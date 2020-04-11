@@ -29,7 +29,9 @@ namespace Utf8Json.Internal
         {
             foreach (var fi in typeof(OpCodes).GetFields(BindingFlags.Public | BindingFlags.Static))
             {
-                var opCode = (OpCode)fi.GetValue(null);
+                var obj = fi.GetValue(null);
+                Debug.Assert(obj != null);
+                var opCode = (OpCode)obj;
                 var value = unchecked((ushort)opCode.Value);
 
                 if (value < 0x100)
@@ -69,7 +71,7 @@ namespace Utf8Json.Internal
 #if DEBUG
 
     // not yet completed so only for debug.
-    public static class ILViewer
+    public static class IntermediateLanguageViewer
     {
         public static string ToPrettyPrintInstruction(MethodBase method)
         {
@@ -89,7 +91,7 @@ namespace Utf8Json.Internal
             if (body == null) yield break;
 
             var il = body.GetILAsByteArray();
-
+            Debug.Assert(il != null);
             using (var reader = new IlStreamReader(il))
             {
                 while (!reader.EndOfStream)
@@ -125,7 +127,7 @@ namespace Utf8Json.Internal
                         case OperandType.InlineSwitch:
                             {
                                 var count = reader.ReadUInt32();
-                                for (int i = 0; i < count; i++)
+                                for (var i = 0; i < count; i++)
                                 {
                                     // data =...
                                     reader.ReadInt32();
@@ -144,25 +146,25 @@ namespace Utf8Json.Internal
                                 genericMethodArguments = method.GetGenericArguments();
                             }
 
-                            if (opCode.OperandType == OperandType.InlineMethod)
+                            switch (opCode.OperandType)
                             {
-                                data = method.Module.ResolveMethod(metaDataToken, method.DeclaringType.GetGenericArguments(), genericMethodArguments);
-                            }
-                            else if (opCode.OperandType == OperandType.InlineField)
-                            {
-                                data = method.Module.ResolveField(metaDataToken, method.DeclaringType.GetGenericArguments(), genericMethodArguments);
-                            }
-                            else if (opCode.OperandType == OperandType.InlineString)
-                            {
-                                data = method.Module.ResolveString(metaDataToken);
-                            }
-                            else if (opCode.OperandType == OperandType.InlineI)
-                            {
-                                data = metaDataToken;
-                            }
-                            else if (opCode.OperandType == OperandType.InlineTok)
-                            {
-                                data = method.Module.ResolveType(metaDataToken);
+                                case OperandType.InlineMethod:
+                                    Debug.Assert(method.DeclaringType != null, "method.DeclaringType != null");
+                                    data = method.Module.ResolveMethod(metaDataToken, method.DeclaringType.GetGenericArguments(), genericMethodArguments);
+                                    break;
+                                case OperandType.InlineField:
+                                    Debug.Assert(method.DeclaringType != null, "method.DeclaringType != null");
+                                    data = method.Module.ResolveField(metaDataToken, method.DeclaringType.GetGenericArguments(), genericMethodArguments);
+                                    break;
+                                case OperandType.InlineString:
+                                    data = method.Module.ResolveString(metaDataToken);
+                                    break;
+                                case OperandType.InlineI:
+                                    data = metaDataToken;
+                                    break;
+                                case OperandType.InlineTok:
+                                    data = method.Module.ResolveType(metaDataToken);
+                                    break;
                             }
                             break;
                         case OperandType.ShortInlineR:

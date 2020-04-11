@@ -42,13 +42,12 @@ namespace Utf8Json.Formatters
                 return;
             }
 
-            var keyFormatter = options.Resolver.GetFormatterWithVerify<TKey>() as IObjectPropertyNameFormatter<TKey>;
             var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
             writer.WriteBeginObject();
             var e = value.GetEnumerator();
             try
             {
-                if (keyFormatter != null)
+                if (options.Resolver.GetFormatterWithVerify<TKey>() is IObjectPropertyNameFormatter<TKey>keyFormatter)
                 {
                     if (e.MoveNext())
                     {

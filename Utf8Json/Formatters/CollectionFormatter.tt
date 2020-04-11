@@ -19,7 +19,9 @@ var tuples = new[]{
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Collections.Generic;
+using StaticFunctionPointerHelper;
 
 namespace Utf8Json.Formatters
 {
@@ -66,13 +68,27 @@ foreach(var tuple in tuples)
                     goto END;
                 }
 
-                var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                formatter.Serialize(ref writer, enumerator.Current, options);
-
-                while (enumerator.MoveNext())
+                var serializer = options.Resolver.GetSerializeStatic<T>();
+                if (serializer == IntPtr.Zero)
                 {
-                    writer.WriteValueSeparator();
+                    var formatter = options.Resolver.GetFormatterWithVerify<T>();
                     formatter.Serialize(ref writer, enumerator.Current, options);
+
+                    while (enumerator.MoveNext())
+                    {
+                        writer.WriteValueSeparator();
+                        formatter.Serialize(ref writer, enumerator.Current, options);
+                    }
+                }
+                else
+                {
+                    writer.Serialize(enumerator.Current, options, serializer);
+
+                    while (enumerator.MoveNext())
+                    {
+                        writer.WriteValueSeparator();
+                        writer.Serialize(enumerator.Current, options, serializer);
+                    }
                 }
             }
             finally
@@ -89,7 +105,9 @@ foreach(var tuple in tuples)
 #else
         public <#= tuple.Item3 #> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
 #endif
-        => DeserializeStatic(ref reader, options);
+        {
+            return DeserializeStatic(ref reader, options);
+        }
 
 #if CSHARP_8_OR_NEWER
         public static <#= tuple.Item3 #>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -103,13 +121,25 @@ foreach(var tuple in tuples)
             }
 
             reader.ReadIsBeginArrayWithVerify();
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             var buffer = <#= tuple.Item5 ?? ("new " + tuple.Item3 + "()")#>;
             var count = 0;
-            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+            var deserializer = options.Resolver.GetDeserializeStatic<T>();
+            if (deserializer == IntPtr.Zero)
             {
-                var item = formatter.Deserialize(ref reader, options);
-                buffer.<#= tuple.Item2 #>(item);
+                var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+                {
+                    var item = formatter.Deserialize(ref reader, options);
+                    buffer.<#= tuple.Item2 #>(item);
+                }
+            }
+            else
+            {
+                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+                {
+                    var item = reader.Deserialize<T>(options, deserializer);
+                    buffer.<#= tuple.Item2 #>(item);
+                }
             }
 
             return <#= tuple.Item6 ?? "buffer" #>;
@@ -127,18 +157,35 @@ foreach(var tuple in tuples)
             }
 
             reader.ReadIsBeginArrayWithVerify();
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-
             var count = 0;
-            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
-            {
-                var item = formatter.Deserialize(ref reader, options);
-                if (value == null)
-                {
-                    value = <#= tuple.Item5 ?? ("new " + tuple.Item3 + "()")#>;
-                }
 
-                value.<#= tuple.Item2 #>(item);
+            var deserializer = options.Resolver.GetDeserializeStatic<T>();
+            if (deserializer == IntPtr.Zero)
+            {
+                var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+                {
+                    var item = formatter.Deserialize(ref reader, options);
+                    if (value == null)
+                    {
+                        value = <#= tuple.Item5 ?? ("new " + tuple.Item3 + "()")#>;
+                    }
+
+                    value.<#= tuple.Item2 #>(item);
+                }
+            }
+            else
+            {
+                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+                {
+                    var item = reader.Deserialize<T>(options, deserializer);
+                    if (value == null)
+                    {
+                        value = <#= tuple.Item5 ?? ("new " + tuple.Item3 + "()")#>;
+                    }
+
+                    value.<#= tuple.Item2 #>(item);
+                }
             }
         }
     }
@@ -158,7 +205,9 @@ foreach(var tuple in tuples)
 #else
         public void Serialize(ref JsonWriter writer, <#= tuple.Item3 #> value, JsonSerializerOptions options)
 #endif
-            => SerializeStatic(ref writer, value, options);
+        {
+            SerializeStatic(ref writer, value, options);
+        }
 
 #if CSHARP_8_OR_NEWER
         public static void SerializeStatic(ref JsonWriter writer, <#= tuple.Item3 #>? value, JsonSerializerOptions options)
@@ -181,13 +230,27 @@ foreach(var tuple in tuples)
                     goto END;
                 }
 
-                var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                formatter.Serialize(ref writer, enumerator.Current, options);
-
-                while (enumerator.MoveNext())
+                var serializer = options.Resolver.GetSerializeStatic<T>();
+                if (serializer == IntPtr.Zero)
                 {
-                    writer.WriteValueSeparator();
+                    var formatter = options.Resolver.GetFormatterWithVerify<T>();
                     formatter.Serialize(ref writer, enumerator.Current, options);
+
+                    while (enumerator.MoveNext())
+                    {
+                        writer.WriteValueSeparator();
+                        formatter.Serialize(ref writer, enumerator.Current, options);
+                    }
+                }
+                else
+                {
+                    writer.Serialize(enumerator.Current, options, serializer);
+
+                    while (enumerator.MoveNext())
+                    {
+                        writer.WriteValueSeparator();
+                        writer.Serialize(enumerator.Current, options, serializer);
+                    }
                 }
             }
             finally
@@ -204,7 +267,9 @@ foreach(var tuple in tuples)
 #else
         public <#= tuple.Item3 #> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
 #endif
-        => DeserializeStatic(ref reader, options);
+        {
+            return DeserializeStatic(ref reader, options); 
+        }
 
 #if CSHARP_8_OR_NEWER
         public static <#= tuple.Item3 #>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -218,13 +283,25 @@ foreach(var tuple in tuples)
             }
 
             reader.ReadIsBeginArrayWithVerify();
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             var buffer = <#= tuple.Item5 ?? ("new " + tuple.Item3 + "()")#>;
             var count = 0;
-            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+            var deserializer = options.Resolver.GetDeserializeStatic<T>();
+            if (deserializer == IntPtr.Zero)
             {
-                var item = formatter.Deserialize(ref reader, options);
-                buffer.<#= tuple.Item2 #>(item);
+                var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+                {
+                    var item = formatter.Deserialize(ref reader, options);
+                    buffer.<#= tuple.Item2 #>(item);
+                }
+            }
+            else
+            {
+                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+                {
+                    var item = reader.Deserialize<T>(options, deserializer);
+                    buffer.<#= tuple.Item2 #>(item);
+                }
             }
 
             return <#= tuple.Item6 ?? "buffer" #>;
@@ -242,7 +319,6 @@ foreach(var tuple in tuples)
             }
 
             reader.ReadIsBeginArrayWithVerify();
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
 
             if (value == null)
             {
@@ -252,12 +328,25 @@ foreach(var tuple in tuples)
             {
                 value.Clear();
             }
-
-            var count = 0;
-            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+            var deserializer = options.Resolver.GetDeserializeStatic<T>();
+            if (deserializer == IntPtr.Zero)
             {
-                var item = formatter.Deserialize(ref reader, options);
-                value.<#= tuple.Item2 #>(item);
+                var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                var count = 0;
+                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+                {
+                    var item = formatter.Deserialize(ref reader, options);
+                    value.<#= tuple.Item2 #>(item);
+                }
+            }
+            else
+            {
+                var count = 0;
+                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+                {
+                    var item = reader.Deserialize<T>(options, deserializer);
+                    value.<#= tuple.Item2 #>(item);
+                }
             }
         }
     }

@@ -6,6 +6,7 @@ using System.Buffers;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using StaticFunctionPointerHelper;
 using Utf8Json.Internal;
 
 namespace Utf8Json
@@ -41,7 +42,22 @@ namespace Utf8Json
             {
                 CancellationToken = cancellationToken,
             };
-            Serialize(ref fastWriter, value, options);
+            try
+            {
+                var serializer = options.Resolver.GetSerializeStatic<T>();
+                if (serializer == IntPtr.Zero)
+                {
+                    options.Resolver.GetFormatterWithVerify<T>().Serialize(ref fastWriter, value, options);
+                }
+                else
+                {
+                    fastWriter.Serialize(value, options, serializer);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new JsonSerializationException($"Failed to serialize {typeof(T).FullName} value.", ex);
+            }
             fastWriter.Flush();
         }
 
@@ -58,7 +74,22 @@ namespace Utf8Json
             {
                 CancellationToken = cancellationToken,
             };
-            Serialize(ref fastWriter, value);
+            try
+            {
+                var serializer = DefaultOptions.Resolver.GetSerializeStatic<T>();
+                if (serializer == IntPtr.Zero)
+                {
+                    DefaultOptions.Resolver.GetFormatterWithVerify<T>().Serialize(ref fastWriter, value, DefaultOptions);
+                }
+                else
+                {
+                    fastWriter.Serialize(value, DefaultOptions, serializer);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new JsonSerializationException($"Failed to serialize {typeof(T).FullName} value.", ex);
+            }
             fastWriter.Flush();
         }
 
@@ -73,7 +104,15 @@ namespace Utf8Json
         {
             try
             {
-                options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value, options);
+                var serializer = options.Resolver.GetSerializeStatic<T>();
+                if (serializer == IntPtr.Zero)
+                {
+                    options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value, options);
+                }
+                else
+                {
+                    writer.Serialize(value, options, serializer);
+                }
             }
             catch (Exception ex)
             {
@@ -91,7 +130,15 @@ namespace Utf8Json
         {
             try
             {
-                DefaultOptions.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value, DefaultOptions);
+                var serializer = DefaultOptions.Resolver.GetSerializeStatic<T>();
+                if (serializer == IntPtr.Zero)
+                {
+                    DefaultOptions.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value, DefaultOptions);
+                }
+                else
+                {
+                    writer.Serialize(value, DefaultOptions, serializer);
+                }
             }
             catch (Exception ex)
             {
@@ -128,7 +175,22 @@ namespace Utf8Json
             {
                 CancellationToken = cancellationToken,
             };
-            Serialize(ref jsonWriter, value, options);
+            try
+            {
+                var serializer = options.Resolver.GetSerializeStatic<T>();
+                if (serializer == IntPtr.Zero)
+                {
+                    options.Resolver.GetFormatterWithVerify<T>().Serialize(ref jsonWriter, value, options);
+                }
+                else
+                {
+                    jsonWriter.Serialize(value, options, serializer);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new JsonSerializationException($"Failed to serialize {typeof(T).FullName} value.", ex);
+            }
             return jsonWriter.FlushAndGetArray();
         }
 
@@ -151,7 +213,22 @@ namespace Utf8Json
             {
                 CancellationToken = cancellationToken,
             };
-            Serialize(ref jsonWriter, value);
+            try
+            {
+                var serializer = DefaultOptions.Resolver.GetSerializeStatic<T>();
+                if (serializer == IntPtr.Zero)
+                {
+                    DefaultOptions.Resolver.GetFormatterWithVerify<T>().Serialize(ref jsonWriter, value, DefaultOptions);
+                }
+                else
+                {
+                    jsonWriter.Serialize(value, DefaultOptions, serializer);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new JsonSerializationException($"Failed to serialize {typeof(T).FullName} value.", ex);
+            }
             return jsonWriter.FlushAndGetArray();
         }
 
@@ -173,7 +250,7 @@ namespace Utf8Json
 
                 try
                 {
-                    foreach (var segment in sequenceRental.Value.AsReadOnlySequence)
+                    foreach (var segment in (ReadOnlySequence<byte>)sequenceRental.Value)
                     {
                         cancellationToken.ThrowIfCancellationRequested();
                         stream.Write(segment.Span);
@@ -202,7 +279,7 @@ namespace Utf8Json
 
                 try
                 {
-                    foreach (var segment in sequenceRental.Value.AsReadOnlySequence)
+                    foreach (var segment in (ReadOnlySequence<byte>)sequenceRental.Value)
                     {
                         cancellationToken.ThrowIfCancellationRequested();
                         stream.Write(segment.Span);
@@ -234,7 +311,7 @@ namespace Utf8Json
 
                 try
                 {
-                    foreach (var segment in sequenceRental.Value.AsReadOnlySequence)
+                    foreach (var segment in (ReadOnlySequence<byte>)sequenceRental.Value)
                     {
                         cancellationToken.ThrowIfCancellationRequested();
                         await stream.WriteAsync(segment, cancellationToken).ConfigureAwait(false);
@@ -269,7 +346,7 @@ namespace Utf8Json
 
                 try
                 {
-                    foreach (var segment in sequenceRental.Value.AsReadOnlySequence)
+                    foreach (var segment in (ReadOnlySequence<byte>)sequenceRental.Value)
                     {
                         cancellationToken.ThrowIfCancellationRequested();
                         await stream.WriteAsync(segment, cancellationToken).ConfigureAwait(false);
@@ -293,24 +370,6 @@ namespace Utf8Json
         /// Deserializes a value of a given type from a sequence of bytes.
         /// </summary>
         /// <typeparam name="T">The type of value to deserialize.</typeparam>
-        /// <param name="byteSequence">The sequence to deserialize from.</param>
-        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
-        /// <param name="cancellationToken">A cancellation token.</param>
-        /// <returns>The deserialized value.</returns>
-        /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
-        public static T Deserialize<T>(in ReadOnlySequence<byte> byteSequence, JsonSerializerOptions options, CancellationToken cancellationToken = default)
-        {
-            var reader = new JsonReader(byteSequence)
-            {
-                CancellationToken = cancellationToken,
-            };
-            return Deserialize<T>(ref reader, options);
-        }
-
-        /// <summary>
-        /// Deserializes a value of a given type from a sequence of bytes.
-        /// </summary>
-        /// <typeparam name="T">The type of value to deserialize.</typeparam>
         /// <param name="reader">The reader to deserialize from.</param>
         /// <param name="options">The options. Use <c>null</c> to use default options.</param>
         /// <returns>The deserialized value.</returns>
@@ -319,7 +378,34 @@ namespace Utf8Json
         {
             try
             {
-                return options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options);
+                var deserializer = options.Resolver.GetDeserializeStatic<T>();
+                return deserializer == IntPtr.Zero
+                    ? options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options)
+                    : reader.Deserialize<T>(options, deserializer);
+            }
+            catch (Exception ex)
+            {
+                throw new JsonSerializationException($"Failed to deserialize {typeof(T).FullName} value.", ex);
+            }
+        }
+
+        /// <summary>
+        /// Deserializes a value of a given type from a sequence of bytes.
+        /// </summary>
+        /// <typeparam name="T">The type of value to deserialize.</typeparam>
+        /// <param name="span">The buffer to deserialize from.</param>
+        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
+        /// <returns>The deserialized value.</returns>
+        /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
+        public static T Deserialize<T>(ReadOnlySpan<byte> span, JsonSerializerOptions options)
+        {
+            var reader = new JsonReader(span);
+            try
+            {
+                var deserializer = options.Resolver.GetDeserializeStatic<T>();
+                return deserializer == IntPtr.Zero
+                    ? options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options)
+                    : reader.Deserialize<T>(options, deserializer);
             }
             catch (Exception ex)
             {
@@ -338,11 +424,21 @@ namespace Utf8Json
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
         public static T Deserialize<T>(ReadOnlyMemory<byte> buffer, JsonSerializerOptions options, CancellationToken cancellationToken = default)
         {
-            var reader = new JsonReader(buffer)
+            var reader = new JsonReader(buffer.Span)
             {
                 CancellationToken = cancellationToken,
             };
-            return Deserialize<T>(ref reader, options);
+            try
+            {
+                var deserializer = options.Resolver.GetDeserializeStatic<T>();
+                return deserializer == IntPtr.Zero
+                    ? options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options)
+                    : reader.Deserialize<T>(options, deserializer);
+            }
+            catch (Exception ex)
+            {
+                throw new JsonSerializationException($"Failed to deserialize {typeof(T).FullName} value.", ex);
+            }
         }
 
         /// <summary>
@@ -357,129 +453,28 @@ namespace Utf8Json
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
         public static T Deserialize<T>(ReadOnlyMemory<byte> buffer, JsonSerializerOptions options, out int bytesRead, CancellationToken cancellationToken = default)
         {
-            var reader = new JsonReader(buffer)
+            var reader = new JsonReader(buffer.Span)
             {
                 CancellationToken = cancellationToken,
             };
-            var result = Deserialize<T>(ref reader, options);
-            bytesRead = buffer.Slice(0, (int)reader.Consumed).Length;
-            return result;
-        }
-
-#if SPAN_BUILTIN
-        /// <summary>
-        /// Deserializes the entire content of a <see cref="Stream"/>.
-        /// </summary>
-        /// <typeparam name="T">The type of value to deserialize.</typeparam>
-        /// <param name="stream">
-        /// The stream to deserialize from.
-        /// The entire stream will be read, and the first json token deserialized will be returned.
-        /// If <see cref="Stream.CanSeek"/> is true on the stream, its position will be set to just after the last deserialized byte.
-        /// </param>
-        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
-        /// <param name="cancellationToken">A cancellation token.</param>
-        /// <returns>The deserialized value.</returns>
-        /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
-        /// <remarks>
-        /// If multiple top-level json data structures are expected on the stream, use <see cref="JsonStreamReader"/> instead.
-        /// </remarks>
-        public static T Deserialize<T>(Stream stream, JsonSerializerOptions options, CancellationToken cancellationToken = default)
-        {
-            if (TryDeserializeFromMemoryStream(stream, options, cancellationToken, out T result))
+            try
             {
+                var deserializer = options.Resolver.GetDeserializeStatic<T>();
+                var result = deserializer == IntPtr.Zero
+                    ? options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options)
+                    : reader.Deserialize<T>(options, deserializer);
+                bytesRead = reader.Consumed;
                 return result;
             }
-
-            using (var sequenceRental = SequencePool.Shared.Rent())
+            catch (Exception ex)
             {
-                var sequence = sequenceRental.Value;
-                try
-                {
-                    int bytesRead;
-                    do
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                        var span = sequence.GetSpan(stream.CanSeek ? (int)(stream.Length - stream.Position) : 0);
-                        bytesRead = stream.Read(span);
-                        sequence.Advance(bytesRead);
-                    }
-                    while (bytesRead > 0);
-                }
-                catch (Exception ex)
-                {
-                    throw new JsonSerializationException("Error occurred while reading from the stream.", ex);
-                }
-
-                return DeserializeFromSequenceAndRewindStreamIfPossible<T>(stream, options, sequence, cancellationToken);
+                throw new JsonSerializationException($"Failed to deserialize {typeof(T).FullName} value.", ex);
             }
         }
 
-        /// <summary>
-        /// Deserializes the entire content of a <see cref="Stream"/>.
-        /// </summary>
-        /// <typeparam name="T">The type of value to deserialize.</typeparam>
-        /// <param name="stream">
-        /// The stream to deserialize from.
-        /// The entire stream will be read, and the first json token deserialized will be returned.
-        /// If <see cref="Stream.CanSeek"/> is true on the stream, its position will be set to just after the last deserialized byte.
-        /// </param>
-        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
-        /// <param name="cancellationToken">A cancellation token.</param>
-        /// <returns>The deserialized value.</returns>
-        /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
-        /// <remarks>
-        /// If multiple top-level json data structures are expected on the stream, use <see cref="JsonStreamReader"/> instead.
-        /// </remarks>
-        public static async ValueTask<T> DeserializeAsync<T>(Stream stream, JsonSerializerOptions options, CancellationToken cancellationToken = default)
-        {
-            if (TryDeserializeFromMemoryStream(stream, options, cancellationToken, out T result))
-            {
-                return result;
-            }
-
-            using (var sequenceRental = SequencePool.Shared.Rent())
-            {
-                var sequence = sequenceRental.Value;
-                try
-                {
-                    int bytesRead;
-                    do
-                    {
-                        var memory = sequence.GetMemory(stream.CanSeek ? (int)(stream.Length - stream.Position) : 0);
-                        bytesRead = await stream.ReadAsync(memory, cancellationToken).ConfigureAwait(false);
-                        sequence.Advance(bytesRead);
-                    }
-                    while (bytesRead > 0);
-                }
-                catch (Exception ex)
-                {
-                    throw new JsonSerializationException("Error occurred while reading from the stream.", ex);
-                }
-
-                return DeserializeFromSequenceAndRewindStreamIfPossible<T>(stream, options, sequence, cancellationToken);
-            }
-        }
-#endif
         #endregion
 
         #region Deserialize without JsonSerializerOptions
-        /// <summary>
-        /// Deserializes a value of a given type from a sequence of bytes.
-        /// </summary>
-        /// <typeparam name="T">The type of value to deserialize.</typeparam>
-        /// <param name="byteSequence">The sequence to deserialize from.</param>
-        /// <param name="cancellationToken">A cancellation token.</param>
-        /// <returns>The deserialized value.</returns>
-        /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
-        public static T Deserialize<T>(in ReadOnlySequence<byte> byteSequence, CancellationToken cancellationToken = default)
-        {
-            var reader = new JsonReader(byteSequence)
-            {
-                CancellationToken = cancellationToken,
-            };
-            return Deserialize<T>(ref reader);
-        }
-
         /// <summary>
         /// Deserializes a value of a given type from a sequence of bytes.
         /// </summary>
@@ -491,7 +486,34 @@ namespace Utf8Json
         {
             try
             {
-                return DefaultOptions.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, DefaultOptions);
+                var deserializer = DefaultOptions.Resolver.GetDeserializeStatic<T>();
+                return deserializer == IntPtr.Zero
+                    ? DefaultOptions.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, DefaultOptions)
+                    : reader.Deserialize<T>(DefaultOptions, deserializer);
+            }
+            catch (Exception ex)
+            {
+                throw new JsonSerializationException($"Failed to deserialize {typeof(T).FullName} value.", ex);
+            }
+        }
+
+        /// <summary>
+        /// Deserializes a value of a given type from a sequence of bytes.
+        /// </summary>
+        /// <typeparam name="T">The type of value to deserialize.</typeparam>
+        /// <param name="span">The buffer to deserialize from.</param>
+        /// <returns>The deserialized value.</returns>
+        /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
+        public static T Deserialize<T>(ReadOnlySpan<byte> span)
+        {
+            var reader = new JsonReader(span);
+            try
+            {
+                var options = DefaultOptions;
+                var deserializer = options.Resolver.GetDeserializeStatic<T>();
+                return deserializer == IntPtr.Zero
+                    ? options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options)
+                    : reader.Deserialize<T>(options, deserializer);
             }
             catch (Exception ex)
             {
@@ -509,11 +531,21 @@ namespace Utf8Json
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
         public static T Deserialize<T>(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
         {
-            var reader = new JsonReader(buffer)
+            var reader = new JsonReader(buffer.Span)
             {
                 CancellationToken = cancellationToken,
             };
-            return Deserialize<T>(ref reader);
+            try
+            {
+                var deserializer = DefaultOptions.Resolver.GetDeserializeStatic<T>();
+                return deserializer == IntPtr.Zero
+                    ? DefaultOptions.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, DefaultOptions)
+                    : reader.Deserialize<T>(DefaultOptions, deserializer);
+            }
+            catch (Exception ex)
+            {
+                throw new JsonSerializationException($"Failed to deserialize {typeof(T).FullName} value.", ex);
+            }
         }
 
         /// <summary>
@@ -527,193 +559,24 @@ namespace Utf8Json
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
         public static T Deserialize<T>(ReadOnlyMemory<byte> buffer, out int bytesRead, CancellationToken cancellationToken = default)
         {
-            var reader = new JsonReader(buffer)
+            var reader = new JsonReader(buffer.Span)
             {
                 CancellationToken = cancellationToken,
             };
-            var result = Deserialize<T>(ref reader);
-            bytesRead = buffer.Slice(0, (int)reader.Consumed).Length;
-            return result;
-        }
-
-#if SPAN_BUILTIN
-        /// <summary>
-        /// Deserializes the entire content of a <see cref="Stream"/>.
-        /// </summary>
-        /// <typeparam name="T">The type of value to deserialize.</typeparam>
-        /// <param name="stream">
-        /// The stream to deserialize from.
-        /// The entire stream will be read, and the first json token deserialized will be returned.
-        /// If <see cref="Stream.CanSeek"/> is true on the stream, its position will be set to just after the last deserialized byte.
-        /// </param>
-        /// <param name="cancellationToken">A cancellation token.</param>
-        /// <returns>The deserialized value.</returns>
-        /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
-        /// <remarks>
-        /// If multiple top-level json data structures are expected on the stream, use <see cref="JsonStreamReader"/> instead.
-        /// </remarks>
-        public static T Deserialize<T>(Stream stream, CancellationToken cancellationToken = default)
-        {
-            if (TryDeserializeFromMemoryStream(stream, cancellationToken, out T result))
+            try
             {
+                var deserializer = DefaultOptions.Resolver.GetDeserializeStatic<T>();
+                var result = deserializer == IntPtr.Zero
+                    ? DefaultOptions.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, DefaultOptions)
+                    : reader.Deserialize<T>(DefaultOptions, deserializer);
+                bytesRead = reader.Consumed;
                 return result;
             }
-
-            using (var sequenceRental = SequencePool.Shared.Rent())
+            catch (Exception ex)
             {
-                var sequence = sequenceRental.Value;
-                try
-                {
-                    int bytesRead;
-                    do
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                        var span = sequence.GetSpan(stream.CanSeek ? (int)(stream.Length - stream.Position) : 0);
-                        bytesRead = stream.Read(span);
-                        sequence.Advance(bytesRead);
-                    }
-                    while (bytesRead > 0);
-                }
-                catch (Exception ex)
-                {
-                    throw new JsonSerializationException("Error occurred while reading from the stream.", ex);
-                }
-
-                return DeserializeFromSequenceAndRewindStreamIfPossible<T>(stream, sequence, cancellationToken);
+                throw new JsonSerializationException($"Failed to deserialize {typeof(T).FullName} value.", ex);
             }
         }
-
-        /// <summary>
-        /// Deserializes the entire content of a <see cref="Stream"/>.
-        /// </summary>
-        /// <typeparam name="T">The type of value to deserialize.</typeparam>
-        /// <param name="stream">
-        /// The stream to deserialize from.
-        /// The entire stream will be read, and the first json token deserialized will be returned.
-        /// If <see cref="Stream.CanSeek"/> is true on the stream, its position will be set to just after the last deserialized byte.
-        /// </param>
-        /// <param name="cancellationToken">A cancellation token.</param>
-        /// <returns>The deserialized value.</returns>
-        /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
-        /// <remarks>
-        /// If multiple top-level json data structures are expected on the stream, use <see cref="JsonStreamReader"/> instead.
-        /// </remarks>
-        public static async ValueTask<T> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default)
-        {
-            if (TryDeserializeFromMemoryStream(stream, cancellationToken, out T result))
-            {
-                return result;
-            }
-
-            using (var sequenceRental = SequencePool.Shared.Rent())
-            {
-                var sequence = sequenceRental.Value;
-                try
-                {
-                    int bytesRead;
-                    do
-                    {
-                        var memory = sequence.GetMemory(stream.CanSeek ? (int)(stream.Length - stream.Position) : 0);
-                        bytesRead = await stream.ReadAsync(memory, cancellationToken).ConfigureAwait(false);
-                        sequence.Advance(bytesRead);
-                    }
-                    while (bytesRead > 0);
-                }
-                catch (Exception ex)
-                {
-                    throw new JsonSerializationException("Error occurred while reading from the stream.", ex);
-                }
-
-                return DeserializeFromSequenceAndRewindStreamIfPossible<T>(stream, sequence, cancellationToken);
-            }
-        }
-
-        private static bool TryDeserializeFromMemoryStream<T>(Stream stream, JsonSerializerOptions options, CancellationToken cancellationToken, out T result)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            if (!(stream is MemoryStream ms) || !ms.TryGetBuffer(out var streamBuffer))
-            {
-#if CSHARP_8_OR_NEWER
-                result = default!;
-#else
-                result = default;
-#endif
-                return false;
-            }
-
-            result = Deserialize<T>(streamBuffer.AsMemory(checked((int)ms.Position)), options, out var bytesRead, cancellationToken);
-
-            // Emulate that we had actually "read" from the stream.
-            ms.Seek(bytesRead, SeekOrigin.Current);
-            return true;
-        }
-
-        private static bool TryDeserializeFromMemoryStream<T>(Stream stream, CancellationToken cancellationToken, out T result)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            if (!(stream is MemoryStream ms) || !ms.TryGetBuffer(out var streamBuffer))
-            {
-#if CSHARP_8_OR_NEWER
-                result = default!;
-#else
-                result = default;
-#endif
-                return false;
-            }
-
-            result = Deserialize<T>(streamBuffer.AsMemory(checked((int)ms.Position)), out var bytesRead, cancellationToken);
-
-            // Emulate that we had actually "read" from the stream.
-            ms.Seek(bytesRead, SeekOrigin.Current);
-            return true;
-        }
-
-        private static T DeserializeFromSequenceAndRewindStreamIfPossible<T>(Stream streamToRewind, JsonSerializerOptions options, ReadOnlySequence<byte> sequence, CancellationToken cancellationToken)
-        {
-            if (streamToRewind is null)
-            {
-                throw new ArgumentNullException(nameof(streamToRewind));
-            }
-
-            var reader = new JsonReader(sequence)
-            {
-                CancellationToken = cancellationToken,
-            };
-            var result = Deserialize<T>(ref reader, options);
-
-            if (streamToRewind.CanSeek && !reader.End)
-            {
-                // Reverse the stream as many bytes as we left unread.
-                var bytesNotRead = checked((int)reader.Sequence.Slice(reader.Position).Length);
-                streamToRewind.Seek(-bytesNotRead, SeekOrigin.Current);
-            }
-
-            return result;
-        }
-
-        private static T DeserializeFromSequenceAndRewindStreamIfPossible<T>(Stream streamToRewind, ReadOnlySequence<byte> sequence, CancellationToken cancellationToken)
-        {
-            if (streamToRewind is null)
-            {
-                throw new ArgumentNullException(nameof(streamToRewind));
-            }
-
-            var reader = new JsonReader(sequence)
-            {
-                CancellationToken = cancellationToken,
-            };
-            var result = Deserialize<T>(ref reader);
-
-            if (streamToRewind.CanSeek && !reader.End)
-            {
-                // Reverse the stream as many bytes as we left unread.
-                var bytesNotRead = checked((int)reader.Sequence.Slice(reader.Position).Length);
-                streamToRewind.Seek(-bytesNotRead, SeekOrigin.Current);
-            }
-
-            return result;
-        }
-#endif
         #endregion
     }
 }

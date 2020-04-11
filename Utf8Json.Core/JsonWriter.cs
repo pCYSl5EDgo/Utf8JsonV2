@@ -71,7 +71,7 @@ namespace Utf8Json
             }
 
             this.Flush();
-            var result = this.Writer.SequenceRental.Value.AsReadOnlySequence.ToArray();
+            var result = ((ReadOnlySequence<byte>)this.Writer.SequenceRental.Value).ToArray();
             this.Writer.SequenceRental.Dispose();
             return result;
         }

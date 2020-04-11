@@ -75,12 +75,13 @@ namespace Utf8Json.Emit
 
             // GetConstructor
 #if CSHARP_8_OR_NEWER
+            // ReSharper disable once SuggestVarOrType_SimpleTypes
             ConstructorInfo? ctor =
 #else
             var ctor =
 #endif
                 ti.DeclaredConstructors.Where(x => x.IsPublic)
-                    .SingleOrDefault(x => x.GetCustomAttribute<SerializationConstructorAttribute>(false) != null);
+                                .SingleOrDefault(x => x.GetCustomAttribute<SerializationConstructorAttribute>(false) != null);
             var constructorParameters = new List<MetaMember>();
             {
                 var ctorEnumerator = default(IEnumerator<ConstructorInfo>);
@@ -103,6 +104,7 @@ namespace Utf8Json.Emit
                         Debug.Assert(ctor != null, nameof(ctor) + " != null");
                         foreach (var item in ctor.GetParameters())
                         {
+                            Debug.Assert(item.Name != null);
                             var hasKey = constructorLookupDictionary[item.Name];
                             var hasKeyEnumerator = hasKey.GetEnumerator();
                             try
@@ -119,7 +121,7 @@ namespace Utf8Json.Emit
                                 {
                                     if (ctorEnumerator == null)
                                     {
-                                        throw new InvalidOperationException("duplicate matched constructor parameter name:" + type.FullName + " parameterName:" + item.Name + " paramterType:" + item.ParameterType.Name);
+                                        throw new InvalidOperationException("duplicate matched constructor parameter name:" + type.FullName + " parameterName:" + item.Name + " parameterType:" + item.ParameterType.Name);
                                     }
 
                                     ctor = null;
@@ -150,8 +152,9 @@ namespace Utf8Json.Emit
             this.ConstructorParameters = constructorParameters.ToArray();
             this.Members = stringMembers.Values.ToArray();
         }
+
 #if CSHARP_8_OR_NEWER
-        private static bool TryGetNextConstructor(IEnumerator<ConstructorInfo> ctorEnumerator, ref ConstructorInfo? ctor)
+        private static bool TryGetNextConstructor(IEnumerator<ConstructorInfo>? ctorEnumerator, ref ConstructorInfo? ctor)
 #else
         private static bool TryGetNextConstructor(IEnumerator<ConstructorInfo> ctorEnumerator, ref ConstructorInfo ctor)
 #endif

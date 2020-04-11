@@ -1,19 +1,29 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using StaticFunctionPointerHelper;
 
 namespace Utf8Json.Formatters
 {
-    public sealed class ReadOnlyCollectionFormatter<T> : IJsonFormatter<ReadOnlyCollection<T>>
+    public sealed class ReadOnlyCollectionFormatter<T>
+#if CSHARP_8_OR_NEWER
+        : IJsonFormatter<ReadOnlyCollection<T>?>
+#else
+        : IJsonFormatter<ReadOnlyCollection<T>>
+#endif
     {
 #if CSHARP_8_OR_NEWER
         public void Serialize(ref JsonWriter writer, ReadOnlyCollection<T>? value, JsonSerializerOptions options)
 #else
         public void Serialize(ref JsonWriter writer, ReadOnlyCollection<T> value, JsonSerializerOptions options)
 #endif
-        => SerializeStatic(ref writer, value, options);
+        {
+            SerializeStatic(ref writer, value, options);
+        }
 
 #if CSHARP_8_OR_NEWER
         public static void SerializeStatic(ref JsonWriter writer, ReadOnlyCollection<T>? value, JsonSerializerOptions options)
@@ -27,8 +37,8 @@ namespace Utf8Json.Formatters
                 return;
             }
 
-            var enumerator = value.GetEnumerator();
             writer.WriteBeginArray();
+            var enumerator = value.GetEnumerator();
             try
             {
                 if (!enumerator.MoveNext())
@@ -36,13 +46,19 @@ namespace Utf8Json.Formatters
                     goto END;
                 }
 
-                var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                formatter.Serialize(ref writer, enumerator.Current, options);
+                var serializer = options.Resolver.GetSerializeStatic<T>();
+                if (serializer == IntPtr.Zero)
+                {
+                    SerializeWithFormatter(ref writer, options, enumerator);
+                    goto END;
+                }
+
+                writer.Serialize(enumerator.Current, options, serializer);
 
                 while (enumerator.MoveNext())
                 {
                     writer.WriteValueSeparator();
-                    formatter.Serialize(ref writer, enumerator.Current, options);
+                    writer.Serialize(enumerator.Current, options, serializer);
                 }
             }
             finally
@@ -54,19 +70,29 @@ namespace Utf8Json.Formatters
             writer.WriteEndArray();
         }
 
+        private static void SerializeWithFormatter(ref JsonWriter writer, JsonSerializerOptions options, IEnumerator<T> enumerator)
+        {
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
+            formatter.Serialize(ref writer, enumerator.Current, options);
+
+            while (enumerator.MoveNext())
+            {
+                writer.WriteValueSeparator();
+                formatter.Serialize(ref writer, enumerator.Current, options);
+            }
+        }
+
 #if CSHARP_8_OR_NEWER
-#pragma warning disable 8613
         public ReadOnlyCollection<T>? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
-#pragma warning restore 8613
 #else
         public ReadOnlyCollection<T> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
 #endif
-        => DeserializeStatic(ref reader, options);
+        {
+            return DeserializeStatic(ref reader, options);
+        }
 
 #if CSHARP_8_OR_NEWER
-#pragma warning disable 8613
         public static ReadOnlyCollection<T>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
-#pragma warning restore 8613
 #else
         public static ReadOnlyCollection<T> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #endif
@@ -77,16 +103,64 @@ namespace Utf8Json.Formatters
             }
 
             reader.ReadIsBeginArrayWithVerify();
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var buffer = new List<T>(); ;
+
+            var pool = ArrayPool<T>.Shared;
+            var array = pool.Rent(256);
+            try
+            {
+                var deserializer = options.Resolver.GetDeserializeStatic<T>();
+                if (deserializer == IntPtr.Zero)
+                {
+                    return DeserializeWithFormatter(ref reader, options, ref array, pool);
+                }
+                else
+                {
+                    var count = 0;
+                    while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+                    {
+                        if (array.Length < count)
+                        {
+                            var tmp = pool.Rent(count);
+                            Array.Copy(array, tmp, array.Length);
+                            pool.Return(array);
+                            array = tmp;
+                        }
+
+                        array[count - 1] = reader.Deserialize<T>(options, deserializer);
+                    }
+
+                    var answer = new T[count];
+                    Array.Copy(array, answer, count);
+                    return new ReadOnlyCollection<T>(answer);
+                }
+
+            }
+            finally
+            {
+                pool.Return(array);
+            }
+        }
+
+        private static ReadOnlyCollection<T> DeserializeWithFormatter(ref JsonReader reader, JsonSerializerOptions options, ref T[] array, ArrayPool<T> pool)
+        {
             var count = 0;
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
             {
-                var item = formatter.Deserialize(ref reader, options);
-                buffer.Add(item);
+                if (array.Length < count)
+                {
+                    var tmp = pool.Rent(count);
+                    Array.Copy(array, tmp, array.Length);
+                    pool.Return(array);
+                    array = tmp;
+                }
+
+                array[count - 1] = formatter.Deserialize(ref reader, options);
             }
 
-            return new ReadOnlyCollection<T>(buffer);
+            var answer = new T[count];
+            Array.Copy(array, answer, count);
+            return new ReadOnlyCollection<T>(answer);
         }
     }
 }

@@ -1,8 +1,10 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using StaticFunctionPointerHelper;
 
 namespace Utf8Json.Formatters
 {
@@ -19,7 +21,9 @@ namespace Utf8Json.Formatters
 #else
         public void Serialize(ref JsonWriter writer, ILookup<TKey, TElement> value, JsonSerializerOptions options)
 #endif
-        => SerializeStatic(ref writer, value, options);
+        {
+            SerializeStatic(ref writer, value, options);
+        }
 
 #if CSHARP_8_OR_NEWER
         public static void SerializeStatic(ref JsonWriter writer, ILookup<TKey, TElement>? value, JsonSerializerOptions options)
@@ -33,7 +37,15 @@ namespace Utf8Json.Formatters
                 return;
             }
 
-            options.Resolver.GetFormatterWithVerify<IEnumerable<IGrouping<TKey, TElement>>>().Serialize(ref writer, value.AsEnumerable(), options);
+            var serializer = options.Resolver.GetSerializeStatic<IEnumerable<IGrouping<TKey, TElement>>>();
+            if (serializer == IntPtr.Zero)
+            {
+                options.Resolver.GetFormatterWithVerify<IEnumerable<IGrouping<TKey, TElement>>>().Serialize(ref writer, value.AsEnumerable(), options);
+            }
+            else
+            {
+                writer.Serialize<IEnumerable<IGrouping<TKey, TElement>>>(value, options, serializer);
+            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -41,7 +53,9 @@ namespace Utf8Json.Formatters
 #else
         public ILookup<TKey, TElement> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
 #endif
-        => DeserializeStatic(ref reader, options);
+        {
+            return DeserializeStatic(ref reader, options);
+        }
 
 #if CSHARP_8_OR_NEWER
         public static ILookup<TKey, TElement>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -56,17 +70,30 @@ namespace Utf8Json.Formatters
 
             var count = 0;
 
-            var formatter = options.Resolver.GetFormatterWithVerify<IGrouping<TKey, TElement>>();
             var intermediateCollection = new Dictionary<TKey, IGrouping<TKey, TElement>>();
 
             reader.ReadIsBeginArrayWithVerify();
-            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+
+            var deserializer = options.Resolver.GetDeserializeStatic<IGrouping<TKey, TElement>>();
+            if (deserializer == IntPtr.Zero)
             {
-                var g = formatter.Deserialize(ref reader, options);
-                intermediateCollection.Add(g.Key, g);
+                var formatter = options.Resolver.GetFormatterWithVerify<IGrouping<TKey, TElement>>();
+                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+                {
+                    var g = formatter.Deserialize(ref reader, options);
+                    intermediateCollection.Add(g.Key, g);
+                }
+            }
+            else
+            {
+                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+                {
+                    var g = reader.Deserialize<IGrouping<TKey, TElement>>(options, deserializer);
+                    intermediateCollection.Add(g.Key, g);
+                }
             }
 
-            return new Utf8Json.Internal.Lookup<TKey, TElement>(intermediateCollection);
+            return new Internal.Lookup<TKey, TElement>(intermediateCollection);
         }
     }
 }

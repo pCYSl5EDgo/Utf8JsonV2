@@ -1,7 +1,9 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Threading.Tasks;
+using StaticFunctionPointerHelper;
 
 namespace Utf8Json.Formatters
 {
@@ -9,25 +11,34 @@ namespace Utf8Json.Formatters
     {
         public void Serialize(ref JsonWriter writer, ValueTask<T> value, JsonSerializerOptions options)
         {
-            // value.Result -> wait...!
-            options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value.Result, options);
+            SerializeStatic(ref writer, value, options);
         }
 
         public static void SerializeStatic(ref JsonWriter writer, ValueTask<T> value, JsonSerializerOptions options)
         {
             // value.Result -> wait...!
-            options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value.Result, options);
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer == IntPtr.Zero)
+            {
+                options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value.Result, options);
+            }
+            else
+            {
+                writer.Serialize(value.Result, options, serializer);
+            }
         }
 
         public ValueTask<T> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            var v = options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options);
-            return new ValueTask<T>(v);
+            return DeserializeStatic(ref reader, options);
         }
 
         public static ValueTask<T> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
-            var v = options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options);
+            var deserializer = options.Resolver.GetDeserializeStatic<T>();
+            var v = deserializer == IntPtr.Zero
+                ? options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options)
+                : reader.Deserialize<T>(options, deserializer);
             return new ValueTask<T>(v);
         }
     }

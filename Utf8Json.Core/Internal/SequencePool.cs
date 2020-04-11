@@ -13,7 +13,7 @@ namespace Utf8Json.Internal
     public sealed class SequencePool
     {
         /// <summary>
-        /// A thread-safe pool of reusable <see cref="Sequence{T}"/> objects.
+        /// A thread-safe pool of reusable <see cref="Sequence"/> objects.
         /// </summary>
         /// <remarks>
         /// We use a <see cref="maxSize"/> that allows every processor to be involved in messagepack serialization concurrently,
@@ -22,10 +22,10 @@ namespace Utf8Json.Internal
         internal static readonly SequencePool Shared = new SequencePool(Environment.ProcessorCount * 2);
 
         /// <summary>
-        /// The value to use for <see cref="Sequence{T}.MinimumSpanLength"/>.
+        /// The value to use for <see cref="Sequence.MinimumSpanLength"/>.
         /// </summary>
         /// <remarks>
-        /// Individual users that want a different value for this can modify the setting on the rented <see cref="Sequence{T}"/>
+        /// Individual users that want a different value for this can modify the setting on the rented <see cref="Sequence"/>
         /// or by supplying their own <see cref="IBufferWriter{T}" />.
         /// </remarks>
         /// <devremarks>
@@ -35,10 +35,10 @@ namespace Utf8Json.Internal
         private const int MinimumSpanLength = 32 * 1024;
 
         private readonly int maxSize;
-        private readonly Stack<Sequence<byte>> pool = new Stack<Sequence<byte>>();
+        private readonly Stack<Sequence> pool = new Stack<Sequence>();
 
         /// <summary>
-        /// The array pool which we share with all <see cref="Sequence{T}"/> objects created by this <see cref="SequencePool"/> instance.
+        /// The array pool which we share with all <see cref="Sequence"/> objects created by this <see cref="SequencePool"/> instance.
         /// </summary>
         /// <devremarks>
         /// We allow 100 arrays to be shared (instead of the default 50) and reduce the max array length from the default 1MB to something more reasonable for our expected use.
@@ -55,7 +55,7 @@ namespace Utf8Json.Internal
         }
 
         /// <summary>
-        /// Gets an instance of <see cref="Sequence{T}"/>
+        /// Gets an instance of <see cref="Sequence"/>
         /// This is taken from the recycled pool if one is available; otherwise a new one is created.
         /// </summary>
         /// <returns>The rental tracker that provides access to the object as well as a means to return it.</returns>
@@ -71,10 +71,10 @@ namespace Utf8Json.Internal
 
             // Configure the newly created object to share a common array pool with the other instances,
             // otherwise each one will have its own ArrayPool which would likely waste a lot of memory.
-            return new Rental(this, new Sequence<byte>(this.arrayPool) { MinimumSpanLength = MinimumSpanLength });
+            return new Rental(this, new Sequence(this.arrayPool) { MinimumSpanLength = MinimumSpanLength });
         }
 
-        private void Return(Sequence<byte> value)
+        private void Return(Sequence value)
         {
             value.Reset();
             lock (this.pool)
@@ -95,7 +95,7 @@ namespace Utf8Json.Internal
         {
             private readonly SequencePool owner;
 
-            internal Rental(SequencePool owner, Sequence<byte> value)
+            internal Rental(SequencePool owner, Sequence value)
             {
                 this.owner = owner;
                 this.Value = value;
@@ -104,7 +104,7 @@ namespace Utf8Json.Internal
             /// <summary>
             /// Gets the recyclable object.
             /// </summary>
-            public Sequence<byte> Value { get; }
+            public Sequence Value { get; }
 
             /// <summary>
             /// Returns the recyclable object to the pool.

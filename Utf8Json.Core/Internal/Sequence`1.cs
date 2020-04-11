@@ -11,37 +11,33 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Reflection;
-using System.Runtime.InteropServices;
 
 namespace Utf8Json.Internal
 {
     /// <summary>
-    /// Manages a sequence of elements, readily castable as a <see cref="ReadOnlySequence{T}"/>.
+    /// Manages a sequence of elements, readily cast-able as a <see cref="ReadOnlySequence{Byte}"/>.
     /// </summary>
-    /// <typeparam name="T">The type of element stored by the sequence.</typeparam>
     /// <remarks>
     /// Instance members are not thread-safe.
     /// </remarks>
-    [DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
-    internal class Sequence<T> : IBufferWriter<T>, IDisposable
+    internal sealed class Sequence : IBufferWriter<byte>, IDisposable
     {
-        private static readonly int defaultLengthFromArrayPool = 1 + (4095 / Marshal.SizeOf<T>());
+        private const int DefaultLengthFromArrayPool = 4096;
 
         private readonly Stack<SequenceSegment> segmentPool = new Stack<SequenceSegment>();
 
 #if CSHARP_8_OR_NEWER
-        private readonly MemoryPool<T>? memoryPool;
+        private readonly MemoryPool<byte>? memoryPool;
 
-        private readonly ArrayPool<T>? arrayPool;
+        private readonly ArrayPool<byte>? arrayPool;
 
         private SequenceSegment? first;
 
         private SequenceSegment? last;
 #else
-        private readonly MemoryPool<T> memoryPool;
+        private readonly MemoryPool<byte> memoryPool;
 
-        private readonly ArrayPool<T> arrayPool;
+        private readonly ArrayPool<byte> arrayPool;
 
         private SequenceSegment first;
 
@@ -49,28 +45,28 @@ namespace Utf8Json.Internal
 #endif
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Sequence{T}"/> class
+        /// Initializes a new instance of the <see cref="Sequence"/> class
         /// that uses a private <see cref="ArrayPool{T}"/> for recycling arrays.
         /// </summary>
         public Sequence()
-            : this(ArrayPool<T>.Create())
+            : this(ArrayPool<byte>.Create())
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Sequence{T}"/> class.
+        /// Initializes a new instance of the <see cref="Sequence"/> class.
         /// </summary>
         /// <param name="memoryPool">The pool to use for recycling backing arrays.</param>
-        public Sequence(MemoryPool<T> memoryPool)
+        public Sequence(MemoryPool<byte> memoryPool)
         {
             this.memoryPool = memoryPool;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Sequence{T}"/> class.
+        /// Initializes a new instance of the <see cref="Sequence"/> class.
         /// </summary>
         /// <param name="arrayPool">The pool to use for recycling backing arrays.</param>
-        public Sequence(ArrayPool<T> arrayPool)
+        public Sequence(ArrayPool<byte> arrayPool)
         {
             this.arrayPool = arrayPool;
         }
@@ -91,41 +87,25 @@ namespace Utf8Json.Internal
         /// instead of many small ones.
         /// </para>
         /// <para>
-        /// The <see cref="MemoryPool{T}"/> in use may itself have a minimum array length as well,
+        /// The <see cref="MemoryPool{Byte}"/> in use may itself have a minimum array length as well,
         /// in which case the higher of the two minimums dictate the minimum array size that will be allocated.
         /// </para>
         /// </remarks>
         public int MinimumSpanLength { get; set; } = 0;
 
         /// <summary>
-        /// Gets this sequence expressed as a <see cref="ReadOnlySequence{T}"/>.
-        /// </summary>
-        /// <returns>A read only sequence representing the data in this object.</returns>
-        public ReadOnlySequence<T> AsReadOnlySequence => this;
-
-        /// <summary>
-        /// Gets the length of the sequence.
-        /// </summary>
-        public long Length => this.AsReadOnlySequence.Length;
-
-        /// <summary>
-        /// Gets the value to display in a debugger datatip.
-        /// </summary>
-        private string DebuggerDisplay => $"Length: {this.AsReadOnlySequence.Length}";
-
-        /// <summary>
-        /// Expresses this sequence as a <see cref="ReadOnlySequence{T}"/>.
+        /// Expresses this sequence as a <see cref="ReadOnlySequence{Byte}"/>.
         /// </summary>
         /// <param name="sequence">The sequence to convert.</param>
-        public static implicit operator ReadOnlySequence<T>(Sequence<T> sequence)
+        public static implicit operator ReadOnlySequence<byte>(Sequence sequence)
         {
             return sequence.first != null
 #if CSHARP_8_OR_NEWER
-                ? new ReadOnlySequence<T>(sequence.first, sequence.first.Start, sequence.last!, sequence.last!.End)
+                ? new ReadOnlySequence<byte>(sequence.first, sequence.first.Start, sequence.last!, sequence.last!.End)
 #else
-                ? new ReadOnlySequence<T>(sequence.first, sequence.first.Start, sequence.last, sequence.last.End)
+                ? new ReadOnlySequence<byte>(sequence.first, sequence.first.Start, sequence.last, sequence.last.End)
 #endif
-                : ReadOnlySequence<T>.Empty;
+                : ReadOnlySequence<byte>.Empty;
         }
 
         /// <summary>
@@ -134,7 +114,7 @@ namespace Utf8Json.Internal
         /// </summary>
         /// <param name="position">
         /// The position of the first element that has not yet been processed.
-        /// This is typically <see cref="ReadOnlySequence{T}.End"/> after reading all elements from that instance.
+        /// This is typically <see cref="ReadOnlySequence{Byte}.End"/> after reading all elements from that instance.
         /// </param>
         public void AdvanceTo(SequencePosition position)
         {
@@ -209,26 +189,26 @@ namespace Utf8Json.Internal
         /// </summary>
         /// <param name="sizeHint">The size of the memory required, or 0 to just get a convenient (non-empty) buffer.</param>
         /// <returns>The requested memory.</returns>
-        public Memory<T> GetMemory(int sizeHint) => this.GetSegment(sizeHint).RemainingMemory;
+        public Memory<byte> GetMemory(int sizeHint) => this.GetSegment(sizeHint).RemainingMemory;
 
         /// <summary>
         /// Gets writable memory that can be initialized and added to the sequence via a subsequent call to <see cref="Advance(int)"/>.
         /// </summary>
         /// <param name="sizeHint">The size of the memory required, or 0 to just get a convenient (non-empty) buffer.</param>
         /// <returns>The requested memory.</returns>
-        public Span<T> GetSpan(int sizeHint) => this.GetSegment(sizeHint).RemainingSpan;
+        public Span<byte> GetSpan(int sizeHint) => this.GetSegment(sizeHint).RemainingSpan;
 
         /// <summary>
         /// Clears the entire sequence, recycles associated memory into pools,
         /// and resets this instance for reuse.
-        /// This invalidates any <see cref="ReadOnlySequence{T}"/> previously produced by this instance.
+        /// This invalidates any <see cref="ReadOnlySequence{Byte}"/> previously produced by this instance.
         /// </summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
         public void Dispose() => this.Reset();
 
         /// <summary>
         /// Clears the entire sequence and recycles associated memory into pools.
-        /// This invalidates any <see cref="ReadOnlySequence{T}"/> previously produced by this instance.
+        /// This invalidates any <see cref="ReadOnlySequence{Byte}"/> previously produced by this instance.
         /// </summary>
         public void Reset()
         {
@@ -281,7 +261,7 @@ namespace Utf8Json.Internal
             var segment = this.segmentPool.Count > 0 ? this.segmentPool.Pop() : new SequenceSegment();
             if (this.arrayPool != null)
             {
-                segment.Assign(this.arrayPool.Rent(minBufferSize == -1 ? defaultLengthFromArrayPool : minBufferSize));
+                segment.Assign(this.arrayPool.Rent(minBufferSize == -1 ? DefaultLengthFromArrayPool : minBufferSize));
             }
             else
             {
@@ -351,26 +331,21 @@ namespace Utf8Json.Internal
             return segment;
         }
 
-        private class SequenceSegment : ReadOnlySequenceSegment<T>
+        private class SequenceSegment : ReadOnlySequenceSegment<byte>
         {
-            /// <summary>
-            /// A value indicating whether the element is a value type.
-            /// </summary>
-            private static readonly bool isValueTypeElement = typeof(T).GetTypeInfo().IsValueType;
-
             /// <summary>
             /// Gets the backing array, when using an <see cref="ArrayPool{T}"/> instead of a <see cref="MemoryPool{T}"/>.
             /// </summary>
 #if CSHARP_8_OR_NEWER
-            private T[]? array;
+            private byte[]? array;
 #else
-            private T[] array;
+            private byte[] array;
 #endif
 
             /// <summary>
             /// Gets the position within <see cref="ReadOnlySequenceSegment{T}.Memory"/> where the data starts.
             /// </summary>
-            /// <remarks>This may be nonzero as a result of calling <see cref="Sequence{T}.AdvanceTo(SequencePosition)"/>.</remarks>
+            /// <remarks>This may be nonzero as a result of calling <see cref="Sequence.AdvanceTo(SequencePosition)"/>.</remarks>
             internal int Start { get; private set; }
 
             /// <summary>
@@ -381,27 +356,27 @@ namespace Utf8Json.Internal
             /// <summary>
             /// Gets the tail of memory that has not yet been committed.
             /// </summary>
-            internal Memory<T> RemainingMemory => this.AvailableMemory.Slice(this.End);
+            internal Memory<byte> RemainingMemory => this.AvailableMemory.Slice(this.End);
 
             /// <summary>
             /// Gets the tail of memory that has not yet been committed.
             /// </summary>
-            internal Span<T> RemainingSpan => this.AvailableMemory.Span.Slice(this.End);
+            internal Span<byte> RemainingSpan => this.AvailableMemory.Span.Slice(this.End);
 
             /// <summary>
             /// Gets the tracker for the underlying array for this segment, which can be used to recycle the array when we're disposed of.
             /// Will be <c>null</c> if using an array pool, in which case the memory is held by <see cref="array"/>.
             /// </summary>
 #if CSHARP_8_OR_NEWER
-            private IMemoryOwner<T>? MemoryOwner { get; set; }
+            private IMemoryOwner<byte>? MemoryOwner { get; set; }
 #else
-            private IMemoryOwner<T> MemoryOwner { get; set; }
+            private IMemoryOwner<byte> MemoryOwner { get; set; }
 #endif
 
             /// <summary>
             /// Gets the full memory owned by the <see cref="MemoryOwner"/>.
             /// </summary>
-            internal Memory<T> AvailableMemory => this.array ?? this.MemoryOwner?.Memory ?? default;
+            private Memory<byte> AvailableMemory => this.array ?? this.MemoryOwner?.Memory ?? default;
 
             /// <summary>
             /// Gets the number of elements that are committed in this segment.
@@ -431,7 +406,7 @@ namespace Utf8Json.Internal
             /// Assigns this (recyclable) segment a new area in memory.
             /// </summary>
             /// <param name="memoryOwner">The memory and a means to recycle it.</param>
-            internal void Assign(IMemoryOwner<T> memoryOwner)
+            internal void Assign(IMemoryOwner<byte> memoryOwner)
             {
                 this.MemoryOwner = memoryOwner;
                 this.Memory = memoryOwner.Memory;
@@ -442,7 +417,7 @@ namespace Utf8Json.Internal
             /// </summary>
             /// <param name="array">An array drawn from an <see cref="ArrayPool{T}"/>.</param>
             // ReSharper disable once ParameterHidesMember
-            internal void Assign(T[] array)
+            internal void Assign(byte[] array)
             {
                 this.array = array;
                 this.Memory = array;
@@ -452,12 +427,11 @@ namespace Utf8Json.Internal
             /// Clears all fields in preparation to recycle this instance.
             /// </summary>
 #if CSHARP_8_OR_NEWER
-            internal void ResetMemory(ArrayPool<T>? arrayPool)
+            internal void ResetMemory(ArrayPool<byte>? arrayPool)
 #else
-            internal void ResetMemory(ArrayPool<T> arrayPool)
+            internal void ResetMemory(ArrayPool<byte> arrayPool)
 #endif
             {
-                this.ClearReferences(this.Start, this.End);
                 this.Memory = default;
                 base.Next = default;
                 this.RunningIndex = 0;
@@ -516,32 +490,7 @@ namespace Utf8Json.Internal
             internal void AdvanceTo(int offset)
             {
                 Debug.Assert(offset >= this.Start, "Trying to rewind.");
-                this.ClearReferences(this.Start, offset - this.Start);
                 this.Start = offset;
-            }
-
-            private void ClearReferences(int startIndex, int length)
-            {
-                // If we store references, clear them to allow the objects to be GC'd.
-                if (!isValueTypeElement)
-                {
-                    this.AvailableMemory.Span.Slice(startIndex, length).Clear();
-                }
-            }
-        }
-    }
-
-    internal static class Requires
-    {
-        /// <summary>
-        /// Throws an ArgumentException if a condition does not evaluate to true.
-        /// </summary>
-        [DebuggerStepThrough]
-        public static void Argument(bool condition, string parameterName, string message)
-        {
-            if (!condition)
-            {
-                throw new ArgumentException(message, parameterName);
             }
         }
     }

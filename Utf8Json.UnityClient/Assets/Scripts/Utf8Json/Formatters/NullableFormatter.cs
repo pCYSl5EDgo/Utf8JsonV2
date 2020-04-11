@@ -1,6 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
+using StaticFunctionPointerHelper;
+
 namespace Utf8Json.Formatters
 {
     public sealed class NullableFormatter<T> : IJsonFormatter<T?>
@@ -8,14 +11,7 @@ namespace Utf8Json.Formatters
     {
         public void Serialize(ref JsonWriter writer, T? value, JsonSerializerOptions options)
         {
-            if (value == null)
-            {
-                writer.WriteNull();
-            }
-            else
-            {
-                options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value.Value, options);
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
         public static void SerializeStatic(ref JsonWriter writer, T? value, JsonSerializerOptions options)
@@ -26,18 +22,21 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value.Value, options);
+                var serializer = options.Resolver.GetSerializeStatic<T>();
+                if (serializer == IntPtr.Zero)
+                {
+                    options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value.Value, options);
+                }
+                else
+                {
+                    writer.Serialize(value.Value, options, serializer);
+                }
             }
         }
 
         public T? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            if (reader.ReadIsNull())
-            {
-                return null;
-            }
-
-            return options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options);
+            return DeserializeStatic(ref reader, options);
         }
 
         public static T? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -47,7 +46,10 @@ namespace Utf8Json.Formatters
                 return null;
             }
 
-            return options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options);
+            var deserializer = options.Resolver.GetDeserializeStatic<T>();
+            return deserializer == IntPtr.Zero
+                ? options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options)
+                : reader.Deserialize<T>(options, deserializer);
         }
     }
 
@@ -64,24 +66,12 @@ namespace Utf8Json.Formatters
 
         public void Serialize(ref JsonWriter writer, T? value, JsonSerializerOptions options)
         {
-            if (value == null)
-            {
-                writer.WriteNull();
-            }
-            else
-            {
-                underlyingFormatter.Serialize(ref writer, value.Value, options);
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
         public T? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            if (reader.ReadIsNull())
-            {
-                return null;
-            }
-
-            return underlyingFormatter.Deserialize(ref reader, options);
+            return DeserializeStatic(ref reader, options);
         }
 
         public static void SerializeStatic(ref JsonWriter writer, T? value, JsonSerializerOptions options)
@@ -98,12 +88,9 @@ namespace Utf8Json.Formatters
 
         public static T? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
-            if (reader.ReadIsNull())
-            {
-                return null;
-            }
-
-            return underlyingFormatter.Deserialize(ref reader, options);
+            return reader.ReadIsNull() 
+                ? null 
+                : underlyingFormatter.Deserialize(ref reader, options);
         }
     }
 }

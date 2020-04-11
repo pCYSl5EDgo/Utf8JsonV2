@@ -14,7 +14,38 @@ namespace StaticFunctionPointerImplementor
             await Host.CreateDefaultBuilder().RunConsoleAppFrameworkAsync<Program>(args);
         }
 
-        public void Run(string directory)
+        [Command("direct")]
+        public void Direct(string directory,
+            string[] patterns)
+        {
+            var directoryInfo = new DirectoryInfo(directory);
+            if (!directoryInfo.Exists)
+            {
+                throw new DirectoryNotFoundException(directory);
+            }
+            foreach (var pattern in patterns)
+            {
+                foreach (var dllFile in directoryInfo.EnumerateFiles(pattern, SearchOption.AllDirectories))
+                {
+                    ProcessEmbedCall(dllFile.FullName);
+                }
+            }
+        }
+
+        private static void ProcessEmbedCall(string filePath)
+        {
+            var module = ModuleDefinition.ReadModule(filePath, new ReaderParameters()
+            {
+                ReadWrite = true,
+            });
+
+            DirectCallEmbedHelper.Visit(module);
+
+            module.Write();
+        }
+
+        [Command("helper")]
+        public void Helper(string directory)
         {
             var directoryInfo = new DirectoryInfo(directory);
             if (!directoryInfo.Exists)
@@ -24,11 +55,11 @@ namespace StaticFunctionPointerImplementor
 
             foreach (var dllFile in directoryInfo.EnumerateFiles("StaticFunctionPointerHelper.dll", SearchOption.AllDirectories))
             {
-                ProcessModule(dllFile.FullName);
+                ProcessRewriteHelperModule(dllFile.FullName);
             }
         }
 
-        private static void ProcessModule(string filePath)
+        private static void ProcessRewriteHelperModule(string filePath)
         {
             var module = ModuleDefinition.ReadModule(filePath, new ReaderParameters()
             {

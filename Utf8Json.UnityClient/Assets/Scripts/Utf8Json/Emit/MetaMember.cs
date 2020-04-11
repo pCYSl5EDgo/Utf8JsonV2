@@ -5,7 +5,6 @@
 using System;
 using System.Linq;
 using System.Diagnostics;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -89,7 +88,7 @@ namespace Utf8Json.Emit
         public T GetCustomAttribute<T>(bool inherit) where T : Attribute
 #endif
         {
-            return IsProperty ? PropertyInfo.GetCustomAttribute<T>(inherit) : FieldInfo?.GetCustomAttribute<T>(inherit);
+            return IsProperty ? PropertyInfo?.GetCustomAttribute<T>(inherit) : FieldInfo?.GetCustomAttribute<T>(inherit);
         }
 
         public virtual void EmitLoadValue(ILGenerator il)
@@ -101,6 +100,7 @@ namespace Utf8Json.Emit
             }
             else
             {
+                Debug.Assert(FieldInfo != null, nameof(FieldInfo) + " != null");
                 il.Emit(OpCodes.Ldfld, FieldInfo);
             }
         }
@@ -114,6 +114,7 @@ namespace Utf8Json.Emit
             }
             else
             {
+                Debug.Assert(FieldInfo != null, nameof(FieldInfo) + " != null");
                 il.Emit(OpCodes.Stfld, FieldInfo);
             }
         }
@@ -149,9 +150,9 @@ namespace Utf8Json.Emit
         private static readonly MethodInfo nonGenericSerialize;
 
         // set after...
-        internal ArgumentField argWriter;
-        internal ArgumentField argValue;
-        internal ArgumentField argOptions;
+        internal ArgumentField ArgWriter;
+        internal ArgumentField ArgValue;
+        internal ArgumentField ArgOptions;
 
         public InnerExceptionMetaMember(string name)
             : base(typeof(Exception), name, name, false, true)
@@ -160,9 +161,14 @@ namespace Utf8Json.Emit
 
         static InnerExceptionMetaMember()
         {
-            getInnerException = ExpressionUtility.GetPropertyInfo((Exception ex) => ex.InnerException).GetGetMethod();
+            var _0 = ExpressionUtility.GetPropertyInfo((Exception ex) => ex.InnerException).GetGetMethod();
+            Debug.Assert(_0 != null, nameof(getInnerException) + " != null");
+            getInnerException = _0;
             var jsonSerializer = Type.GetType("Utf8Json.JsonSerializer");
-            nonGenericSerialize = jsonSerializer?.GetMethods()?.First(PredicateNonGenericSerialize)?.MakeGenericMethod(typeof(object));
+            // ReSharper disable once ConstantConditionalAccessQualifier
+            var _1 = jsonSerializer?.GetMethods()?.FirstOrDefault(PredicateNonGenericSerialize)?.MakeGenericMethod(typeof(object));
+            Debug.Assert(_1 != null, nameof(nonGenericSerialize) + " != null");
+            nonGenericSerialize = _1;
         }
 
         private static bool PredicateNonGenericSerialize(MethodInfo x)
@@ -189,10 +195,10 @@ namespace Utf8Json.Emit
         public void EmitSerializeDirectly(ILGenerator il)
         {
             // JsonSerializer.NonGeneric.Serialize(ref writer, value.InnerException, formatterResolver);
-            argWriter.EmitLoad();
-            argValue.EmitLoad();
+            ArgWriter.EmitLoad();
+            ArgValue.EmitLoad();
             il.Emit(OpCodes.Callvirt, getInnerException);
-            argOptions.EmitLoad();
+            ArgOptions.EmitLoad();
             il.EmitCall(nonGenericSerialize);
         }
     }

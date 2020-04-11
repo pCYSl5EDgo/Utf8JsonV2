@@ -45,14 +45,7 @@ namespace Utf8Json.Formatters
             var serializer = options.Resolver.GetSerializeStatic<T>();
             if (serializer == IntPtr.Zero)
             {
-                var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                formatter.Serialize(ref writer, value[0], options);
-
-                for (var i = 1; i < value.Length; i++)
-                {
-                    writer.WriteValueSeparator();
-                    formatter.Serialize(ref writer, value[i], options);
-                }
+                SerializeWithFormatter(ref writer, value, options);
             }
             else
             {
@@ -65,6 +58,18 @@ namespace Utf8Json.Formatters
             }
 
             writer.WriteEndArray();
+        }
+
+        private static void SerializeWithFormatter(ref JsonWriter writer, T[] value, JsonSerializerOptions options)
+        {
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
+            formatter.Serialize(ref writer, value[0], options);
+
+            for (var i = 1; i < value.Length; i++)
+            {
+                writer.WriteValueSeparator();
+                formatter.Serialize(ref writer, value[i], options);
+            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -93,41 +98,28 @@ namespace Utf8Json.Formatters
 
             reader.ReadIsBeginArrayWithVerify();
 
-            var count = 0;
-            var array = ArrayPool<T>.Shared.Rent(256);
+            var pool = ArrayPool<T>.Shared;
+            var array = pool.Rent(256);
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
             try
             {
                 if (deserializer == IntPtr.Zero)
                 {
-                    var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                    while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
-                    {
-                        if (array.Length < count)
-                        {
-                            var tmp = ArrayPool<T>.Shared.Rent(count << 1);
-                            Array.Copy(array, 0, tmp, 0, array.Length);
-                            ArrayPool<T>.Shared.Return(array);
-                            array = tmp;
-                        }
-
-                        array[count - 1] = formatter.Deserialize(ref reader, options);
-                    }
+                    return DeserializeWithFormatter(ref reader, options, pool, ref array);
                 }
-                else
-                {
-                    while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
-                    {
-                        if (array.Length < count)
-                        {
-                            var tmp = ArrayPool<T>.Shared.Rent(count << 1);
-                            Array.Copy(array, 0, tmp, 0, array.Length);
-                            ArrayPool<T>.Shared.Return(array);
-                            array = tmp;
-                        }
 
-                        array[count - 1] = reader.Deserialize<T>(options, deserializer);
+                var count = 0;
+                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+                {
+                    if (array.Length < count)
+                    {
+                        var tmp = pool.Rent(count << 1);
+                        Array.Copy(array, 0, tmp, 0, array.Length);
+                        pool.Return(array);
+                        array = tmp;
                     }
+
+                    array[count - 1] = reader.Deserialize<T>(options, deserializer);
                 }
 
                 var answer = new T[count];
@@ -136,8 +128,30 @@ namespace Utf8Json.Formatters
             }
             finally
             {
-                ArrayPool<T>.Shared.Return(array);
+                pool.Return(array);
             }
+        }
+
+        private static T[] DeserializeWithFormatter(ref JsonReader reader, JsonSerializerOptions options, ArrayPool<T> pool, ref T[] array)
+        {
+            var count = 0;
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
+            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+            {
+                if (array.Length < count)
+                {
+                    var tmp = pool.Rent(count << 1);
+                    Array.Copy(array, 0, tmp, 0, array.Length);
+                    pool.Return(array);
+                    array = tmp;
+                }
+
+                array[count - 1] = formatter.Deserialize(ref reader, options);
+            }
+
+            var answer = new T[count];
+            Array.Copy(array, answer, count);
+            return answer;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -152,67 +166,92 @@ namespace Utf8Json.Formatters
             }
 
             reader.ReadIsBeginArrayWithVerify();
-            var count = 0;
             var pool = ArrayPool<T>.Shared;
-            var workingArea = pool.Rent(64);
+            var array = pool.Rent(64);
             try
             {
                 var deserializer = options.Resolver.GetDeserializeStatic<T>();
-
-                void ReAllocWorkingArea()
-                {
-                    var tmp = pool.Rent(count << 1);
-                    Array.Copy(workingArea, tmp, workingArea.Length);
-                    pool.Return(workingArea);
-                    workingArea = tmp;
-                }
-
                 if (deserializer == IntPtr.Zero)
                 {
-                    var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                    while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
-                    {
-                        if (workingArea.Length < count)
-                        {
-                            ReAllocWorkingArea();
-                        }
-
-                        workingArea[count - 1] = formatter.Deserialize(ref reader, options);
-                    }
+                    DeserializeToWithFormatter(ref value, ref reader, options, ref array, pool);
                 }
                 else
                 {
+                    var count = 0;
                     while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
                     {
-                        if (workingArea.Length < count)
+                        if (array.Length < count)
                         {
-                            ReAllocWorkingArea();
+                            var tmp = pool.Rent(count << 1);
+                            Array.Copy(array, tmp, array.Length);
+                            pool.Return(array);
+                            array = tmp;
                         }
 
-                        workingArea[count - 1] = reader.Deserialize<T>(options, deserializer);
+                        array[count - 1] = reader.Deserialize<T>(options, deserializer);
                     }
-                }
 
-                if (count == 0)
-                {
-                    return;
-                }
-                if (value == null)
-                {
-                    value = new T[count];
-                    Array.Copy(workingArea, 0, value, value.Length, count);
-                }
-                else
-                {
-                    var result = new T[value.Length + count];
-                    Array.Copy(value, 0, result, 0, value.Length);
-                    Array.Copy(workingArea, 0, result, value.Length, count);
-                    value = result;
+                    if (count == 0)
+                    {
+                        return;
+                    }
+                    if (value == null)
+                    {
+                        value = new T[count];
+                        Array.Copy(array, 0, value, value.Length, count);
+                    }
+                    else
+                    {
+                        var result = new T[value.Length + count];
+                        Array.Copy(value, 0, result, 0, value.Length);
+                        Array.Copy(array, 0, result, value.Length, count);
+                        value = result;
+                    }
                 }
             }
             finally
             {
-                pool.Return(workingArea);
+                pool.Return(array);
+            }
+        }
+
+#if CSHARP_8_OR_NEWER
+        private static void DeserializeToWithFormatter(ref T[]? value, ref JsonReader reader, JsonSerializerOptions options, ref T[] array, ArrayPool<T> pool)
+#else
+        private static void DeserializeToWithFormatter(ref T[] value, ref JsonReader reader, JsonSerializerOptions options, ref T[] array, ArrayPool<T> pool)
+#endif
+        {
+            var count = 0;
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
+            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+            {
+                if (array.Length < count)
+                {
+                    var tmp = pool.Rent(count << 1);
+                    Array.Copy(array, tmp, array.Length);
+                    pool.Return(array);
+                    array = tmp;
+                }
+
+                array[count - 1] = formatter.Deserialize(ref reader, options);
+            }
+
+            if (count == 0)
+            {
+                return;
+            }
+
+            if (value == null)
+            {
+                value = new T[count];
+                Array.Copy(array, 0, value, value.Length, count);
+            }
+            else
+            {
+                var result = new T[value.Length + count];
+                Array.Copy(value, 0, result, 0, value.Length);
+                Array.Copy(array, 0, result, value.Length, count);
+                value = result;
             }
         }
     }
@@ -254,14 +293,7 @@ namespace Utf8Json.Formatters
             var serializer = options.Resolver.GetSerializeStatic<T>();
             if (serializer == IntPtr.Zero)
             {
-                var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                formatter.Serialize(ref writer, value[0], options);
-
-                for (var i = 1; i < value.Length; i++)
-                {
-                    writer.WriteValueSeparator();
-                    formatter.Serialize(ref writer, value[i], options);
-                }
+                SerializeWithFormatter(ref writer, value, options);
             }
             else
             {
@@ -275,6 +307,18 @@ namespace Utf8Json.Formatters
             }
         END:
             writer.WriteEndArray();
+        }
+
+        private static void SerializeWithFormatter(ref JsonWriter writer, T[] value, JsonSerializerOptions options)
+        {
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
+            formatter.Serialize(ref writer, value[0], options);
+
+            for (var i = 1; i < value.Length; i++)
+            {
+                writer.WriteValueSeparator();
+                formatter.Serialize(ref writer, value[i], options);
+            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -299,44 +343,28 @@ namespace Utf8Json.Formatters
 
             reader.ReadIsBeginArrayWithVerify();
 
-            var count = 0;
             var pool = ArrayPool<T>.Shared;
             var array = pool.Rent(256);
             try
             {
-                void ReAlloc()
-                {
-                    var tmp = pool.Rent(count << 1);
-                    Array.Copy(array, 0, tmp, 0, array.Length);
-                    pool.Return(array);
-                    array = tmp;
-                }
-
                 var deserializer = options.Resolver.GetDeserializeStatic<T>();
                 if (deserializer == IntPtr.Zero)
                 {
-                    var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                    while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
-                    {
-                        if (array.Length < count)
-                        {
-                            ReAlloc();
-                        }
-
-                        array[count - 1] = formatter.Deserialize(ref reader, options);
-                    }
+                    return DeserializeWithFormatter(ref reader, options, pool, ref array);
                 }
-                else
-                {
-                    while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
-                    {
-                        if (array.Length < count)
-                        {
-                            ReAlloc();
-                        }
 
-                        array[count - 1] = reader.Deserialize<T>(options, deserializer);
+                var count = 0;
+                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+                {
+                    if (array.Length < count)
+                    {
+                        var tmp = pool.Rent(count << 1);
+                        Array.Copy(array, 0, tmp, 0, array.Length);
+                        pool.Return(array);
+                        array = tmp;
                     }
+
+                    array[count - 1] = reader.Deserialize<T>(options, deserializer);
                 }
 
                 var answer = new T[count];
@@ -347,6 +375,28 @@ namespace Utf8Json.Formatters
             {
                 pool.Return(array);
             }
+        }
+
+        private static T[] DeserializeWithFormatter(ref JsonReader reader, JsonSerializerOptions options, ArrayPool<T> pool, ref T[] array)
+        {
+            var count = 0;
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
+            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+            {
+                if (array.Length < count)
+                {
+                    var tmp = pool.Rent(count << 1);
+                    Array.Copy(array, 0, tmp, 0, array.Length);
+                    pool.Return(array);
+                    array = tmp;
+                }
+
+                array[count - 1] = formatter.Deserialize(ref reader, options);
+            }
+
+            var answer = new T[count];
+            Array.Copy(array, answer, count);
+            return answer;
         }
 
 #if CSHARP_8_OR_NEWER

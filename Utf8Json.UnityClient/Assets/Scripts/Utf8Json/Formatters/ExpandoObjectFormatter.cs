@@ -2,8 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #if !ENABLE_IL2CPP
+using System;
 using System.Collections.Generic;
 using System.Dynamic;
+using StaticFunctionPointerHelper;
 
 namespace Utf8Json.Formatters
 {
@@ -11,46 +13,55 @@ namespace Utf8Json.Formatters
     {
         public void Serialize(ref JsonWriter writer, ExpandoObject value, JsonSerializerOptions options)
         {
-            var formatter = options.Resolver.GetFormatterWithVerify<IDictionary<string, object>>();
-            formatter.Serialize(ref writer, value, options);
+            SerializeStatic(ref writer, value, options);
         }
 
         public static void SerializeStatic(ref JsonWriter writer, ExpandoObject value, JsonSerializerOptions options)
         {
-            var formatter = options.Resolver.GetFormatterWithVerify<IDictionary<string, object>>();
-            formatter.Serialize(ref writer, value, options);
+            var serializer = options.Resolver.GetSerializeStatic<IDictionary<string, object>>();
+            if (serializer == IntPtr.Zero)
+            {
+                var formatter = options.Resolver.GetFormatterWithVerify<IDictionary<string, object>>();
+                formatter.Serialize(ref writer, value, options);
+            }
+            else
+            {
+                writer.Serialize(value, options, serializer);
+            }
         }
 
         public static ExpandoObject DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
-            var result = new ExpandoObject() as IDictionary<string, object>;
+            var result = new ExpandoObject();
 
-            var objectFormatter = options.Resolver.GetFormatterWithVerify<object>();
-            var c = 0;
-            while (reader.ReadIsInObject(ref c))
+            var count = 0;
+            var deserializer = options.Resolver.GetDeserializeStatic<object>();
+            if (deserializer == IntPtr.Zero)
             {
-                var propName = reader.ReadPropertyName();
-                var value = objectFormatter.Deserialize(ref reader, options);
-                result.Add(propName, value);
+                var formatter = options.Resolver.GetFormatterWithVerify<object>();
+                while (reader.ReadIsInObject(ref count))
+                {
+                    var propName = reader.ReadPropertyName();
+                    var value = formatter.Deserialize(ref reader, options);
+                    ((IDictionary<string, object>)result).Add(propName, value);
+                }
+            }
+            else
+            {
+                while (reader.ReadIsInObject(ref count))
+                {
+                    var propName = reader.ReadPropertyName();
+                    var value = reader.Deserialize<object>(options, deserializer);
+                    ((IDictionary<string, object>)result).Add(propName, value);
+                }
             }
 
-            return (ExpandoObject)result;
+            return result;
         }
 
         public ExpandoObject Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            var result = new ExpandoObject() as IDictionary<string, object>;
-
-            var objectFormatter = options.Resolver.GetFormatterWithVerify<object>();
-            var c = 0;
-            while (reader.ReadIsInObject(ref c))
-            {
-                var propName = reader.ReadPropertyName();
-                var value = objectFormatter.Deserialize(ref reader, options);
-                result.Add(propName, value);
-            }
-
-            return (ExpandoObject)result;
+            return DeserializeStatic(ref reader, options);
         }
     }
 }

@@ -2,12 +2,13 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netstandard2.0;netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
+    <LangVersion>8.0</LangVersion>
     <LangVersion Condition="'$(TargetFramework)'=='netstandard2.0' OR '$(TargetFramework)'=='netcoreapp2.1'">7.3</LangVersion>
-    <LangVersion Condition="'$(TargetFramework)'!='netstandard2.0'">8.0</LangVersion>
     <DefineConstants Condition="'$(TargetFramework)'=='netcoreapp2.1' Or '$(TargetFramework)'=='netcoreapp2.2' Or '$(TargetFramework)'=='netcoreapp3.0' Or '$(TargetFramework)'=='netcoreapp3.1' Or '$(TargetFramework)'=='netstandard2.1' Or '$(TargetFramework)'=='net5.0'">$(DefineConstants);SPAN_BUILTIN</DefineConstants>
-    <DefineConstants Condition="'$(TargetFramework)'=='netcoreapp3.0' Or '$(TargetFramework)'=='netcoreapp3.1' Or '$(TargetFramework)'=='netstandard2.1' Or '$(TargetFramework)'=='net5.0'">$(DefineConstants);SEQUENCE_READER_BUILTIN;NULLABLE_BUILTIN</DefineConstants>
+    <DefineConstants Condition="'$(TargetFramework)'=='netcoreapp3.0' Or '$(TargetFramework)'=='netcoreapp3.1' Or '$(TargetFramework)'=='netstandard2.1' Or '$(TargetFramework)'=='net5.0'">$(DefineConstants);NULLABLE_BUILTIN</DefineConstants>
     <DefineConstants Condition="'$(LangVersion)'&gt;=8.0">$(DefineConstants);CSHARP_8_OR_NEWER</DefineConstants>
     <Nullable Condition="'$(LangVersion)'&gt;=8.0">enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>

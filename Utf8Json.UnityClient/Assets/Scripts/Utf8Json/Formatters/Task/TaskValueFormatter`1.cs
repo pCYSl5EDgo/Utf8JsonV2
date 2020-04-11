@@ -1,18 +1,18 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Threading.Tasks;
+using StaticFunctionPointerHelper;
 
 namespace Utf8Json.Formatters
 {
-    public sealed class TaskValueFormatter<T> : IJsonFormatter<Task<T>>
+    public sealed class TaskValueFormatter<T>
+        : IJsonFormatter<Task<T>>
     {
         public void Serialize(ref JsonWriter writer, Task<T> value, JsonSerializerOptions options)
         {
-            if (value == null) { writer.WriteNull(); return; }
-
-            // value.Result -> wait...!
-            options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value.Result, options);
+            SerializeStatic(ref writer, value, options);
         }
 
         public static void SerializeStatic(ref JsonWriter writer, Task<T> value, JsonSerializerOptions options)
@@ -20,40 +20,37 @@ namespace Utf8Json.Formatters
             if (value == null) { writer.WriteNull(); return; }
 
             // value.Result -> wait...!
-            options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value.Result, options);
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer == IntPtr.Zero)
+            {
+                options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value.Result, options);
+            }
+            else
+            {
+                writer.Serialize(value.Result, options, serializer);
+            }
         }
 
-#if CSHARP_8_OR_NEWER
-#pragma warning disable 8613
-        public Task<T>? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
-#pragma warning restore 8613
-#else
         public Task<T> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
-#endif
         {
-            if (reader.ReadIsNull())
-            {
-                return null;
-            }
-
-            var v = options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options);
-            return Task.FromResult(v);
+            return DeserializeStatic(ref reader, options);
         }
 
-#if CSHARP_8_OR_NEWER
-#pragma warning disable 8613
-        public static Task<T>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
-#pragma warning restore 8613
-#else
         public static Task<T> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
-#endif
         {
             if (reader.ReadIsNull())
             {
-                return null;
+#if CSHARP_8_OR_NEWER
+                return Task.FromResult(default(T)!);
+#else
+                return Task.FromResult(default(T));
+#endif
             }
 
-            var v = options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options);
+            var deserializer = options.Resolver.GetDeserializeStatic<T>();
+            var v = deserializer == IntPtr.Zero
+                ? options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options)
+                : reader.Deserialize<T>(options, deserializer);
             return Task.FromResult(v);
         }
     }

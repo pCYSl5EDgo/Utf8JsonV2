@@ -26,7 +26,7 @@ namespace Utf8Json.Emit
         {
             this.il = il;
             this.i = i;
-            this.@ref = (type.IsClass || type.IsInterface || type.IsAbstract) ? false : true;
+            this.@ref = !type.IsClass && !type.IsInterface && !type.IsAbstract;
         }
 
         public void EmitLoad()
@@ -50,7 +50,7 @@ namespace Utf8Json.Emit
     /// <summary>
     /// Provides optimized generation code and helpers.
     /// </summary>
-    internal static class ILGeneratorExtensions
+    internal static class IlGeneratorExtensions
     {
         /// <summary>
         /// Loads the local variable at a specific index onto the evaluation stack.
@@ -294,7 +294,7 @@ namespace Utf8Json.Emit
         /// </summary>
         public static void EmitPop(this ILGenerator il, int count)
         {
-            for (int i = 0; i < count; i++)
+            for (var i = 0; i < count; i++)
             {
                 il.Emit(OpCodes.Pop);
             }
@@ -344,9 +344,9 @@ namespace Utf8Json.Emit
             il.Emit(OpCodes.Ldc_I8, unchecked((long)value));
         }
 
-        public static void EmitThrowNotimplemented(this ILGenerator il)
+        public static void EmitThrowNotImplemented(this ILGenerator il)
         {
-            il.Emit(OpCodes.Newobj, typeof(System.NotImplementedException).GetTypeInfo().DeclaredConstructors.First(x => x.GetParameters().Length == 0));
+            il.Emit(OpCodes.Newobj, typeof(NotImplementedException).GetTypeInfo().DeclaredConstructors.First(x => x.GetParameters().Length == 0));
             il.Emit(OpCodes.Throw);
         }
 

@@ -21,65 +21,23 @@ namespace Utf8Json
         /// <summary>
         /// The reader over the sequence.
         /// </summary>
-        internal SequenceReader<byte> Reader;
+        internal SequenceReader Reader;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="JsonReader"/> struct.
         /// </summary>
-        /// <param name="memory">The buffer to read from.</param>
-        public JsonReader(ReadOnlyMemory<byte> memory)
+        /// <param name="span">The buffer to read from.</param>
+        public JsonReader(ReadOnlySpan<byte> span)
         {
-            if (memory.Length > 3)
-            {
-                var span = memory.Span;
-                if (span[0] == Bom0 && span[1] == Bom1 && span[2] == Bom2)
-                {
-                    memory = memory.Slice(3);
-                }
-            }
-
-            this.Reader = new SequenceReader<byte>(new ReadOnlySequence<byte>(memory));
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="JsonReader"/> struct.
-        /// </summary>
-        /// <param name="readOnlySequence">The sequence to read from.</param>
-        public JsonReader(in ReadOnlySequence<byte> readOnlySequence)
-        {
-            if (readOnlySequence.Length < 3)
-            {
-                goto DEFAULT;
-            }
-
-            var span = readOnlySequence.First.Span;
-            if (span.Length >= 3)
+            if (span.Length > 3)
             {
                 if (span[0] == Bom0 && span[1] == Bom1 && span[2] == Bom2)
                 {
-                    this.Reader = new SequenceReader<byte>(readOnlySequence.Slice(3));
-                    return;
+                    span = span.Slice(3);
                 }
-
-                goto DEFAULT;
             }
 
-            if (readOnlySequence.IsSingleSegment)
-            {
-                goto DEFAULT;
-            }
-
-            Span<byte> header = stackalloc byte[3];
-            readOnlySequence.CopyTo(header);
-
-            if (header[0] == Bom0 && header[1] == Bom1 && header[2] == Bom2)
-            {
-                this.Reader = new SequenceReader<byte>(readOnlySequence.Slice(3));
-                return;
-            }
-
-        DEFAULT:
-            this.Reader = new SequenceReader<byte>(readOnlySequence);
+            this.Reader = new SequenceReader(span);
         }
 
         /// <summary>
@@ -88,38 +46,17 @@ namespace Utf8Json
         public CancellationToken CancellationToken { get; set; }
 
         /// <summary>
-        /// Gets the <see cref="ReadOnlySequence{T}"/> originally supplied to the constructor.
-        /// </summary>
-        public ReadOnlySequence<byte> Sequence => this.Reader.Sequence;
-
-        /// <summary>
-        /// Gets the current position of the reader within <see cref="Sequence"/>.
-        /// </summary>
-        public SequencePosition Position => this.Reader.Position;
-
-        /// <summary>
         /// Gets the number of bytes consumed by the reader.
         /// </summary>
-        public long Consumed => this.Reader.Consumed;
+        public int Consumed => this.Reader.Consumed;
 
         /// <summary>
         /// Gets a value indicating whether the reader is at the end of the sequence.
         /// </summary>
         public bool End => this.Reader.End;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="JsonReader"/> struct,
-        /// with the same settings as this one, but with its own buffer to read from.
-        /// </summary>
-        /// <param name="readOnlySequence">The sequence to read from.</param>
-        /// <returns>The new reader.</returns>
-        public JsonReader Clone(in ReadOnlySequence<byte> readOnlySequence) => new JsonReader(readOnlySequence)
-        {
-            CancellationToken = this.CancellationToken
-        };
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Advance(long length)
+        public void Advance(int length)
         {
             Reader.Advance(length);
         }
@@ -138,7 +75,6 @@ namespace Utf8Json
             Reader.AdvancePastAny(space, tab, lineFeed, carriageReturn);
         }
 
-        private static readonly byte[] nullBytesSkipFirst = { (byte)'u', (byte)'l', (byte)'l' };
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ReadIsNull()
         {
@@ -149,13 +85,14 @@ namespace Utf8Json
             }
 
             Advance(1);
-
-            if (Reader.IsNext(nullBytesSkipFirst, true))
+            ReadOnlySpan<byte> nullBytesSkipFirst = stackalloc byte[] { (byte)'u', (byte)'l', (byte)'l' };
+            if (!Reader.UnreadSpan.StartsWith(nullBytesSkipFirst))
             {
-                return true;
+                throw new JsonParsingException(ExpectedFirst + "null" + ExpectedLast);
             }
 
-            throw new JsonParsingException(ExpectedFirst + "null" + ExpectedLast);
+            Reader.Advance(3);
+            return true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -388,7 +325,7 @@ namespace Utf8Json
                 throw new JsonParsingException("" + ExpectedFirst + "\"'");
             }
 
-            if (!Reader.TryReadTo(out ReadOnlySpan<byte> answer, (byte)'"', (byte)'\\'))
+            if (!Reader.TryReadToAdvancePastDelimiter(out var answer, (byte)'"', (byte)'\\'))
             {
                 throw new JsonParsingException(ExpectedFirst + "not found end string." + ExpectedLast);
             }
@@ -446,16 +383,13 @@ namespace Utf8Json
                     break;
                 case JsonToken.String:
                     Advance(1);
-                    if (!Reader.TryReadTo(out ReadOnlySpan<byte> _, (byte)'"', (byte)'\\'))
+                    if (!Reader.TryReadToAdvancePastDelimiter(out var _, (byte)'"', (byte)'\\'))
                     {
                         throw new JsonParsingException(ExpectedFirst + "not found end string." + ExpectedLast);
                     }
                     break;
                 case JsonToken.Number:
-                    if (!Reader.TryAdvanceToAny(NumberBreaks))
-                    {
-                        Advance(Reader.Remaining);
-                    }
+                    Reader.AdvanceToAnyOrEnd(NumberBreaks);
                     break;
                 case JsonToken.None:
                 default:

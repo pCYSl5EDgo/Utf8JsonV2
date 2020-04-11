@@ -3,6 +3,7 @@
 
 using System;
 using System.Buffers;
+using StaticFunctionPointerHelper;
 
 namespace Utf8Json.Formatters
 {
@@ -27,13 +28,27 @@ namespace Utf8Json.Formatters
                 goto END;
             }
 
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            formatter.Serialize(ref writer, span[0], options);
-
-            for (var i = 1; i < span.Length; i++)
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer == IntPtr.Zero)
             {
-                writer.WriteValueSeparator();
-                formatter.Serialize(ref writer, span[i], options);
+                var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                formatter.Serialize(ref writer, span[0], options);
+
+                for (var i = 1; i < span.Length; i++)
+                {
+                    writer.WriteValueSeparator();
+                    formatter.Serialize(ref writer, span[i], options);
+                }
+            }
+            else
+            {
+                writer.Serialize(span[0], options, serializer);
+
+                for (var i = 1; i < span.Length; i++)
+                {
+                    writer.WriteValueSeparator();
+                    writer.Serialize(span[i], options, IntPtr.Zero);
+                }
             }
 
         END:
@@ -50,33 +65,52 @@ namespace Utf8Json.Formatters
                 return default;
             }
 
-            var count = 0;
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
+            reader.ReadIsBeginArrayWithVerify();
 
-            var workingArea = ArrayPool<T>.Shared.Rent(64);
+            var pool = ArrayPool<T>.Shared;
+            var array = pool.Rent(64);
+            var count = 0;
             try
             {
-                reader.ReadIsBeginArrayWithVerify();
-                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+                var deserializer = options.Resolver.GetDeserializeStatic<T>();
+                if (deserializer == IntPtr.Zero)
                 {
-                    if (workingArea.Length < count)
+                    var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                    while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
                     {
-                        var tmp = ArrayPool<T>.Shared.Rent(count << 1);
-                        Array.Copy(workingArea, tmp, workingArea.Length);
-                        ArrayPool<T>.Shared.Return(workingArea);
-                        workingArea = tmp;
+                        if (array.Length < count)
+                        {
+                            var tmp = pool.Rent(count << 1);
+                            Array.Copy(array, tmp, array.Length);
+                            pool.Return(array);
+                            array = tmp;
+                        }
+
+                        array[count - 1] = formatter.Deserialize(ref reader, options);
                     }
-
-                    workingArea[count - 1] = formatter.Deserialize(ref reader, options);
                 }
+                else
+                {
+                    while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+                    {
+                        if (array.Length < count)
+                        {
+                            var tmp = pool.Rent(count << 1);
+                            Array.Copy(array, tmp, array.Length);
+                            pool.Return(array);
+                            array = tmp;
+                        }
 
+                        array[count - 1] = reader.Deserialize<T>(options, deserializer);
+                    }
+                }
                 var answer = new T[count];
-                Array.Copy(workingArea, answer, count);
+                Array.Copy(array, answer, count);
                 return new ArraySegment<T>(answer, 0, answer.Length);
             }
             finally
             {
-                ArrayPool<T>.Shared.Return(workingArea);
+                pool.Return(array);
             }
         }
     }
