@@ -1,0 +1,246 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+<#
+ValueTuple<string, string, bool>[] tuples = new[]{
+new ValueTuple<string, string, bool>("  byte",  "ByteFormatter",    false),
+new ValueTuple<string, string, bool>("  char",  "CharFormatter",    false),
+new ValueTuple<string, string, bool>(" short",  "Int16Formatter",   false),
+new ValueTuple<string, string, bool>("   int",  "Int32Formatter",   false),
+new ValueTuple<string, string, bool>("  long",  "Int64Formatter",   false),
+new ValueTuple<string, string, bool>(" sbyte",  "SByteFormatter",   false),
+new ValueTuple<string, string, bool>("ushort",  "UInt16Formatter",  false),
+new ValueTuple<string, string, bool>("  uint",  "UInt32Formatter",  false),
+new ValueTuple<string, string, bool>(" ulong",  "UInt64Formatter",  false),
+new ValueTuple<string, string, bool>(" float",  "SingleFormatter",  false),
+new ValueTuple<string, string, bool>("double",  "DoubleFormatter",  false),
+new ValueTuple<string, string, bool>("  bool",  "BooleanFormatter", false),
+
+new ValueTuple<string, string, bool>(" short?",  "NullableInt16Formatter", false),
+new ValueTuple<string, string, bool>(" int?  ",  "NullableInt32Formatter", false),
+new ValueTuple<string, string, bool>(" long?  ", "NullableInt64Formatter", false),
+new ValueTuple<string, string, bool>(" ushort?", "NullableUInt16Formatter", false),
+new ValueTuple<string, string, bool>("   uint?", "NullableUInt32Formatter", false),
+new ValueTuple<string, string, bool>("  ulong?", "NullableUInt64Formatter", false),
+new ValueTuple<string, string, bool>("  byte?",  "NullableByteFormatter", false),
+new ValueTuple<string, string, bool>(" sbyte?",  "NullableSByteFormatter", false),
+new ValueTuple<string, string, bool>("  bool?",  "NullableBooleanFormatter", false),
+new ValueTuple<string, string, bool>("  char?",  "NullableCharFormatter", false),
+new ValueTuple<string, string, bool>(" float?",  "NullableSingleFormatter", false),
+new ValueTuple<string, string, bool>("double?",  "NullableDoubleFormatter", false),
+
+new ValueTuple<string, string, bool>(" short[]",  "Int16ArrayFormatter",   true),
+new ValueTuple<string, string, bool>("   int[]",  "Int32ArrayFormatter",   true),
+new ValueTuple<string, string, bool>("  long[]",  "Int64ArrayFormatter",   true),
+new ValueTuple<string, string, bool>("ushort[]",  "UInt16ArrayFormatter",  true),
+new ValueTuple<string, string, bool>("  uint[]",  "UInt32ArrayFormatter",  true),
+new ValueTuple<string, string, bool>(" ulong[]",  "UInt64ArrayFormatter",  true),
+new ValueTuple<string, string, bool>("  byte[]",  "ByteArrayFormatter",    true),
+new ValueTuple<string, string, bool>(" sbyte[]",  "SByteArrayFormatter",   true),
+new ValueTuple<string, string, bool>("  bool[]",  "BooleanArrayFormatter", true),
+new ValueTuple<string, string, bool>("  char[]",  "CharArrayFormatter",    true),
+new ValueTuple<string, string, bool>(" float[]",  "SingleArrayFormatter",  true),
+new ValueTuple<string, string, bool>("double[]",  "DoubleArrayFormatter",  true),
+
+new ValueTuple<string, string, bool>("List<  byte>",  "ByteListFormatter",    true),
+new ValueTuple<string, string, bool>("List<  char>",  "CharListFormatter",    true),
+new ValueTuple<string, string, bool>("List< short>",  "Int16ListFormatter",   true),
+new ValueTuple<string, string, bool>("List<   int>",  "Int32ListFormatter",   true),
+new ValueTuple<string, string, bool>("List<  long>",  "Int64ListFormatter",   true),
+new ValueTuple<string, string, bool>("List< sbyte>",  "SByteListFormatter",   true),
+new ValueTuple<string, string, bool>("List<ushort>",  "UInt16ListFormatter",  true),
+new ValueTuple<string, string, bool>("List<  uint>",  "UInt32ListFormatter",  true),
+new ValueTuple<string, string, bool>("List< ulong>",  "UInt64ListFormatter",  true),
+new ValueTuple<string, string, bool>("List< float>",  "SingleListFormatter",  true),
+new ValueTuple<string, string, bool>("List<double>",  "DoubleListFormatter",  true),
+new ValueTuple<string, string, bool>("List<  bool>",  "BooleanListFormatter", true),
+
+new ValueTuple<string, string, bool>("Memory<  byte>",  "ByteMemoryFormatter", false),
+new ValueTuple<string, string, bool>("Memory<  char>",  "CharMemoryFormatter", false),
+new ValueTuple<string, string, bool>("Memory< short>",  "Int16MemoryFormatter", false),
+new ValueTuple<string, string, bool>("Memory<   int>",  "Int32MemoryFormatter", false),
+new ValueTuple<string, string, bool>("Memory<  long>",  "Int64MemoryFormatter", false),
+new ValueTuple<string, string, bool>("Memory< sbyte>",  "SByteMemoryFormatter", false),
+new ValueTuple<string, string, bool>("Memory<ushort>",  "UInt16MemoryFormatter", false),
+new ValueTuple<string, string, bool>("Memory<  uint>",  "UInt32MemoryFormatter", false),
+new ValueTuple<string, string, bool>("Memory< ulong>",  "UInt64MemoryFormatter", false),
+new ValueTuple<string, string, bool>("Memory< float>",  "SingleMemoryFormatter", false),
+new ValueTuple<string, string, bool>("Memory<double>",  "DoubleMemoryFormatter", false),
+new ValueTuple<string, string, bool>("Memory<  bool>",  "BooleanMemoryFormatter", false),
+
+new ValueTuple<string, string, bool>("ReadOnlyMemory<  byte>",  "ByteReadOnlyMemoryFormatter", false),
+new ValueTuple<string, string, bool>("ReadOnlyMemory<  char>",  "CharReadOnlyMemoryFormatter", false),
+new ValueTuple<string, string, bool>("ReadOnlyMemory< short>",  "Int16ReadOnlyMemoryFormatter", false),
+new ValueTuple<string, string, bool>("ReadOnlyMemory<   int>",  "Int32ReadOnlyMemoryFormatter", false),
+new ValueTuple<string, string, bool>("ReadOnlyMemory<  long>",  "Int64ReadOnlyMemoryFormatter", false),
+new ValueTuple<string, string, bool>("ReadOnlyMemory< sbyte>",  "SByteReadOnlyMemoryFormatter", false),
+new ValueTuple<string, string, bool>("ReadOnlyMemory<ushort>",  "UInt16ReadOnlyMemoryFormatter", false),
+new ValueTuple<string, string, bool>("ReadOnlyMemory<  uint>",  "UInt32ReadOnlyMemoryFormatter", false),
+new ValueTuple<string, string, bool>("ReadOnlyMemory< ulong>",  "UInt64ReadOnlyMemoryFormatter", false),
+new ValueTuple<string, string, bool>("ReadOnlyMemory< float>",  "SingleReadOnlyMemoryFormatter", false),
+new ValueTuple<string, string, bool>("ReadOnlyMemory<double>",  "DoubleReadOnlyMemoryFormatter", false),
+new ValueTuple<string, string, bool>("ReadOnlyMemory<  bool>",  "BooleanReadOnlyMemoryFormatter", false),
+
+new ValueTuple<string, string, bool>("Dictionary<string, string>", "DictionaryFormatter<string, string>", true),
+new ValueTuple<string, string, bool>("IDictionary<string, string>", "InterfaceDictionaryFormatter<string, string>", true),
+new ValueTuple<string, string, bool>("IDictionary<string, object>", "InterfaceDictionaryFormatter<string, object>", true),
+new ValueTuple<string, string, bool>("BigInteger", "BigIntegerFormatter", false),
+new ValueTuple<string, string, bool>("BigInteger?", "NullableBigIntegerFormatter", false),
+new ValueTuple<string, string, bool>("Complex", "ComplexFormatter", false),
+new ValueTuple<string, string, bool>("Complex?", "NullableComplexFormatter", false),
+new ValueTuple<string, string, bool>("Task", "TaskUnitFormatter", true),
+new ValueTuple<string, string, bool>("      DateTime", "ISO8601DateTimeFormatter", false),
+new ValueTuple<string, string, bool>("DateTimeOffset", "ISO8601DateTimeOffsetFormatter", false),
+new ValueTuple<string, string, bool>("      TimeSpan", "ISO8601TimeSpanFormatter", false),
+new ValueTuple<string, string, bool>("      DateTime?", "NullableISO8601DateTimeFormatter", false),
+new ValueTuple<string, string, bool>("DateTimeOffset?", "NullableISO8601DateTimeOffsetFormatter", false),
+new ValueTuple<string, string, bool>("      TimeSpan?", "NullableISO8601TimeSpanFormatter", false),
+
+new ValueTuple<string, string, bool>("string", "NullableStringFormatter", true),
+new ValueTuple<string, string, bool>("List<string>", "ListFormatter<string>", true),
+
+new ValueTuple<string, string, bool>("              Guid", "GuidFormatter", false),
+new ValueTuple<string, string, bool>("ArraySegment<byte>", "ArraySegmentFormatter<byte>", false),
+new ValueTuple<string, string, bool>("decimal", "DecimalFormatter", false),
+new ValueTuple<string, string, bool>("              Guid?", "NullableGuidFormatter", false),
+new ValueTuple<string, string, bool>("ArraySegment<byte>?", "NullableArraySegmentFormatter<byte>", false),
+new ValueTuple<string, string, bool>("           decimal?", "NullableDecimalFormatter", false),
+
+new ValueTuple<string, string, bool>("StringBuilder", "StringBuilderFormatter", true),
+new ValueTuple<string, string, bool>("BitArray", "BitArrayFormatter", true),
+new ValueTuple<string, string, bool>("Type", "TypeFormatter", true),
+new ValueTuple<string, string, bool>("Uri", "UriFormatter", true),
+new ValueTuple<string, string, bool>("Version", "VersionFormatter", true),
+};
+ValueTuple<string, string>[] unityTuples = new[]{
+new ValueTuple<string, string>("NativeArray<  byte>",  "ByteNativeArrayFormatter"),
+new ValueTuple<string, string>("NativeArray<  char>",  "CharNativeArrayFormatter"),
+new ValueTuple<string, string>("NativeArray< short>",  "Int16NativeArrayFormatter"),
+new ValueTuple<string, string>("NativeArray<   int>",  "Int32NativeArrayFormatter"),
+new ValueTuple<string, string>("NativeArray<  long>",  "Int64NativeArrayFormatter"),
+new ValueTuple<string, string>("NativeArray< sbyte>",  "SByteNativeArrayFormatter"),
+new ValueTuple<string, string>("NativeArray<ushort>",  "UInt16NativeArrayFormatter"),
+new ValueTuple<string, string>("NativeArray<  uint>",  "UInt32NativeArrayFormatter"),
+new ValueTuple<string, string>("NativeArray< ulong>",  "UInt64NativeArrayFormatter"),
+new ValueTuple<string, string>("NativeArray< float>",  "SingleNativeArrayFormatter"),
+new ValueTuple<string, string>("NativeArray<double>",  "DoubleNativeArrayFormatter"),
+new ValueTuple<string, string>("NativeArray<  bool>",  "BooleanNativeArrayFormatter"),
+};
+ValueTuple<string, string>[] notEnableIL2CPPTuples = new[]{
+new ValueTuple<string, string>("ExpandoObject", "ExpandoObjectFormatter"),
+};
+#>
+// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+using System.Numerics;
+using System.Collections;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading.Tasks;
+using Utf8Json.Formatters;
+using Utf8Json.Internal;
+
+#if UNITY_2018_4_OR_NEWER
+using Unity.Collections;
+#endif
+
+#if !ENABLE_IL2CPP
+using System.Dynamic;
+#endif
+
+namespace Utf8Json.Resolvers
+{
+    public sealed partial class BuiltinResolver
+    {
+        internal static class BuiltinResolverGetFormatterHelper
+        {
+            private static readonly ThreadSafeTypeKeyFormatterHashTable formatterHashTable
+#region table
+            = new ThreadSafeTypeKeyFormatterHashTable(new[]
+            {
+#if CSHARP_8_OR_NEWER
+                new ThreadSafeTypeKeyFormatterHashTable.Entry(typeof(string[]), StaticHelper.GetSerializeStatic<string?[]?, NullableStringArrayFormatter>(), StaticHelper.GetDeserializeStatic<string?[]?, NullableStringArrayFormatter>()),
+#else
+                new ThreadSafeTypeKeyFormatterHashTable.Entry(typeof(string[]), StaticHelper.GetSerializeStatic<string[], NullableStringArrayFormatter>(), StaticHelper.GetDeserializeStatic<string[], NullableStringArrayFormatter>()),
+#endif
+<#foreach(var t in tuples){
+    if(t.Item3){#>
+#if CSHARP_8_OR_NEWER
+                new ThreadSafeTypeKeyFormatterHashTable.Entry(typeof(<#= t.Item1 #>), StaticHelper.GetSerializeStatic<<#= t.Item1 #>?, <#= t.Item2 #>>(), StaticHelper.GetDeserializeStatic<<#= t.Item1 #>?, <#= t.Item2 #>>()),
+#else
+                new ThreadSafeTypeKeyFormatterHashTable.Entry(typeof(<#= t.Item1 #>), StaticHelper.GetSerializeStatic<<#= t.Item1 #>, <#= t.Item2 #>>(), StaticHelper.GetDeserializeStatic<<#= t.Item1 #>, <#= t.Item2 #>>()),
+#endif
+<#
+    }
+    else
+    {#>
+                new ThreadSafeTypeKeyFormatterHashTable.Entry(typeof(<#= t.Item1 #>), StaticHelper.GetSerializeStatic<<#= t.Item1 #>, <#= t.Item2 #>>(), StaticHelper.GetDeserializeStatic<<#= t.Item1 #>, <#= t.Item2 #>>()),
+<#
+    }
+#>
+<#}#>
+
+
+#if UNITY_2018_4_OR_NEWER
+<#foreach(var t in unityTuples){#>
+                new ThreadSafeTypeKeyFormatterHashTable.Entry(typeof(<#= t.Item1 #>), StaticHelper.GetSerializeStatic<<#= t.Item1 #>, <#= t.Item2 #>>(), StaticHelper.GetDeserializeStatic<<#= t.Item1 #>, <#= t.Item2 #>>()),
+<#}#>
+#endif
+
+#if !ENABLE_IL2CPP
+<#foreach(var t in notEnableIL2CPPTuples){#>
+                new ThreadSafeTypeKeyFormatterHashTable.Entry(typeof(<#= t.Item1 #>), StaticHelper.GetSerializeStatic<<#= t.Item1 #>, <#= t.Item2 #>>(), StaticHelper.GetDeserializeStatic<<#= t.Item1 #>, <#= t.Item2 #>>()),
+<#}#>
+#endif
+            }, 0.5d);
+#endregion
+
+            private static readonly ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter> formatterInstanceMap
+#region table
+            = new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>(new[]
+            {
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(string[]), new NullableStringArrayFormatter()),
+<#foreach(var t in tuples){#>
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(<#= t.Item1 #>), new <#= t.Item2 #>()),
+<#}#>
+
+#if UNITY_2018_4_OR_NEWER
+<#foreach(var t in unityTuples){#>
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(<#= t.Item1 #>), new <#= t.Item2 #>()),
+<#}#>
+#endif
+
+#if !ENABLE_IL2CPP
+<#foreach(var t in notEnableIL2CPPTuples){#>
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(<#= t.Item1 #>), new <#= t.Item2 #>()),
+<#}#>
+#endif
+            }, 0.5d);
+#endregion
+
+#if CSHARP_8_OR_NEWER
+            internal static IJsonFormatter? GetFormatter(Type t)
+#else
+            internal static IJsonFormatter GetFormatter(Type t)
+#endif
+            {
+                if (formatterInstanceMap.TryGetValue(t, out var formatter))
+                {
+                    return formatter;
+                }
+
+                return null;
+            }
+
+            internal static ThreadSafeTypeKeyFormatterHashTable.FunctionPair GetFunctionPointers(Type t)
+            {
+                return formatterHashTable[t];
+            }
+        }
+    }
+}

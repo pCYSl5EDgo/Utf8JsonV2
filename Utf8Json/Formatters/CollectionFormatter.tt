@@ -1,0 +1,268 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+<#
+var tuples = new[]{
+    new ValueTuple<string, string, string, string, string, string>("GenericClassCollectionFormatter<T, TCollection>", "Add", "TCollection", "where TCollection : class, ICollection<T>, new()", null, null),
+    new ValueTuple<string, string, string, string, string, string>("LinkedListFormatter<T>", "AddLast", "LinkedList<T>", null, null, null),
+    new ValueTuple<string, string, string, string, string, string>("QueueFormatter<T>", "Enqueue", "Queue<T>", null, null, null),
+    new ValueTuple<string, string, string, string, string, string>("StackFormatter<T>", "Push", "Stack<T>", null, null, null),
+    new ValueTuple<string, string, string, string, string, string>("HashSetFormatter<T>", "Add", "HashSet<T>", null, null, null),
+    new ValueTuple<string, string, string, string, string, string>("InterfaceListFormatter<T>", "Add", "IList<T>", null, "new List<T>()", null),
+    new ValueTuple<string, string, string, string, string, string>("InterfaceCollectionFormatter<T>", "Add", "ICollection<T>", null, "new List<T>()", null),
+};
+
+#>
+// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.Collections.Generic;
+
+namespace Utf8Json.Formatters
+{
+<#
+foreach(var tuple in tuples)
+{#>
+    public sealed class Add<#= tuple.Item1 #>
+#if CSHARP_8_OR_NEWER
+    : IOverwriteJsonFormatter<<#= tuple.Item3 #>?>
+#else
+    : IOverwriteJsonFormatter<<#= tuple.Item3 #>>
+#endif
+<#if(tuple.Item4 != null){#>
+        <#= tuple.Item4 #>
+<#}#>
+    {
+#if CSHARP_8_OR_NEWER
+        public void Serialize(ref JsonWriter writer, <#= tuple.Item3 #>? value, JsonSerializerOptions options)
+#else
+        public void Serialize(ref JsonWriter writer, <#= tuple.Item3 #> value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value, options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public static void SerializeStatic(ref JsonWriter writer, <#= tuple.Item3 #>? value, JsonSerializerOptions options)
+#else
+        public static void SerializeStatic(ref JsonWriter writer, <#= tuple.Item3 #> value, JsonSerializerOptions options)
+#endif
+        {
+            if (value == null)
+            {
+                writer.WriteNull();
+                return;
+            }
+
+            var enumerator = value.GetEnumerator();
+            writer.WriteBeginArray();
+            try
+            {
+                if (!enumerator.MoveNext())
+                {
+                    goto END;
+                }
+
+                var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                formatter.Serialize(ref writer, enumerator.Current, options);
+
+                while (enumerator.MoveNext())
+                {
+                    writer.WriteValueSeparator();
+                    formatter.Serialize(ref writer, enumerator.Current, options);
+                }
+            }
+            finally
+            {
+                enumerator.Dispose();
+            }
+
+        END:
+            writer.WriteEndArray();
+        }
+
+#if CSHARP_8_OR_NEWER
+        public <#= tuple.Item3 #>? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public <#= tuple.Item3 #> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        => DeserializeStatic(ref reader, options);
+
+#if CSHARP_8_OR_NEWER
+        public static <#= tuple.Item3 #>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public static <#= tuple.Item3 #> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            if (reader.ReadIsNull())
+            {
+                return default;
+            }
+
+            reader.ReadIsBeginArrayWithVerify();
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
+            var buffer = <#= tuple.Item5 ?? ("new " + tuple.Item3 + "()")#>;
+            var count = 0;
+            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+            {
+                var item = formatter.Deserialize(ref reader, options);
+                buffer.<#= tuple.Item2 #>(item);
+            }
+
+            return <#= tuple.Item6 ?? "buffer" #>;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void DeserializeTo(ref <#= tuple.Item3 #>? value, ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public void DeserializeTo(ref <#= tuple.Item3 #> value, ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            if (reader.ReadIsNull())
+            {
+                return; // do nothing
+            }
+
+            reader.ReadIsBeginArrayWithVerify();
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
+
+            var count = 0;
+            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+            {
+                var item = formatter.Deserialize(ref reader, options);
+                if (value == null)
+                {
+                    value = <#= tuple.Item5 ?? ("new " + tuple.Item3 + "()")#>;
+                }
+
+                value.<#= tuple.Item2 #>(item);
+            }
+        }
+    }
+
+    public sealed class Overwrite<#= tuple.Item1 #>
+#if CSHARP_8_OR_NEWER
+    : IOverwriteJsonFormatter<<#= tuple.Item3 #>?>
+#else
+    : IOverwriteJsonFormatter<<#= tuple.Item3 #>>
+#endif
+<#if(tuple.Item4 != null){#>
+        <#= tuple.Item4 #>
+<#}#>
+    {
+#if CSHARP_8_OR_NEWER
+        public void Serialize(ref JsonWriter writer, <#= tuple.Item3 #>? value, JsonSerializerOptions options)
+#else
+        public void Serialize(ref JsonWriter writer, <#= tuple.Item3 #> value, JsonSerializerOptions options)
+#endif
+            => SerializeStatic(ref writer, value, options);
+
+#if CSHARP_8_OR_NEWER
+        public static void SerializeStatic(ref JsonWriter writer, <#= tuple.Item3 #>? value, JsonSerializerOptions options)
+#else
+        public static void SerializeStatic(ref JsonWriter writer, <#= tuple.Item3 #> value, JsonSerializerOptions options)
+#endif
+        {
+            if (value == null)
+            {
+                writer.WriteNull();
+                return;
+            }
+
+            var enumerator = value.GetEnumerator();
+            writer.WriteBeginArray();
+            try
+            {
+                if (!enumerator.MoveNext())
+                {
+                    goto END;
+                }
+
+                var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                formatter.Serialize(ref writer, enumerator.Current, options);
+
+                while (enumerator.MoveNext())
+                {
+                    writer.WriteValueSeparator();
+                    formatter.Serialize(ref writer, enumerator.Current, options);
+                }
+            }
+            finally
+            {
+                enumerator.Dispose();
+            }
+
+        END:
+            writer.WriteEndArray();
+        }
+
+#if CSHARP_8_OR_NEWER
+        public <#= tuple.Item3 #>? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public <#= tuple.Item3 #> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        => DeserializeStatic(ref reader, options);
+
+#if CSHARP_8_OR_NEWER
+        public static <#= tuple.Item3 #>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public static <#= tuple.Item3 #> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            if (reader.ReadIsNull())
+            {
+                return default;
+            }
+
+            reader.ReadIsBeginArrayWithVerify();
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
+            var buffer = <#= tuple.Item5 ?? ("new " + tuple.Item3 + "()")#>;
+            var count = 0;
+            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+            {
+                var item = formatter.Deserialize(ref reader, options);
+                buffer.<#= tuple.Item2 #>(item);
+            }
+
+            return <#= tuple.Item6 ?? "buffer" #>;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void DeserializeTo(ref <#= tuple.Item3 #>? value, ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public void DeserializeTo(ref <#= tuple.Item3 #> value, ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            if (reader.ReadIsNull())
+            {
+                return; // do nothing
+            }
+
+            reader.ReadIsBeginArrayWithVerify();
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
+
+            if (value == null)
+            {
+                value = <#= tuple.Item5 ?? ("new " + tuple.Item3 + "()")#>;
+            }
+            else
+            {
+                value.Clear();
+            }
+
+            var count = 0;
+            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+            {
+                var item = formatter.Deserialize(ref reader, options);
+                value.<#= tuple.Item2 #>(item);
+            }
+        }
+    }
+
+<#
+}
+#>
+}

@@ -1,0 +1,110 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netstandard2.0;netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
+    <LangVersion>8.0</LangVersion>
+    <LangVersion Condition="'$(TargetFramework)'=='netstandard2.0' OR '$(TargetFramework)'=='netcoreapp2.1'">7.3</LangVersion>
+    <DefineConstants Condition="'$(TargetFramework)'=='netcoreapp2.1' Or '$(TargetFramework)'=='netcoreapp2.2' Or '$(TargetFramework)'=='netcoreapp3.0' Or '$(TargetFramework)'=='netcoreapp3.1' Or '$(TargetFramework)'=='net5.0'">$(DefineConstants);IMMUTABLE</DefineConstants>
+    <DefineConstants Condition="'$(TargetFramework)'=='netcoreapp2.1' Or '$(TargetFramework)'=='netcoreapp2.2' Or '$(TargetFramework)'=='netcoreapp3.0' Or '$(TargetFramework)'=='netcoreapp3.1' Or '$(TargetFramework)'=='netstandard2.1' Or '$(TargetFramework)'=='net5.0'">$(DefineConstants);SPAN_BUILTIN</DefineConstants>
+    <DefineConstants Condition="'$(TargetFramework)'=='netcoreapp3.0' Or '$(TargetFramework)'=='netcoreapp3.1' Or '$(TargetFramework)'=='netstandard2.1' Or '$(TargetFramework)'=='net5.0'">$(DefineConstants);SEQUENCE_READER_BUILTIN;NULLABLE_BUILTIN</DefineConstants>
+    <DefineConstants Condition="'$(LangVersion)'&gt;=8.0">$(DefineConstants);CSHARP_8_OR_NEWER</DefineConstants>
+    <Nullable Condition="'$(LangVersion)'&gt;=8.0">enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Buffers" Version="4.5.1" />
+    <PackageReference Include="System.Memory" Version="4.5.4" />
+    <PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.7.1" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\**\*.cs" Exclude="..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Unity\**;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Shims\**;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\退避~\**;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Annotations\**;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Emit\**;" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\PrimitiveFormatter.cs;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\CollectionFormatter.cs;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\Dictionary\DictionaryFormatter.cs;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Resolvers\BuiltinResolverHelper.cs;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\JsonSerializer.Primitive.cs;" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Utf8Json.Annotations\Utf8Json.Annotations.csproj" />
+    <ProjectReference Include="..\Utf8Json.Core\Utf8Json.Core.csproj" />
+    <ProjectReference Include="..\Utf8Json.Emit\Utf8Json.Emit.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="StaticFunctionPointerHelper">
+      <HintPath>..\StaticFunctionPointerHelper\bin\$(Configuration)\$(TargetFramework)\StaticFunctionPointerHelper.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Formatters\CollectionFormatter.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>CollectionFormatter.cs</LastGenOutput>
+    </None>
+    <None Update="Formatters\Dictionary\DictionaryFormatter.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>DictionaryFormatter.cs</LastGenOutput>
+    </None>
+    <None Update="Formatters\PrimitiveFormatter.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>PrimitiveFormatter.cs</LastGenOutput>
+    </None>
+    <None Update="JsonSerializer.Primitive.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>JsonSerializer.Primitive.cs</LastGenOutput>
+    </None>
+    <None Update="Resolvers\BuiltinResolverHelper.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>BuiltinResolverHelper.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Formatters\CollectionFormatter.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>CollectionFormatter.tt</DependentUpon>
+    </Compile>
+    <Compile Update="Formatters\Dictionary\DictionaryFormatter.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>DictionaryFormatter.tt</DependentUpon>
+    </Compile>
+    <Compile Update="Formatters\PrimitiveFormatter.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>PrimitiveFormatter.tt</DependentUpon>
+    </Compile>
+    <Compile Update="JsonSerializer.Primitive.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>JsonSerializer.Primitive.tt</DependentUpon>
+    </Compile>
+    <Compile Update="Resolvers\BuiltinResolverHelper.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>BuiltinResolverHelper.tt</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Formatters\Dictionary\" />
+    <Folder Include="Resolvers\" />
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="Exists('C:\')">
+    <Exec Command="XCOPY &quot;$(ProjectDir)Formatters\PrimitiveFormatter.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\&quot; /D /Y&#xD;&#xA;XCOPY &quot;$(ProjectDir)Formatters\CollectionFormatter.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\&quot; /D /Y&#xD;&#xA;XCOPY &quot;$(ProjectDir)Formatters\Dictionary\DictionaryFormatter.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\Dictionary\&quot; /D /Y&#xD;&#xA;XCOPY &quot;$(ProjectDir)Resolvers\BuiltinResolverHelper.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Resolvers\&quot; /D /Y&#xD;&#xA;XCOPY &quot;$(ProjectDir)JsonSerializer.Primitive.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\&quot; /D /Y" />
+  </Target>
+
+
+</Project>

@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netstandard2.0;netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Utf8Json.Core\Utf8Json.Core.csproj" />
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="Exists('C:\') AND '$(TargetFramework)'=='netstandard2.0' AND '$(Configuration)' == 'Release'">
+    <Exec Command="XCOPY &quot;$(TargetPath)&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Plugins\&quot; /D /Y" />
+  </Target>
+
+</Project>
