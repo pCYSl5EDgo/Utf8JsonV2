@@ -1,14 +1,13 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using StaticFunctionPointerHelper;
 
 namespace Utf8Json.Formatters
 {
-    public sealed class InterfaceLookupFormatter<TKey, TElement>
+    public sealed unsafe class InterfaceLookupFormatter<TKey, TElement>
 #if CSHARP_8_OR_NEWER
         : IJsonFormatter<ILookup<TKey, TElement>?>
         where TKey : notnull
@@ -38,7 +37,7 @@ namespace Utf8Json.Formatters
             }
 
             var serializer = options.Resolver.GetSerializeStatic<IEnumerable<IGrouping<TKey, TElement>>>();
-            if (serializer == IntPtr.Zero)
+            if (serializer.ToPointer() == null)
             {
                 options.Resolver.GetFormatterWithVerify<IEnumerable<IGrouping<TKey, TElement>>>().Serialize(ref writer, value.AsEnumerable(), options);
             }
@@ -75,7 +74,7 @@ namespace Utf8Json.Formatters
             reader.ReadIsBeginArrayWithVerify();
 
             var deserializer = options.Resolver.GetDeserializeStatic<IGrouping<TKey, TElement>>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<IGrouping<TKey, TElement>>();
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))

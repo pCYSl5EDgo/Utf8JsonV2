@@ -7,7 +7,7 @@ using StaticFunctionPointerHelper;
 
 namespace Utf8Json.Formatters
 {
-    public sealed class AddArrayFormatter<T>
+    public sealed unsafe class AddArrayFormatter<T>
 #if CSHARP_8_OR_NEWER
         : IOverwriteJsonFormatter<T[]?>
 #else
@@ -43,7 +43,7 @@ namespace Utf8Json.Formatters
             }
 
             var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer == IntPtr.Zero)
+            if (serializer.ToPointer() == null)
             {
                 SerializeWithFormatter(ref writer, value, options);
             }
@@ -103,7 +103,7 @@ namespace Utf8Json.Formatters
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
             try
             {
-                if (deserializer == IntPtr.Zero)
+                if (deserializer.ToPointer() == null)
                 {
                     return DeserializeWithFormatter(ref reader, options, pool, ref array);
                 }
@@ -171,7 +171,7 @@ namespace Utf8Json.Formatters
             try
             {
                 var deserializer = options.Resolver.GetDeserializeStatic<T>();
-                if (deserializer == IntPtr.Zero)
+                if (deserializer.ToPointer() == null)
                 {
                     DeserializeToWithFormatter(ref value, ref reader, options, ref array, pool);
                 }
@@ -256,7 +256,7 @@ namespace Utf8Json.Formatters
         }
     }
 
-    public sealed class OverwriteArrayFormatter<T>
+    public sealed unsafe class OverwriteArrayFormatter<T>
 #if CSHARP_8_OR_NEWER
         : IOverwriteJsonFormatter<T[]?>
 #else
@@ -291,7 +291,7 @@ namespace Utf8Json.Formatters
             }
 
             var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer == IntPtr.Zero)
+            if (serializer.ToPointer() == null)
             {
                 SerializeWithFormatter(ref writer, value, options);
             }
@@ -348,7 +348,7 @@ namespace Utf8Json.Formatters
             try
             {
                 var deserializer = options.Resolver.GetDeserializeStatic<T>();
-                if (deserializer == IntPtr.Zero)
+                if (deserializer.ToPointer() == null)
                 {
                     return DeserializeWithFormatter(ref reader, options, pool, ref array);
                 }
@@ -420,7 +420,7 @@ namespace Utf8Json.Formatters
 
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
 
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))

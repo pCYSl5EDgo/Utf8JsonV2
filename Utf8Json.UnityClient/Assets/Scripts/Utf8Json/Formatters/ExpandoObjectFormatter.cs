@@ -2,14 +2,13 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #if !ENABLE_IL2CPP
-using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using StaticFunctionPointerHelper;
 
 namespace Utf8Json.Formatters
 {
-    public sealed class ExpandoObjectFormatter : IJsonFormatter<ExpandoObject>
+    public sealed unsafe class ExpandoObjectFormatter : IJsonFormatter<ExpandoObject>
     {
         public void Serialize(ref JsonWriter writer, ExpandoObject value, JsonSerializerOptions options)
         {
@@ -19,7 +18,7 @@ namespace Utf8Json.Formatters
         public static void SerializeStatic(ref JsonWriter writer, ExpandoObject value, JsonSerializerOptions options)
         {
             var serializer = options.Resolver.GetSerializeStatic<IDictionary<string, object>>();
-            if (serializer == IntPtr.Zero)
+            if (serializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<IDictionary<string, object>>();
                 formatter.Serialize(ref writer, value, options);
@@ -36,7 +35,7 @@ namespace Utf8Json.Formatters
 
             var count = 0;
             var deserializer = options.Resolver.GetDeserializeStatic<object>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<object>();
                 while (reader.ReadIsInObject(ref count))

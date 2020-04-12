@@ -9,7 +9,7 @@ using StaticFunctionPointerHelper;
 
 namespace Utf8Json.Formatters
 {
-    public sealed class ReadOnlyCollectionFormatter<T>
+    public sealed unsafe class ReadOnlyCollectionFormatter<T>
 #if CSHARP_8_OR_NEWER
         : IJsonFormatter<ReadOnlyCollection<T>?>
 #else
@@ -47,7 +47,7 @@ namespace Utf8Json.Formatters
                 }
 
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     SerializeWithFormatter(ref writer, options, enumerator);
                     goto END;
@@ -109,7 +109,7 @@ namespace Utf8Json.Formatters
             try
             {
                 var deserializer = options.Resolver.GetDeserializeStatic<T>();
-                if (deserializer == IntPtr.Zero)
+                if (deserializer.ToPointer() == null)
                 {
                     return DeserializeWithFormatter(ref reader, options, ref array, pool);
                 }

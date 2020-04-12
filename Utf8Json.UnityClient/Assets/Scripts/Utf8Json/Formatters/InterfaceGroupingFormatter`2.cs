@@ -1,7 +1,6 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -9,7 +8,7 @@ using StaticFunctionPointerHelper;
 
 namespace Utf8Json.Formatters
 {
-    public sealed class InterfaceGroupingFormatter<TKey, TElement>
+    public sealed unsafe class InterfaceGroupingFormatter<TKey, TElement>
 #if CSHARP_8_OR_NEWER
         : IJsonFormatter<IGrouping<TKey, TElement>?>
 #else
@@ -46,7 +45,7 @@ namespace Utf8Json.Formatters
             }
 
             var keySerializer = options.Resolver.GetSerializeStatic<TKey>();
-            if (keySerializer == IntPtr.Zero)
+            if (keySerializer.ToPointer() == null)
             {
                 options.Resolver.GetFormatterWithVerify<TKey>().Serialize(ref writer, value.Key, options);
             }
@@ -63,8 +62,12 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(8);
             }
 
+#if CSHARP_8_OR_NEWER
+            var enumerableSerializer = options.Resolver.GetSerializeStatic<IEnumerable<TElement>?>();
+#else
             var enumerableSerializer = options.Resolver.GetSerializeStatic<IEnumerable<TElement>>();
-            if (enumerableSerializer == IntPtr.Zero)
+#endif
+            if (enumerableSerializer.ToPointer() == null)
             {
                 options.Resolver.GetFormatterWithVerify<IEnumerable<TElement>>().Serialize(ref writer, value.AsEnumerable(), options);
             }
@@ -111,7 +114,7 @@ namespace Utf8Json.Formatters
                         if (keyString[0] == 0x4B && keyString[1] == 0x65 && keyString[2] == 0x79)
                         {
                             var deserializer = options.Resolver.GetDeserializeStatic<TKey>();
-                            resultKey = deserializer == IntPtr.Zero
+                            resultKey = deserializer.ToPointer() == null
                                 ? options.Resolver.GetFormatterWithVerify<TKey>().Deserialize(ref reader, options)
                                 : reader.Deserialize<TKey>(options, deserializer);
                         }
@@ -120,7 +123,7 @@ namespace Utf8Json.Formatters
                         if (keyString[0] == 0x45 && keyString[1] == 0x6C && keyString[2] == 0x65 && keyString[3] == 0x6D && keyString[4] == 0x65 && keyString[5] == 0x6E && keyString[6] == 0x74 && keyString[7] == 0x73)
                         {
                             var deserializer = options.Resolver.GetDeserializeStatic<IEnumerable<TElement>>();
-                            resultValue = deserializer == IntPtr.Zero
+                            resultValue = deserializer.ToPointer() == null
                                 ? options.Resolver.GetFormatterWithVerify<IEnumerable<TElement>>().Deserialize(ref reader, options)
                                 : reader.Deserialize<IEnumerable<TElement>>(options, deserializer);
                         }

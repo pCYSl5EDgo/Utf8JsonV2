@@ -35,7 +35,7 @@ namespace Utf8Json.Formatters
 <#foreach(var t in tuples){#>
 <#if(t.Item6 != null){#>#if <#= t.Item6 #><#}#>
 
-    public sealed class <#= t.Item1 #>Formatter<TKey, TValue>
+    public sealed unsafe class <#= t.Item1 #>Formatter<TKey, TValue>
 #if CSHARP_8_OR_NEWER
         : IJsonFormatter<<#= t.Item2 #>?>
         where TKey : notnull
@@ -81,7 +81,7 @@ namespace Utf8Json.Formatters
                     keyFormatter.SerializeToPropertyName(ref writer, tuple.Key, options);
                     writer.WriteNameSeparator();
                     
-                    if (valueSerializer == IntPtr.Zero)
+                    if (valueSerializer.ToPointer() == null)
                     {
                         var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
                         valueFormatter.Serialize(ref writer, tuple.Value, options);
@@ -115,7 +115,7 @@ namespace Utf8Json.Formatters
                     Debug.Assert(propertyName != null, nameof(propertyName) + " != null");
                     writer.WritePropertyName(propertyName);
                     
-                    if (valueSerializer == IntPtr.Zero)
+                    if (valueSerializer.ToPointer() == null)
                     {
                         var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
                         valueFormatter.Serialize(ref writer, tuple.Value, options);
@@ -185,7 +185,7 @@ namespace Utf8Json.Formatters
             var answer = <#= t.Item3 #>;
             var count = 0;
             var valueDeserializer = options.Resolver.GetDeserializeStatic<TValue>();
-            if (valueDeserializer == IntPtr.Zero)
+            if (valueDeserializer.ToPointer() == null)
             {
                 var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
                 while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))

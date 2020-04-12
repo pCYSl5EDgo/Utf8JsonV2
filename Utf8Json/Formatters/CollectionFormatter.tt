@@ -28,7 +28,7 @@ namespace Utf8Json.Formatters
 <#
 foreach(var tuple in tuples)
 {#>
-    public sealed class Add<#= tuple.Item1 #>
+    public sealed unsafe class Add<#= tuple.Item1 #>
 #if CSHARP_8_OR_NEWER
     : IOverwriteJsonFormatter<<#= tuple.Item3 #>?>
 #else
@@ -69,7 +69,7 @@ foreach(var tuple in tuples)
                 }
 
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     var formatter = options.Resolver.GetFormatterWithVerify<T>();
                     formatter.Serialize(ref writer, enumerator.Current, options);
@@ -124,7 +124,7 @@ foreach(var tuple in tuples)
             var buffer = <#= tuple.Item5 ?? ("new " + tuple.Item3 + "()")#>;
             var count = 0;
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
@@ -160,7 +160,7 @@ foreach(var tuple in tuples)
             var count = 0;
 
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
@@ -190,7 +190,7 @@ foreach(var tuple in tuples)
         }
     }
 
-    public sealed class Overwrite<#= tuple.Item1 #>
+    public sealed unsafe class Overwrite<#= tuple.Item1 #>
 #if CSHARP_8_OR_NEWER
     : IOverwriteJsonFormatter<<#= tuple.Item3 #>?>
 #else
@@ -231,7 +231,7 @@ foreach(var tuple in tuples)
                 }
 
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     var formatter = options.Resolver.GetFormatterWithVerify<T>();
                     formatter.Serialize(ref writer, enumerator.Current, options);
@@ -286,7 +286,7 @@ foreach(var tuple in tuples)
             var buffer = <#= tuple.Item5 ?? ("new " + tuple.Item3 + "()")#>;
             var count = 0;
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
@@ -329,7 +329,7 @@ foreach(var tuple in tuples)
                 value.Clear();
             }
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 var count = 0;

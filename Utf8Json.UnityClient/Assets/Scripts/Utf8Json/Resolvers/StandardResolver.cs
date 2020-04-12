@@ -94,7 +94,7 @@ namespace Utf8Json.Resolvers
                     }
 
                     SerializeFunctionPointer = formatterResolver.GetSerializeStatic<T>();
-                    if (SerializeFunctionPointer == IntPtr.Zero)
+                    if (SerializeFunctionPointer == null)
                     {
                         continue;
                     }

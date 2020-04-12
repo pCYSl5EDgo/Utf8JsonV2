@@ -20,7 +20,9 @@ namespace Utf8Json.Formatters
 #else
         public void Serialize(ref JsonWriter writer, T value, JsonSerializerOptions options)
 #endif
-        => SerializeStatic(ref writer, value, options);
+        {
+            SerializeStatic(ref writer, value, options);
+        }
 
 #if CSHARP_8_OR_NEWER
         public static void SerializeStatic(ref JsonWriter writer, T? value, JsonSerializerOptions options)
@@ -87,7 +89,9 @@ namespace Utf8Json.Formatters
 #else
         public T Deserialize(ref JsonReader reader, JsonSerializerOptions options)
 #endif
-        => DeserializeStatic(ref reader, options);
+        {
+            return DeserializeStatic(ref reader, options);
+        }
 
 #if CSHARP_8_OR_NEWER
         public static T? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -101,20 +105,19 @@ namespace Utf8Json.Formatters
                 return default;
             }
 
-            var valueFormatter = options.Resolver.GetFormatterWithVerify<object>();
-
             reader.ReadIsBeginObjectWithVerify();
 
-            var dict = new T();
-            var i = 0;
-            while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref i))
+            var answer = new T();
+            var count = 0;
+            var valueFormatter = options.Resolver.GetFormatterWithVerify<object>();
+            while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
             {
                 var key = reader.ReadPropertyName();
                 var value = valueFormatter.Deserialize(ref reader, options);
-                dict.Add(key, value);
+                answer.Add(key, value);
             }
 
-            return dict;
+            return answer;
         }
     }
 }

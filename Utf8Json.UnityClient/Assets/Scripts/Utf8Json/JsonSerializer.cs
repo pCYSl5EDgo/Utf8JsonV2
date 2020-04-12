@@ -36,7 +36,7 @@ namespace Utf8Json
         /// <param name="options">The options.</param>
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static void Serialize<T>(IBufferWriter<byte> writer, T value, JsonSerializerOptions options, CancellationToken cancellationToken = default)
+        public static unsafe void Serialize<T>(IBufferWriter<byte> writer, T value, JsonSerializerOptions options, CancellationToken cancellationToken = default)
         {
             var fastWriter = new JsonWriter(writer)
             {
@@ -45,7 +45,7 @@ namespace Utf8Json
             try
             {
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     options.Resolver.GetFormatterWithVerify<T>().Serialize(ref fastWriter, value, options);
                 }
@@ -68,7 +68,7 @@ namespace Utf8Json
         /// <param name="value">The value to serialize.</param>
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static void Serialize<T>(IBufferWriter<byte> writer, T value, CancellationToken cancellationToken = default)
+        public static unsafe void Serialize<T>(IBufferWriter<byte> writer, T value, CancellationToken cancellationToken = default)
         {
             var fastWriter = new JsonWriter(writer)
             {
@@ -77,7 +77,7 @@ namespace Utf8Json
             try
             {
                 var serializer = DefaultOptions.Resolver.GetSerializeStatic<T>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     DefaultOptions.Resolver.GetFormatterWithVerify<T>().Serialize(ref fastWriter, value, DefaultOptions);
                 }
@@ -100,12 +100,12 @@ namespace Utf8Json
         /// <param name="value">The value to serialize.</param>
         /// <param name="options">The options.</param>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static void Serialize<T>(ref JsonWriter writer, T value, JsonSerializerOptions options)
+        public static unsafe void Serialize<T>(ref JsonWriter writer, T value, JsonSerializerOptions options)
         {
             try
             {
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value, options);
                 }
@@ -126,12 +126,12 @@ namespace Utf8Json
         /// <param name="writer">The buffer writer to serialize with.</param>
         /// <param name="value">The value to serialize.</param>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static void Serialize<T>(ref JsonWriter writer, T value)
+        public static unsafe void Serialize<T>(ref JsonWriter writer, T value)
         {
             try
             {
                 var serializer = DefaultOptions.Resolver.GetSerializeStatic<T>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     DefaultOptions.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value, DefaultOptions);
                 }
@@ -163,7 +163,7 @@ namespace Utf8Json
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>A byte array with the serialized value.</returns>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static byte[] Serialize<T>(T value, JsonSerializerOptions options, CancellationToken cancellationToken = default)
+        public static unsafe byte[] Serialize<T>(T value, JsonSerializerOptions options, CancellationToken cancellationToken = default)
         {
             var array = ScratchArray;
             if (array == null)
@@ -178,7 +178,7 @@ namespace Utf8Json
             try
             {
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     options.Resolver.GetFormatterWithVerify<T>().Serialize(ref jsonWriter, value, options);
                 }
@@ -201,7 +201,7 @@ namespace Utf8Json
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>A byte array with the serialized value.</returns>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static byte[] Serialize<T>(T value, CancellationToken cancellationToken = default)
+        public static unsafe byte[] Serialize<T>(T value, CancellationToken cancellationToken = default)
         {
             var array = ScratchArray;
             if (array == null)
@@ -216,7 +216,7 @@ namespace Utf8Json
             try
             {
                 var serializer = DefaultOptions.Resolver.GetSerializeStatic<T>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     DefaultOptions.Resolver.GetFormatterWithVerify<T>().Serialize(ref jsonWriter, value, DefaultOptions);
                 }
@@ -273,7 +273,9 @@ namespace Utf8Json
         public static void Serialize<T>(Stream stream, T value, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
+#pragma warning disable IDE0063 // 単純な 'using' ステートメントを使用する
             using (var sequenceRental = SequencePool.Shared.Rent())
+#pragma warning restore IDE0063 // 単純な 'using' ステートメントを使用する
             {
                 Serialize(sequenceRental.Value, value, cancellationToken);
 
@@ -374,12 +376,12 @@ namespace Utf8Json
         /// <param name="options">The options. Use <c>null</c> to use default options.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
-        public static T Deserialize<T>(ref JsonReader reader, JsonSerializerOptions options)
+        public static unsafe T Deserialize<T>(ref JsonReader reader, JsonSerializerOptions options)
         {
             try
             {
                 var deserializer = options.Resolver.GetDeserializeStatic<T>();
-                return deserializer == IntPtr.Zero
+                return deserializer.ToPointer() == null
                     ? options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options)
                     : reader.Deserialize<T>(options, deserializer);
             }
@@ -397,13 +399,13 @@ namespace Utf8Json
         /// <param name="options">The options. Use <c>null</c> to use default options.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
-        public static T Deserialize<T>(ReadOnlySpan<byte> span, JsonSerializerOptions options)
+        public static unsafe T Deserialize<T>(ReadOnlySpan<byte> span, JsonSerializerOptions options)
         {
             var reader = new JsonReader(span);
             try
             {
                 var deserializer = options.Resolver.GetDeserializeStatic<T>();
-                return deserializer == IntPtr.Zero
+                return deserializer.ToPointer() == null
                     ? options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options)
                     : reader.Deserialize<T>(options, deserializer);
             }
@@ -422,7 +424,7 @@ namespace Utf8Json
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
-        public static T Deserialize<T>(ReadOnlyMemory<byte> buffer, JsonSerializerOptions options, CancellationToken cancellationToken = default)
+        public static unsafe T Deserialize<T>(ReadOnlyMemory<byte> buffer, JsonSerializerOptions options, CancellationToken cancellationToken = default)
         {
             var reader = new JsonReader(buffer.Span)
             {
@@ -431,7 +433,7 @@ namespace Utf8Json
             try
             {
                 var deserializer = options.Resolver.GetDeserializeStatic<T>();
-                return deserializer == IntPtr.Zero
+                return deserializer.ToPointer() == null
                     ? options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options)
                     : reader.Deserialize<T>(options, deserializer);
             }
@@ -451,7 +453,7 @@ namespace Utf8Json
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
-        public static T Deserialize<T>(ReadOnlyMemory<byte> buffer, JsonSerializerOptions options, out int bytesRead, CancellationToken cancellationToken = default)
+        public static unsafe T Deserialize<T>(ReadOnlyMemory<byte> buffer, JsonSerializerOptions options, out int bytesRead, CancellationToken cancellationToken = default)
         {
             var reader = new JsonReader(buffer.Span)
             {
@@ -460,7 +462,7 @@ namespace Utf8Json
             try
             {
                 var deserializer = options.Resolver.GetDeserializeStatic<T>();
-                var result = deserializer == IntPtr.Zero
+                var result = deserializer.ToPointer() == null
                     ? options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options)
                     : reader.Deserialize<T>(options, deserializer);
                 bytesRead = reader.Consumed;
@@ -482,12 +484,12 @@ namespace Utf8Json
         /// <param name="reader">The reader to deserialize from.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
-        public static T Deserialize<T>(ref JsonReader reader)
+        public static unsafe T Deserialize<T>(ref JsonReader reader)
         {
             try
             {
                 var deserializer = DefaultOptions.Resolver.GetDeserializeStatic<T>();
-                return deserializer == IntPtr.Zero
+                return deserializer.ToPointer() == null
                     ? DefaultOptions.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, DefaultOptions)
                     : reader.Deserialize<T>(DefaultOptions, deserializer);
             }
@@ -504,14 +506,14 @@ namespace Utf8Json
         /// <param name="span">The buffer to deserialize from.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
-        public static T Deserialize<T>(ReadOnlySpan<byte> span)
+        public static unsafe T Deserialize<T>(ReadOnlySpan<byte> span)
         {
             var reader = new JsonReader(span);
             try
             {
                 var options = DefaultOptions;
                 var deserializer = options.Resolver.GetDeserializeStatic<T>();
-                return deserializer == IntPtr.Zero
+                return deserializer.ToPointer() == null
                     ? options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options)
                     : reader.Deserialize<T>(options, deserializer);
             }
@@ -529,7 +531,7 @@ namespace Utf8Json
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
-        public static T Deserialize<T>(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+        public static unsafe T Deserialize<T>(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
         {
             var reader = new JsonReader(buffer.Span)
             {
@@ -538,7 +540,7 @@ namespace Utf8Json
             try
             {
                 var deserializer = DefaultOptions.Resolver.GetDeserializeStatic<T>();
-                return deserializer == IntPtr.Zero
+                return deserializer.ToPointer() == null
                     ? DefaultOptions.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, DefaultOptions)
                     : reader.Deserialize<T>(DefaultOptions, deserializer);
             }
@@ -557,7 +559,7 @@ namespace Utf8Json
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
-        public static T Deserialize<T>(ReadOnlyMemory<byte> buffer, out int bytesRead, CancellationToken cancellationToken = default)
+        public static unsafe T Deserialize<T>(ReadOnlyMemory<byte> buffer, out int bytesRead, CancellationToken cancellationToken = default)
         {
             var reader = new JsonReader(buffer.Span)
             {
@@ -566,7 +568,7 @@ namespace Utf8Json
             try
             {
                 var deserializer = DefaultOptions.Resolver.GetDeserializeStatic<T>();
-                var result = deserializer == IntPtr.Zero
+                var result = deserializer.ToPointer() == null
                     ? DefaultOptions.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, DefaultOptions)
                     : reader.Deserialize<T>(DefaultOptions, deserializer);
                 bytesRead = reader.Consumed;

@@ -25,15 +25,15 @@ namespace Utf8Json.Emit
         public PropertyInfo? PropertyInfo { get; private set; }
         public MethodInfo? ShouldSerializeMethodInfo { get; private set; }
 
-        private MethodInfo? getMethod;
-        private MethodInfo? setMethod;
+        private readonly MethodInfo? getMethod;
+        private readonly MethodInfo? setMethod;
 #else
         public FieldInfo FieldInfo { get; private set; }
         public PropertyInfo PropertyInfo { get; private set; }
         public MethodInfo ShouldSerializeMethodInfo { get; private set; }
 
-        private MethodInfo getMethod;
-        private MethodInfo setMethod;
+        private readonly MethodInfo getMethod;
+        private readonly MethodInfo setMethod;
 #endif
 
 

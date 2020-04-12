@@ -15,6 +15,7 @@ using Unity.Collections.LowLevel.Unsafe;
 
 // ReSharper disable StackAllocInsideLoop
 #pragma warning disable SA1649 // File name should match first type name
+#pragma warning disable IDE0060 // 未使用のパラメーターを削除します
 
 namespace Utf8Json.Formatters
 {
@@ -9342,3 +9343,4 @@ namespace Utf8Json.Formatters
     }
 
 }
+#pragma warning restore IDE0060 // 未使用のパラメーターを削除します

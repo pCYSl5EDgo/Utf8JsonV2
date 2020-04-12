@@ -8,7 +8,11 @@ using Utf8Json.Internal;
 
 namespace Utf8Json.Formatters
 {
-    public sealed class KeyValuePairFormatter<TKey, TValue> : IJsonFormatter<KeyValuePair<TKey, TValue>>
+    public sealed unsafe class KeyValuePairFormatter<TKey, TValue>
+        : IJsonFormatter<KeyValuePair<TKey, TValue>>
+#if CSHARP_8_OR_NEWER
+        where TKey : notnull
+#endif
     {
         public void Serialize(ref JsonWriter writer, KeyValuePair<TKey, TValue> value, JsonSerializerOptions options)
         {
@@ -32,7 +36,7 @@ namespace Utf8Json.Formatters
             }
             {
                 var serializer = options.Resolver.GetSerializeStatic<TKey>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     options.Resolver.GetFormatterWithVerify<TKey>().Serialize(ref writer, value.Key, options);
                 }
@@ -58,7 +62,7 @@ namespace Utf8Json.Formatters
             }
             {
                 var serializer = options.Resolver.GetSerializeStatic<TValue>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     options.Resolver.GetFormatterWithVerify<TValue>().Serialize(ref writer, value.Value, options);
                 }
@@ -86,13 +90,13 @@ namespace Utf8Json.Formatters
             var span = reader.ReadPropertyNameSegmentRaw();
 
             var keyDeserializer = options.Resolver.GetDeserializeStatic<TKey>();
-            if (keyDeserializer == IntPtr.Zero)
+            if (keyDeserializer.ToPointer() == null)
             {
                 return WithFormatter(ref reader, options, span);
             }
 
             var valueDeserializer = options.Resolver.GetDeserializeStatic<TValue>();
-            if (valueDeserializer == IntPtr.Zero)
+            if (valueDeserializer.ToPointer() == null)
             {
                 return WithFormatter(ref reader, options, span);
             }

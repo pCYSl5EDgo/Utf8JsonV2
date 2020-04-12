@@ -28,8 +28,10 @@ using System;
 using System.Buffers;
 using System.IO;
 using System.Threading;
-using System.Threading.Tasks;
 using Utf8Json.Internal;
+
+// ReSharper disable BuiltInTypeReferenceStyle
+#pragma warning disable IDE0060 // 未使用のパラメーターを削除します
 
 namespace Utf8Json
 {
@@ -120,3 +122,4 @@ var name = t.Name;#>
 <#}#>
     }
 }
+#pragma warning restore IDE0060 // 未使用のパラメーターを削除します

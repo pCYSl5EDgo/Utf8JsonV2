@@ -3,8 +3,6 @@
 
 // ReSharper disable InvalidXmlDocComment
 
-using System.Diagnostics;
-
 namespace Utf8Json
 {
     public static partial class JsonSerializer

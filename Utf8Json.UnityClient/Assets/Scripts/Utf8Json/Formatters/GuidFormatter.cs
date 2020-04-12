@@ -25,7 +25,9 @@ namespace Utf8Json.Formatters
             return new GuidBits(segment).Value;
         }
 
+#pragma warning disable IDE0060 // 未使用のパラメーターを削除します
         public static void SerializeStatic(ref JsonWriter writer, Guid value, JsonSerializerOptions options)
+#pragma warning restore IDE0060 // 未使用のパラメーターを削除します
         {
             var span = writer.Writer.GetSpan(38);
             span[0] = (byte)'\"';
@@ -35,7 +37,9 @@ namespace Utf8Json.Formatters
             span[37] = (byte)'\"';
         }
 
+#pragma warning disable IDE0060 // 未使用のパラメーターを削除します
         public static Guid DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+#pragma warning restore IDE0060 // 未使用のパラメーターを削除します
         {
             reader.SkipWhiteSpace();
             var segment = reader.ReadNotNullStringSegmentRaw();
@@ -80,7 +84,9 @@ namespace Utf8Json.Formatters
             return new GuidBits(segment).Value;
         }
 
+#pragma warning disable IDE0060 // 未使用のパラメーターを削除します
         public static void SerializeStatic(ref JsonWriter writer, Guid? value, JsonSerializerOptions options)
+#pragma warning restore IDE0060 // 未使用のパラメーターを削除します
         {
             if (value.HasValue)
             {
@@ -98,7 +104,9 @@ namespace Utf8Json.Formatters
             }
         }
 
+#pragma warning disable IDE0060 // 未使用のパラメーターを削除します
         public static Guid? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+#pragma warning restore IDE0060 // 未使用のパラメーターを削除します
         {
             if (reader.ReadIsNull()) return default;
             var segment = reader.ReadNotNullStringSegmentRaw();

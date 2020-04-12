@@ -7,7 +7,7 @@ using StaticFunctionPointerHelper;
 
 namespace Utf8Json.Formatters
 {
-    public sealed class AddGenericClassCollectionFormatter<T, TCollection>
+    public sealed unsafe class AddGenericClassCollectionFormatter<T, TCollection>
 #if CSHARP_8_OR_NEWER
     : IOverwriteJsonFormatter<TCollection?>
 #else
@@ -46,7 +46,7 @@ namespace Utf8Json.Formatters
                 }
 
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     var formatter = options.Resolver.GetFormatterWithVerify<T>();
                     formatter.Serialize(ref writer, enumerator.Current, options);
@@ -101,7 +101,7 @@ namespace Utf8Json.Formatters
             var buffer = new TCollection();
             var count = 0;
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
@@ -137,7 +137,7 @@ namespace Utf8Json.Formatters
             var count = 0;
 
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
@@ -167,7 +167,7 @@ namespace Utf8Json.Formatters
         }
     }
 
-    public sealed class OverwriteGenericClassCollectionFormatter<T, TCollection>
+    public sealed unsafe class OverwriteGenericClassCollectionFormatter<T, TCollection>
 #if CSHARP_8_OR_NEWER
     : IOverwriteJsonFormatter<TCollection?>
 #else
@@ -206,7 +206,7 @@ namespace Utf8Json.Formatters
                 }
 
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     var formatter = options.Resolver.GetFormatterWithVerify<T>();
                     formatter.Serialize(ref writer, enumerator.Current, options);
@@ -261,7 +261,7 @@ namespace Utf8Json.Formatters
             var buffer = new TCollection();
             var count = 0;
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
@@ -304,7 +304,7 @@ namespace Utf8Json.Formatters
                 value.Clear();
             }
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 var count = 0;
@@ -326,7 +326,7 @@ namespace Utf8Json.Formatters
         }
     }
 
-    public sealed class AddLinkedListFormatter<T>
+    public sealed unsafe class AddLinkedListFormatter<T>
 #if CSHARP_8_OR_NEWER
     : IOverwriteJsonFormatter<LinkedList<T>?>
 #else
@@ -364,7 +364,7 @@ namespace Utf8Json.Formatters
                 }
 
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     var formatter = options.Resolver.GetFormatterWithVerify<T>();
                     formatter.Serialize(ref writer, enumerator.Current, options);
@@ -419,7 +419,7 @@ namespace Utf8Json.Formatters
             var buffer = new LinkedList<T>();
             var count = 0;
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
@@ -455,7 +455,7 @@ namespace Utf8Json.Formatters
             var count = 0;
 
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
@@ -485,7 +485,7 @@ namespace Utf8Json.Formatters
         }
     }
 
-    public sealed class OverwriteLinkedListFormatter<T>
+    public sealed unsafe class OverwriteLinkedListFormatter<T>
 #if CSHARP_8_OR_NEWER
     : IOverwriteJsonFormatter<LinkedList<T>?>
 #else
@@ -523,7 +523,7 @@ namespace Utf8Json.Formatters
                 }
 
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     var formatter = options.Resolver.GetFormatterWithVerify<T>();
                     formatter.Serialize(ref writer, enumerator.Current, options);
@@ -578,7 +578,7 @@ namespace Utf8Json.Formatters
             var buffer = new LinkedList<T>();
             var count = 0;
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
@@ -621,7 +621,7 @@ namespace Utf8Json.Formatters
                 value.Clear();
             }
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 var count = 0;
@@ -643,7 +643,7 @@ namespace Utf8Json.Formatters
         }
     }
 
-    public sealed class AddQueueFormatter<T>
+    public sealed unsafe class AddQueueFormatter<T>
 #if CSHARP_8_OR_NEWER
     : IOverwriteJsonFormatter<Queue<T>?>
 #else
@@ -681,7 +681,7 @@ namespace Utf8Json.Formatters
                 }
 
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     var formatter = options.Resolver.GetFormatterWithVerify<T>();
                     formatter.Serialize(ref writer, enumerator.Current, options);
@@ -736,7 +736,7 @@ namespace Utf8Json.Formatters
             var buffer = new Queue<T>();
             var count = 0;
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
@@ -772,7 +772,7 @@ namespace Utf8Json.Formatters
             var count = 0;
 
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
@@ -802,7 +802,7 @@ namespace Utf8Json.Formatters
         }
     }
 
-    public sealed class OverwriteQueueFormatter<T>
+    public sealed unsafe class OverwriteQueueFormatter<T>
 #if CSHARP_8_OR_NEWER
     : IOverwriteJsonFormatter<Queue<T>?>
 #else
@@ -840,7 +840,7 @@ namespace Utf8Json.Formatters
                 }
 
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     var formatter = options.Resolver.GetFormatterWithVerify<T>();
                     formatter.Serialize(ref writer, enumerator.Current, options);
@@ -895,7 +895,7 @@ namespace Utf8Json.Formatters
             var buffer = new Queue<T>();
             var count = 0;
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
@@ -938,7 +938,7 @@ namespace Utf8Json.Formatters
                 value.Clear();
             }
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 var count = 0;
@@ -960,7 +960,7 @@ namespace Utf8Json.Formatters
         }
     }
 
-    public sealed class AddStackFormatter<T>
+    public sealed unsafe class AddStackFormatter<T>
 #if CSHARP_8_OR_NEWER
     : IOverwriteJsonFormatter<Stack<T>?>
 #else
@@ -998,7 +998,7 @@ namespace Utf8Json.Formatters
                 }
 
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     var formatter = options.Resolver.GetFormatterWithVerify<T>();
                     formatter.Serialize(ref writer, enumerator.Current, options);
@@ -1053,7 +1053,7 @@ namespace Utf8Json.Formatters
             var buffer = new Stack<T>();
             var count = 0;
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
@@ -1089,7 +1089,7 @@ namespace Utf8Json.Formatters
             var count = 0;
 
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
@@ -1119,7 +1119,7 @@ namespace Utf8Json.Formatters
         }
     }
 
-    public sealed class OverwriteStackFormatter<T>
+    public sealed unsafe class OverwriteStackFormatter<T>
 #if CSHARP_8_OR_NEWER
     : IOverwriteJsonFormatter<Stack<T>?>
 #else
@@ -1157,7 +1157,7 @@ namespace Utf8Json.Formatters
                 }
 
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     var formatter = options.Resolver.GetFormatterWithVerify<T>();
                     formatter.Serialize(ref writer, enumerator.Current, options);
@@ -1212,7 +1212,7 @@ namespace Utf8Json.Formatters
             var buffer = new Stack<T>();
             var count = 0;
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
@@ -1255,7 +1255,7 @@ namespace Utf8Json.Formatters
                 value.Clear();
             }
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 var count = 0;
@@ -1277,7 +1277,7 @@ namespace Utf8Json.Formatters
         }
     }
 
-    public sealed class AddHashSetFormatter<T>
+    public sealed unsafe class AddHashSetFormatter<T>
 #if CSHARP_8_OR_NEWER
     : IOverwriteJsonFormatter<HashSet<T>?>
 #else
@@ -1315,7 +1315,7 @@ namespace Utf8Json.Formatters
                 }
 
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     var formatter = options.Resolver.GetFormatterWithVerify<T>();
                     formatter.Serialize(ref writer, enumerator.Current, options);
@@ -1370,7 +1370,7 @@ namespace Utf8Json.Formatters
             var buffer = new HashSet<T>();
             var count = 0;
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
@@ -1406,7 +1406,7 @@ namespace Utf8Json.Formatters
             var count = 0;
 
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
@@ -1436,7 +1436,7 @@ namespace Utf8Json.Formatters
         }
     }
 
-    public sealed class OverwriteHashSetFormatter<T>
+    public sealed unsafe class OverwriteHashSetFormatter<T>
 #if CSHARP_8_OR_NEWER
     : IOverwriteJsonFormatter<HashSet<T>?>
 #else
@@ -1474,7 +1474,7 @@ namespace Utf8Json.Formatters
                 }
 
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     var formatter = options.Resolver.GetFormatterWithVerify<T>();
                     formatter.Serialize(ref writer, enumerator.Current, options);
@@ -1529,7 +1529,7 @@ namespace Utf8Json.Formatters
             var buffer = new HashSet<T>();
             var count = 0;
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
@@ -1572,7 +1572,7 @@ namespace Utf8Json.Formatters
                 value.Clear();
             }
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 var count = 0;
@@ -1594,7 +1594,7 @@ namespace Utf8Json.Formatters
         }
     }
 
-    public sealed class AddInterfaceListFormatter<T>
+    public sealed unsafe class AddInterfaceListFormatter<T>
 #if CSHARP_8_OR_NEWER
     : IOverwriteJsonFormatter<IList<T>?>
 #else
@@ -1632,7 +1632,7 @@ namespace Utf8Json.Formatters
                 }
 
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     var formatter = options.Resolver.GetFormatterWithVerify<T>();
                     formatter.Serialize(ref writer, enumerator.Current, options);
@@ -1687,7 +1687,7 @@ namespace Utf8Json.Formatters
             var buffer = new List<T>();
             var count = 0;
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
@@ -1723,7 +1723,7 @@ namespace Utf8Json.Formatters
             var count = 0;
 
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
@@ -1753,7 +1753,7 @@ namespace Utf8Json.Formatters
         }
     }
 
-    public sealed class OverwriteInterfaceListFormatter<T>
+    public sealed unsafe class OverwriteInterfaceListFormatter<T>
 #if CSHARP_8_OR_NEWER
     : IOverwriteJsonFormatter<IList<T>?>
 #else
@@ -1791,7 +1791,7 @@ namespace Utf8Json.Formatters
                 }
 
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     var formatter = options.Resolver.GetFormatterWithVerify<T>();
                     formatter.Serialize(ref writer, enumerator.Current, options);
@@ -1846,7 +1846,7 @@ namespace Utf8Json.Formatters
             var buffer = new List<T>();
             var count = 0;
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
@@ -1889,7 +1889,7 @@ namespace Utf8Json.Formatters
                 value.Clear();
             }
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 var count = 0;
@@ -1911,7 +1911,7 @@ namespace Utf8Json.Formatters
         }
     }
 
-    public sealed class AddInterfaceCollectionFormatter<T>
+    public sealed unsafe class AddInterfaceCollectionFormatter<T>
 #if CSHARP_8_OR_NEWER
     : IOverwriteJsonFormatter<ICollection<T>?>
 #else
@@ -1949,7 +1949,7 @@ namespace Utf8Json.Formatters
                 }
 
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     var formatter = options.Resolver.GetFormatterWithVerify<T>();
                     formatter.Serialize(ref writer, enumerator.Current, options);
@@ -2004,7 +2004,7 @@ namespace Utf8Json.Formatters
             var buffer = new List<T>();
             var count = 0;
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
@@ -2040,7 +2040,7 @@ namespace Utf8Json.Formatters
             var count = 0;
 
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
@@ -2070,7 +2070,7 @@ namespace Utf8Json.Formatters
         }
     }
 
-    public sealed class OverwriteInterfaceCollectionFormatter<T>
+    public sealed unsafe class OverwriteInterfaceCollectionFormatter<T>
 #if CSHARP_8_OR_NEWER
     : IOverwriteJsonFormatter<ICollection<T>?>
 #else
@@ -2108,7 +2108,7 @@ namespace Utf8Json.Formatters
                 }
 
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     var formatter = options.Resolver.GetFormatterWithVerify<T>();
                     formatter.Serialize(ref writer, enumerator.Current, options);
@@ -2163,7 +2163,7 @@ namespace Utf8Json.Formatters
             var buffer = new List<T>();
             var count = 0;
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
@@ -2206,7 +2206,7 @@ namespace Utf8Json.Formatters
                 value.Clear();
             }
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer == IntPtr.Zero)
+            if (deserializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 var count = 0;

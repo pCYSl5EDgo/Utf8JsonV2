@@ -1,4 +1,7 @@
-﻿using System.Linq;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
@@ -36,6 +39,7 @@ namespace StaticFunctionPointerImplementor
             }
         }
 
+        // ReSharper disable once UnusedMember.Local
         private static void EmbedLoadFunctionPointerDirectly(MethodDefinition method)
         {
             foreach (var instruction in method.Body.Instructions)

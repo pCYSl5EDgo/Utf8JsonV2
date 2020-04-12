@@ -18,9 +18,7 @@ namespace Utf8Json.Formatters
 #endif
     {
 #if CSHARP_8_OR_NEWER
-#pragma warning disable 8614
         public void Serialize(ref JsonWriter writer, TDictionary? value, JsonSerializerOptions options)
-#pragma warning restore 8614
 #else
         public void Serialize(ref JsonWriter writer, TDictionary value, JsonSerializerOptions options)
 #endif
@@ -29,9 +27,7 @@ namespace Utf8Json.Formatters
         }
 
 #if CSHARP_8_OR_NEWER
-#pragma warning disable 8614
         public static void SerializeStatic(ref JsonWriter writer, TDictionary? value, JsonSerializerOptions options)
-#pragma warning restore 8614
 #else
         public static void SerializeStatic(ref JsonWriter writer, TDictionary value, JsonSerializerOptions options)
 #endif
@@ -104,10 +100,9 @@ namespace Utf8Json.Formatters
         END:
             writer.WriteEndObject();
         }
+
 #if CSHARP_8_OR_NEWER
-#pragma warning disable 8613
         public TDictionary? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
-#pragma warning restore 8613
 #else
         public TDictionary Deserialize(ref JsonReader reader, JsonSerializerOptions options)
 #endif
@@ -116,9 +111,7 @@ namespace Utf8Json.Formatters
         }
 
 #if CSHARP_8_OR_NEWER
-#pragma warning disable 8613
         public static TDictionary? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
-#pragma warning restore 8613
 #else
         public static TDictionary DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #endif

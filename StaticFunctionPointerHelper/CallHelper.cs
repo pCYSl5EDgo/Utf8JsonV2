@@ -12,6 +12,7 @@ namespace StaticFunctionPointerHelper
 {
     public static class CallHelper
     {
+#pragma warning disable IDE0060 // 未使用のパラメーターを削除します
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Serialize<T>(this ref JsonWriter writer, T value, JsonSerializerOptions options, IntPtr functionPointer)
         {
@@ -22,5 +23,6 @@ namespace StaticFunctionPointerHelper
         {
             return default;
         }
+#pragma warning restore IDE0060 // 未使用のパラメーターを削除します
     }
 }

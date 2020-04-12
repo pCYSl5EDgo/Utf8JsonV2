@@ -1,13 +1,12 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
 using System.Threading.Tasks;
 using StaticFunctionPointerHelper;
 
 namespace Utf8Json.Formatters
 {
-    public sealed class TaskValueFormatter<T>
+    public sealed unsafe class TaskValueFormatter<T>
         : IJsonFormatter<Task<T>>
     {
         public void Serialize(ref JsonWriter writer, Task<T> value, JsonSerializerOptions options)
@@ -21,7 +20,7 @@ namespace Utf8Json.Formatters
 
             // value.Result -> wait...!
             var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer == IntPtr.Zero)
+            if (serializer.ToPointer() == null)
             {
                 options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value.Result, options);
             }
@@ -48,7 +47,7 @@ namespace Utf8Json.Formatters
             }
 
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            var v = deserializer == IntPtr.Zero
+            var v = deserializer.ToPointer() == null
                 ? options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options)
                 : reader.Deserialize<T>(options, deserializer);
             return Task.FromResult(v);

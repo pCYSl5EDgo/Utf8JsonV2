@@ -8,7 +8,12 @@ using StaticFunctionPointerHelper;
 
 namespace Utf8Json.Formatters
 {
-    public sealed class InterfaceEnumerableFormatter<T> : IJsonFormatter<IEnumerable<T>>
+    public sealed unsafe class InterfaceEnumerableFormatter<T>
+#if CSHARP_8_OR_NEWER
+        : IJsonFormatter<IEnumerable<T>?>
+#else
+        : IJsonFormatter<IEnumerable<T>>
+#endif
     {
 #if CSHARP_8_OR_NEWER
         public void Serialize(ref JsonWriter writer, IEnumerable<T>? value, JsonSerializerOptions options)
@@ -41,7 +46,7 @@ namespace Utf8Json.Formatters
                 }
 
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     var formatter = options.Resolver.GetFormatterWithVerify<T>();
                     formatter.Serialize(ref writer, enumerator.Current, options);
@@ -73,9 +78,7 @@ namespace Utf8Json.Formatters
         }
 
 #if CSHARP_8_OR_NEWER
-#pragma warning disable 8613
         public IEnumerable<T>? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
-#pragma warning restore 8613
 #else
         public IEnumerable<T> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
 #endif
@@ -84,9 +87,7 @@ namespace Utf8Json.Formatters
         }
 
 #if CSHARP_8_OR_NEWER
-#pragma warning disable 8613
         public static IEnumerable<T>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
-#pragma warning restore 8613
 #else
         public static IEnumerable<T> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #endif
@@ -105,7 +106,7 @@ namespace Utf8Json.Formatters
             try
             {
                 var deserializer = options.Resolver.GetDeserializeStatic<T>();
-                if (deserializer == IntPtr.Zero)
+                if (deserializer.ToPointer() == null)
                 {
                     var formatter = options.Resolver.GetFormatterWithVerify<T>();
                     while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))

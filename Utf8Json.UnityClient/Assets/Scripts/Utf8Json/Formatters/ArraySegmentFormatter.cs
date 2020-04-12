@@ -12,7 +12,7 @@ namespace Utf8Json.Formatters
         public void Serialize(ref JsonWriter writer, ArraySegment<T> value, JsonSerializerOptions options)
             => SerializeStatic(ref writer, value, options);
 
-        public static void SerializeStatic(ref JsonWriter writer, ArraySegment<T> value, JsonSerializerOptions options)
+        public static unsafe void SerializeStatic(ref JsonWriter writer, ArraySegment<T> value, JsonSerializerOptions options)
         {
             if (value.Array == null)
             {
@@ -29,7 +29,7 @@ namespace Utf8Json.Formatters
             }
 
             var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer == IntPtr.Zero)
+            if (serializer.ToPointer() == null)
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<T>();
                 formatter.Serialize(ref writer, span[0], options);
@@ -47,7 +47,7 @@ namespace Utf8Json.Formatters
                 for (var i = 1; i < span.Length; i++)
                 {
                     writer.WriteValueSeparator();
-                    writer.Serialize(span[i], options, IntPtr.Zero);
+                    writer.Serialize(span[i], options, serializer);
                 }
             }
 
@@ -58,7 +58,7 @@ namespace Utf8Json.Formatters
         public ArraySegment<T> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
             => DeserializeStatic(ref reader, options);
 
-        public static ArraySegment<T> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+        public static unsafe ArraySegment<T> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
             if (reader.ReadIsNull())
             {
@@ -73,7 +73,7 @@ namespace Utf8Json.Formatters
             try
             {
                 var deserializer = options.Resolver.GetDeserializeStatic<T>();
-                if (deserializer == IntPtr.Zero)
+                if (deserializer.ToPointer() == null)
                 {
                     var formatter = options.Resolver.GetFormatterWithVerify<T>();
                     while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))

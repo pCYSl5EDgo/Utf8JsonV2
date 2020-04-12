@@ -3,5 +3,6 @@
 /**/obj/*
 /**/Temp/*
 /**/Library/*
+/**/BenchmarkDotNet.Artifacts/*
 *.user
 *.editorconfig

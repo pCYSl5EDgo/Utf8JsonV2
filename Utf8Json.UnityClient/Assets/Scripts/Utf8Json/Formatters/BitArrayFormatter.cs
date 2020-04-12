@@ -2,7 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Buffers;
 using System.Collections;
+using System.Runtime.InteropServices;
 
 #if UNITY_2018_4_OR_NEWER
 using Unity.Collections;
@@ -36,11 +38,13 @@ namespace Utf8Json.Formatters
             return DeserializeStatic(ref reader, options);
         }
 
+#pragma warning disable IDE0060 // 未使用のパラメーターを削除します
 #if CSHARP_8_OR_NEWER
         public static void SerializeStatic(ref JsonWriter writer, BitArray? value, JsonSerializerOptions options)
 #else
         public static void SerializeStatic(ref JsonWriter writer, BitArray value, JsonSerializerOptions options)
 #endif
+#pragma warning restore IDE0060 // 未使用のパラメーターを削除します
         {
             if (value == null)
             {
@@ -115,36 +119,46 @@ namespace Utf8Json.Formatters
                 return new BitArray(answer);
             }
 #else
-            Span<bool> span = stackalloc bool[16];
+            var pool = ArrayPool<byte>.Shared;
+            var array = pool.Rent(32);
+            var span = MemoryMarshal.Cast<byte, bool>(array.AsSpan());
             var count = 0;
-            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+            try
             {
-                if (span.Length < count)
+                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
                 {
-                    Span<bool> tmp = stackalloc bool[span.Length << 1];
-                    span.CopyTo(tmp);
-                    span = tmp;
+                    if (span.Length < count)
+                    {
+                        var tmp = pool.Rent(count);
+                        var tmpSpan = MemoryMarshal.Cast<byte, bool>(tmp.AsSpan());
+                        span.CopyTo(tmpSpan.Slice(0, span.Length));
+                        span = tmpSpan;
+                        pool.Return(array);
+                    }
+
+                    span[count - 1] = reader.ReadBoolean();
                 }
 
-                span[count - 1] = reader.ReadBoolean();
-            }
-
-            if (count == 0)
-            {
-                return new BitArray(Array.Empty<bool>());
-            }
-
-            var answer = new bool[count];
-            unsafe
-            {
-                fixed (void* dst = &answer[0])
-                fixed (void* src = &span[0])
+                if (count == 0)
                 {
-                    Buffer.MemoryCopy(src, dst, count, count);
+                    return new BitArray(Array.Empty<bool>());
                 }
-            }
 
-            return new BitArray(answer);
+                var answer = new bool[count];
+                unsafe
+                {
+                    fixed (void* dst = &answer[0])
+                    fixed (void* src = &span[0])
+                    {
+                        Buffer.MemoryCopy(src, dst, count, count);
+                    }
+                }
+                return new BitArray(answer);
+            }
+            finally
+            {
+                pool.Return(array);
+            }
 #endif
         }
     }

@@ -12,13 +12,13 @@ using Utf8Json.Internal;
 
 namespace Utf8Json.Formatters
 {
-    public sealed class NameEnumFormatter<T> : IJsonFormatter<T>, IObjectPropertyNameFormatter<T>
+    public sealed unsafe class NameEnumFormatter<T> : IJsonFormatter<T>, IObjectPropertyNameFormatter<T>
         where T : unmanaged, Enum
     {
         private static readonly ByteArrayStringEnumValueHashTable<T> nameValueMapping;
         private static readonly Dictionary<T, string> valueNameMapping;
 
-        static unsafe NameEnumFormatter()
+        static NameEnumFormatter()
         {
             var type = typeof(T);
 
@@ -240,7 +240,9 @@ namespace Utf8Json.Formatters
             SerializeStatic(ref writer, value, options);
         }
 
+#pragma warning disable IDE0060 // 未使用のパラメーターを削除します
         public static void SerializeStatic(ref JsonWriter writer, T value, JsonSerializerOptions options)
+#pragma warning restore IDE0060 // 未使用のパラメーターを削除します
         {
             if (!valueNameMapping.TryGetValue(value, out var name))
             {

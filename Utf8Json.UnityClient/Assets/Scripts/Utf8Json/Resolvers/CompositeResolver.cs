@@ -120,10 +120,10 @@ namespace Utf8Json.Resolvers
                 return Unsafe.As<IJsonFormatter<T>>(formatter);
             }
 
-            public IntPtr GetSerializeStatic<T>()
+            public unsafe IntPtr GetSerializeStatic<T>()
             {
                 var (answer, _) = functionsCache[typeof(T)];
-                if (answer != IntPtr.Zero)
+                if (answer.ToPointer() != null)
                 {
                     return answer;
                 }
@@ -131,7 +131,7 @@ namespace Utf8Json.Resolvers
                 foreach (var resolver in subResolvers)
                 {
                     answer = resolver.GetSerializeStatic<T>();
-                    if (answer == IntPtr.Zero)
+                    if (answer.ToPointer() == null)
                     {
                         continue;
                     }
@@ -141,13 +141,13 @@ namespace Utf8Json.Resolvers
                     return answer;
                 }
 
-                return IntPtr.Zero;
+                return new IntPtr(null);
             }
 
-            public IntPtr GetDeserializeStatic<T>()
+            public unsafe IntPtr GetDeserializeStatic<T>()
             {
                 var (_, answer) = functionsCache[typeof(T)];
-                if (answer != IntPtr.Zero)
+                if (answer.ToPointer() != null)
                 {
                     return answer;
                 }
@@ -155,7 +155,7 @@ namespace Utf8Json.Resolvers
                 foreach (var resolver in subResolvers)
                 {
                     answer = resolver.GetDeserializeStatic<T>();
-                    if (answer == IntPtr.Zero)
+                    if (answer.ToPointer() == null)
                     {
                         continue;
                     }
@@ -165,7 +165,7 @@ namespace Utf8Json.Resolvers
                     return answer;
                 }
 
-                return IntPtr.Zero;
+                return new IntPtr(null);
             }
         }
     }

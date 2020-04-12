@@ -10,7 +10,9 @@ namespace Utf8Json.Formatters
             writer.WriteNull();
         }
 
+#pragma warning disable IDE0060 // 未使用のパラメーターを削除します
         public static void SerializeStatic(ref JsonWriter writer, T value, JsonSerializerOptions options)
+#pragma warning restore IDE0060 // 未使用のパラメーターを削除します
         {
             writer.WriteNull();
         }

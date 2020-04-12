@@ -1,12 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
 using StaticFunctionPointerHelper;
 
 namespace Utf8Json.Formatters
 {
-    public sealed class NullableFormatter<T> : IJsonFormatter<T?>
+    public sealed unsafe class NullableFormatter<T> : IJsonFormatter<T?>
         where T : struct
     {
         public void Serialize(ref JsonWriter writer, T? value, JsonSerializerOptions options)
@@ -23,7 +22,7 @@ namespace Utf8Json.Formatters
             else
             {
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer == IntPtr.Zero)
+                if (serializer.ToPointer() == null)
                 {
                     options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value.Value, options);
                 }
@@ -47,7 +46,7 @@ namespace Utf8Json.Formatters
             }
 
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            return deserializer == IntPtr.Zero
+            return deserializer.ToPointer() == null
                 ? options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options)
                 : reader.Deserialize<T>(options, deserializer);
         }

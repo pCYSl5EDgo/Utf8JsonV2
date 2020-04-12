@@ -5,8 +5,10 @@ using System;
 using System.Buffers;
 using System.IO;
 using System.Threading;
-using System.Threading.Tasks;
 using Utf8Json.Internal;
+
+// ReSharper disable BuiltInTypeReferenceStyle
+#pragma warning disable IDE0060 // 未使用のパラメーターを削除します
 
 namespace Utf8Json
 {
@@ -61,7 +63,9 @@ namespace Utf8Json
 #if SPAN_BUILTIN
         public static void Serialize(Stream stream, Byte value)
         {
+#pragma warning disable IDE0063 // 単純な 'using' ステートメントを使用する
             using (var sequenceRental = SequencePool.Shared.Rent())
+#pragma warning restore IDE0063 // 単純な 'using' ステートメントを使用する
             {
                 var fastWriter = new JsonWriter(sequenceRental.Value)
                 {
@@ -141,7 +145,9 @@ namespace Utf8Json
 #if SPAN_BUILTIN
         public static void Serialize(Stream stream, SByte value)
         {
+#pragma warning disable IDE0063 // 単純な 'using' ステートメントを使用する
             using (var sequenceRental = SequencePool.Shared.Rent())
+#pragma warning restore IDE0063 // 単純な 'using' ステートメントを使用する
             {
                 var fastWriter = new JsonWriter(sequenceRental.Value)
                 {
@@ -221,7 +227,9 @@ namespace Utf8Json
 #if SPAN_BUILTIN
         public static void Serialize(Stream stream, Int16 value)
         {
+#pragma warning disable IDE0063 // 単純な 'using' ステートメントを使用する
             using (var sequenceRental = SequencePool.Shared.Rent())
+#pragma warning restore IDE0063 // 単純な 'using' ステートメントを使用する
             {
                 var fastWriter = new JsonWriter(sequenceRental.Value)
                 {
@@ -301,7 +309,9 @@ namespace Utf8Json
 #if SPAN_BUILTIN
         public static void Serialize(Stream stream, Int32 value)
         {
+#pragma warning disable IDE0063 // 単純な 'using' ステートメントを使用する
             using (var sequenceRental = SequencePool.Shared.Rent())
+#pragma warning restore IDE0063 // 単純な 'using' ステートメントを使用する
             {
                 var fastWriter = new JsonWriter(sequenceRental.Value)
                 {
@@ -381,7 +391,9 @@ namespace Utf8Json
 #if SPAN_BUILTIN
         public static void Serialize(Stream stream, Int64 value)
         {
+#pragma warning disable IDE0063 // 単純な 'using' ステートメントを使用する
             using (var sequenceRental = SequencePool.Shared.Rent())
+#pragma warning restore IDE0063 // 単純な 'using' ステートメントを使用する
             {
                 var fastWriter = new JsonWriter(sequenceRental.Value)
                 {
@@ -461,7 +473,9 @@ namespace Utf8Json
 #if SPAN_BUILTIN
         public static void Serialize(Stream stream, UInt16 value)
         {
+#pragma warning disable IDE0063 // 単純な 'using' ステートメントを使用する
             using (var sequenceRental = SequencePool.Shared.Rent())
+#pragma warning restore IDE0063 // 単純な 'using' ステートメントを使用する
             {
                 var fastWriter = new JsonWriter(sequenceRental.Value)
                 {
@@ -541,7 +555,9 @@ namespace Utf8Json
 #if SPAN_BUILTIN
         public static void Serialize(Stream stream, UInt32 value)
         {
+#pragma warning disable IDE0063 // 単純な 'using' ステートメントを使用する
             using (var sequenceRental = SequencePool.Shared.Rent())
+#pragma warning restore IDE0063 // 単純な 'using' ステートメントを使用する
             {
                 var fastWriter = new JsonWriter(sequenceRental.Value)
                 {
@@ -621,7 +637,9 @@ namespace Utf8Json
 #if SPAN_BUILTIN
         public static void Serialize(Stream stream, UInt64 value)
         {
+#pragma warning disable IDE0063 // 単純な 'using' ステートメントを使用する
             using (var sequenceRental = SequencePool.Shared.Rent())
+#pragma warning restore IDE0063 // 単純な 'using' ステートメントを使用する
             {
                 var fastWriter = new JsonWriter(sequenceRental.Value)
                 {
@@ -701,7 +719,9 @@ namespace Utf8Json
 #if SPAN_BUILTIN
         public static void Serialize(Stream stream, Char value)
         {
+#pragma warning disable IDE0063 // 単純な 'using' ステートメントを使用する
             using (var sequenceRental = SequencePool.Shared.Rent())
+#pragma warning restore IDE0063 // 単純な 'using' ステートメントを使用する
             {
                 var fastWriter = new JsonWriter(sequenceRental.Value)
                 {
@@ -781,7 +801,9 @@ namespace Utf8Json
 #if SPAN_BUILTIN
         public static void Serialize(Stream stream, String value)
         {
+#pragma warning disable IDE0063 // 単純な 'using' ステートメントを使用する
             using (var sequenceRental = SequencePool.Shared.Rent())
+#pragma warning restore IDE0063 // 単純な 'using' ステートメントを使用する
             {
                 var fastWriter = new JsonWriter(sequenceRental.Value)
                 {
@@ -861,7 +883,9 @@ namespace Utf8Json
 #if SPAN_BUILTIN
         public static void Serialize(Stream stream, Boolean value)
         {
+#pragma warning disable IDE0063 // 単純な 'using' ステートメントを使用する
             using (var sequenceRental = SequencePool.Shared.Rent())
+#pragma warning restore IDE0063 // 単純な 'using' ステートメントを使用する
             {
                 var fastWriter = new JsonWriter(sequenceRental.Value)
                 {
@@ -941,7 +965,9 @@ namespace Utf8Json
 #if SPAN_BUILTIN
         public static void Serialize(Stream stream, Single value)
         {
+#pragma warning disable IDE0063 // 単純な 'using' ステートメントを使用する
             using (var sequenceRental = SequencePool.Shared.Rent())
+#pragma warning restore IDE0063 // 単純な 'using' ステートメントを使用する
             {
                 var fastWriter = new JsonWriter(sequenceRental.Value)
                 {
@@ -1054,3 +1080,4 @@ namespace Utf8Json
 
     }
 }
+#pragma warning restore IDE0060 // 未使用のパラメーターを削除します
