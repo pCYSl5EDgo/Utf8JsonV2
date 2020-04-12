@@ -8,7 +8,7 @@ using System.Threading;
 using Utf8Json.Internal;
 
 // ReSharper disable BuiltInTypeReferenceStyle
-#pragma warning disable IDE0060 // –¢g—p‚Ìƒpƒ‰ƒ[ƒ^[‚ğíœ‚µ‚Ü‚·
+#pragma warning disable IDE0060 // æœªä½¿ç”¨ã®ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ãƒ¼ã‚’å‰Šé™¤ã—ã¾ã™
 
 namespace Utf8Json
 {
@@ -1121,4 +1121,4 @@ namespace Utf8Json
 
     }
 }
-#pragma warning restore IDE0060 // –¢g—p‚Ìƒpƒ‰ƒ[ƒ^[‚ğíœ‚µ‚Ü‚·
+#pragma warning restore IDE0060 // æœªä½¿ç”¨ã®ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ãƒ¼ã‚’å‰Šé™¤ã—ã¾ã™
