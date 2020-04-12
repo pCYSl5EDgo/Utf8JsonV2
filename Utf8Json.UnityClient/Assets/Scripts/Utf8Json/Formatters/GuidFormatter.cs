@@ -25,9 +25,9 @@ namespace Utf8Json.Formatters
             return new GuidBits(segment).Value;
         }
 
-#pragma warning disable IDE0060 // –¢g—p‚Ìƒpƒ‰ƒ[ƒ^[‚ğíœ‚µ‚Ü‚·
+#pragma warning disable IDE0060 // æœªä½¿ç”¨ã®ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ãƒ¼ã‚’å‰Šé™¤ã—ã¾ã™
         public static void SerializeStatic(ref JsonWriter writer, Guid value, JsonSerializerOptions options)
-#pragma warning restore IDE0060 // –¢g—p‚Ìƒpƒ‰ƒ[ƒ^[‚ğíœ‚µ‚Ü‚·
+#pragma warning restore IDE0060 // æœªä½¿ç”¨ã®ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ãƒ¼ã‚’å‰Šé™¤ã—ã¾ã™
         {
             var span = writer.Writer.GetSpan(38);
             span[0] = (byte)'\"';
@@ -37,9 +37,9 @@ namespace Utf8Json.Formatters
             span[37] = (byte)'\"';
         }
 
-#pragma warning disable IDE0060 // –¢g—p‚Ìƒpƒ‰ƒ[ƒ^[‚ğíœ‚µ‚Ü‚·
+#pragma warning disable IDE0060 // æœªä½¿ç”¨ã®ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ãƒ¼ã‚’å‰Šé™¤ã—ã¾ã™
         public static Guid DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
-#pragma warning restore IDE0060 // –¢g—p‚Ìƒpƒ‰ƒ[ƒ^[‚ğíœ‚µ‚Ü‚·
+#pragma warning restore IDE0060 // æœªä½¿ç”¨ã®ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ãƒ¼ã‚’å‰Šé™¤ã—ã¾ã™
         {
             reader.SkipWhiteSpace();
             var segment = reader.ReadNotNullStringSegmentRaw();
@@ -84,9 +84,9 @@ namespace Utf8Json.Formatters
             return new GuidBits(segment).Value;
         }
 
-#pragma warning disable IDE0060 // –¢g—p‚Ìƒpƒ‰ƒ[ƒ^[‚ğíœ‚µ‚Ü‚·
+#pragma warning disable IDE0060 // æœªä½¿ç”¨ã®ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ãƒ¼ã‚’å‰Šé™¤ã—ã¾ã™
         public static void SerializeStatic(ref JsonWriter writer, Guid? value, JsonSerializerOptions options)
-#pragma warning restore IDE0060 // –¢g—p‚Ìƒpƒ‰ƒ[ƒ^[‚ğíœ‚µ‚Ü‚·
+#pragma warning restore IDE0060 // æœªä½¿ç”¨ã®ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ãƒ¼ã‚’å‰Šé™¤ã—ã¾ã™
         {
             if (value.HasValue)
             {
@@ -104,9 +104,9 @@ namespace Utf8Json.Formatters
             }
         }
 
-#pragma warning disable IDE0060 // –¢g—p‚Ìƒpƒ‰ƒ[ƒ^[‚ğíœ‚µ‚Ü‚·
+#pragma warning disable IDE0060 // æœªä½¿ç”¨ã®ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ãƒ¼ã‚’å‰Šé™¤ã—ã¾ã™
         public static Guid? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
-#pragma warning restore IDE0060 // –¢g—p‚Ìƒpƒ‰ƒ[ƒ^[‚ğíœ‚µ‚Ü‚·
+#pragma warning restore IDE0060 // æœªä½¿ç”¨ã®ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ãƒ¼ã‚’å‰Šé™¤ã—ã¾ã™
         {
             if (reader.ReadIsNull()) return default;
             var segment = reader.ReadNotNullStringSegmentRaw();

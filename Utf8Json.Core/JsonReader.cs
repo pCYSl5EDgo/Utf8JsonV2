@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved.
+// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
@@ -79,19 +79,19 @@ namespace Utf8Json
         public bool ReadIsNull()
         {
             SkipWhiteSpace();
-            if (!Reader.TryPeek(out var b) || b != 'n')
+
+            var span = Reader.UnreadSpan;
+            if (span.Length < 4 || span[0] != 'n')
             {
                 return false;
             }
 
-            Advance(1);
-            ReadOnlySpan<byte> nullBytesSkipFirst = stackalloc byte[] { (byte)'u', (byte)'l', (byte)'l' };
-            if (!Reader.UnreadSpan.StartsWith(nullBytesSkipFirst))
+            if (span[1] != 'u' || span[2] != 'l' || span[3] != 'l')
             {
                 throw new JsonParsingException(ExpectedFirst + "null" + ExpectedLast);
             }
 
-            Reader.Advance(3);
+            Reader.Advance(4);
             return true;
         }
 
@@ -104,7 +104,7 @@ namespace Utf8Json
                 return false;
             }
 
-            Advance(1);
+            Reader.Advance(1);
             return true;
         }
 
@@ -126,7 +126,7 @@ namespace Utf8Json
                 return false;
             }
 
-            Advance(1);
+            Reader.Advance(1);
             return true;
         }
 
@@ -148,7 +148,7 @@ namespace Utf8Json
                 return false;
             }
 
-            Advance(1);
+            Reader.Advance(1);
             return true;
         }
 
@@ -167,7 +167,7 @@ namespace Utf8Json
 
             if (Reader.TryPeek(out var b) && b == ']')
             {
-                Advance(1);
+                Reader.Advance(1);
                 return true;
             }
 
@@ -215,7 +215,7 @@ namespace Utf8Json
                 return false;
             }
 
-            Advance(1);
+            Reader.Advance(1);
             return true;
         }
 
@@ -237,7 +237,7 @@ namespace Utf8Json
                 return false;
             }
 
-            Advance(1);
+            Reader.Advance(1);
             return true;
         }
 
@@ -259,7 +259,7 @@ namespace Utf8Json
                 return false;
             }
 
-            Advance(1);
+            Reader.Advance(1);
             return true;
         }
 
@@ -277,7 +277,7 @@ namespace Utf8Json
             SkipWhiteSpace();
             if (Reader.TryPeek(out var b) && b == '}')
             {
-                Advance(1);
+                Reader.Advance(1);
                 return true;
             }
 
@@ -372,17 +372,17 @@ namespace Utf8Json
                 case JsonToken.NameSeparator:
                 case JsonToken.EndObject:
                 case JsonToken.EndArray:
-                    Advance(1);
+                    Reader.Advance(1);
                     break;
                 case JsonToken.True:
                 case JsonToken.Null:
-                    Advance(4);
+                    Reader.Advance(4);
                     break;
                 case JsonToken.False:
-                    Advance(5);
+                    Reader.Advance(5);
                     break;
                 case JsonToken.String:
-                    Advance(1);
+                    Reader.Advance(1);
                     if (!Reader.TryReadToAdvancePastDelimiter(out var _, (byte)'"', (byte)'\\'))
                     {
                         throw new JsonParsingException(ExpectedFirst + "not found end string." + ExpectedLast);
@@ -405,7 +405,7 @@ namespace Utf8Json
             {
                 case JsonToken.BeginObject:
                 case JsonToken.BeginArray:
-                    Advance(1);
+                    Reader.Advance(1);
                     ReadNextBlockCore(1);
                     break;
                 case JsonToken.EndObject:
@@ -436,12 +436,12 @@ namespace Utf8Json
                 {
                     case JsonToken.BeginObject:
                     case JsonToken.BeginArray:
-                        Advance(1);
+                        Reader.Advance(1);
                         stack++;
                         continue;
                     case JsonToken.EndObject:
                     case JsonToken.EndArray:
-                        Advance(1);
+                        Reader.Advance(1);
                         if (stack != 1)
                         {
                             stack--;

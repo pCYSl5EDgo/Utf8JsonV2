@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved.
+// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
@@ -8,7 +8,7 @@ using System.Threading;
 using Utf8Json.Internal;
 
 // ReSharper disable BuiltInTypeReferenceStyle
-#pragma warning disable IDE0060 // 未使用のパラメーターを削除します
+#pragma warning disable IDE0060 // ���g�p�̃p�����[�^�[���폜���܂�
 
 namespace Utf8Json
 {
@@ -63,9 +63,8 @@ namespace Utf8Json
 #if SPAN_BUILTIN
         public static void Serialize(Stream stream, Byte value)
         {
-#pragma warning disable IDE0063 // 単純な 'using' ステートメントを使用する
-            using (var sequenceRental = SequencePool.Shared.Rent())
-#pragma warning restore IDE0063 // 単純な 'using' ステートメントを使用する
+            var sequenceRental = SequencePool.Shared.Rent();
+            try
             {
                 var fastWriter = new JsonWriter(sequenceRental.Value)
                 {
@@ -92,6 +91,10 @@ namespace Utf8Json
                 {
                     throw new JsonSerializationException("Error occurred while writing the serialized data to the stream.", ex);
                 }
+            }
+            finally
+            {
+                sequenceRental.Dispose();
             }
         }
 #endif
@@ -145,9 +148,8 @@ namespace Utf8Json
 #if SPAN_BUILTIN
         public static void Serialize(Stream stream, SByte value)
         {
-#pragma warning disable IDE0063 // 単純な 'using' ステートメントを使用する
-            using (var sequenceRental = SequencePool.Shared.Rent())
-#pragma warning restore IDE0063 // 単純な 'using' ステートメントを使用する
+            var sequenceRental = SequencePool.Shared.Rent();
+            try
             {
                 var fastWriter = new JsonWriter(sequenceRental.Value)
                 {
@@ -174,6 +176,10 @@ namespace Utf8Json
                 {
                     throw new JsonSerializationException("Error occurred while writing the serialized data to the stream.", ex);
                 }
+            }
+            finally
+            {
+                sequenceRental.Dispose();
             }
         }
 #endif
@@ -227,9 +233,8 @@ namespace Utf8Json
 #if SPAN_BUILTIN
         public static void Serialize(Stream stream, Int16 value)
         {
-#pragma warning disable IDE0063 // 単純な 'using' ステートメントを使用する
-            using (var sequenceRental = SequencePool.Shared.Rent())
-#pragma warning restore IDE0063 // 単純な 'using' ステートメントを使用する
+            var sequenceRental = SequencePool.Shared.Rent();
+            try
             {
                 var fastWriter = new JsonWriter(sequenceRental.Value)
                 {
@@ -256,6 +261,10 @@ namespace Utf8Json
                 {
                     throw new JsonSerializationException("Error occurred while writing the serialized data to the stream.", ex);
                 }
+            }
+            finally
+            {
+                sequenceRental.Dispose();
             }
         }
 #endif
@@ -309,9 +318,8 @@ namespace Utf8Json
 #if SPAN_BUILTIN
         public static void Serialize(Stream stream, Int32 value)
         {
-#pragma warning disable IDE0063 // 単純な 'using' ステートメントを使用する
-            using (var sequenceRental = SequencePool.Shared.Rent())
-#pragma warning restore IDE0063 // 単純な 'using' ステートメントを使用する
+            var sequenceRental = SequencePool.Shared.Rent();
+            try
             {
                 var fastWriter = new JsonWriter(sequenceRental.Value)
                 {
@@ -338,6 +346,10 @@ namespace Utf8Json
                 {
                     throw new JsonSerializationException("Error occurred while writing the serialized data to the stream.", ex);
                 }
+            }
+            finally
+            {
+                sequenceRental.Dispose();
             }
         }
 #endif
@@ -391,9 +403,8 @@ namespace Utf8Json
 #if SPAN_BUILTIN
         public static void Serialize(Stream stream, Int64 value)
         {
-#pragma warning disable IDE0063 // 単純な 'using' ステートメントを使用する
-            using (var sequenceRental = SequencePool.Shared.Rent())
-#pragma warning restore IDE0063 // 単純な 'using' ステートメントを使用する
+            var sequenceRental = SequencePool.Shared.Rent();
+            try
             {
                 var fastWriter = new JsonWriter(sequenceRental.Value)
                 {
@@ -420,6 +431,10 @@ namespace Utf8Json
                 {
                     throw new JsonSerializationException("Error occurred while writing the serialized data to the stream.", ex);
                 }
+            }
+            finally
+            {
+                sequenceRental.Dispose();
             }
         }
 #endif
@@ -473,9 +488,8 @@ namespace Utf8Json
 #if SPAN_BUILTIN
         public static void Serialize(Stream stream, UInt16 value)
         {
-#pragma warning disable IDE0063 // 単純な 'using' ステートメントを使用する
-            using (var sequenceRental = SequencePool.Shared.Rent())
-#pragma warning restore IDE0063 // 単純な 'using' ステートメントを使用する
+            var sequenceRental = SequencePool.Shared.Rent();
+            try
             {
                 var fastWriter = new JsonWriter(sequenceRental.Value)
                 {
@@ -502,6 +516,10 @@ namespace Utf8Json
                 {
                     throw new JsonSerializationException("Error occurred while writing the serialized data to the stream.", ex);
                 }
+            }
+            finally
+            {
+                sequenceRental.Dispose();
             }
         }
 #endif
@@ -555,9 +573,8 @@ namespace Utf8Json
 #if SPAN_BUILTIN
         public static void Serialize(Stream stream, UInt32 value)
         {
-#pragma warning disable IDE0063 // 単純な 'using' ステートメントを使用する
-            using (var sequenceRental = SequencePool.Shared.Rent())
-#pragma warning restore IDE0063 // 単純な 'using' ステートメントを使用する
+            var sequenceRental = SequencePool.Shared.Rent();
+            try
             {
                 var fastWriter = new JsonWriter(sequenceRental.Value)
                 {
@@ -584,6 +601,10 @@ namespace Utf8Json
                 {
                     throw new JsonSerializationException("Error occurred while writing the serialized data to the stream.", ex);
                 }
+            }
+            finally
+            {
+                sequenceRental.Dispose();
             }
         }
 #endif
@@ -637,9 +658,8 @@ namespace Utf8Json
 #if SPAN_BUILTIN
         public static void Serialize(Stream stream, UInt64 value)
         {
-#pragma warning disable IDE0063 // 単純な 'using' ステートメントを使用する
-            using (var sequenceRental = SequencePool.Shared.Rent())
-#pragma warning restore IDE0063 // 単純な 'using' ステートメントを使用する
+            var sequenceRental = SequencePool.Shared.Rent();
+            try
             {
                 var fastWriter = new JsonWriter(sequenceRental.Value)
                 {
@@ -666,6 +686,10 @@ namespace Utf8Json
                 {
                     throw new JsonSerializationException("Error occurred while writing the serialized data to the stream.", ex);
                 }
+            }
+            finally
+            {
+                sequenceRental.Dispose();
             }
         }
 #endif
@@ -719,9 +743,8 @@ namespace Utf8Json
 #if SPAN_BUILTIN
         public static void Serialize(Stream stream, Char value)
         {
-#pragma warning disable IDE0063 // 単純な 'using' ステートメントを使用する
-            using (var sequenceRental = SequencePool.Shared.Rent())
-#pragma warning restore IDE0063 // 単純な 'using' ステートメントを使用する
+            var sequenceRental = SequencePool.Shared.Rent();
+            try
             {
                 var fastWriter = new JsonWriter(sequenceRental.Value)
                 {
@@ -748,6 +771,10 @@ namespace Utf8Json
                 {
                     throw new JsonSerializationException("Error occurred while writing the serialized data to the stream.", ex);
                 }
+            }
+            finally
+            {
+                sequenceRental.Dispose();
             }
         }
 #endif
@@ -801,9 +828,8 @@ namespace Utf8Json
 #if SPAN_BUILTIN
         public static void Serialize(Stream stream, String value)
         {
-#pragma warning disable IDE0063 // 単純な 'using' ステートメントを使用する
-            using (var sequenceRental = SequencePool.Shared.Rent())
-#pragma warning restore IDE0063 // 単純な 'using' ステートメントを使用する
+            var sequenceRental = SequencePool.Shared.Rent();
+            try
             {
                 var fastWriter = new JsonWriter(sequenceRental.Value)
                 {
@@ -830,6 +856,10 @@ namespace Utf8Json
                 {
                     throw new JsonSerializationException("Error occurred while writing the serialized data to the stream.", ex);
                 }
+            }
+            finally
+            {
+                sequenceRental.Dispose();
             }
         }
 #endif
@@ -883,9 +913,8 @@ namespace Utf8Json
 #if SPAN_BUILTIN
         public static void Serialize(Stream stream, Boolean value)
         {
-#pragma warning disable IDE0063 // 単純な 'using' ステートメントを使用する
-            using (var sequenceRental = SequencePool.Shared.Rent())
-#pragma warning restore IDE0063 // 単純な 'using' ステートメントを使用する
+            var sequenceRental = SequencePool.Shared.Rent();
+            try
             {
                 var fastWriter = new JsonWriter(sequenceRental.Value)
                 {
@@ -912,6 +941,10 @@ namespace Utf8Json
                 {
                     throw new JsonSerializationException("Error occurred while writing the serialized data to the stream.", ex);
                 }
+            }
+            finally
+            {
+                sequenceRental.Dispose();
             }
         }
 #endif
@@ -965,9 +998,8 @@ namespace Utf8Json
 #if SPAN_BUILTIN
         public static void Serialize(Stream stream, Single value)
         {
-#pragma warning disable IDE0063 // 単純な 'using' ステートメントを使用する
-            using (var sequenceRental = SequencePool.Shared.Rent())
-#pragma warning restore IDE0063 // 単純な 'using' ステートメントを使用する
+            var sequenceRental = SequencePool.Shared.Rent();
+            try
             {
                 var fastWriter = new JsonWriter(sequenceRental.Value)
                 {
@@ -994,6 +1026,10 @@ namespace Utf8Json
                 {
                     throw new JsonSerializationException("Error occurred while writing the serialized data to the stream.", ex);
                 }
+            }
+            finally
+            {
+                sequenceRental.Dispose();
             }
         }
 #endif
@@ -1047,7 +1083,8 @@ namespace Utf8Json
 #if SPAN_BUILTIN
         public static void Serialize(Stream stream, Double value)
         {
-            using (var sequenceRental = SequencePool.Shared.Rent())
+            var sequenceRental = SequencePool.Shared.Rent();
+            try
             {
                 var fastWriter = new JsonWriter(sequenceRental.Value)
                 {
@@ -1075,9 +1112,13 @@ namespace Utf8Json
                     throw new JsonSerializationException("Error occurred while writing the serialized data to the stream.", ex);
                 }
             }
+            finally
+            {
+                sequenceRental.Dispose();
+            }
         }
 #endif
 
     }
 }
-#pragma warning restore IDE0060 // 未使用のパラメーターを削除します
+#pragma warning restore IDE0060 // ���g�p�̃p�����[�^�[���폜���܂�

@@ -63,15 +63,35 @@ namespace Utf8Json.Test
         [TestCase('\t')]
         [TestCase('\f')]
         [TestCase('/')]
-        [TestCase('��')]
-        [TestCase('�')]
-        [TestCase('��')]
+        [TestCase('あ')]
+        [TestCase('ｲ')]
+        [TestCase('凸')]
         public void SameChar(char value)
         {
             var bytes = JsonSerializer.Serialize(value);
-            Console.WriteLine(bytes.ToArrayString());
             var deserialize = JsonSerializer.Deserialize<char>(bytes);
             Assert.AreEqual(value, deserialize);
+        }
+
+        //[TestCase("")]
+        [TestCase(default(string))]
+        [TestCase("とてつもなく大きな力が我々の前に立ちはだかるだろう。心せよ。探索者たちよ。")]
+        [TestCase("とてつもな\\\\\\\\\r\nく大きな力が我々の前に立ちはだかるだろう。心せよ。探索者たちよ。")]
+        public void SameString(string value)
+        {
+            var bytes = JsonSerializer.Serialize(value);
+            Console.WriteLine(bytes.ToArrayString());
+            var deserialize = JsonSerializer.Deserialize<string>(bytes);
+            Assert.True(value == deserialize);
+        }
+
+        [Test]
+        public void CanReadNull()
+        {
+            var bytes = JsonSerializer.Serialize(null);
+            Console.WriteLine(bytes.ToArrayString());
+            var deserialize = JsonSerializer.Deserialize<string>(bytes);
+            Assert.IsNull(deserialize);
         }
     }
 }

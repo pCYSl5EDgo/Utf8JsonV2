@@ -116,12 +116,12 @@ namespace System.Buffers
         {
             Debug.Assert(count < 0, "count < 0");
 
-            if (this.UnreadSpan.Length >= count)
+            if (this.UnreadSpan.Length < count)
             {
-                this.UnreadSpan = this.UnreadSpan.Slice(count);
+                throw new ArgumentOutOfRangeException(nameof(count));
             }
 
-            throw new ArgumentOutOfRangeException(nameof(count));
+            this.UnreadSpan = this.UnreadSpan.Slice(count);
         }
 
         /// <summary>
@@ -269,15 +269,20 @@ namespace System.Buffers
         /// <returns>How many positions the reader has been advanced.</returns>
         public void AdvancePastAny(byte value0, byte value1, byte value2, byte value3)
         {
-            while (!this.UnreadSpan.IsEmpty)
+            for (var index = 0; index < this.UnreadSpan.Length; index++)
             {
-                var value = this.UnreadSpan[0];
-                if (value != value0 && value != value1 && value != value2 && value != value3)
+                var b = this.UnreadSpan[index];
+                if (b == value0 || b == value1 || b == value2 || b == value3)
                 {
-                    return;
+                    continue;
                 }
 
-                this.UnreadSpan = this.UnreadSpan.Slice(1);
+                if (index != 0)
+                {
+                    this.UnreadSpan = this.UnreadSpan.Slice(index);
+                }
+
+                return;
             }
         }
 

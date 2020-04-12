@@ -384,10 +384,10 @@ namespace Utf8Json.Formatters
                 throw new InvalidOperationException("Can't parse JSON to Enum format.");
             }
 
-            reader.Advance(1); // skip \""
+            reader.Reader.Advance(1); // skip \""
             var t = DeserializeStatic(ref reader, options); // token is Number
             reader.SkipWhiteSpace();
-            reader.Advance(1); // skip \""
+            reader.Reader.Advance(1); // skip \""
             return t;
         }
     }

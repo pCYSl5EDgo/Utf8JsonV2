@@ -244,13 +244,14 @@ namespace Utf8Json
         public static void Serialize<T>(Stream stream, T value, JsonSerializerOptions options, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            using (var sequenceRental = SequencePool.Shared.Rent())
+            var sequenceRental = SequencePool.Shared.Rent();
+            try
             {
                 Serialize(sequenceRental.Value, value, options, cancellationToken);
 
                 try
                 {
-                    foreach (var segment in (ReadOnlySequence<byte>)sequenceRental.Value)
+                    foreach (var segment in (ReadOnlySequence<byte>) sequenceRental.Value)
                     {
                         cancellationToken.ThrowIfCancellationRequested();
                         stream.Write(segment.Span);
@@ -260,6 +261,10 @@ namespace Utf8Json
                 {
                     throw new JsonSerializationException("Error occurred while writing the serialized data to the stream.", ex);
                 }
+            }
+            finally
+            {
+                sequenceRental.Dispose();
             }
         }
 
@@ -273,15 +278,14 @@ namespace Utf8Json
         public static void Serialize<T>(Stream stream, T value, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-#pragma warning disable IDE0063 // 単純な 'using' ステートメントを使用する
-            using (var sequenceRental = SequencePool.Shared.Rent())
-#pragma warning restore IDE0063 // 単純な 'using' ステートメントを使用する
+            var sequenceRental = SequencePool.Shared.Rent();
+            try
             {
                 Serialize(sequenceRental.Value, value, cancellationToken);
 
                 try
                 {
-                    foreach (var segment in (ReadOnlySequence<byte>)sequenceRental.Value)
+                    foreach (var segment in (ReadOnlySequence<byte>) sequenceRental.Value)
                     {
                         cancellationToken.ThrowIfCancellationRequested();
                         stream.Write(segment.Span);
@@ -291,6 +295,10 @@ namespace Utf8Json
                 {
                     throw new JsonSerializationException("Error occurred while writing the serialized data to the stream.", ex);
                 }
+            }
+            finally
+            {
+                sequenceRental.Dispose();
             }
         }
 

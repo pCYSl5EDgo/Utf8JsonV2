@@ -38,13 +38,13 @@ namespace Utf8Json.Formatters
             return DeserializeStatic(ref reader, options);
         }
 
-#pragma warning disable IDE0060 // –¢g—p‚Ìƒpƒ‰ƒ[ƒ^[‚ğíœ‚µ‚Ü‚·
+#pragma warning disable IDE0060 // æœªä½¿ç”¨ã®ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ãƒ¼ã‚’å‰Šé™¤ã—ã¾ã™
 #if CSHARP_8_OR_NEWER
         public static void SerializeStatic(ref JsonWriter writer, BitArray? value, JsonSerializerOptions options)
 #else
         public static void SerializeStatic(ref JsonWriter writer, BitArray value, JsonSerializerOptions options)
 #endif
-#pragma warning restore IDE0060 // –¢g—p‚Ìƒpƒ‰ƒ[ƒ^[‚ğíœ‚µ‚Ü‚·
+#pragma warning restore IDE0060 // æœªä½¿ç”¨ã®ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ãƒ¼ã‚’å‰Šé™¤ã—ã¾ã™
         {
             if (value == null)
             {
