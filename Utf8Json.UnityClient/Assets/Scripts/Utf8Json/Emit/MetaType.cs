@@ -3,9 +3,9 @@
 
 #if !ENABLE_IL2CPP
 using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
 using Utf8Json.Internal;

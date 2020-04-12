@@ -1,9 +1,9 @@
-﻿using System.IO;
-using System.Threading.Tasks;
-using Mono.Cecil;
-using ConsoleAppFramework;
+﻿using ConsoleAppFramework;
 using Microsoft.Extensions.Hosting;
+using Mono.Cecil;
 using Mono.Cecil.Cil;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace StaticFunctionPointerImplementor
 {

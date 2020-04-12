@@ -1,12 +1,12 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using StaticFunctionPointerHelper;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using StaticFunctionPointerHelper;
 
 #if IMMUTABLE
 using System.Collections.Immutable;
@@ -60,7 +60,7 @@ namespace Utf8Json.Formatters
                 {
                     keyFormatter.SerializeToPropertyName(ref writer, tuple.Key, options);
                     writer.WriteNameSeparator();
-                    
+
                     if (valueSerializer.ToPointer() == null)
                     {
                         var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
@@ -93,8 +93,30 @@ namespace Utf8Json.Formatters
                 {
                     var propertyName = tuple.Key.ToString();
                     Debug.Assert(propertyName != null, nameof(propertyName) + " != null");
+
+/* プロジェクト 'Utf8JsonV2 (netcoreapp3.1)' からのマージされていない変更
+前:
                     writer.WritePropertyName(propertyName);
                     
+                    if (valueSerializer.ToPointer() == null)
+後:
+                    writer.WritePropertyName(propertyName);
+
+                    if (valueSerializer.ToPointer() == null)
+*/
+
+/* プロジェクト 'Utf8JsonV2 (netcoreapp2.1)' からのマージされていない変更
+前:
+                    writer.WritePropertyName(propertyName);
+                    
+                    if (valueSerializer.ToPointer() == null)
+後:
+                    writer.WritePropertyName(propertyName);
+
+                    if (valueSerializer.ToPointer() == null)
+*/
+                    writer.WritePropertyName(propertyName);
+
                     if (valueSerializer.ToPointer() == null)
                     {
                         var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
@@ -236,8 +258,30 @@ namespace Utf8Json.Formatters
                 if (options.Resolver.GetFormatterWithVerify<TKey>() is IObjectPropertyNameFormatter<TKey> keyFormatter)
                 {
                     keyFormatter.SerializeToPropertyName(ref writer, tuple.Key, options);
+
+/* プロジェクト 'Utf8JsonV2 (netcoreapp3.1)' からのマージされていない変更
+前:
                     writer.WriteNameSeparator();
                     
+                    if (valueSerializer.ToPointer() == null)
+後:
+                    writer.WriteNameSeparator();
+
+                    if (valueSerializer.ToPointer() == null)
+*/
+
+/* プロジェクト 'Utf8JsonV2 (netcoreapp2.1)' からのマージされていない変更
+前:
+                    writer.WriteNameSeparator();
+                    
+                    if (valueSerializer.ToPointer() == null)
+後:
+                    writer.WriteNameSeparator();
+
+                    if (valueSerializer.ToPointer() == null)
+*/
+                    writer.WriteNameSeparator();
+
                     if (valueSerializer.ToPointer() == null)
                     {
                         var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
@@ -270,8 +314,30 @@ namespace Utf8Json.Formatters
                 {
                     var propertyName = tuple.Key.ToString();
                     Debug.Assert(propertyName != null, nameof(propertyName) + " != null");
+
+/* プロジェクト 'Utf8JsonV2 (netcoreapp3.1)' からのマージされていない変更
+前:
                     writer.WritePropertyName(propertyName);
                     
+                    if (valueSerializer.ToPointer() == null)
+後:
+                    writer.WritePropertyName(propertyName);
+
+                    if (valueSerializer.ToPointer() == null)
+*/
+
+/* プロジェクト 'Utf8JsonV2 (netcoreapp2.1)' からのマージされていない変更
+前:
+                    writer.WritePropertyName(propertyName);
+                    
+                    if (valueSerializer.ToPointer() == null)
+後:
+                    writer.WritePropertyName(propertyName);
+
+                    if (valueSerializer.ToPointer() == null)
+*/
+                    writer.WritePropertyName(propertyName);
+
                     if (valueSerializer.ToPointer() == null)
                     {
                         var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
@@ -413,8 +479,30 @@ namespace Utf8Json.Formatters
                 if (options.Resolver.GetFormatterWithVerify<TKey>() is IObjectPropertyNameFormatter<TKey> keyFormatter)
                 {
                     keyFormatter.SerializeToPropertyName(ref writer, tuple.Key, options);
+
+/* プロジェクト 'Utf8JsonV2 (netcoreapp3.1)' からのマージされていない変更
+前:
                     writer.WriteNameSeparator();
                     
+                    if (valueSerializer.ToPointer() == null)
+後:
+                    writer.WriteNameSeparator();
+
+                    if (valueSerializer.ToPointer() == null)
+*/
+
+/* プロジェクト 'Utf8JsonV2 (netcoreapp2.1)' からのマージされていない変更
+前:
+                    writer.WriteNameSeparator();
+                    
+                    if (valueSerializer.ToPointer() == null)
+後:
+                    writer.WriteNameSeparator();
+
+                    if (valueSerializer.ToPointer() == null)
+*/
+                    writer.WriteNameSeparator();
+
                     if (valueSerializer.ToPointer() == null)
                     {
                         var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
@@ -448,7 +536,7 @@ namespace Utf8Json.Formatters
                     var propertyName = tuple.Key.ToString();
                     Debug.Assert(propertyName != null, nameof(propertyName) + " != null");
                     writer.WritePropertyName(propertyName);
-                    
+
                     if (valueSerializer.ToPointer() == null)
                     {
                         var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
@@ -591,7 +679,7 @@ namespace Utf8Json.Formatters
                 {
                     keyFormatter.SerializeToPropertyName(ref writer, tuple.Key, options);
                     writer.WriteNameSeparator();
-                    
+
                     if (valueSerializer.ToPointer() == null)
                     {
                         var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
@@ -625,7 +713,7 @@ namespace Utf8Json.Formatters
                     var propertyName = tuple.Key.ToString();
                     Debug.Assert(propertyName != null, nameof(propertyName) + " != null");
                     writer.WritePropertyName(propertyName);
-                    
+
                     if (valueSerializer.ToPointer() == null)
                     {
                         var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
@@ -768,7 +856,7 @@ namespace Utf8Json.Formatters
                 {
                     keyFormatter.SerializeToPropertyName(ref writer, tuple.Key, options);
                     writer.WriteNameSeparator();
-                    
+
                     if (valueSerializer.ToPointer() == null)
                     {
                         var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
@@ -802,7 +890,7 @@ namespace Utf8Json.Formatters
                     var propertyName = tuple.Key.ToString();
                     Debug.Assert(propertyName != null, nameof(propertyName) + " != null");
                     writer.WritePropertyName(propertyName);
-                    
+
                     if (valueSerializer.ToPointer() == null)
                     {
                         var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
@@ -945,7 +1033,7 @@ namespace Utf8Json.Formatters
                 {
                     keyFormatter.SerializeToPropertyName(ref writer, tuple.Key, options);
                     writer.WriteNameSeparator();
-                    
+
                     if (valueSerializer.ToPointer() == null)
                     {
                         var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
@@ -979,7 +1067,7 @@ namespace Utf8Json.Formatters
                     var propertyName = tuple.Key.ToString();
                     Debug.Assert(propertyName != null, nameof(propertyName) + " != null");
                     writer.WritePropertyName(propertyName);
-                    
+
                     if (valueSerializer.ToPointer() == null)
                     {
                         var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
@@ -1122,7 +1210,7 @@ namespace Utf8Json.Formatters
                 {
                     keyFormatter.SerializeToPropertyName(ref writer, tuple.Key, options);
                     writer.WriteNameSeparator();
-                    
+
                     if (valueSerializer.ToPointer() == null)
                     {
                         var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
@@ -1156,7 +1244,7 @@ namespace Utf8Json.Formatters
                     var propertyName = tuple.Key.ToString();
                     Debug.Assert(propertyName != null, nameof(propertyName) + " != null");
                     writer.WritePropertyName(propertyName);
-                    
+
                     if (valueSerializer.ToPointer() == null)
                     {
                         var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
@@ -1299,7 +1387,7 @@ namespace Utf8Json.Formatters
                 {
                     keyFormatter.SerializeToPropertyName(ref writer, tuple.Key, options);
                     writer.WriteNameSeparator();
-                    
+
                     if (valueSerializer.ToPointer() == null)
                     {
                         var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
@@ -1333,7 +1421,7 @@ namespace Utf8Json.Formatters
                     var propertyName = tuple.Key.ToString();
                     Debug.Assert(propertyName != null, nameof(propertyName) + " != null");
                     writer.WritePropertyName(propertyName);
-                    
+
                     if (valueSerializer.ToPointer() == null)
                     {
                         var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();

@@ -9,7 +9,6 @@ using System;
 using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-// ReSharper disable InconsistentNaming
 
 namespace Utf8Json.Internal
 {
@@ -19,40 +18,40 @@ namespace Utf8Json.Internal
         /// The underlying <see cref="IBufferWriter{T}"/>.
         /// </summary>
 #if CSHARP_8_OR_NEWER
-        private IBufferWriter<byte>? _output;
+        private IBufferWriter<byte>? output;
 #else
-        private IBufferWriter<byte> _output;
+        private IBufferWriter<byte> output;
 #endif
 
         /// <summary>
         /// The result of the last call to <see cref="IBufferWriter{T}.GetSpan(int)"/>, less any bytes already "consumed" with <see cref="Advance(int)"/>.
         /// Backing field for the <see cref="Span"/> property.
         /// </summary>
-        private Span<byte> _span;
+        private Span<byte> innerSpan;
 
         /// <summary>
         /// The result of the last call to <see cref="IBufferWriter{T}.GetMemory(int)"/>, less any bytes already "consumed" with <see cref="Advance(int)"/>.
         /// </summary>
-        private ArraySegment<byte> _segment;
+        private ArraySegment<byte> segment;
 
         /// <summary>
         /// The number of uncommitted bytes (all the calls to <see cref="Advance(int)"/> since the last call to <see cref="Commit"/>).
         /// </summary>
-        private int _buffered;
+        private int buffered;
 
         /// <summary>
         /// The total number of bytes written with this writer.
         /// Backing field for the <see cref="BytesCommitted"/> property.
         /// </summary>
-        private long _bytesCommitted;
+        private long bytesCommitted;
 
 #if CSHARP_8_OR_NEWER
-        private SequencePool? _sequencePool;
+        private SequencePool? sequencePool;
 #else
-        private SequencePool _sequencePool;
+        private SequencePool sequencePool;
 #endif
 
-        private SequencePool.Rental _rental;
+        private SequencePool.Rental rental;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BufferWriter"/> struct.
@@ -61,21 +60,21 @@ namespace Utf8Json.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public BufferWriter(IBufferWriter<byte> output)
         {
-            _buffered = 0;
-            _bytesCommitted = 0;
-            _output = output;
+            buffered = 0;
+            bytesCommitted = 0;
+            this.output = output;
 
-            _sequencePool = default;
-            _rental = default;
+            sequencePool = default;
+            rental = default;
 
-            var memory1 = _output.GetMemory();
+            var memory1 = this.output.GetMemory();
             if (memory1.IsEmpty)
             {
-                throw new InvalidOperationException("The underlying IBufferWriter<byte>.GetMemory(int) method returned an empty memory block, which is not allowed. This is a bug in " + _output.GetType().FullName);
+                throw new InvalidOperationException("The underlying IBufferWriter<byte>.GetMemory(int) method returned an empty memory block, which is not allowed. This is a bug in " + this.output.GetType().FullName);
             }
             var memory = memory1;
-            MemoryMarshal.TryGetArray(memory, out _segment);
-            _span = memory.Span;
+            MemoryMarshal.TryGetArray(memory, out segment);
+            innerSpan = memory.Span;
         }
 
         /// <summary>
@@ -86,36 +85,36 @@ namespace Utf8Json.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal BufferWriter(SequencePool sequencePool, byte[] array)
         {
-            _buffered = 0;
-            _bytesCommitted = 0;
-            _sequencePool = sequencePool;
-            _rental = default;
-            _output = null;
+            buffered = 0;
+            bytesCommitted = 0;
+            this.sequencePool = sequencePool;
+            rental = default;
+            output = null;
 
-            _segment = new ArraySegment<byte>(array);
-            _span = _segment.AsSpan();
+            segment = new ArraySegment<byte>(array);
+            innerSpan = segment.AsSpan();
         }
 
         /// <summary>
         /// Gets the result of the last call to <see cref="IBufferWriter{T}.GetSpan(int)"/>.
         /// </summary>
-        public Span<byte> Span => _span;
+        public Span<byte> Span => innerSpan;
 
         /// <summary>
         /// Gets the total number of bytes written with this writer.
         /// </summary>
-        public long BytesCommitted => _bytesCommitted;
+        public long BytesCommitted => bytesCommitted;
 
         /// <summary>
         /// Gets the <see cref="IBufferWriter{T}"/> underlying this instance.
         /// </summary>
 #if CSHARP_8_OR_NEWER
-        internal IBufferWriter<byte>? UnderlyingWriter => _output;
+        internal IBufferWriter<byte>? UnderlyingWriter => output;
 #else
-        internal IBufferWriter<byte> UnderlyingWriter => _output;
+        internal IBufferWriter<byte> UnderlyingWriter => output;
 #endif
 
-        internal SequencePool.Rental SequenceRental => _rental;
+        internal SequencePool.Rental SequenceRental => rental;
 
         public Span<byte> GetSpan(int sizeHint)
         {
@@ -128,13 +127,13 @@ namespace Utf8Json.Internal
         {
             Ensure(sizeHint);
 
-            if (_segment.Array != null)
+            if (segment.Array != null)
             {
-                return ref _segment.Array[_segment.Offset + _buffered];
+                return ref segment.Array[segment.Offset + buffered];
             }
             else
             {
-                return ref _span.GetPinnableReference();
+                return ref innerSpan.GetPinnableReference();
             }
         }
 
@@ -145,22 +144,22 @@ namespace Utf8Json.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Commit()
         {
-            var buffered = _buffered;
-            if (buffered <= 0)
+            if (this.buffered <= 0)
             {
                 return;
             }
 
+            var oldBuffered = this.buffered;
             this.MigrateToSequence();
 
-            _bytesCommitted += buffered;
-            _buffered = 0;
+            bytesCommitted += oldBuffered;
+            this.buffered = 0;
 #if CSHARP_8_OR_NEWER
-            _output!.Advance(buffered);
+            output!.Advance(oldBuffered);
 #else
-            _output.Advance(buffered);
+            output.Advance(oldBuffered);
 #endif
-            _span = default;
+            innerSpan = default;
         }
 
         /// <summary>
@@ -170,8 +169,8 @@ namespace Utf8Json.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Advance(int count)
         {
-            _buffered += count;
-            _span = _span.Slice(count);
+            buffered += count;
+            innerSpan = innerSpan.Slice(count);
         }
 
         /// <summary>
@@ -181,9 +180,9 @@ namespace Utf8Json.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Write(ReadOnlySpan<byte> source)
         {
-            if (_span.Length >= source.Length)
+            if (innerSpan.Length >= source.Length)
             {
-                source.CopyTo(_span);
+                source.CopyTo(innerSpan);
                 Advance(source.Length);
             }
             else
@@ -199,7 +198,7 @@ namespace Utf8Json.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Ensure(int count = 1)
         {
-            if (_span.Length < count)
+            if (innerSpan.Length < count)
             {
                 EnsureMore(count);
             }
@@ -212,9 +211,9 @@ namespace Utf8Json.Internal
         /// <returns></returns>
         internal bool TryGetUncommittedSpan(out ReadOnlySpan<byte> span)
         {
-            if (this._sequencePool != null)
+            if (this.sequencePool != null)
             {
-                span = _segment.AsSpan(0, _buffered);
+                span = segment.AsSpan(0, buffered);
                 return true;
             }
 
@@ -227,11 +226,21 @@ namespace Utf8Json.Internal
         /// </summary>
         /// <param name="count">The minimum size for the next requested buffer.</param>
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private void EnsureMore(int count = 0)
+        private void EnsureMore(int count)
         {
-            if (_buffered > 0)
+            if (buffered > 0)
             {
-                Commit();
+                var oldBuffered = this.buffered;
+                this.MigrateToSequence();
+
+                bytesCommitted += oldBuffered;
+                this.buffered = 0;
+#if CSHARP_8_OR_NEWER
+                output!.Advance(oldBuffered);
+#else
+                output.Advance(oldBuffered);
+#endif
+                innerSpan = default;
             }
             else
             {
@@ -239,17 +248,16 @@ namespace Utf8Json.Internal
             }
 
 #if CSHARP_8_OR_NEWER
-            var memory1 = _output!.GetMemory(count);
+            var memory = output!.GetMemory(count);
 #else
-            var memory1 = _output.GetMemory(count);
+            var memory = output.GetMemory(count);
 #endif
-            if (memory1.IsEmpty)
+            if (memory.IsEmpty)
             {
-                throw new InvalidOperationException("The underlying IBufferWriter<byte>.GetMemory(int) method returned an empty memory block, which is not allowed. This is a bug in " + _output.GetType().FullName);
+                throw new InvalidOperationException("The underlying IBufferWriter<byte>.GetMemory(int) method returned an empty memory block, which is not allowed. This is a bug in " + output.GetType().FullName);
             }
-            var memory = memory1;
-            MemoryMarshal.TryGetArray(memory, out _segment);
-            _span = memory.Span;
+            MemoryMarshal.TryGetArray(memory, out segment);
+            innerSpan = memory.Span;
         }
 
         /// <summary>
@@ -262,13 +270,13 @@ namespace Utf8Json.Internal
             var bytesLeftToCopy = source.Length;
             while (bytesLeftToCopy > 0)
             {
-                if (_span.Length == 0)
+                if (innerSpan.Length == 0)
                 {
-                    EnsureMore();
+                    EnsureMore(0);
                 }
 
-                var writable = Math.Min(bytesLeftToCopy, _span.Length);
-                source.Slice(copiedBytes, writable).CopyTo(_span);
+                var writable = Math.Min(bytesLeftToCopy, innerSpan.Length);
+                source.Slice(copiedBytes, writable).CopyTo(innerSpan);
                 copiedBytes += writable;
                 bytesLeftToCopy -= writable;
                 Advance(writable);
@@ -277,15 +285,17 @@ namespace Utf8Json.Internal
 
         private void MigrateToSequence()
         {
-            if (this._sequencePool != null)
+            if (this.sequencePool == null)
             {
-                // We were writing to our private scratch memory, so we have to copy it into the actual writer.
-                _rental = _sequencePool.Rent();
-                _output = _rental.Value;
-                var realSpan = _output.GetSpan(_buffered);
-                _segment.AsSpan(0, _buffered).CopyTo(realSpan);
-                _sequencePool = null;
+                return;
             }
+
+            // We were writing to our private scratch memory, so we have to copy it into the actual writer.
+            rental = sequencePool.Rent();
+            output = rental.Value;
+            var realSpan = output.GetSpan(buffered);
+            segment.AsSpan(0, buffered).CopyTo(realSpan);
+            sequencePool = null;
         }
     }
 }

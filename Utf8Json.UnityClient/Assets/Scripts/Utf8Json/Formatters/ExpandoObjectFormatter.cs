@@ -2,9 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #if !ENABLE_IL2CPP
+using StaticFunctionPointerHelper;
 using System.Collections.Generic;
 using System.Dynamic;
-using StaticFunctionPointerHelper;
 
 namespace Utf8Json.Formatters
 {

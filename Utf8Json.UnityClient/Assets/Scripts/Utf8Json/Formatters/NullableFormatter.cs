@@ -87,8 +87,8 @@ namespace Utf8Json.Formatters
 
         public static T? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() 
-                ? null 
+            return reader.ReadIsNull()
+                ? null
                 : underlyingFormatter.Deserialize(ref reader, options);
         }
     }

@@ -1,8 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Collections.Generic;
 using StaticFunctionPointerHelper;
+using System.Collections.Generic;
 
 namespace Utf8Json.Formatters
 {
@@ -242,7 +242,7 @@ namespace Utf8Json.Formatters
         public TCollection Deserialize(ref JsonReader reader, JsonSerializerOptions options)
 #endif
         {
-            return DeserializeStatic(ref reader, options); 
+            return DeserializeStatic(ref reader, options);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -559,7 +559,7 @@ namespace Utf8Json.Formatters
         public LinkedList<T> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
 #endif
         {
-            return DeserializeStatic(ref reader, options); 
+            return DeserializeStatic(ref reader, options);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -876,7 +876,7 @@ namespace Utf8Json.Formatters
         public Queue<T> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
 #endif
         {
-            return DeserializeStatic(ref reader, options); 
+            return DeserializeStatic(ref reader, options);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -1193,7 +1193,7 @@ namespace Utf8Json.Formatters
         public Stack<T> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
 #endif
         {
-            return DeserializeStatic(ref reader, options); 
+            return DeserializeStatic(ref reader, options);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -1510,7 +1510,7 @@ namespace Utf8Json.Formatters
         public HashSet<T> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
 #endif
         {
-            return DeserializeStatic(ref reader, options); 
+            return DeserializeStatic(ref reader, options);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -1827,7 +1827,7 @@ namespace Utf8Json.Formatters
         public IList<T> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
 #endif
         {
-            return DeserializeStatic(ref reader, options); 
+            return DeserializeStatic(ref reader, options);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -2144,7 +2144,7 @@ namespace Utf8Json.Formatters
         public ICollection<T> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
 #endif
         {
-            return DeserializeStatic(ref reader, options); 
+            return DeserializeStatic(ref reader, options);
         }
 
 #if CSHARP_8_OR_NEWER

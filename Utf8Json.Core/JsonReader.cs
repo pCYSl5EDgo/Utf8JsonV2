@@ -4,9 +4,11 @@
 using System;
 using System.Buffers;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using Utf8Json.Internal;
 // ReSharper disable RedundantCaseLabel
+#if SPAN_BUILTIN
+using System.Threading;
+#endif
 
 namespace Utf8Json
 {
@@ -39,11 +41,6 @@ namespace Utf8Json
 
             this.Reader = new SequenceReader(span);
         }
-
-        /// <summary>
-        /// Gets or sets the cancellation token for this deserialization operation.
-        /// </summary>
-        public CancellationToken CancellationToken { get; set; }
 
         /// <summary>
         /// Gets the number of bytes consumed by the reader.

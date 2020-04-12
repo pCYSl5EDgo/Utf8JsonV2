@@ -27,7 +27,7 @@ namespace Utf8Json.Formatters
                 return;
             }
 
-            
+
             var minus = value < TimeSpan.Zero;
             if (minus) value = value.Negate();
             var span = writer.Writer.GetSpan(minus ? 2 : 1);

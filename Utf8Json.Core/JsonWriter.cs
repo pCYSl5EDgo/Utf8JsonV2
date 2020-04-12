@@ -4,7 +4,6 @@
 using System;
 using System.Buffers;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using Utf8Json.Internal;
 // ReSharper disable RedundantCaseLabel
 #pragma warning disable IDE0057 // 範囲演算子を使用
@@ -17,11 +16,6 @@ namespace Utf8Json
         /// The writer to use.
         /// </summary>
         internal BufferWriter Writer;
-
-        /// <summary>
-        /// Gets or sets the cancellation token for this serialization operation.
-        /// </summary>
-        public CancellationToken CancellationToken { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="JsonWriter"/> struct.
@@ -50,10 +44,7 @@ namespace Utf8Json
         /// </summary>
         /// <param name="writer">The writer to use for the new instance.</param>
         /// <returns>The new writer.</returns>
-        public JsonWriter Clone(IBufferWriter<byte> writer) => new JsonWriter(writer)
-        {
-            CancellationToken = this.CancellationToken,
-        };
+        public JsonWriter Clone(IBufferWriter<byte> writer) => new JsonWriter(writer);
 
         /// <summary>
         /// Ensures everything previously written has been flushed to the underlying <see cref="IBufferWriter{T}"/>.
@@ -96,18 +87,6 @@ namespace Utf8Json
         /// </summary>
         /// <param name="rawJsonBlock">The span of bytes to copy from.</param>
         public void WriteRaw(ReadOnlySpan<byte> rawJsonBlock) => Writer.Write(rawJsonBlock);
-
-        /// <summary>
-        /// Copies bytes directly into the message pack writer.
-        /// </summary>
-        /// <param name="rawJsonBlock">The span of bytes to copy from.</param>
-        public void WriteRaw(in ReadOnlySequence<byte> rawJsonBlock)
-        {
-            foreach (var segment in rawJsonBlock)
-            {
-                Writer.Write(segment.Span);
-            }
-        }
 
         /// <summary>:</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -594,13 +573,11 @@ namespace Utf8Json
 #if SPAN_BUILTIN
                 offset += StringEncoding.Utf8.GetBytes(value.Slice(from, i - from), span.Slice(offset));
 #else
-                unsafe
+
+                fixed (char* srcPtr = &value[from])
+                fixed (byte* dstPtr = &span[offset])
                 {
-                    fixed (char* srcPtr = &value[from])
-                    fixed (byte* dstPtr = &span[offset])
-                    {
-                        offset += StringEncoding.Utf8.GetBytes(srcPtr, i - from, dstPtr, span.Length - offset);
-                    }
+                    offset += StringEncoding.Utf8.GetBytes(srcPtr, i - from, dstPtr, span.Length - offset);
                 }
 #endif
                 from = i + 1;
@@ -613,13 +590,10 @@ namespace Utf8Json
 #if SPAN_BUILTIN
                 offset += StringEncoding.Utf8.GetBytes(value.Slice(from), span.Slice(offset));
 #else
-                unsafe
+                fixed (char* srcPtr = &value[from])
+                fixed (byte* dstPtr = &span[offset])
                 {
-                    fixed (char* srcPtr = &value[from])
-                    fixed (byte* dstPtr = &span[offset])
-                    {
-                        offset += StringEncoding.Utf8.GetBytes(srcPtr, value.Length - from, dstPtr, span.Length - offset);
-                    }
+                    offset += StringEncoding.Utf8.GetBytes(srcPtr, value.Length - from, dstPtr, span.Length - offset);
                 }
 #endif
             }
@@ -771,13 +745,10 @@ namespace Utf8Json
 #if SPAN_BUILTIN
                 offset += StringEncoding.Utf8.GetBytes(valueSpan.Slice(from, i - from), span.Slice(offset));
 #else
-                unsafe
+                fixed (char* srcPtr = &valueSpan[from])
+                fixed (byte* dstPtr = &span[offset])
                 {
-                    fixed (char* srcPtr = &valueSpan[from])
-                    fixed (byte* dstPtr = &span[offset])
-                    {
-                        offset += StringEncoding.Utf8.GetBytes(srcPtr, i - from, dstPtr, span.Length - offset);
-                    }
+                    offset += StringEncoding.Utf8.GetBytes(srcPtr, i - from, dstPtr, span.Length - offset);
                 }
 #endif
                 from = i + 1;
@@ -790,13 +761,10 @@ namespace Utf8Json
 #if SPAN_BUILTIN
                 offset += StringEncoding.Utf8.GetBytes(valueSpan.Slice(from), span.Slice(offset));
 #else
-                unsafe
+                fixed (char* srcPtr = &valueSpan[from])
+                fixed (byte* dstPtr = &span[offset])
                 {
-                    fixed (char* srcPtr = &valueSpan[from])
-                    fixed (byte* dstPtr = &span[offset])
-                    {
-                        offset += StringEncoding.Utf8.GetBytes(srcPtr, value.Length - from, dstPtr, span.Length - offset);
-                    }
+                    offset += StringEncoding.Utf8.GetBytes(srcPtr, value.Length - from, dstPtr, span.Length - offset);
                 }
 #endif
             }

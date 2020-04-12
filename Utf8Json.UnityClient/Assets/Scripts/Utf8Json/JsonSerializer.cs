@@ -1,13 +1,15 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using StaticFunctionPointerHelper;
 using System;
 using System.Buffers;
+using Utf8Json.Internal;
+#if SPAN_BUILTIN
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using StaticFunctionPointerHelper;
-using Utf8Json.Internal;
+#endif
 
 namespace Utf8Json
 {
@@ -34,14 +36,10 @@ namespace Utf8Json
         /// <param name="writer">The buffer writer to serialize with.</param>
         /// <param name="value">The value to serialize.</param>
         /// <param name="options">The options.</param>
-        /// <param name="cancellationToken">A cancellation token.</param>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static unsafe void Serialize<T>(IBufferWriter<byte> writer, T value, JsonSerializerOptions options, CancellationToken cancellationToken = default)
+        public static unsafe void Serialize<T>(IBufferWriter<byte> writer, T value, JsonSerializerOptions options)
         {
-            var fastWriter = new JsonWriter(writer)
-            {
-                CancellationToken = cancellationToken,
-            };
+            var fastWriter = new JsonWriter(writer);
             try
             {
                 var serializer = options.Resolver.GetSerializeStatic<T>();
@@ -66,14 +64,10 @@ namespace Utf8Json
         /// </summary>
         /// <param name="writer">The buffer writer to serialize with.</param>
         /// <param name="value">The value to serialize.</param>
-        /// <param name="cancellationToken">A cancellation token.</param>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static unsafe void Serialize<T>(IBufferWriter<byte> writer, T value, CancellationToken cancellationToken = default)
+        public static unsafe void Serialize<T>(IBufferWriter<byte> writer, T value)
         {
-            var fastWriter = new JsonWriter(writer)
-            {
-                CancellationToken = cancellationToken,
-            };
+            var fastWriter = new JsonWriter(writer);
             try
             {
                 var serializer = DefaultOptions.Resolver.GetSerializeStatic<T>();
@@ -160,10 +154,9 @@ namespace Utf8Json
         /// </summary>
         /// <param name="value">The value to serialize.</param>
         /// <param name="options">The options.</param>
-        /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>A byte array with the serialized value.</returns>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static unsafe byte[] Serialize<T>(T value, JsonSerializerOptions options, CancellationToken cancellationToken = default)
+        public static unsafe byte[] Serialize<T>(T value, JsonSerializerOptions options)
         {
             var array = ScratchArray;
             if (array == null)
@@ -171,10 +164,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = cancellationToken,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 var serializer = options.Resolver.GetSerializeStatic<T>();
@@ -198,10 +188,9 @@ namespace Utf8Json
         /// Serializes a given value with the specified buffer writer.
         /// </summary>
         /// <param name="value">The value to serialize.</param>
-        /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>A byte array with the serialized value.</returns>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static unsafe byte[] Serialize<T>(T value, CancellationToken cancellationToken = default)
+        public static unsafe byte[] Serialize<T>(T value)
         {
             var array = ScratchArray;
             if (array == null)
@@ -209,10 +198,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = cancellationToken,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 var serializer = DefaultOptions.Resolver.GetSerializeStatic<T>();
@@ -247,11 +233,11 @@ namespace Utf8Json
             var sequenceRental = SequencePool.Shared.Rent();
             try
             {
-                Serialize(sequenceRental.Value, value, options, cancellationToken);
+                Serialize(sequenceRental.Value, value, options);
 
                 try
                 {
-                    foreach (var segment in (ReadOnlySequence<byte>) sequenceRental.Value)
+                    foreach (var segment in (ReadOnlySequence<byte>)sequenceRental.Value)
                     {
                         cancellationToken.ThrowIfCancellationRequested();
                         stream.Write(segment.Span);
@@ -281,11 +267,11 @@ namespace Utf8Json
             var sequenceRental = SequencePool.Shared.Rent();
             try
             {
-                Serialize(sequenceRental.Value, value, cancellationToken);
+                Serialize(sequenceRental.Value, value);
 
                 try
                 {
-                    foreach (var segment in (ReadOnlySequence<byte>) sequenceRental.Value)
+                    foreach (var segment in (ReadOnlySequence<byte>)sequenceRental.Value)
                     {
                         cancellationToken.ThrowIfCancellationRequested();
                         stream.Write(segment.Span);
@@ -317,7 +303,7 @@ namespace Utf8Json
             var sequenceRental = SequencePool.Shared.Rent();
             try
             {
-                Serialize(sequenceRental.Value, value, options, cancellationToken);
+                Serialize(sequenceRental.Value, value, options);
 
                 try
                 {
@@ -352,7 +338,7 @@ namespace Utf8Json
             var sequenceRental = SequencePool.Shared.Rent();
             try
             {
-                Serialize(sequenceRental.Value, value, cancellationToken);
+                Serialize(sequenceRental.Value, value);
 
                 try
                 {
@@ -429,15 +415,11 @@ namespace Utf8Json
         /// <typeparam name="T">The type of value to deserialize.</typeparam>
         /// <param name="buffer">The buffer to deserialize from.</param>
         /// <param name="options">The options. Use <c>null</c> to use default options.</param>
-        /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
-        public static unsafe T Deserialize<T>(ReadOnlyMemory<byte> buffer, JsonSerializerOptions options, CancellationToken cancellationToken = default)
+        public static unsafe T Deserialize<T>(ReadOnlyMemory<byte> buffer, JsonSerializerOptions options)
         {
-            var reader = new JsonReader(buffer.Span)
-            {
-                CancellationToken = cancellationToken,
-            };
+            var reader = new JsonReader(buffer.Span);
             try
             {
                 var deserializer = options.Resolver.GetDeserializeStatic<T>();
@@ -458,15 +440,11 @@ namespace Utf8Json
         /// <param name="buffer">The memory to deserialize from.</param>
         /// <param name="options">The options. Use <c>null</c> to use default options.</param>
         /// <param name="bytesRead">The number of bytes read.</param>
-        /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
-        public static unsafe T Deserialize<T>(ReadOnlyMemory<byte> buffer, JsonSerializerOptions options, out int bytesRead, CancellationToken cancellationToken = default)
+        public static unsafe T Deserialize<T>(ReadOnlyMemory<byte> buffer, JsonSerializerOptions options, out int bytesRead)
         {
-            var reader = new JsonReader(buffer.Span)
-            {
-                CancellationToken = cancellationToken,
-            };
+            var reader = new JsonReader(buffer.Span);
             try
             {
                 var deserializer = options.Resolver.GetDeserializeStatic<T>();
@@ -535,44 +513,13 @@ namespace Utf8Json
         /// Deserializes a value of a given type from a sequence of bytes.
         /// </summary>
         /// <typeparam name="T">The type of value to deserialize.</typeparam>
-        /// <param name="buffer">The buffer to deserialize from.</param>
-        /// <param name="cancellationToken">A cancellation token.</param>
-        /// <returns>The deserialized value.</returns>
-        /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
-        public static unsafe T Deserialize<T>(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
-        {
-            var reader = new JsonReader(buffer.Span)
-            {
-                CancellationToken = cancellationToken,
-            };
-            try
-            {
-                var deserializer = DefaultOptions.Resolver.GetDeserializeStatic<T>();
-                return deserializer.ToPointer() == null
-                    ? DefaultOptions.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, DefaultOptions)
-                    : reader.Deserialize<T>(DefaultOptions, deserializer);
-            }
-            catch (Exception ex)
-            {
-                throw new JsonSerializationException($"Failed to deserialize {typeof(T).FullName} value.", ex);
-            }
-        }
-
-        /// <summary>
-        /// Deserializes a value of a given type from a sequence of bytes.
-        /// </summary>
-        /// <typeparam name="T">The type of value to deserialize.</typeparam>
         /// <param name="buffer">The memory to deserialize from.</param>
         /// <param name="bytesRead">The number of bytes read.</param>
-        /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
-        public static unsafe T Deserialize<T>(ReadOnlyMemory<byte> buffer, out int bytesRead, CancellationToken cancellationToken = default)
+        public static unsafe T Deserialize<T>(ReadOnlyMemory<byte> buffer, out int bytesRead)
         {
-            var reader = new JsonReader(buffer.Span)
-            {
-                CancellationToken = cancellationToken,
-            };
+            var reader = new JsonReader(buffer.Span);
             try
             {
                 var deserializer = DefaultOptions.Resolver.GetDeserializeStatic<T>();

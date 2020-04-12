@@ -1,10 +1,10 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using StaticFunctionPointerHelper;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
-using StaticFunctionPointerHelper;
 
 namespace Utf8Json.Formatters
 {
@@ -320,7 +320,7 @@ namespace Utf8Json.Formatters
 
                     array[count - 1] = reader.Deserialize<T>(options, deserializer);
                 }
-                
+
                 var answer = new List<T>(count);
                 var span = array.AsSpan(0, count);
                 for (var index = 0; index < span.Length; index++)
@@ -364,7 +364,7 @@ namespace Utf8Json.Formatters
             return answer;
         }
 
-        #if CSHARP_8_OR_NEWER
+#if CSHARP_8_OR_NEWER
         public void DeserializeTo(ref List<T>? value, ref JsonReader reader, JsonSerializerOptions options)
 #else
         public void DeserializeTo(ref List<T> value, ref JsonReader reader, JsonSerializerOptions options)

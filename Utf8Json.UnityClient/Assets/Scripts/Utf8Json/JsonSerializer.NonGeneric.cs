@@ -38,15 +38,15 @@ namespace Utf8Json
         }
 
         /// <seealso cref="Serialize{T}(IBufferWriter{byte}, T, JsonSerializerOptions, System.Threading.CancellationToken)"/>
-        public static void Serialize(System.Type type, System.Buffers.IBufferWriter<byte> writer, object obj, JsonSerializerOptions options, System.Threading.CancellationToken cancellationToken = default)
+        public static void Serialize(System.Type type, System.Buffers.IBufferWriter<byte> writer, object obj, JsonSerializerOptions options)
         {
-            GetOrAdd(type).Serialize_IBufferWriter_T_Options_CancellationToken.Invoke(writer, obj, options, cancellationToken);
+            GetOrAdd(type).Serialize_IBufferWriter_T_Options.Invoke(writer, obj, options);
         }
 
         /// <seealso cref="Serialize{T}(T, JsonSerializerOptions, System.Threading.CancellationToken)"/>
-        public static byte[] Serialize(System.Type type, object obj, JsonSerializerOptions options, System.Threading.CancellationToken cancellationToken = default)
+        public static byte[] Serialize(System.Type type, object obj, JsonSerializerOptions options)
         {
-            return GetOrAdd(type).Serialize_T_Options.Invoke(obj, options, cancellationToken);
+            return GetOrAdd(type).Serialize_T_Options.Invoke(obj, options);
         }
 
 #if SPAN_BUILTIN
@@ -72,9 +72,9 @@ namespace Utf8Json
         }
 
         /// <seealso cref="Deserialize{T}(ReadOnlyMemory{byte}, JsonSerializerOptions, System.Threading.CancellationToken)"/>
-        public static object Deserialize(System.Type type, System.ReadOnlyMemory<byte> bytes, JsonSerializerOptions options, System.Threading.CancellationToken cancellationToken = default)
+        public static object Deserialize(System.Type type, System.ReadOnlyMemory<byte> bytes, JsonSerializerOptions options)
         {
-            return GetOrAdd(type).Deserialize_ReadOnlyMemory_Options.Invoke(bytes, options, cancellationToken);
+            return GetOrAdd(type).Deserialize_ReadOnlyMemory_Options.Invoke(bytes, options);
         }
 
 #if SPAN_BUILTIN

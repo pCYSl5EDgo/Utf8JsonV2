@@ -22,14 +22,14 @@ namespace Utf8Json.Formatters
         public DateTimeOffset Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
             var str = reader.ReadString();
-            if(str == null) throw new JsonParsingException("DateTimeOffset cannot be null.");
+            if (str == null) throw new JsonParsingException("DateTimeOffset cannot be null.");
             return DateTimeOffset.Parse(str, CultureInfo.InvariantCulture);
         }
 
         public static DateTimeOffset DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
             var str = reader.ReadString();
-            if(str == null) throw new JsonParsingException("DateTimeOffset cannot be null.");
+            if (str == null) throw new JsonParsingException("DateTimeOffset cannot be null.");
             return DateTimeOffset.Parse(str, CultureInfo.InvariantCulture);
         }
     }

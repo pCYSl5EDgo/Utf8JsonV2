@@ -43,7 +43,7 @@ namespace Utf8Json.Formatters
             var e = value.GetEnumerator();
             try
             {
-                if (options.Resolver.GetFormatterWithVerify<TKey>() is IObjectPropertyNameFormatter<TKey>keyFormatter)
+                if (options.Resolver.GetFormatterWithVerify<TKey>() is IObjectPropertyNameFormatter<TKey> keyFormatter)
                 {
                     if (e.MoveNext())
                     {

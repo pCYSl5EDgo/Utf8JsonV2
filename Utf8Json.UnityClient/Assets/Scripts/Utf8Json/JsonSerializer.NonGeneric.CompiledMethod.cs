@@ -6,10 +6,10 @@ using System.Buffers;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Threading;
 
 #if SPAN_BUILTIN
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 #endif
 
@@ -25,9 +25,9 @@ namespace Utf8Json
 
             internal delegate object JsonReaderDeserialize(ref JsonReader reader, JsonSerializerOptions options);
 
-            internal readonly Func<object, JsonSerializerOptions, CancellationToken, byte[]> Serialize_T_Options;
+            internal readonly Func<object, JsonSerializerOptions, byte[]> Serialize_T_Options;
             internal readonly JsonWriterSerialize Serialize_JsonWriter_T_Options;
-            internal readonly Action<IBufferWriter<byte>, object, JsonSerializerOptions, CancellationToken> Serialize_IBufferWriter_T_Options_CancellationToken;
+            internal readonly Action<IBufferWriter<byte>, object, JsonSerializerOptions> Serialize_IBufferWriter_T_Options;
 
 #if SPAN_BUILTIN
             internal readonly Action<Stream, object, JsonSerializerOptions, CancellationToken> Serialize_Stream_T_Options_CancellationToken;
@@ -35,7 +35,7 @@ namespace Utf8Json
 #endif
 
             internal readonly JsonReaderDeserialize Deserialize_JsonReader_Options;
-            internal readonly Func<ReadOnlyMemory<byte>, JsonSerializerOptions, CancellationToken, object> Deserialize_ReadOnlyMemory_Options;
+            internal readonly Func<ReadOnlyMemory<byte>, JsonSerializerOptions, object> Deserialize_ReadOnlyMemory_Options;
 
 #if SPAN_BUILTIN
             internal readonly Func<Stream, JsonSerializerOptions, CancellationToken, object> Deserialize_Stream_Options_CancellationToken;
@@ -46,19 +46,17 @@ namespace Utf8Json
                 var ti = type.GetTypeInfo();
                 {
                     // public static byte[] Serialize<T>(T obj, JsonSerializerOptions options, CancellationToken cancellationToken)
-                    var serialize = GetMethod(nameof(Serialize), type, new[] { null, typeof(JsonSerializerOptions), typeof(CancellationToken) });
+                    var serialize = GetMethod(nameof(Serialize), type, new[] { null, typeof(JsonSerializerOptions) });
 
                     var param1 = Expression.Parameter(typeof(object), "obj");
                     var param2 = Expression.Parameter(typeof(JsonSerializerOptions), "options");
-                    var param3 = Expression.Parameter(typeof(CancellationToken), "cancellationToken");
 
                     var body = Expression.Call(
                         null,
                         serialize,
                         ti.IsValueType ? Expression.Unbox(param1, type) : Expression.Convert(param1, type),
-                        param2,
-                        param3);
-                    var lambda = Expression.Lambda<Func<object, JsonSerializerOptions, CancellationToken, byte[]>>(body, param1, param2, param3).Compile();
+                        param2);
+                    var lambda = Expression.Lambda<Func<object, JsonSerializerOptions, byte[]>>(body, param1, param2).Compile();
 
                     this.Serialize_T_Options = lambda;
                 }
@@ -109,23 +107,21 @@ namespace Utf8Json
 
                 {
                     // public static Task Serialize<T>(IBufferWriter<byte> writer, T obj, JsonSerializerOptions options, CancellationToken cancellationToken)
-                    var serialize = GetMethod(nameof(Serialize), type, new[] { typeof(IBufferWriter<byte>), null, typeof(JsonSerializerOptions), typeof(CancellationToken) });
+                    var serialize = GetMethod(nameof(Serialize), type, new[] { typeof(IBufferWriter<byte>), null, typeof(JsonSerializerOptions) });
 
                     var param1 = Expression.Parameter(typeof(IBufferWriter<byte>), "writer");
                     var param2 = Expression.Parameter(typeof(object), "obj");
                     var param3 = Expression.Parameter(typeof(JsonSerializerOptions), "options");
-                    var param4 = Expression.Parameter(typeof(CancellationToken), "cancellationToken");
 
                     var body = Expression.Call(
                         null,
                         serialize,
                         param1,
                         ti.IsValueType ? Expression.Unbox(param2, type) : Expression.Convert(param2, type),
-                        param3,
-                        param4);
-                    var lambda = Expression.Lambda<Action<IBufferWriter<byte>, object, JsonSerializerOptions, CancellationToken>>(body, param1, param2, param3, param4).Compile();
+                        param3);
+                    var lambda = Expression.Lambda<Action<IBufferWriter<byte>, object, JsonSerializerOptions>>(body, param1, param2, param3).Compile();
 
-                    this.Serialize_IBufferWriter_T_Options_CancellationToken = lambda;
+                    this.Serialize_IBufferWriter_T_Options = lambda;
                 }
 
                 {
@@ -176,13 +172,12 @@ namespace Utf8Json
 
                 {
                     // public static T Deserialize<T>(ReadOnlyMemory<byte> bytes, JsonSerializerOptions options, CancellationToken cancellationToken)
-                    var deserialize = GetMethod(nameof(Deserialize), type, new[] { typeof(ReadOnlyMemory<byte>), typeof(JsonSerializerOptions), typeof(CancellationToken) });
+                    var deserialize = GetMethod(nameof(Deserialize), type, new[] { typeof(ReadOnlyMemory<byte>), typeof(JsonSerializerOptions) });
 
                     var param1 = Expression.Parameter(typeof(ReadOnlyMemory<byte>), "bytes");
                     var param2 = Expression.Parameter(typeof(JsonSerializerOptions), "options");
-                    var param3 = Expression.Parameter(typeof(CancellationToken), "cancellationToken");
-                    var body = Expression.Convert(Expression.Call(null, deserialize, param1, param2, param3), typeof(object));
-                    var lambda = Expression.Lambda<Func<ReadOnlyMemory<byte>, JsonSerializerOptions, CancellationToken, object>>(body, param1, param2, param3).Compile();
+                    var body = Expression.Convert(Expression.Call(null, deserialize, param1, param2), typeof(object));
+                    var lambda = Expression.Lambda<Func<ReadOnlyMemory<byte>, JsonSerializerOptions, object>>(body, param1, param2).Compile();
 
                     this.Deserialize_ReadOnlyMemory_Options = lambda;
                 }

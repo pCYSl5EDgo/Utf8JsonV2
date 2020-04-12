@@ -1,9 +1,9 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using StaticFunctionPointerHelper;
 using System;
 using System.Collections.Generic;
-using StaticFunctionPointerHelper;
 using Utf8Json.Internal;
 
 namespace Utf8Json.Formatters

@@ -2,13 +2,15 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Buffers;
-using System.IO;
-using System.Threading;
 using Utf8Json.Internal;
 
+#if SPAN_BUILTIN
+using System.Buffers;
+using System.IO;
+#endif
+
 // ReSharper disable BuiltInTypeReferenceStyle
-#pragma warning disable IDE0060 // Êú™‰ΩøÁî®„ÅÆ„Éë„É©„É°„Éº„Çø„Éº„ÇíÂâäÈô§„Åó„Åæ„Åô
+#pragma warning disable IDE0060 // ñ¢égópÇÃÉpÉâÉÅÅ[É^Å[ÇçÌèúÇµÇ‹Ç∑
 
 namespace Utf8Json
 {
@@ -22,10 +24,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = CancellationToken.None,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 jsonWriter.Write(value);
@@ -45,10 +44,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = CancellationToken.None,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 jsonWriter.Write(value);
@@ -66,10 +62,7 @@ namespace Utf8Json
             var sequenceRental = SequencePool.Shared.Rent();
             try
             {
-                var fastWriter = new JsonWriter(sequenceRental.Value)
-                {
-                    CancellationToken = CancellationToken.None,
-                };
+                var fastWriter = new JsonWriter(sequenceRental.Value);
                 try
                 {
                     fastWriter.Write(value);
@@ -107,10 +100,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = CancellationToken.None,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 jsonWriter.Write(value);
@@ -130,10 +120,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = CancellationToken.None,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 jsonWriter.Write(value);
@@ -151,10 +138,7 @@ namespace Utf8Json
             var sequenceRental = SequencePool.Shared.Rent();
             try
             {
-                var fastWriter = new JsonWriter(sequenceRental.Value)
-                {
-                    CancellationToken = CancellationToken.None,
-                };
+                var fastWriter = new JsonWriter(sequenceRental.Value);
                 try
                 {
                     fastWriter.Write(value);
@@ -192,10 +176,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = CancellationToken.None,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 jsonWriter.Write(value);
@@ -215,10 +196,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = CancellationToken.None,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 jsonWriter.Write(value);
@@ -236,10 +214,7 @@ namespace Utf8Json
             var sequenceRental = SequencePool.Shared.Rent();
             try
             {
-                var fastWriter = new JsonWriter(sequenceRental.Value)
-                {
-                    CancellationToken = CancellationToken.None,
-                };
+                var fastWriter = new JsonWriter(sequenceRental.Value);
                 try
                 {
                     fastWriter.Write(value);
@@ -277,10 +252,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = CancellationToken.None,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 jsonWriter.Write(value);
@@ -300,10 +272,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = CancellationToken.None,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 jsonWriter.Write(value);
@@ -321,10 +290,7 @@ namespace Utf8Json
             var sequenceRental = SequencePool.Shared.Rent();
             try
             {
-                var fastWriter = new JsonWriter(sequenceRental.Value)
-                {
-                    CancellationToken = CancellationToken.None,
-                };
+                var fastWriter = new JsonWriter(sequenceRental.Value);
                 try
                 {
                     fastWriter.Write(value);
@@ -362,10 +328,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = CancellationToken.None,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 jsonWriter.Write(value);
@@ -385,10 +348,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = CancellationToken.None,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 jsonWriter.Write(value);
@@ -406,10 +366,7 @@ namespace Utf8Json
             var sequenceRental = SequencePool.Shared.Rent();
             try
             {
-                var fastWriter = new JsonWriter(sequenceRental.Value)
-                {
-                    CancellationToken = CancellationToken.None,
-                };
+                var fastWriter = new JsonWriter(sequenceRental.Value);
                 try
                 {
                     fastWriter.Write(value);
@@ -447,10 +404,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = CancellationToken.None,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 jsonWriter.Write(value);
@@ -470,10 +424,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = CancellationToken.None,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 jsonWriter.Write(value);
@@ -491,10 +442,7 @@ namespace Utf8Json
             var sequenceRental = SequencePool.Shared.Rent();
             try
             {
-                var fastWriter = new JsonWriter(sequenceRental.Value)
-                {
-                    CancellationToken = CancellationToken.None,
-                };
+                var fastWriter = new JsonWriter(sequenceRental.Value);
                 try
                 {
                     fastWriter.Write(value);
@@ -532,10 +480,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = CancellationToken.None,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 jsonWriter.Write(value);
@@ -555,10 +500,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = CancellationToken.None,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 jsonWriter.Write(value);
@@ -576,10 +518,7 @@ namespace Utf8Json
             var sequenceRental = SequencePool.Shared.Rent();
             try
             {
-                var fastWriter = new JsonWriter(sequenceRental.Value)
-                {
-                    CancellationToken = CancellationToken.None,
-                };
+                var fastWriter = new JsonWriter(sequenceRental.Value);
                 try
                 {
                     fastWriter.Write(value);
@@ -617,10 +556,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = CancellationToken.None,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 jsonWriter.Write(value);
@@ -640,10 +576,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = CancellationToken.None,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 jsonWriter.Write(value);
@@ -661,10 +594,7 @@ namespace Utf8Json
             var sequenceRental = SequencePool.Shared.Rent();
             try
             {
-                var fastWriter = new JsonWriter(sequenceRental.Value)
-                {
-                    CancellationToken = CancellationToken.None,
-                };
+                var fastWriter = new JsonWriter(sequenceRental.Value);
                 try
                 {
                     fastWriter.Write(value);
@@ -702,10 +632,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = CancellationToken.None,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 jsonWriter.Write(value);
@@ -725,10 +652,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = CancellationToken.None,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 jsonWriter.Write(value);
@@ -746,10 +670,7 @@ namespace Utf8Json
             var sequenceRental = SequencePool.Shared.Rent();
             try
             {
-                var fastWriter = new JsonWriter(sequenceRental.Value)
-                {
-                    CancellationToken = CancellationToken.None,
-                };
+                var fastWriter = new JsonWriter(sequenceRental.Value);
                 try
                 {
                     fastWriter.Write(value);
@@ -787,10 +708,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = CancellationToken.None,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 jsonWriter.Write(value);
@@ -810,10 +728,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = CancellationToken.None,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 jsonWriter.Write(value);
@@ -831,10 +746,7 @@ namespace Utf8Json
             var sequenceRental = SequencePool.Shared.Rent();
             try
             {
-                var fastWriter = new JsonWriter(sequenceRental.Value)
-                {
-                    CancellationToken = CancellationToken.None,
-                };
+                var fastWriter = new JsonWriter(sequenceRental.Value);
                 try
                 {
                     fastWriter.Write(value);
@@ -872,10 +784,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = CancellationToken.None,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 jsonWriter.Write(value);
@@ -895,10 +804,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = CancellationToken.None,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 jsonWriter.Write(value);
@@ -916,10 +822,7 @@ namespace Utf8Json
             var sequenceRental = SequencePool.Shared.Rent();
             try
             {
-                var fastWriter = new JsonWriter(sequenceRental.Value)
-                {
-                    CancellationToken = CancellationToken.None,
-                };
+                var fastWriter = new JsonWriter(sequenceRental.Value);
                 try
                 {
                     fastWriter.Write(value);
@@ -957,10 +860,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = CancellationToken.None,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 jsonWriter.Write(value);
@@ -980,10 +880,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = CancellationToken.None,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 jsonWriter.Write(value);
@@ -1001,10 +898,7 @@ namespace Utf8Json
             var sequenceRental = SequencePool.Shared.Rent();
             try
             {
-                var fastWriter = new JsonWriter(sequenceRental.Value)
-                {
-                    CancellationToken = CancellationToken.None,
-                };
+                var fastWriter = new JsonWriter(sequenceRental.Value);
                 try
                 {
                     fastWriter.Write(value);
@@ -1042,10 +936,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = CancellationToken.None,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 jsonWriter.Write(value);
@@ -1065,10 +956,7 @@ namespace Utf8Json
                 ScratchArray = array = new byte[65536];
             }
 
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array)
-            {
-                CancellationToken = CancellationToken.None,
-            };
+            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
             try
             {
                 jsonWriter.Write(value);
@@ -1086,10 +974,7 @@ namespace Utf8Json
             var sequenceRental = SequencePool.Shared.Rent();
             try
             {
-                var fastWriter = new JsonWriter(sequenceRental.Value)
-                {
-                    CancellationToken = CancellationToken.None,
-                };
+                var fastWriter = new JsonWriter(sequenceRental.Value);
                 try
                 {
                     fastWriter.Write(value);
@@ -1121,4 +1006,4 @@ namespace Utf8Json
 
     }
 }
-#pragma warning restore IDE0060 // Êú™‰ΩøÁî®„ÅÆ„Éë„É©„É°„Éº„Çø„Éº„ÇíÂâäÈô§„Åó„Åæ„Åô
+#pragma warning restore IDE0060 // ñ¢égópÇÃÉpÉâÉÅÅ[É^Å[ÇçÌèúÇµÇ‹Ç∑

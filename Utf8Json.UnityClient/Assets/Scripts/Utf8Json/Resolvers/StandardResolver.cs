@@ -88,7 +88,7 @@ namespace Utf8Json.Resolvers
                         continue;
                     }
 
-                    if(Formatter == null)
+                    if (Formatter == null)
                     {
                         Formatter = f;
                     }

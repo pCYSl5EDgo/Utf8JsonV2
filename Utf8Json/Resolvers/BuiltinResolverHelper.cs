@@ -25,7 +25,7 @@ namespace Utf8Json.Resolvers
         internal static class BuiltinResolverGetFormatterHelper
         {
             private static readonly ThreadSafeTypeKeyFormatterHashTable formatterHashTable
-#region table
+            #region table
             = new ThreadSafeTypeKeyFormatterHashTable(new[]
             {
 #if CSHARP_8_OR_NEWER
@@ -293,10 +293,10 @@ namespace Utf8Json.Resolvers
                 new ThreadSafeTypeKeyFormatterHashTable.Entry(typeof(ExpandoObject), StaticHelper.GetSerializeStatic<ExpandoObject, ExpandoObjectFormatter>(), StaticHelper.GetDeserializeStatic<ExpandoObject, ExpandoObjectFormatter>()),
 #endif
             }, 0.5d);
-#endregion
+            #endregion
 
             private static readonly ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter> formatterInstanceMap
-#region table
+            #region table
             = new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>(new[]
             {
                 new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(string[]), new NullableStringArrayFormatter()),
@@ -419,7 +419,7 @@ namespace Utf8Json.Resolvers
                 new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(ExpandoObject), new ExpandoObjectFormatter()),
 #endif
             }, 0.5d);
-#endregion
+            #endregion
 
 #if CSHARP_8_OR_NEWER
             internal static IJsonFormatter? GetFormatter(Type t)
