@@ -27,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\PrimitiveFormatter.cs;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\CollectionFormatter.cs;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\Dictionary\DictionaryFormatter.cs;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Resolvers\BuiltinResolverHelper.cs;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\JsonSerializer.Primitive.cs;" />
+    <Compile Remove="..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\PrimitiveFormatter.cs;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\CollectionFormatter.cs;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\Dictionary\DictionaryFormatter.cs;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Resolvers\BuiltinResolverHelper.cs;" />
   </ItemGroup>
 
   <ItemGroup>
@@ -55,10 +55,6 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>PrimitiveFormatter.cs</LastGenOutput>
     </None>
-    <None Update="JsonSerializer.Primitive.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>JsonSerializer.Primitive.cs</LastGenOutput>
-    </None>
     <None Update="Resolvers\BuiltinResolverHelper.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>BuiltinResolverHelper.cs</LastGenOutput>
@@ -81,11 +77,6 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>PrimitiveFormatter.tt</DependentUpon>
     </Compile>
-    <Compile Update="JsonSerializer.Primitive.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>JsonSerializer.Primitive.tt</DependentUpon>
-    </Compile>
     <Compile Update="Resolvers\BuiltinResolverHelper.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
@@ -103,7 +94,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="Exists('C:\')">
-    <Exec Command="XCOPY &quot;$(ProjectDir)Formatters\PrimitiveFormatter.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\&quot; /D /Y&#xD;&#xA;XCOPY &quot;$(ProjectDir)Formatters\CollectionFormatter.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\&quot; /D /Y&#xD;&#xA;XCOPY &quot;$(ProjectDir)Formatters\Dictionary\DictionaryFormatter.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\Dictionary\&quot; /D /Y&#xD;&#xA;XCOPY &quot;$(ProjectDir)Resolvers\BuiltinResolverHelper.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Resolvers\&quot; /D /Y&#xD;&#xA;XCOPY &quot;$(ProjectDir)JsonSerializer.Primitive.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\&quot; /D /Y" />
+    <Exec Command="XCOPY &quot;$(ProjectDir)Formatters\PrimitiveFormatter.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\&quot; /D /Y&#xD;&#xA;XCOPY &quot;$(ProjectDir)Formatters\CollectionFormatter.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\&quot; /D /Y&#xD;&#xA;XCOPY &quot;$(ProjectDir)Formatters\Dictionary\DictionaryFormatter.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\Dictionary\&quot; /D /Y&#xD;&#xA;XCOPY &quot;$(ProjectDir)Resolvers\BuiltinResolverHelper.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Resolvers\&quot; /D /Y" />
   </Target>
 
 

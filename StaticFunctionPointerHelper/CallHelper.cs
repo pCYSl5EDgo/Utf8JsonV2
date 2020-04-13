@@ -25,7 +25,7 @@ namespace StaticFunctionPointerHelper
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int CalcExactByteLengthForSerialization<T>(this JsonSerializerOptions options, T value, IntPtr functionPointer)
+        public static int CalcByteLengthForSerialization<T>(this JsonSerializerOptions options, T value, IntPtr functionPointer)
         {
             return default;
         }

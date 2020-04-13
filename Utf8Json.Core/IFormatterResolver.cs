@@ -14,7 +14,7 @@ namespace Utf8Json
 #endif
         IntPtr GetSerializeStatic<T>();
         IntPtr GetDeserializeStatic<T>();
-        IntPtr GetCalcExactByteLengthForSerializationStatic<T>();
+        IntPtr GetCalcByteLengthForSerialization<T>();
         IntPtr GetSerializeSpan<T>();
     }
 }

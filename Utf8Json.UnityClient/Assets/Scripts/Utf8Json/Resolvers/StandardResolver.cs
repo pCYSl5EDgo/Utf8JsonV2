@@ -55,14 +55,14 @@ namespace Utf8Json.Resolvers
             return FormatterCache<T>.DeserializeFunctionPointer;
         }
 
-        public IntPtr GetCalcExactByteLengthForSerializationStatic<T>()
+        public IntPtr GetCalcByteLengthForSerialization<T>()
         {
-            throw new NotImplementedException();
+            return FormatterCache<T>.CalcByteLengthForSerializationFunctionPointer;
         }
 
         public IntPtr GetSerializeSpan<T>()
         {
-            throw new NotImplementedException();
+            return FormatterCache<T>.SerializeSpanFunctionPointer;
         }
 
         private static class FormatterCache<T>
@@ -118,7 +118,7 @@ namespace Utf8Json.Resolvers
 
                     if (CalcByteLengthForSerializationFunctionPointer == IntPtr.Zero)
                     {
-                        CalcByteLengthForSerializationFunctionPointer = formatterResolver.GetCalcExactByteLengthForSerializationStatic<T>();
+                        CalcByteLengthForSerializationFunctionPointer = formatterResolver.GetCalcByteLengthForSerialization<T>();
                         if (SerializeFunctionPointer != IntPtr.Zero
                             && DeserializeFunctionPointer != IntPtr.Zero
                             && SerializeSpanFunctionPointer != IntPtr.Zero)

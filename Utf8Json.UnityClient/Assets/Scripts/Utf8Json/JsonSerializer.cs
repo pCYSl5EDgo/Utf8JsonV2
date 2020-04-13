@@ -147,7 +147,38 @@ namespace Utf8Json
         /// <param name="options">The options.</param>
         /// <returns>A byte array with the serialized value.</returns>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static unsafe byte[] Serialize<T>(T value, JsonSerializerOptions options)
+#if CSHARP_8_OR_NEWER
+        public static unsafe byte[] Serialize<T>(T value, JsonSerializerOptions? options = default)
+#else
+        public static unsafe byte[] Serialize<T>(T value, JsonSerializerOptions options = default)
+#endif
+        {
+            if (options == null)
+            {
+                options = DefaultOptions;
+            }
+
+            var calculator = options.Resolver.GetCalcByteLengthForSerialization<T>();
+            if (calculator.ToPointer() == null)
+            {
+                goto INTERNAL;
+            }
+
+            var serializer = options.Resolver.GetSerializeSpan<T>();
+            if (serializer.ToPointer() == null)
+            {
+                goto INTERNAL;
+            }
+
+            var answer = new byte[options.CalcByteLengthForSerialization(value, calculator)];
+            options.SerializeSpan(value, answer.AsSpan(), serializer);
+            return answer;
+
+        INTERNAL:
+            return SerializeInternal(value, options);
+        }
+
+        private static unsafe byte[] SerializeInternal<T>(T value, JsonSerializerOptions options)
         {
             var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
@@ -163,43 +194,6 @@ namespace Utf8Json
                     else
                     {
                         jsonWriter.Serialize(value, options, serializer);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    throw new JsonSerializationException($"Failed to serialize {typeof(T).FullName} value.", ex);
-                }
-
-                return jsonWriter.FlushAndGetArray();
-            }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return(array);
-            }
-        }
-
-        /// <summary>
-        /// Serializes a given value with the specified buffer writer.
-        /// </summary>
-        /// <param name="value">The value to serialize.</param>
-        /// <returns>A byte array with the serialized value.</returns>
-        /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static unsafe byte[] Serialize<T>(T value)
-        {
-            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
-            try
-            {
-                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
-                try
-                {
-                    var serializer = DefaultOptions.Resolver.GetSerializeStatic<T>();
-                    if (serializer.ToPointer() == null)
-                    {
-                        DefaultOptions.Resolver.GetFormatterWithVerify<T>().Serialize(ref jsonWriter, value, DefaultOptions);
-                    }
-                    else
-                    {
-                        jsonWriter.Serialize(value, DefaultOptions, serializer);
                     }
                 }
                 catch (Exception ex)

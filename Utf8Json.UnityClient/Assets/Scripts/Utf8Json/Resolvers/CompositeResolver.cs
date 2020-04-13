@@ -137,7 +137,7 @@ namespace Utf8Json.Resolvers
                     }
 
                     var other0 = resolver.GetDeserializeStatic<T>();
-                    var other1 = resolver.GetCalcExactByteLengthForSerializationStatic<T>();
+                    var other1 = resolver.GetCalcByteLengthForSerialization<T>();
                     var other2 = resolver.GetSerializeSpan<T>();
                     functionsCache.Add(typeof(T), new ThreadSafeTypeKeyFormatterHashTable.FunctionPair(answer, other0, other1, other2));
                     return answer;
@@ -163,7 +163,7 @@ namespace Utf8Json.Resolvers
                     }
 
                     var other0 = resolver.GetSerializeStatic<T>();
-                    var other1 = resolver.GetCalcExactByteLengthForSerializationStatic<T>();
+                    var other1 = resolver.GetCalcByteLengthForSerialization<T>();
                     var other2 = resolver.GetSerializeSpan<T>();
                     functionsCache.Add(typeof(T), new ThreadSafeTypeKeyFormatterHashTable.FunctionPair(other0, answer, other1, other2));
                     return answer;
@@ -172,7 +172,7 @@ namespace Utf8Json.Resolvers
                 return new IntPtr(null);
             }
 
-            public unsafe IntPtr GetCalcExactByteLengthForSerializationStatic<T>()
+            public unsafe IntPtr GetCalcByteLengthForSerialization<T>()
             {
                 var answer = functionsCache[typeof(T)].CalcByteLengthFunctionPtr;
                 if (answer.ToPointer() != null)
@@ -216,7 +216,7 @@ namespace Utf8Json.Resolvers
 
                     var other0 = resolver.GetSerializeStatic<T>();
                     var other1 = resolver.GetDeserializeStatic<T>();
-                    var other2 = resolver.GetCalcExactByteLengthForSerializationStatic<T>();
+                    var other2 = resolver.GetCalcByteLengthForSerialization<T>();
                     functionsCache.Add(typeof(T), new ThreadSafeTypeKeyFormatterHashTable.FunctionPair(other0, other1, other2, answer));
                     return answer;
                 }

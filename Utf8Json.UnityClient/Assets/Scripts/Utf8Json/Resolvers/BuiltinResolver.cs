@@ -26,7 +26,7 @@ namespace Utf8Json.Resolvers
             return FormatterCache<T>.DeserializeFunctionPointer;
         }
 
-        public IntPtr GetCalcExactByteLengthForSerializationStatic<T>()
+        public IntPtr GetCalcByteLengthForSerialization<T>()
         {
             return FormatterCache<T>.CalcByteLengthForSerializationFunctionPointer;
         }
