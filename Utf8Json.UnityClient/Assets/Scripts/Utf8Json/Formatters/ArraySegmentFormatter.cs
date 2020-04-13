@@ -16,7 +16,12 @@ namespace Utf8Json.Formatters
         {
             if (value.Array == null)
             {
-                writer.WriteNull();
+                var span1 = writer.Writer.GetSpan(4);
+                span1[0] = (byte)'n';
+                span1[1] = (byte)'u';
+                span1[2] = (byte)'l';
+                span1[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 
@@ -125,7 +130,12 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
@@ -137,7 +147,12 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 

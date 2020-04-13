@@ -7,9 +7,9 @@ namespace Utf8JsonBenchmark
 {
     internal class Program
     {
-        private static void Main(string[] args)
+        private static void Main()
         {
-            BenchmarkRunner.Run<JsonInt64Tester>();
+            BenchmarkRunner.Run<JsonStringTester>();
         }
     }
 

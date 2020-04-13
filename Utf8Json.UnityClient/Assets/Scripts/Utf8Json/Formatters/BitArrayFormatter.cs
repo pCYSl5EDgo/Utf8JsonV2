@@ -38,17 +38,22 @@ namespace Utf8Json.Formatters
             return DeserializeStatic(ref reader, options);
         }
 
-#pragma warning disable IDE0060 // 未使用のパラメーターを削除します
+#pragma warning disable IDE0060
 #if CSHARP_8_OR_NEWER
         public static void SerializeStatic(ref JsonWriter writer, BitArray? value, JsonSerializerOptions options)
 #else
         public static void SerializeStatic(ref JsonWriter writer, BitArray value, JsonSerializerOptions options)
 #endif
-#pragma warning restore IDE0060 // 未使用のパラメーターを削除します
+#pragma warning restore IDE0060
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 

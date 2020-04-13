@@ -7,14 +7,24 @@ namespace Utf8Json.Formatters
     {
         public void Serialize(ref JsonWriter writer, T value, JsonSerializerOptions options)
         {
-            writer.WriteNull();
+            var span = writer.Writer.GetSpan(4);
+            span[0] = (byte)'n';
+            span[1] = (byte)'u';
+            span[2] = (byte)'l';
+            span[3] = (byte)'l';
+            writer.Writer.Advance(4);
         }
 
-#pragma warning disable IDE0060 // 未使用のパラメーターを削除します
+#pragma warning disable IDE0060
         public static void SerializeStatic(ref JsonWriter writer, T value, JsonSerializerOptions options)
-#pragma warning restore IDE0060 // 未使用のパラメーターを削除します
+#pragma warning restore IDE0060
         {
-            writer.WriteNull();
+            var span = writer.Writer.GetSpan(4);
+            span[0] = (byte)'n';
+            span[1] = (byte)'u';
+            span[2] = (byte)'l';
+            span[3] = (byte)'l';
+            writer.Writer.Advance(4);
         }
 
         public T Deserialize(ref JsonReader reader, JsonSerializerOptions options)

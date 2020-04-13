@@ -3,7 +3,7 @@
 
 using System;
 using System.Buffers;
-#pragma warning disable IDE0060 // 未使用のパラメーターを削除します
+#pragma warning disable IDE0060
 
 namespace Utf8Json.Formatters
 {
@@ -20,14 +20,7 @@ namespace Utf8Json.Formatters
         public void Serialize(ref JsonWriter writer, string value, JsonSerializerOptions options)
 #endif
         {
-            if (value == default)
-            {
-                writer.WriteNull();
-            }
-            else
-            {
-                writer.Write(value);
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -45,14 +38,27 @@ namespace Utf8Json.Formatters
         public static void SerializeStatic(ref JsonWriter writer, string value, JsonSerializerOptions options)
 #endif
         {
-            if (value == default)
+            if (value is null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
+                return;
             }
-            else
+
+            if (value.Length == 0)
             {
-                writer.Write(value);
+                var emptySpan = writer.Writer.GetSpan(2);
+                emptySpan[0] = 0x22;
+                emptySpan[1] = 0x22;
+                writer.Writer.Advance(2);
+                return;
             }
+
+            writer.Write(value.AsSpan());
         }
 
 #if CSHARP_8_OR_NEWER
@@ -98,7 +104,12 @@ namespace Utf8Json.Formatters
         {
             if (value == default)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
             writer.WriteBeginArray();
@@ -110,7 +121,12 @@ namespace Utf8Json.Formatters
             var str = value[0];
             if (str == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
             else
             {
@@ -123,7 +139,12 @@ namespace Utf8Json.Formatters
                 str = value[i];
                 if (str == null)
                 {
-                    writer.WriteNull();
+                    var span = writer.Writer.GetSpan(4);
+                    span[0] = (byte)'n';
+                    span[1] = (byte)'u';
+                    span[2] = (byte)'l';
+                    span[3] = (byte)'l';
+                    writer.Writer.Advance(4);
                 }
                 else
                 {
@@ -180,4 +201,4 @@ namespace Utf8Json.Formatters
         }
     }
 }
-#pragma warning restore IDE0060 // 未使用のパラメーターを削除します
+#pragma warning restore IDE0060

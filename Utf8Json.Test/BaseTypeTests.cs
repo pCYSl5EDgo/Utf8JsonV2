@@ -73,7 +73,7 @@ namespace Utf8Json.Test
             Assert.AreEqual(value, deserialize);
         }
 
-        //[TestCase("")]
+        [TestCase("")]
         [TestCase(default(string))]
         [TestCase("とてつもなく大きな力が我々の前に立ちはだかるだろう。心せよ。探索者たちよ。")]
         [TestCase("とてつもな\\\\\\\\\r\nく大きな力が我々の前に立ちはだかるだろう。心せよ。探索者たちよ。")]
@@ -82,6 +82,7 @@ namespace Utf8Json.Test
             var bytes = JsonSerializer.Serialize(value);
             Console.WriteLine(bytes.ToArrayString());
             var deserialize = JsonSerializer.Deserialize<string>(bytes);
+            Console.WriteLine(deserialize);
             Assert.True(value == deserialize);
         }
 

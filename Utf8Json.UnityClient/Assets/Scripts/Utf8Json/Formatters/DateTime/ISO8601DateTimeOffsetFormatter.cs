@@ -466,7 +466,12 @@ namespace Utf8Json.Formatters
                 return;
             }
 
-            writer.WriteNull();
+            var span = writer.Writer.GetSpan(4);
+            span[0] = (byte)'n';
+            span[1] = (byte)'u';
+            span[2] = (byte)'l';
+            span[3] = (byte)'l';
+            writer.Writer.Advance(4);
         }
 
         public DateTimeOffset? Deserialize(ref JsonReader reader, JsonSerializerOptions options)

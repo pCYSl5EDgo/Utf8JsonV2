@@ -14,8 +14,8 @@ using Unity.Collections.LowLevel.Unsafe;
 #endif
 
 // ReSharper disable StackAllocInsideLoop
-#pragma warning disable SA1649 // File name should match first type name
-#pragma warning disable IDE0060 // 未使用のパラメーターを削除します
+#pragma warning disable SA1649
+#pragma warning disable IDE0060
 
 namespace Utf8Json.Formatters
 {
@@ -121,7 +121,7 @@ namespace Utf8Json.Formatters
         {
             SerializeStatic(ref writer, value, options);
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public static short[]? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #else
@@ -132,7 +132,7 @@ namespace Utf8Json.Formatters
             {
                 return default;
             }
-
+            
             reader.ReadIsBeginArrayWithVerify();
 #if UNITY_2018_4_OR_NEWER
             unsafe
@@ -182,7 +182,7 @@ namespace Utf8Json.Formatters
                     span.CopyTo(tmp);
                     span = tmp;
                 }
-
+                    
                 span[count - 1] = reader.ReadInt16();
             }
 
@@ -215,7 +215,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -413,7 +413,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -787,7 +787,7 @@ namespace Utf8Json.Formatters
         {
             SerializeStatic(ref writer, value, options);
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public static int[]? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #else
@@ -798,7 +798,7 @@ namespace Utf8Json.Formatters
             {
                 return default;
             }
-
+            
             reader.ReadIsBeginArrayWithVerify();
 #if UNITY_2018_4_OR_NEWER
             unsafe
@@ -848,7 +848,7 @@ namespace Utf8Json.Formatters
                     span.CopyTo(tmp);
                     span = tmp;
                 }
-
+                    
                 span[count - 1] = reader.ReadInt32();
             }
 
@@ -881,7 +881,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -1079,7 +1079,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -1453,7 +1453,7 @@ namespace Utf8Json.Formatters
         {
             SerializeStatic(ref writer, value, options);
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public static long[]? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #else
@@ -1464,7 +1464,7 @@ namespace Utf8Json.Formatters
             {
                 return default;
             }
-
+            
             reader.ReadIsBeginArrayWithVerify();
 #if UNITY_2018_4_OR_NEWER
             unsafe
@@ -1514,7 +1514,7 @@ namespace Utf8Json.Formatters
                     span.CopyTo(tmp);
                     span = tmp;
                 }
-
+                    
                 span[count - 1] = reader.ReadInt64();
             }
 
@@ -1547,7 +1547,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -1745,7 +1745,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -2119,7 +2119,7 @@ namespace Utf8Json.Formatters
         {
             SerializeStatic(ref writer, value, options);
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public static ushort[]? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #else
@@ -2130,7 +2130,7 @@ namespace Utf8Json.Formatters
             {
                 return default;
             }
-
+            
             reader.ReadIsBeginArrayWithVerify();
 #if UNITY_2018_4_OR_NEWER
             unsafe
@@ -2180,7 +2180,7 @@ namespace Utf8Json.Formatters
                     span.CopyTo(tmp);
                     span = tmp;
                 }
-
+                    
                 span[count - 1] = reader.ReadUInt16();
             }
 
@@ -2213,7 +2213,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -2411,7 +2411,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -2785,7 +2785,7 @@ namespace Utf8Json.Formatters
         {
             SerializeStatic(ref writer, value, options);
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public static uint[]? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #else
@@ -2796,7 +2796,7 @@ namespace Utf8Json.Formatters
             {
                 return default;
             }
-
+            
             reader.ReadIsBeginArrayWithVerify();
 #if UNITY_2018_4_OR_NEWER
             unsafe
@@ -2846,7 +2846,7 @@ namespace Utf8Json.Formatters
                     span.CopyTo(tmp);
                     span = tmp;
                 }
-
+                    
                 span[count - 1] = reader.ReadUInt32();
             }
 
@@ -2879,7 +2879,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -3077,7 +3077,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -3451,7 +3451,7 @@ namespace Utf8Json.Formatters
         {
             SerializeStatic(ref writer, value, options);
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public static ulong[]? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #else
@@ -3462,7 +3462,7 @@ namespace Utf8Json.Formatters
             {
                 return default;
             }
-
+            
             reader.ReadIsBeginArrayWithVerify();
 #if UNITY_2018_4_OR_NEWER
             unsafe
@@ -3512,7 +3512,7 @@ namespace Utf8Json.Formatters
                     span.CopyTo(tmp);
                     span = tmp;
                 }
-
+                    
                 span[count - 1] = reader.ReadUInt64();
             }
 
@@ -3545,7 +3545,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -3743,7 +3743,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -4117,7 +4117,7 @@ namespace Utf8Json.Formatters
         {
             SerializeStatic(ref writer, value, options);
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public static float[]? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #else
@@ -4128,7 +4128,7 @@ namespace Utf8Json.Formatters
             {
                 return default;
             }
-
+            
             reader.ReadIsBeginArrayWithVerify();
 #if UNITY_2018_4_OR_NEWER
             unsafe
@@ -4178,7 +4178,7 @@ namespace Utf8Json.Formatters
                     span.CopyTo(tmp);
                     span = tmp;
                 }
-
+                    
                 span[count - 1] = reader.ReadSingle();
             }
 
@@ -4211,7 +4211,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -4409,7 +4409,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -4783,7 +4783,7 @@ namespace Utf8Json.Formatters
         {
             SerializeStatic(ref writer, value, options);
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public static double[]? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #else
@@ -4794,7 +4794,7 @@ namespace Utf8Json.Formatters
             {
                 return default;
             }
-
+            
             reader.ReadIsBeginArrayWithVerify();
 #if UNITY_2018_4_OR_NEWER
             unsafe
@@ -4844,7 +4844,7 @@ namespace Utf8Json.Formatters
                     span.CopyTo(tmp);
                     span = tmp;
                 }
-
+                    
                 span[count - 1] = reader.ReadDouble();
             }
 
@@ -4877,7 +4877,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -5075,7 +5075,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -5449,7 +5449,7 @@ namespace Utf8Json.Formatters
         {
             SerializeStatic(ref writer, value, options);
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public static bool[]? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #else
@@ -5460,7 +5460,7 @@ namespace Utf8Json.Formatters
             {
                 return default;
             }
-
+            
             reader.ReadIsBeginArrayWithVerify();
 #if UNITY_2018_4_OR_NEWER
             unsafe
@@ -5510,7 +5510,7 @@ namespace Utf8Json.Formatters
                     span.CopyTo(tmp);
                     span = tmp;
                 }
-
+                    
                 span[count - 1] = reader.ReadBoolean();
             }
 
@@ -5543,7 +5543,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -5741,7 +5741,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -6115,7 +6115,7 @@ namespace Utf8Json.Formatters
         {
             SerializeStatic(ref writer, value, options);
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public static byte[]? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #else
@@ -6126,7 +6126,7 @@ namespace Utf8Json.Formatters
             {
                 return default;
             }
-
+            
             reader.ReadIsBeginArrayWithVerify();
 #if UNITY_2018_4_OR_NEWER
             unsafe
@@ -6176,7 +6176,7 @@ namespace Utf8Json.Formatters
                     span.CopyTo(tmp);
                     span = tmp;
                 }
-
+                    
                 span[count - 1] = reader.ReadByte();
             }
 
@@ -6209,7 +6209,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -6407,7 +6407,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -6781,7 +6781,7 @@ namespace Utf8Json.Formatters
         {
             SerializeStatic(ref writer, value, options);
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public static sbyte[]? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #else
@@ -6792,7 +6792,7 @@ namespace Utf8Json.Formatters
             {
                 return default;
             }
-
+            
             reader.ReadIsBeginArrayWithVerify();
 #if UNITY_2018_4_OR_NEWER
             unsafe
@@ -6842,7 +6842,7 @@ namespace Utf8Json.Formatters
                     span.CopyTo(tmp);
                     span = tmp;
                 }
-
+                    
                 span[count - 1] = reader.ReadSByte();
             }
 
@@ -6875,7 +6875,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -7073,7 +7073,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -7447,7 +7447,7 @@ namespace Utf8Json.Formatters
         {
             SerializeStatic(ref writer, value, options);
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public static char[]? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #else
@@ -7458,7 +7458,7 @@ namespace Utf8Json.Formatters
             {
                 return default;
             }
-
+            
             reader.ReadIsBeginArrayWithVerify();
 #if UNITY_2018_4_OR_NEWER
             unsafe
@@ -7508,7 +7508,7 @@ namespace Utf8Json.Formatters
                     span.CopyTo(tmp);
                     span = tmp;
                 }
-
+                    
                 span[count - 1] = reader.ReadChar();
             }
 
@@ -7541,7 +7541,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -7739,7 +7739,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -8113,7 +8113,7 @@ namespace Utf8Json.Formatters
         {
             SerializeStatic(ref writer, value, options);
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public static DateTime[]? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #else
@@ -8124,7 +8124,7 @@ namespace Utf8Json.Formatters
             {
                 return default;
             }
-
+            
             reader.ReadIsBeginArrayWithVerify();
 #if UNITY_2018_4_OR_NEWER
             unsafe
@@ -8174,7 +8174,7 @@ namespace Utf8Json.Formatters
                     span.CopyTo(tmp);
                     span = tmp;
                 }
-
+                    
                 span[count - 1] = reader.ReadDateTime();
             }
 
@@ -8207,7 +8207,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -8405,7 +8405,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -8779,7 +8779,7 @@ namespace Utf8Json.Formatters
         {
             SerializeStatic(ref writer, value, options);
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public static decimal[]? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #else
@@ -8790,7 +8790,7 @@ namespace Utf8Json.Formatters
             {
                 return default;
             }
-
+            
             reader.ReadIsBeginArrayWithVerify();
 #if UNITY_2018_4_OR_NEWER
             unsafe
@@ -8840,7 +8840,7 @@ namespace Utf8Json.Formatters
                     span.CopyTo(tmp);
                     span = tmp;
                 }
-
+                    
                 span[count - 1] = reader.ReadDecimal();
             }
 
@@ -8873,7 +8873,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -9071,7 +9071,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-
+            
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -9343,4 +9343,3 @@ namespace Utf8Json.Formatters
     }
 
 }
-#pragma warning restore IDE0060 // 未使用のパラメーターを削除します

@@ -44,14 +44,28 @@ namespace Utf8Json.Formatters
 
         public void Serialize(ref JsonWriter writer, TimeSpan? value, JsonSerializerOptions options)
         {
-            if (value == null) { writer.WriteNull(); return; }
+            if (value == null) {
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
+                return; }
 
             TimeSpanFormatter.SerializeStatic(ref writer, value.Value, options);
         }
 
         public static void SerializeStatic(ref JsonWriter writer, TimeSpan? value, JsonSerializerOptions options)
         {
-            if (value == null) { writer.WriteNull(); return; }
+            if (value == null) {
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
+                return; }
 
             TimeSpanFormatter.SerializeStatic(ref writer, value.Value, options);
         }

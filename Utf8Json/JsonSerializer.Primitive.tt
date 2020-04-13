@@ -6,16 +6,10 @@
 <#@ output extension=".cs" #>
 <#
 var primitives = new Type[]{
-typeof(byte),
-typeof(sbyte),
-typeof(short),
 typeof(int),
 typeof(long),
-typeof(ushort),
-typeof(uint),
 typeof(ulong),
 typeof(char),
-typeof(string),
 typeof(bool),
 typeof(float),
 typeof(double),
@@ -46,16 +40,16 @@ var name = t.Name;#>
             var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                var writer = new JsonWriter(SequencePool.Shared, array);
                 try
                 {
-                    jsonWriter.Write(value);
+                    writer.Write(value);
                 }
                 catch (Exception ex)
                 {
                     throw new JsonSerializationException("Failed to serialize <#= t.FullName #> value.", ex);
                 }
-                return jsonWriter.FlushAndGetArray();
+                return writer.FlushAndGetArray();
             }
             finally
             {
@@ -68,16 +62,16 @@ var name = t.Name;#>
             var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                var writer = new JsonWriter(SequencePool.Shared, array);
                 try
                 {
-                    jsonWriter.Write(value);
+                    writer.Write(value);
                 }
                 catch (Exception ex)
                 {
                     throw new JsonSerializationException("Failed to serialize <#= t.FullName #> value.", ex);
                 }
-                return jsonWriter.FlushAndGetArray();
+                return writer.FlushAndGetArray();
             }
             finally
             {
