@@ -2,15 +2,15 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Buffers;
 using Utf8Json.Internal;
 
 #if SPAN_BUILTIN
-using System.Buffers;
 using System.IO;
 #endif
 
 // ReSharper disable BuiltInTypeReferenceStyle
-#pragma warning disable IDE0060 // 未使用のパラメーターを削除します
+#pragma warning disable IDE0060
 
 namespace Utf8Json
 {
@@ -18,42 +18,46 @@ namespace Utf8Json
     {
         public static byte[] Serialize(Byte value, JsonSerializerOptions options)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize System.Byte value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize System.Byte value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
         public static byte[] Serialize(Byte value)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize System.Byte value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize System.Byte value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
 #if SPAN_BUILTIN
@@ -94,42 +98,46 @@ namespace Utf8Json
 
         public static byte[] Serialize(SByte value, JsonSerializerOptions options)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize System.SByte value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize System.SByte value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
         public static byte[] Serialize(SByte value)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize System.SByte value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize System.SByte value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
 #if SPAN_BUILTIN
@@ -170,42 +178,46 @@ namespace Utf8Json
 
         public static byte[] Serialize(Int16 value, JsonSerializerOptions options)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize System.Int16 value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize System.Int16 value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
         public static byte[] Serialize(Int16 value)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize System.Int16 value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize System.Int16 value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
 #if SPAN_BUILTIN
@@ -246,42 +258,46 @@ namespace Utf8Json
 
         public static byte[] Serialize(Int32 value, JsonSerializerOptions options)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize System.Int32 value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize System.Int32 value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
         public static byte[] Serialize(Int32 value)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize System.Int32 value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize System.Int32 value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
 #if SPAN_BUILTIN
@@ -322,42 +338,46 @@ namespace Utf8Json
 
         public static byte[] Serialize(Int64 value, JsonSerializerOptions options)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize System.Int64 value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize System.Int64 value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
         public static byte[] Serialize(Int64 value)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize System.Int64 value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize System.Int64 value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
 #if SPAN_BUILTIN
@@ -398,42 +418,46 @@ namespace Utf8Json
 
         public static byte[] Serialize(UInt16 value, JsonSerializerOptions options)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize System.UInt16 value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize System.UInt16 value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
         public static byte[] Serialize(UInt16 value)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize System.UInt16 value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize System.UInt16 value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
 #if SPAN_BUILTIN
@@ -474,42 +498,46 @@ namespace Utf8Json
 
         public static byte[] Serialize(UInt32 value, JsonSerializerOptions options)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize System.UInt32 value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize System.UInt32 value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
         public static byte[] Serialize(UInt32 value)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize System.UInt32 value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize System.UInt32 value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
 #if SPAN_BUILTIN
@@ -550,42 +578,46 @@ namespace Utf8Json
 
         public static byte[] Serialize(UInt64 value, JsonSerializerOptions options)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize System.UInt64 value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize System.UInt64 value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
         public static byte[] Serialize(UInt64 value)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize System.UInt64 value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize System.UInt64 value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
 #if SPAN_BUILTIN
@@ -626,42 +658,46 @@ namespace Utf8Json
 
         public static byte[] Serialize(Char value, JsonSerializerOptions options)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize System.Char value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize System.Char value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
         public static byte[] Serialize(Char value)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize System.Char value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize System.Char value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
 #if SPAN_BUILTIN
@@ -702,42 +738,46 @@ namespace Utf8Json
 
         public static byte[] Serialize(String value, JsonSerializerOptions options)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize System.String value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize System.String value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
         public static byte[] Serialize(String value)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize System.String value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize System.String value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
 #if SPAN_BUILTIN
@@ -778,42 +818,46 @@ namespace Utf8Json
 
         public static byte[] Serialize(Boolean value, JsonSerializerOptions options)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize System.Boolean value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize System.Boolean value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
         public static byte[] Serialize(Boolean value)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize System.Boolean value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize System.Boolean value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
 #if SPAN_BUILTIN
@@ -854,42 +898,46 @@ namespace Utf8Json
 
         public static byte[] Serialize(Single value, JsonSerializerOptions options)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize System.Single value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize System.Single value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
         public static byte[] Serialize(Single value)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize System.Single value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize System.Single value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
 #if SPAN_BUILTIN
@@ -930,42 +978,46 @@ namespace Utf8Json
 
         public static byte[] Serialize(Double value, JsonSerializerOptions options)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize System.Double value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize System.Double value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
         public static byte[] Serialize(Double value)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize System.Double value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize System.Double value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
 #if SPAN_BUILTIN
@@ -1006,4 +1058,4 @@ namespace Utf8Json
 
     }
 }
-#pragma warning restore IDE0060 // 未使用のパラメーターを削除します
+#pragma warning restore IDE0060

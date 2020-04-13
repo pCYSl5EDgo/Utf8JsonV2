@@ -25,15 +25,15 @@ typeof(double),
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Buffers;
 using Utf8Json.Internal;
 
 #if SPAN_BUILTIN
-using System.Buffers;
 using System.IO;
 #endif
 
 // ReSharper disable BuiltInTypeReferenceStyle
-#pragma warning disable IDE0060 // 未使用のパラメーターを削除します
+#pragma warning disable IDE0060
 
 namespace Utf8Json
 {
@@ -43,42 +43,46 @@ namespace Utf8Json
 var name = t.Name;#>
         public static byte[] Serialize(<#= name #> value, JsonSerializerOptions options)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize <#= t.FullName #> value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize <#= t.FullName #> value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
         public static byte[] Serialize(<#= name #> value)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                jsonWriter.Write(value);
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    jsonWriter.Write(value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException("Failed to serialize <#= t.FullName #> value.", ex);
+                }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException("Failed to serialize <#= t.FullName #> value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
 #if SPAN_BUILTIN
@@ -120,4 +124,4 @@ var name = t.Name;#>
 <#}#>
     }
 }
-#pragma warning restore IDE0060 // 未使用のパラメーターを削除します
+#pragma warning restore IDE0060

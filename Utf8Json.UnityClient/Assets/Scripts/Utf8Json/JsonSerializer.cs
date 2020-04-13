@@ -141,15 +141,6 @@ namespace Utf8Json
         }
 
         /// <summary>
-        /// A thread-local, recyclable array that may be used for short bursts of code.
-        /// </summary>
-#if CSHARP_8_OR_NEWER
-        [ThreadStatic] private static byte[]? ScratchArray;
-#else
-        [ThreadStatic] private static byte[] ScratchArray;
-#endif
-
-        /// <summary>
         /// Serializes a given value with the specified buffer writer.
         /// </summary>
         /// <param name="value">The value to serialize.</param>
@@ -158,30 +149,33 @@ namespace Utf8Json
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
         public static unsafe byte[] Serialize<T>(T value, JsonSerializerOptions options)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer.ToPointer() == null)
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
                 {
-                    options.Resolver.GetFormatterWithVerify<T>().Serialize(ref jsonWriter, value, options);
+                    var serializer = options.Resolver.GetSerializeStatic<T>();
+                    if (serializer.ToPointer() == null)
+                    {
+                        options.Resolver.GetFormatterWithVerify<T>().Serialize(ref jsonWriter, value, options);
+                    }
+                    else
+                    {
+                        jsonWriter.Serialize(value, options, serializer);
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    jsonWriter.Serialize(value, options, serializer);
+                    throw new JsonSerializationException($"Failed to serialize {typeof(T).FullName} value.", ex);
                 }
+
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException($"Failed to serialize {typeof(T).FullName} value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
         /// <summary>
@@ -192,30 +186,32 @@ namespace Utf8Json
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
         public static unsafe byte[] Serialize<T>(T value)
         {
-            var array = ScratchArray;
-            if (array == null)
-            {
-                ScratchArray = array = new byte[65536];
-            }
-
-            var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                var serializer = DefaultOptions.Resolver.GetSerializeStatic<T>();
-                if (serializer.ToPointer() == null)
+                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                try
                 {
-                    DefaultOptions.Resolver.GetFormatterWithVerify<T>().Serialize(ref jsonWriter, value, DefaultOptions);
+                    var serializer = DefaultOptions.Resolver.GetSerializeStatic<T>();
+                    if (serializer.ToPointer() == null)
+                    {
+                        DefaultOptions.Resolver.GetFormatterWithVerify<T>().Serialize(ref jsonWriter, value, DefaultOptions);
+                    }
+                    else
+                    {
+                        jsonWriter.Serialize(value, DefaultOptions, serializer);
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    jsonWriter.Serialize(value, DefaultOptions, serializer);
+                    throw new JsonSerializationException($"Failed to serialize {typeof(T).FullName} value.", ex);
                 }
+                return jsonWriter.FlushAndGetArray();
             }
-            catch (Exception ex)
+            finally
             {
-                throw new JsonSerializationException($"Failed to serialize {typeof(T).FullName} value.", ex);
+                ArrayPool<byte>.Shared.Return(array);
             }
-            return jsonWriter.FlushAndGetArray();
         }
 
 #if SPAN_BUILTIN
