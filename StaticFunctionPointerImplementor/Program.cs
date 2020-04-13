@@ -71,14 +71,70 @@ namespace StaticFunctionPointerImplementor
                 var callHelper = module.GetType("StaticFunctionPointerHelper", "CallHelper");
                 var serialize = callHelper.Methods[0];
                 ProcessSerialize(serialize);
+                
                 var deserialize = callHelper.Methods[1];
                 ProcessDeserialize(deserialize);
+
+                var calcExactByteLengthForSerialization = callHelper.Methods[2];
+                ProcessCalcExactByteLengthForSerialization(calcExactByteLengthForSerialization);
+
+                var serializeSpan = callHelper.Methods[3];
+                ProcessSerializeSpan(serializeSpan);
+
                 module.Write();
             }
             finally
             {
                 module.Dispose();
             }
+        }
+
+        private static void ProcessSerializeSpan(MethodDefinition method)
+        {
+            var body = method.Body;
+            body.Variables.Clear();
+            body.Instructions.Clear();
+            var processor = body.GetILProcessor();
+            var callSite = new CallSite(method.Module.TypeSystem.Void)
+            {
+                HasThis = false,
+                Parameters =
+                {
+                    new ParameterDefinition(method.Parameters[0].ParameterType),
+                    new ParameterDefinition(method.Parameters[1].ParameterType),
+                    new ParameterDefinition(method.Parameters[2].ParameterType),
+                },
+            };
+
+            processor.Append(Instruction.Create(OpCodes.Ldarg_0));
+            processor.Append(Instruction.Create(OpCodes.Ldarg_1));
+            processor.Append(Instruction.Create(OpCodes.Ldarg_2));
+            processor.Append(Instruction.Create(OpCodes.Ldarg_3));
+            processor.Append(Instruction.Create(OpCodes.Calli, callSite));
+            processor.Append(Instruction.Create(OpCodes.Ret));
+        }
+
+        private static void ProcessCalcExactByteLengthForSerialization(MethodDefinition method)
+        {
+            var body = method.Body;
+            body.Variables.Clear();
+            body.Instructions.Clear();
+            var processor = body.GetILProcessor();
+            var callSite = new CallSite(method.Module.TypeSystem.Int32)
+            {
+                HasThis = false,
+                Parameters =
+                {
+                    new ParameterDefinition(method.Parameters[0].ParameterType),
+                    new ParameterDefinition(method.Parameters[1].ParameterType),
+                },
+            };
+
+            processor.Append(Instruction.Create(OpCodes.Ldarg_0));
+            processor.Append(Instruction.Create(OpCodes.Ldarg_1));
+            processor.Append(Instruction.Create(OpCodes.Ldarg_2));
+            processor.Append(Instruction.Create(OpCodes.Calli, callSite));
+            processor.Append(Instruction.Create(OpCodes.Ret));
         }
 
         private static void ProcessDeserialize(MethodDefinition method)

@@ -343,7 +343,7 @@ namespace Utf8Json
                         var consumed = StringEncoding.Utf8.GetBytes(value.Slice(0, index), span);
 #else
                         int consumed;
-                        fixed (char* src = &input[0])
+                        fixed (char* src = &value[0])
                         fixed (byte* dst = &span[0])
                         {
                             consumed = StringEncoding.Utf8.GetBytes(src, index, dst, span.Length);
@@ -367,10 +367,10 @@ namespace Utf8Json
                     var consumed = StringEncoding.Utf8.GetBytes(value, span);
 #else
                     int consumed;
-                    fixed (char* src = &input[0])
+                    fixed (char* src = &value[0])
                     fixed (byte* dst = &span[0])
                     {
-                        consumed = StringEncoding.Utf8.GetBytes(src, input.Length, dst, span.Length);
+                        consumed = StringEncoding.Utf8.GetBytes(src, value.Length, dst, span.Length);
                     }
 #endif
                     actualLength += consumed;

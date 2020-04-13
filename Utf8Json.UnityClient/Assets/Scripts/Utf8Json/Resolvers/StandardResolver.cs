@@ -55,6 +55,16 @@ namespace Utf8Json.Resolvers
             return FormatterCache<T>.DeserializeFunctionPointer;
         }
 
+        public IntPtr GetCalcExactByteLengthForSerializationStatic<T>()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IntPtr GetSerializeSpan<T>()
+        {
+            throw new NotImplementedException();
+        }
+
         private static class FormatterCache<T>
         {
 #if CSHARP_8_OR_NEWER
@@ -65,6 +75,8 @@ namespace Utf8Json.Resolvers
 
             public static readonly IntPtr SerializeFunctionPointer;
             public static readonly IntPtr DeserializeFunctionPointer;
+            public static readonly IntPtr CalcByteLengthForSerializationFunctionPointer;
+            public static readonly IntPtr SerializeSpanFunctionPointer;
 
             static FormatterCache()
             {
@@ -85,7 +97,9 @@ namespace Utf8Json.Resolvers
                     if (SerializeFunctionPointer == IntPtr.Zero)
                     {
                         SerializeFunctionPointer = formatterResolver.GetSerializeStatic<T>();
-                        if (DeserializeFunctionPointer != IntPtr.Zero)
+                        if (DeserializeFunctionPointer != IntPtr.Zero
+                            && CalcByteLengthForSerializationFunctionPointer != IntPtr.Zero
+                            && SerializeSpanFunctionPointer != IntPtr.Zero)
                         {
                             return;
                         }
@@ -94,7 +108,31 @@ namespace Utf8Json.Resolvers
                     if (DeserializeFunctionPointer == IntPtr.Zero)
                     {
                         DeserializeFunctionPointer = formatterResolver.GetDeserializeStatic<T>();
-                        if (SerializeFunctionPointer != IntPtr.Zero)
+                        if (SerializeFunctionPointer != IntPtr.Zero
+                            && CalcByteLengthForSerializationFunctionPointer != IntPtr.Zero
+                            && SerializeSpanFunctionPointer != IntPtr.Zero)
+                        {
+                            return;
+                        }
+                    }
+
+                    if (CalcByteLengthForSerializationFunctionPointer == IntPtr.Zero)
+                    {
+                        CalcByteLengthForSerializationFunctionPointer = formatterResolver.GetCalcExactByteLengthForSerializationStatic<T>();
+                        if (SerializeFunctionPointer != IntPtr.Zero
+                            && DeserializeFunctionPointer != IntPtr.Zero
+                            && SerializeSpanFunctionPointer != IntPtr.Zero)
+                        {
+                            return;
+                        }
+                    }
+
+                    if (SerializeSpanFunctionPointer == IntPtr.Zero)
+                    {
+                        SerializeSpanFunctionPointer = formatterResolver.GetSerializeSpan<T>();
+                        if (SerializeFunctionPointer != IntPtr.Zero
+                            && DeserializeFunctionPointer != IntPtr.Zero
+                            && CalcByteLengthForSerializationFunctionPointer != IntPtr.Zero)
                         {
                             return;
                         }

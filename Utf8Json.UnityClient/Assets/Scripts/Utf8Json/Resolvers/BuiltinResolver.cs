@@ -26,15 +26,27 @@ namespace Utf8Json.Resolvers
             return FormatterCache<T>.DeserializeFunctionPointer;
         }
 
+        public IntPtr GetCalcExactByteLengthForSerializationStatic<T>()
+        {
+            return FormatterCache<T>.CalcByteLengthForSerializationFunctionPointer;
+        }
+
+        public IntPtr GetSerializeSpan<T>()
+        {
+            return FormatterCache<T>.SerializeSpanFunctionPointer;
+        }
+
         private static class FormatterCache<T>
         {
             public static readonly IntPtr SerializeFunctionPointer;
             public static readonly IntPtr DeserializeFunctionPointer;
+            public static readonly IntPtr CalcByteLengthForSerializationFunctionPointer;
+            public static readonly IntPtr SerializeSpanFunctionPointer;
 
             static FormatterCache()
             {
                 // Reduce IL2CPP code generate size(don't write long code in <T>)
-                (SerializeFunctionPointer, DeserializeFunctionPointer) = BuiltinResolverGetFormatterHelper.GetFunctionPointers(typeof(T));
+                (SerializeFunctionPointer, DeserializeFunctionPointer, CalcByteLengthForSerializationFunctionPointer, SerializeSpanFunctionPointer) = BuiltinResolverGetFormatterHelper.GetFunctionPointers(typeof(T));
             }
         }
     }

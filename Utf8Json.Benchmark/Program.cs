@@ -66,7 +66,7 @@ namespace Utf8JsonBenchmark
         [Benchmark]
         public byte[] SerializeUtf8JsonV2()
         {
-            return V2::Utf8Json.JsonSerializer.Serialize(Value);
+            return V2::Utf8Json.JsonSerializer.Serialize<int>(Value);
         }
     }
 }

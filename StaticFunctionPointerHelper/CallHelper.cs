@@ -7,12 +7,12 @@
 using System;
 using System.Runtime.CompilerServices;
 using Utf8Json;
+#pragma warning disable IDE0060
 
 namespace StaticFunctionPointerHelper
 {
     public static class CallHelper
     {
-#pragma warning disable IDE0060
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Serialize<T>(this ref JsonWriter writer, T value, JsonSerializerOptions options, IntPtr functionPointer)
         {
@@ -23,6 +23,16 @@ namespace StaticFunctionPointerHelper
         {
             return default;
         }
-#pragma warning restore IDE0060
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int CalcExactByteLengthForSerialization<T>(this JsonSerializerOptions options, T value, IntPtr functionPointer)
+        {
+            return default;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void SerializeSpan<T>(this JsonSerializerOptions options, T value, Span<byte> span, IntPtr functionPointer)
+        {
+        }
     }
 }

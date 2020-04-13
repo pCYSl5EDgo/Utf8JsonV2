@@ -122,7 +122,7 @@ namespace Utf8Json.Resolvers
 
             public unsafe IntPtr GetSerializeStatic<T>()
             {
-                var (answer, _) = functionsCache[typeof(T)];
+                var answer = functionsCache[typeof(T)].SerializeFunctionPtr;
                 if (answer.ToPointer() != null)
                 {
                     return answer;
@@ -136,8 +136,10 @@ namespace Utf8Json.Resolvers
                         continue;
                     }
 
-                    var other = resolver.GetDeserializeStatic<T>();
-                    functionsCache.Add(typeof(T), answer, other);
+                    var other0 = resolver.GetDeserializeStatic<T>();
+                    var other1 = resolver.GetCalcExactByteLengthForSerializationStatic<T>();
+                    var other2 = resolver.GetSerializeSpan<T>();
+                    functionsCache.Add(typeof(T), new ThreadSafeTypeKeyFormatterHashTable.FunctionPair(answer, other0, other1, other2));
                     return answer;
                 }
 
@@ -146,7 +148,7 @@ namespace Utf8Json.Resolvers
 
             public unsafe IntPtr GetDeserializeStatic<T>()
             {
-                var (_, answer) = functionsCache[typeof(T)];
+                var answer = functionsCache[typeof(T)].DeserializeFunctionPtr;
                 if (answer.ToPointer() != null)
                 {
                     return answer;
@@ -160,8 +162,62 @@ namespace Utf8Json.Resolvers
                         continue;
                     }
 
-                    var other = resolver.GetSerializeStatic<T>();
-                    functionsCache.Add(typeof(T), other, answer);
+                    var other0 = resolver.GetSerializeStatic<T>();
+                    var other1 = resolver.GetCalcExactByteLengthForSerializationStatic<T>();
+                    var other2 = resolver.GetSerializeSpan<T>();
+                    functionsCache.Add(typeof(T), new ThreadSafeTypeKeyFormatterHashTable.FunctionPair(other0, answer, other1, other2));
+                    return answer;
+                }
+
+                return new IntPtr(null);
+            }
+
+            public unsafe IntPtr GetCalcExactByteLengthForSerializationStatic<T>()
+            {
+                var answer = functionsCache[typeof(T)].CalcByteLengthFunctionPtr;
+                if (answer.ToPointer() != null)
+                {
+                    return answer;
+                }
+
+                foreach (var resolver in subResolvers)
+                {
+                    answer = resolver.GetDeserializeStatic<T>();
+                    if (answer.ToPointer() == null)
+                    {
+                        continue;
+                    }
+
+                    var other0 = resolver.GetSerializeStatic<T>();
+                    var other1 = resolver.GetDeserializeStatic<T>();
+                    var other2 = resolver.GetSerializeSpan<T>();
+                    functionsCache.Add(typeof(T), new ThreadSafeTypeKeyFormatterHashTable.FunctionPair(other0, other1, answer, other2));
+                    return answer;
+                }
+
+                return new IntPtr(null);
+            }
+
+            public unsafe IntPtr GetSerializeSpan<T>()
+            {
+                var answer = functionsCache[typeof(T)].SerializeSpanFunctionPtr;
+                if (answer.ToPointer() != null)
+                {
+                    return answer;
+                }
+
+                foreach (var resolver in subResolvers)
+                {
+                    answer = resolver.GetDeserializeStatic<T>();
+                    if (answer.ToPointer() == null)
+                    {
+                        continue;
+                    }
+
+                    var other0 = resolver.GetSerializeStatic<T>();
+                    var other1 = resolver.GetDeserializeStatic<T>();
+                    var other2 = resolver.GetCalcExactByteLengthForSerializationStatic<T>();
+                    functionsCache.Add(typeof(T), new ThreadSafeTypeKeyFormatterHashTable.FunctionPair(other0, other1, other2, answer));
                     return answer;
                 }
 

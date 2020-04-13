@@ -41,9 +41,8 @@ namespace Utf8Json.Internal
             bitMask = typeArrayArray.Length - 1;
             shift = 0;
             var maxCount = 0;
-            for (var index = 0; index < entries.Length; index++)
+            foreach (ref readonly var entry in entries)
             {
-                ref readonly var entry = ref entries[index];
                 var entryKey = entry.Key;
                 var code = entryKey.GetHashCode() & bitMask;
                 ref var array = ref typeArrayArray[code];
@@ -71,9 +70,8 @@ namespace Utf8Json.Internal
             functionBytes = ArrayPool<byte>.Shared.Rent((typeArrayArray.Length * sizeof(FunctionPair)) << shift);
 
             var span = MemoryMarshal.Cast<byte, FunctionPair>(functionBytes.AsSpan());
-            for (var index = 0; index < entries.Length; index++)
+            foreach (ref readonly var entry in entries)
             {
-                ref readonly var entry = ref entries[index];
                 var entryKey = entry.Key;
                 var code = entryKey.GetHashCode() & bitMask;
 #if CSHARP_8_OR_NEWER
@@ -133,7 +131,7 @@ namespace Utf8Json.Internal
             }
         }
 
-        public void Add(Type type, IntPtr serialize, IntPtr deserialize)
+        public void Add(Type type, in FunctionPair pair)
         {
             var code = type.GetHashCode() & bitMask;
             ref var array = ref typeArrayArray[code];
@@ -144,7 +142,7 @@ namespace Utf8Json.Internal
                 {
                     array = new[] { type };
                     var span = MemoryMarshal.Cast<byte, FunctionPair>(functionBytes.AsSpan());
-                    span[code << shift] = new FunctionPair(serialize, deserialize);
+                    span[code << shift] = pair;
                     return;
                 }
 
@@ -158,7 +156,7 @@ namespace Utf8Json.Internal
 
                 {
                     var span = MemoryMarshal.Cast<byte, FunctionPair>(functionBytes.AsSpan());
-                    span[(code << shift) + array.Length - 1] = new FunctionPair(serialize, deserialize);
+                    span[(code << shift) + array.Length - 1] = pair;
                 }
             }
         }
@@ -195,17 +193,23 @@ namespace Utf8Json.Internal
         {
             public readonly IntPtr SerializeFunctionPtr;
             public readonly IntPtr DeserializeFunctionPtr;
+            public readonly IntPtr CalcByteLengthFunctionPtr;
+            public readonly IntPtr SerializeSpanFunctionPtr;
 
-            public FunctionPair(IntPtr serialize, IntPtr deserialize)
+            public FunctionPair(IntPtr serialize, IntPtr deserialize, IntPtr calcByteLength, IntPtr serializeSpan)
             {
                 SerializeFunctionPtr = serialize;
                 DeserializeFunctionPtr = deserialize;
+                CalcByteLengthFunctionPtr = calcByteLength;
+                SerializeSpanFunctionPtr = serializeSpan;
             }
 
-            public void Deconstruct(out IntPtr serialize, out IntPtr deserialize)
+            public void Deconstruct(out IntPtr serialize, out IntPtr deserialize, out IntPtr calcByteLength, out IntPtr serializeSpan)
             {
                 serialize = SerializeFunctionPtr;
                 deserialize = DeserializeFunctionPtr;
+                calcByteLength = CalcByteLengthFunctionPtr;
+                serializeSpan = SerializeSpanFunctionPtr;
             }
         }
 
@@ -215,10 +219,10 @@ namespace Utf8Json.Internal
             public readonly Type Key;
             public readonly FunctionPair Pair;
 
-            public Entry(Type key, IntPtr serialize, IntPtr deserialize)
+            public Entry(Type key, IntPtr serialize, IntPtr deserialize, IntPtr calcByteLength, IntPtr serializeSpan)
             {
                 Key = key;
-                Pair = new FunctionPair(serialize, deserialize);
+                Pair = new FunctionPair(serialize, deserialize, calcByteLength, serializeSpan);
             }
         }
 
