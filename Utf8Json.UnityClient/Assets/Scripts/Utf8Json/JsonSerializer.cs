@@ -147,16 +147,42 @@ namespace Utf8Json
         /// <param name="options">The options.</param>
         /// <returns>A byte array with the serialized value.</returns>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-#if CSHARP_8_OR_NEWER
-        public static unsafe byte[] Serialize<T>(T value, JsonSerializerOptions? options = default)
-#else
-        public static unsafe byte[] Serialize<T>(T value, JsonSerializerOptions options = default)
-#endif
+        public static unsafe byte[] Serialize<T>(T value, JsonSerializerOptions options)
         {
             if (options == null)
             {
                 options = DefaultOptions;
             }
+
+            var calculator = options.Resolver.GetCalcByteLengthForSerialization<T>();
+            if (calculator.ToPointer() == null)
+            {
+                goto INTERNAL;
+            }
+
+            var serializer = options.Resolver.GetSerializeSpan<T>();
+            if (serializer.ToPointer() == null)
+            {
+                goto INTERNAL;
+            }
+
+            var answer = new byte[options.CalcByteLengthForSerialization(value, calculator)];
+            options.SerializeSpan(value, answer.AsSpan(), serializer);
+            return answer;
+
+        INTERNAL:
+            return SerializeInternal(value, options);
+        }
+
+        /// <summary>
+        /// Serializes a given value with the specified buffer writer.
+        /// </summary>
+        /// <param name="value">The value to serialize.</param>
+        /// <returns>A byte array with the serialized value.</returns>
+        /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
+        public static unsafe byte[] Serialize<T>(T value)
+        {
+            var options = DefaultOptions;
 
             var calculator = options.Resolver.GetCalcByteLengthForSerialization<T>();
             if (calculator.ToPointer() == null)

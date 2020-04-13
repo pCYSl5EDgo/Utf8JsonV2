@@ -21,6 +21,15 @@ namespace Utf8Json.Test
             Assert.IsTrue(JsonSerializer.DefaultOptions.Resolver is StandardResolver);
         }
 
+        [TestCase(true)]
+        [TestCase(false)]
+        public void SameBoolean(bool value)
+        {
+            var bytes = JsonSerializer.Serialize(value);
+            var deserialize = JsonSerializer.Deserialize<bool>(bytes);
+            Assert.AreEqual(value, deserialize);
+        }
+
         [TestCase(0)]
         [TestCase(int.MaxValue)]
         [TestCase(int.MinValue)]

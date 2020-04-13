@@ -1,70 +1,173 @@
-﻿<#@ template debug="false" hostspecific="false" language="C#" #>
-<#@ assembly name="System.Core" #>
-<#@ import namespace="System.Linq" #>
-<#@ import namespace="System.Text" #>
-<#@ import namespace="System.Collections.Generic" #>
-<#@ output extension=".cs" #>
-<#
-    ValueTuple<Type, string, int>[] types =
-    {
-        new ValueTuple<Type, string, int>(typeof(Int16), "short", 2),
-        new ValueTuple<Type, string, int>(typeof(UInt16), "ushort", 2),
-        new ValueTuple<Type, string, int>(typeof(Single), "float", 4),
-        new ValueTuple<Type, string, int>(typeof(Double), "double", 8),
-        new ValueTuple<Type, string, int>(typeof(byte), "byte", 1),
-        new ValueTuple<Type, string, int>(typeof(sbyte), "sbyte", 1),
-        new ValueTuple<Type, string, int>(typeof(DateTime), "DateTime", 8),
-        new ValueTuple<Type, string, int>(typeof(decimal), "decimal", 16),
-    };
-#>
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
-/* THIS (.cs) FILE IS GENERATED. DO NOT CHANGE IT.
- * CHANGE THE .tt FILE INSTEAD. */
 
 using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-#if UNITY_2018_4_OR_NEWER
-using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
-#endif
-
-// ReSharper disable StackAllocInsideLoop
-#pragma warning disable SA1649
-#pragma warning disable IDE0060
 
 namespace Utf8Json.Formatters
-{<# foreach(var t in types) {  #>
-
-    public sealed class <#= t.Item1.Name #>Formatter : IJsonFormatter<<#= t.Item2 #>>
+{
+    public sealed class Int32Formatter : IJsonFormatter<int>
     {
-        public static void SerializeStatic(ref JsonWriter writer, <#= t.Item2 #> value, JsonSerializerOptions options)
+        public static void SerializeStatic(ref JsonWriter writer, int value, JsonSerializerOptions options)
         {
             writer.Write(value);
         }
 
-        public void Serialize(ref JsonWriter writer, <#= t.Item2 #> value, JsonSerializerOptions options)
+        public void Serialize(ref JsonWriter writer, int value, JsonSerializerOptions options)
         {
             writer.Write(value);
         }
 
-        public static <#= t.Item2 #> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+        public static int DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.Read<#= t.Item1.Name #>();
+            return reader.ReadInt32();
         }
 
-        public <#= t.Item2 #> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+        public int Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.Read<#= t.Item1.Name #>();
+            return reader.ReadInt32();
+        }
+
+        public static int CalcByteLengthForSerialization(JsonSerializerOptions options, int value)
+        {
+            if (int.MinValue == value)
+            {
+                return 11;
+            }
+
+            var isNegative = value < 0;
+            var num1 = (uint)(isNegative ? -value : value);
+            // 4294967295 == uint.MaxValue
+            if (num1 < 10000)
+            {
+                if (num1 < 10)
+                {
+                    return isNegative ? 2 : 1;
+                }
+
+                if (num1 < 100)
+                {
+                    return isNegative ? 3 : 2;
+                }
+
+                if (num1 < 1000)
+                {
+                    return isNegative ? 4 : 3;
+                }
+
+                return isNegative ? 5 : 4;
+            }
+
+            if (num1 < 10000_0000)
+            {
+                if (num1 < 10_0000)
+                {
+                    return isNegative ? 6 : 5;
+                }
+
+                if (num1 < 100_0000)
+                {
+                    return isNegative ? 7 : 6;
+                }
+
+                if (num1 < 1000_0000)
+                {
+                    return isNegative ? 8 : 7;
+                }
+
+                return isNegative ? 9 : 8;
+            }
+
+            if (num1 < 1_0_0000_0000)
+                return isNegative ? 10 : 9;
+
+            return isNegative ? 11 : 10;
+        }
+
+        public static void SerializeSpan(JsonSerializerOptions options, int value, Span<byte> span)
+        {
+            if (value == int.MinValue)
+            {
+                span[0] = (byte)'-';
+                span[1] = (byte)'2';
+                span[2] = (byte)'1';
+                span[3] = (byte)'4';
+                span[4] = (byte)'7';
+                span[5] = (byte)'4';
+                span[6] = (byte)'8';
+                span[7] = (byte)'3';
+                span[8] = (byte)'6';
+                span[9] = (byte)'4';
+                span[10] = (byte)'8';
+                return;
+            }
+
+            if (value < 0)
+            {
+                span[0] = (byte)'-';
+                span = span.Slice(1);
+                value = -value;
+            }
+
+            var num1 = (uint)value;
+            var num2 = num1 / 10000;
+            num1 -= num2 * 10000;
+            var num3 = num2 / 10000;
+            num2 -= num3 * 10000;
+            var offset = 0;
+            uint div;
+            switch (span.Length)
+            {
+                case 10:
+                    span[offset++] = (byte)('0' + (div = (num3 * 6554U) >> 16));
+                    num3 -= div * 10U;
+                    goto case 9;
+                case 9:
+                    span[offset++] = (byte)('0' + num3);
+                    goto case 8;
+                case 8:
+                    span[offset++] = (byte)('0' + (div = (num2 * 8389U) >> 23));
+                    num2 -= div * 1000U;
+                    goto case 7;
+                case 7:
+                    span[offset++] = (byte)('0' + (div = (num2 * 5243U) >> 19));
+                    num2 -= div * 100U;
+                    goto case 6;
+                case 6:
+                    span[offset++] = (byte)('0' + (div = (num2 * 6554U) >> 16));
+                    num2 -= div * 10U;
+                    goto case 5;
+                case 5:
+                    span[offset++] = (byte)('0' + num2);
+                    goto case 4;
+                case 4:
+                    span[offset++] = (byte)('0' + (div = (num1 * 8389U) >> 23));
+                    num1 -= div * 1000U;
+                    goto case 3;
+                case 3:
+                    span[offset++] = (byte)('0' + (div = (num1 * 5243U) >> 19));
+                    num1 -= div * 100U;
+                    goto case 2;
+                case 2:
+                    span[offset++] = (byte)('0' + (div = (num1 * 6554U) >> 16));
+                    num1 -= div * 10U;
+                    goto case 1;
+                case 1:
+                    span[offset] = (byte)('0' + num1);
+                    return;
+                // ReSharper disable once RedundantCaseLabel
+                case 0:
+                default:
+                    throw new JsonSerializationException("Invalid number.");
+            }
         }
     }
 
-    public sealed class Nullable<#= t.Item1.Name #>Formatter : IJsonFormatter<<#= t.Item2 #>?>
+    public sealed class NullableInt32Formatter : IJsonFormatter<int?>
     {
-        public static void SerializeStatic(ref JsonWriter writer, <#= t.Item2 #>? value, JsonSerializerOptions options)
+        public static void SerializeStatic(ref JsonWriter writer, int? value, JsonSerializerOptions options)
         {
             if (value.HasValue)
             {
@@ -76,7 +179,7 @@ namespace Utf8Json.Formatters
             }
         }
 
-        public void Serialize(ref JsonWriter writer, <#= t.Item2 #>? value, JsonSerializerOptions options)
+        public void Serialize(ref JsonWriter writer, int? value, JsonSerializerOptions options)
         {
             if (value.HasValue)
             {
@@ -88,28 +191,28 @@ namespace Utf8Json.Formatters
             }
         }
 
-        public static <#= t.Item2 #>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+        public static int? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : reader.Read<#= t.Item1.Name #>();
+            return reader.ReadIsNull() ? default : reader.ReadInt32();
         }
 
-        public <#= t.Item2 #>? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+        public int? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : reader.Read<#= t.Item1.Name #>();
+            return reader.ReadIsNull() ? default : reader.ReadInt32();
         }
     }
 
-    public sealed class <#= t.Item1.Name #>ArrayFormatter
+    public sealed class Int32ArrayFormatter
 #if CSHARP_8_OR_NEWER
-        : IJsonFormatter<<#= t.Item2 #>[]?>
+        : IJsonFormatter<int[]?>
 #else
-        : IJsonFormatter<<#= t.Item2 #>[]>
+        : IJsonFormatter<int[]>
 #endif
     {
 #if CSHARP_8_OR_NEWER
-        public static void SerializeStatic(ref JsonWriter writer, <#= t.Item2 #>[]? value, JsonSerializerOptions options)
+        public static void SerializeStatic(ref JsonWriter writer, int[]? value, JsonSerializerOptions options)
 #else
-        public static void SerializeStatic(ref JsonWriter writer, <#= t.Item2 #>[] value, JsonSerializerOptions options)
+        public static void SerializeStatic(ref JsonWriter writer, int[] value, JsonSerializerOptions options)
 #endif
         {
             if (value == null)
@@ -134,98 +237,98 @@ namespace Utf8Json.Formatters
         }
 
 #if CSHARP_8_OR_NEWER
-        public void Serialize(ref JsonWriter writer, <#= t.Item2 #>[]? value, JsonSerializerOptions options)
+        public void Serialize(ref JsonWriter writer, int[]? value, JsonSerializerOptions options)
 #else
-        public void Serialize(ref JsonWriter writer, <#= t.Item2 #>[] value, JsonSerializerOptions options)
+        public void Serialize(ref JsonWriter writer, int[] value, JsonSerializerOptions options)
 #endif
         {
             SerializeStatic(ref writer, value, options);
         }
-        
+
 #if CSHARP_8_OR_NEWER
-        public static <#= t.Item2 #>[]? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+        public static int[]? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #else
-        public static <#= t.Item2 #>[] DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+        public static int[] DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #endif
         {
             if (reader.ReadIsNull())
             {
                 return default;
             }
-            
+
             reader.ReadIsBeginArrayWithVerify();
 #if UNITY_2018_4_OR_NEWER
             unsafe
             {
                 const Allocator allocator = Allocator.Temp;
-                var ptr = (<#= t.Item2 #>*)UnsafeUtility.Malloc(32 * <#= t.Item3 #>, 4, allocator);
+                var ptr = (int*)UnsafeUtility.Malloc(32 * 4, 4, allocator);
                 var count = 0;
                 var capacity = 32;
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
                 {
                     if (capacity < count)
                     {
-                        long size = <#= t.Item3 #> * capacity;
-                        var tmp = (<#= t.Item2 #>*)UnsafeUtility.Malloc(size << 1, 4, allocator);
+                        long size = 4 * capacity;
+                        var tmp = (int*)UnsafeUtility.Malloc(size << 1, 4, allocator);
                         UnsafeUtility.MemCpy(tmp, ptr, size);
                         capacity <<= 1;
                         UnsafeUtility.Free(ptr, allocator);
                         ptr = tmp;
                     }
                     
-                    ptr[count - 1] = reader.Read<#= t.Item1.Name #>();
+                    ptr[count - 1] = reader.ReadInt32();
                 }
 
                 if (count == 0)
                 {
                     UnsafeUtility.Free(ptr, allocator);
-                    return Array.Empty<<#= t.Item2 #>>();
+                    return Array.Empty<int>();
                 }
 
-                var answer = new <#= t.Item2 #>[count];
+                var answer = new int[count];
                 fixed (void* dest = &answer[0])
                 {
-                    UnsafeUtility.MemCpy(dest, ptr, <#= t.Item3 #> * count);
+                    UnsafeUtility.MemCpy(dest, ptr, 4 * count);
                 }
 
                 UnsafeUtility.Free(ptr, allocator);
                 return answer;
             }
 #else
-            Span<<#= t.Item2 #>> span = stackalloc <#= t.Item2 #>[16];
+            Span<int> span = stackalloc int[16];
             var count = 0;
             while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
             {
                 if (span.Length < count)
                 {
-                    Span<<#= t.Item2 #>> tmp = stackalloc <#= t.Item2 #>[span.Length << 1];
+                    Span<int> tmp = stackalloc int[span.Length << 1];
                     span.CopyTo(tmp);
                     span = tmp;
                 }
-                    
-                span[count - 1] = reader.Read<#= t.Item1.Name #>();
+
+                span[count - 1] = reader.ReadInt32();
             }
 
-            return count == 0 ? Array.Empty<<#= t.Item2 #>>() : span.Slice(0, count).ToArray();
+            return count == 0 ? Array.Empty<int>() : span.Slice(0, count).ToArray();
 #endif
         }
 
 #if CSHARP_8_OR_NEWER
-        public <#= t.Item2 #>[]? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+        public int[]? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
 #else
-        public <#= t.Item2 #>[] Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+        public int[] Deserialize(ref JsonReader reader, JsonSerializerOptions options)
 #endif
         {
             return DeserializeStatic(ref reader, options);
         }
     }
 
-    public sealed class <#= t.Item1.Name #>ReadOnlyMemoryFormatter : IJsonFormatter<ReadOnlyMemory<<#= t.Item2 #>>>
+    public sealed class Int32ReadOnlyMemoryFormatter : IJsonFormatter<ReadOnlyMemory<int>>
     {
-        public void Serialize(ref JsonWriter writer, ReadOnlyMemory<<#= t.Item2 #>> value, JsonSerializerOptions options)
+        public void Serialize(ref JsonWriter writer, ReadOnlyMemory<int> value, JsonSerializerOptions options)
             => SerializeStatic(ref writer, value, options);
 
-        public static void SerializeStatic(ref JsonWriter writer, ReadOnlyMemory<<#= t.Item2 #>> value, JsonSerializerOptions options)
+        public static void SerializeStatic(ref JsonWriter writer, ReadOnlyMemory<int> value, JsonSerializerOptions options)
         {
             writer.WriteBeginArray();
             if (value.Length == 0)
@@ -235,7 +338,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-            
+
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -246,10 +349,10 @@ namespace Utf8Json.Formatters
             writer.WriteEndArray();
         }
 
-        public ReadOnlyMemory<<#= t.Item2 #>> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
-            => DeserializeStatic(ref reader, options);
+        public ReadOnlyMemory<int> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+                    => DeserializeStatic(ref reader, options);
 
-        public static unsafe ReadOnlyMemory<<#= t.Item2 #>> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+        public static unsafe ReadOnlyMemory<int> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
             if (reader.ReadIsNull())
             {
@@ -261,49 +364,49 @@ namespace Utf8Json.Formatters
             var count = 0;
 #if UNITY_2018_4_OR_NEWER
             const Allocator allocator = Allocator.Temp;
-            var ptr = (<#= t.Item2 #>*)UnsafeUtility.Malloc(32 * <#= t.Item3 #>, 4, allocator);
+            var ptr = (int*)UnsafeUtility.Malloc(32 * 4, 4, allocator);
             var capacity = 32;
             while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
             {
                 if (capacity < count)
                 {
-                    long size = <#= t.Item3 #> * capacity;
-                    var tmp = (<#= t.Item2 #>*)UnsafeUtility.Malloc(size << 1, 4, allocator);
+                    long size = 4 * capacity;
+                    var tmp = (int*)UnsafeUtility.Malloc(size << 1, 4, allocator);
                     UnsafeUtility.MemCpy(tmp, ptr, size);
                     capacity <<= 1;
                     UnsafeUtility.Free(ptr, allocator);
                     ptr = tmp;
                 }
 
-                ptr[count - 1] = reader.Read<#= t.Item1.Name #>();
+                ptr[count - 1] = reader.ReadInt32();
             }
 
-            <#= t.Item2 #>[] answer;
+            int[] answer;
             if (count == 0)
             {
-                answer = Array.Empty<<#= t.Item2 #>>();
+                answer = Array.Empty<int>();
             }
             else
             {
-                answer = new <#= t.Item2 #>[count];
+                answer = new int[count];
                 fixed (void* dst = &answer[0])
                 {
-                    UnsafeUtility.MemCpy(dst, ptr, count<#if (t.Item3 != 1) {#> * <#= t.Item3 #><#}#>);
+                    UnsafeUtility.MemCpy(dst, ptr, count*4);
                 }
             }
 
             UnsafeUtility.Free(ptr, allocator);
             return answer;
 #else
-            var array = ArrayPool<byte>.Shared.Rent(256<#if (t.Item3 != 1) {#> * <#= t.Item3 #><#}#>);
-            var span = <#if(t.Item2 != "byte"){#>MemoryMarshal.Cast<byte, <#= t.Item2 #>>(array.AsSpan())<#}else{#>array.AsSpan()<#}#>;
+            var array = ArrayPool<byte>.Shared.Rent(256 * 4);
+            var span = MemoryMarshal.Cast<byte, int>(array.AsSpan());
             try
             {
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
                 {
                     if (span.Length < count)
                     {
-                        var size = span.Length<#if (t.Item3 != 1) {#> * <#= t.Item3 #><#}#>;
+                        var size = span.Length * 4;
                         var tmp = ArrayPool<byte>.Shared.Rent(size << 1);
                         fixed (byte* src = &array[0])
                         fixed (byte* dest = &tmp[0])
@@ -313,23 +416,23 @@ namespace Utf8Json.Formatters
 
                         ArrayPool<byte>.Shared.Return(array);
                         array = tmp;
-                        span = <#if(t.Item2 != "byte"){#>MemoryMarshal.Cast<byte, <#= t.Item2 #>>(array.AsSpan())<#}else{#>array.AsSpan()<#}#>;
+                        span = MemoryMarshal.Cast<byte, int>(array.AsSpan());
                     }
 
-                    span[count - 1] = reader.Read<#= t.Item1.Name #>();
+                    span[count - 1] = reader.ReadInt32();
                 }
 
                 if (count == 0)
                 {
-                    return Array.Empty<<#= t.Item2 #>>();
+                    return Array.Empty<int>();
                 }
                 else
                 {
-                    var answer = new <#= t.Item2 #>[count];
+                    var answer = new int[count];
                     fixed (void* dst = &answer[0])
                     fixed (void* src = &array[0])
                     {
-                        var size = count<#if (t.Item3 != 1) {#> * <#= t.Item3 #><#}#>;
+                        var size = count * 4;
                         Buffer.MemoryCopy(src, dst, size, size);
                     }
                     return answer;
@@ -344,15 +447,15 @@ namespace Utf8Json.Formatters
     }
 
 #if UNITY_2018_4_OR_NEWER
-    public sealed class <#= t.Item1.Name #>NativeArrayFormatter : IJsonFormatter<NativeArray<<#= t.Item2 #>>>
+    public sealed class Int32NativeArrayFormatter : IJsonFormatter<NativeArray<int>>
     {
-        public void Serialize(ref JsonWriter writer, NativeArray<<#= t.Item2 #>> value, JsonSerializerOptions options)
+        public void Serialize(ref JsonWriter writer, NativeArray<int> value, JsonSerializerOptions options)
             => SerializeStatic(ref writer, value, options);
 
-        public NativeArray<<#= t.Item2 #>> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+        public NativeArray<int> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
             => DeserializeStatic(ref reader, options);
 
-        public static void SerializeStatic(ref JsonWriter writer, NativeArray<<#= t.Item2 #>> value, JsonSerializerOptions options)
+        public static void SerializeStatic(ref JsonWriter writer, NativeArray<int> value, JsonSerializerOptions options)
         {
             writer.WriteBeginArray();
             if (value.Length == 0)
@@ -372,7 +475,7 @@ namespace Utf8Json.Formatters
             writer.WriteEndArray();
         }
 
-        public static unsafe NativeArray<<#= t.Item2 #>> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+        public static unsafe NativeArray<int> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
             if (reader.ReadIsNull())
             {
@@ -383,33 +486,33 @@ namespace Utf8Json.Formatters
 
             var count = 0;
             const Allocator allocator = Allocator.Temp;
-            var ptr = (<#= t.Item2 #>*)UnsafeUtility.Malloc(32 * <#= t.Item3 #>, 4, allocator);
+            var ptr = (int*)UnsafeUtility.Malloc(32 * 4, 4, allocator);
             var capacity = 32;
             while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
             {
                 if (capacity < count)
                 {
-                    long size = <#= t.Item3 #> * capacity;
-                    var tmp = (<#= t.Item2 #>*)UnsafeUtility.Malloc(size << 1, 4, allocator);
+                    long size = 4 * capacity;
+                    var tmp = (int*)UnsafeUtility.Malloc(size << 1, 4, allocator);
                     UnsafeUtility.MemCpy(tmp, ptr, size);
                     capacity <<= 1;
                     UnsafeUtility.Free(ptr, allocator);
                     ptr = tmp;
                 }
 
-                ptr[count - 1] = reader.Read<#= t.Item1.Name #>();
+                ptr[count - 1] = reader.ReadInt32();
             }
 
-            NativeArray<<#= t.Item2 #>> answer;
+            NativeArray<int> answer;
             if (count == 0)
             {
                 answer = default;
             }
             else
             {
-                answer = new NativeArray<<#= t.Item2 #>>(count, Allocator.Persistent);
+                answer = new NativeArray<int>(count, Allocator.Persistent);
                 var dst = NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(answer);
-                UnsafeUtility.MemCpy(dst, ptr, count<#if (t.Item3 != 1) {#> * <#= t.Item3 #><#}#>);
+                UnsafeUtility.MemCpy(dst, ptr, count*4);
             }
 
             UnsafeUtility.Free(ptr, allocator);
@@ -418,12 +521,12 @@ namespace Utf8Json.Formatters
     }
 #endif
 
-    public sealed class <#= t.Item1.Name #>MemoryFormatter : IJsonFormatter<Memory<<#= t.Item2 #>>>
+    public sealed class Int32MemoryFormatter : IJsonFormatter<Memory<int>>
     {
-        public void Serialize(ref JsonWriter writer, Memory<<#= t.Item2 #>> value, JsonSerializerOptions options)
+        public void Serialize(ref JsonWriter writer, Memory<int> value, JsonSerializerOptions options)
             => SerializeStatic(ref writer, value, options);
 
-        public static void SerializeStatic(ref JsonWriter writer, Memory<<#= t.Item2 #>> value, JsonSerializerOptions options)
+        public static void SerializeStatic(ref JsonWriter writer, Memory<int> value, JsonSerializerOptions options)
         {
             writer.WriteBeginArray();
             if (value.Length == 0)
@@ -433,7 +536,7 @@ namespace Utf8Json.Formatters
 
             var span = value.Span;
             writer.Write(span[0]);
-            
+
             for (var i = 1; i < span.Length; i++)
             {
                 writer.WriteValueSeparator();
@@ -444,10 +547,10 @@ namespace Utf8Json.Formatters
             writer.WriteEndArray();
         }
 
-        public Memory<<#= t.Item2 #>> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
-            => DeserializeStatic(ref reader, options);
+        public Memory<int> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+                    => DeserializeStatic(ref reader, options);
 
-        public static unsafe Memory<<#= t.Item2 #>> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+        public static unsafe Memory<int> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
             if (reader.ReadIsNull())
             {
@@ -459,49 +562,49 @@ namespace Utf8Json.Formatters
             var count = 0;
 #if UNITY_2018_4_OR_NEWER
             const Allocator allocator = Allocator.Temp;
-            var ptr = (<#= t.Item2 #>*)UnsafeUtility.Malloc(32 * <#= t.Item3 #>, 4, allocator);
+            var ptr = (int*)UnsafeUtility.Malloc(32 * 4, 4, allocator);
             var capacity = 32;
             while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
             {
                 if (capacity < count)
                 {
-                    long size = <#= t.Item3 #> * capacity;
-                    var tmp = (<#= t.Item2 #>*)UnsafeUtility.Malloc(size << 1, 4, allocator);
+                    long size = 4 * capacity;
+                    var tmp = (int*)UnsafeUtility.Malloc(size << 1, 4, allocator);
                     UnsafeUtility.MemCpy(tmp, ptr, size);
                     capacity <<= 1;
                     UnsafeUtility.Free(ptr, allocator);
                     ptr = tmp;
                 }
 
-                ptr[count - 1] = reader.Read<#= t.Item1.Name #>();
+                ptr[count - 1] = reader.ReadInt32();
             }
 
-            <#= t.Item2 #>[] answer;
+            int[] answer;
             if (count == 0)
             {
-                answer = Array.Empty<<#= t.Item2 #>>();
+                answer = Array.Empty<int>();
             }
             else
             {
-                answer = new <#= t.Item2 #>[count];
+                answer = new int[count];
                 fixed (void* dst = &answer[0])
                 {
-                    UnsafeUtility.MemCpy(dst, ptr, count<#if (t.Item3 != 1) {#> * <#= t.Item3 #><#}#>);
+                    UnsafeUtility.MemCpy(dst, ptr, count*4);
                 }
             }
 
             UnsafeUtility.Free(ptr, allocator);
             return answer;
 #else
-            var array = ArrayPool<byte>.Shared.Rent(256<#if (t.Item3 != 1) {#> * <#= t.Item3 #><#}#>);
-            var span = <#if(t.Item2 != "byte"){#>MemoryMarshal.Cast<byte, <#= t.Item2 #>>(array.AsSpan())<#}else{#>array.AsSpan()<#}#>;
+            var array = ArrayPool<byte>.Shared.Rent(256 * 4);
+            var span = MemoryMarshal.Cast<byte, int>(array.AsSpan());
             try
             {
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
                 {
                     if (span.Length < count)
                     {
-                        var size = span.Length<#if (t.Item3 != 1) {#> * <#= t.Item3 #><#}#>;
+                        var size = span.Length * 4;
                         var tmp = ArrayPool<byte>.Shared.Rent(size << 1);
                         fixed (byte* src = &array[0])
                         fixed (byte* dest = &tmp[0])
@@ -511,23 +614,23 @@ namespace Utf8Json.Formatters
 
                         ArrayPool<byte>.Shared.Return(array);
                         array = tmp;
-                        span = <#if(t.Item2 != "byte"){#>MemoryMarshal.Cast<byte, <#= t.Item2 #>>(array.AsSpan())<#}else{#>array.AsSpan()<#}#>;
+                        span = MemoryMarshal.Cast<byte, int>(array.AsSpan());
                     }
 
-                    span[count - 1] = reader.Read<#= t.Item1.Name #>();
+                    span[count - 1] = reader.ReadInt32();
                 }
 
                 if (count == 0)
                 {
-                    return Array.Empty<<#= t.Item2 #>>();
+                    return Array.Empty<int>();
                 }
                 else
                 {
-                    var answer = new <#= t.Item2 #>[count];
+                    var answer = new int[count];
                     fixed (void* dst = &answer[0])
                     fixed (void* src = &array[0])
                     {
-                        var size = count<#if (t.Item3 != 1) {#> * <#= t.Item3 #><#}#>;
+                        var size = count * 4;
                         Buffer.MemoryCopy(src, dst, size, size);
                     }
                     return answer;
@@ -541,17 +644,17 @@ namespace Utf8Json.Formatters
         }
     }
 
-    public sealed class <#= t.Item1.Name #>ListFormatter
+    public sealed class Int32ListFormatter
 #if CSHARP_8_OR_NEWER
-        : IOverwriteJsonFormatter<List<<#= t.Item2 #>>?>
+        : IOverwriteJsonFormatter<List<int>?>
 #else
-        : IOverwriteJsonFormatter<List<<#= t.Item2 #>>>
+        : IOverwriteJsonFormatter<List<int>>
 #endif
     {
 #if CSHARP_8_OR_NEWER
-        public static void SerializeStatic(ref JsonWriter writer, List<<#= t.Item2 #>>? value, JsonSerializerOptions options)
+        public static void SerializeStatic(ref JsonWriter writer, List<int>? value, JsonSerializerOptions options)
 #else
-        public static void SerializeStatic(ref JsonWriter writer, List<<#= t.Item2 #>> value, JsonSerializerOptions options)
+        public static void SerializeStatic(ref JsonWriter writer, List<int> value, JsonSerializerOptions options)
 #endif
         {
             if (value == null)
@@ -579,25 +682,25 @@ namespace Utf8Json.Formatters
         }
 
 #if CSHARP_8_OR_NEWER
-        public void Serialize(ref JsonWriter writer, List<<#= t.Item2 #>>? value, JsonSerializerOptions options)
+        public void Serialize(ref JsonWriter writer, List<int>? value, JsonSerializerOptions options)
 #else
-        public void Serialize(ref JsonWriter writer, List<<#= t.Item2 #>> value, JsonSerializerOptions options)
+        public void Serialize(ref JsonWriter writer, List<int> value, JsonSerializerOptions options)
 #endif
         {
             SerializeStatic(ref writer, value, options);
         }
 
 #if CSHARP_8_OR_NEWER
-        public List<<#= t.Item2 #>>? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+        public List<int>? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
 #else
-        public List<<#= t.Item2 #>> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+        public List<int> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
 #endif
             => DeserializeStatic(ref reader, options);
 
 #if CSHARP_8_OR_NEWER
-        public static unsafe List<<#= t.Item2 #>>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+        public static unsafe List<int>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #else
-        public static unsafe List<<#= t.Item2 #>> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+        public static unsafe List<int> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #endif
         {
             if (reader.ReadIsNull())
@@ -610,24 +713,24 @@ namespace Utf8Json.Formatters
             var count = 0;
 #if UNITY_2018_4_OR_NEWER
             const Allocator allocator = Allocator.Temp;
-            var ptr = (<#= t.Item2 #>*)UnsafeUtility.Malloc(32 * <#= t.Item3 #>, 4, allocator);
+            var ptr = (int*)UnsafeUtility.Malloc(32 * 4, 4, allocator);
             var capacity = 32;
             while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
             {
                 if (capacity < count)
                 {
-                    long size = <#= t.Item3 #> * capacity;
-                    var tmp = (<#= t.Item2 #>*)UnsafeUtility.Malloc(size << 1, 4, allocator);
+                    long size = 4 * capacity;
+                    var tmp = (int*)UnsafeUtility.Malloc(size << 1, 4, allocator);
                     UnsafeUtility.MemCpy(tmp, ptr, size);
                     capacity <<= 1;
                     UnsafeUtility.Free(ptr, allocator);
                     ptr = tmp;
                 }
 
-                ptr[count - 1] = reader.Read<#= t.Item1.Name #>();
+                ptr[count - 1] = reader.ReadInt32();
             }
 
-            var answer = new List<<#= t.Item2 #>>(count);
+            var answer = new List<int>(count);
             for (var i = 0; i < count; i++)
             {
                 answer.Add(ptr[i]);
@@ -636,15 +739,15 @@ namespace Utf8Json.Formatters
             UnsafeUtility.Free(ptr, allocator);
             return answer;
 #else
-            var array = ArrayPool<byte>.Shared.Rent(256<#if (t.Item3 != 1) {#> * <#= t.Item3 #><#}#>);
-            var span = <#if(t.Item2 != "byte"){#>MemoryMarshal.Cast<byte, <#= t.Item2 #>>(array.AsSpan())<#}else{#>array.AsSpan()<#}#>;
+            var array = ArrayPool<byte>.Shared.Rent(256 * 4);
+            var span = MemoryMarshal.Cast<byte, int>(array.AsSpan());
             try
             {
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
                 {
                     if (span.Length < count)
                     {
-                        var size = span.Length<#if (t.Item3 != 1) {#> * <#= t.Item3 #><#}#>;
+                        var size = span.Length * 4;
                         var tmp = ArrayPool<byte>.Shared.Rent(size << 1);
                         fixed (byte* src = &array[0])
                         fixed (byte* dest = &tmp[0])
@@ -654,13 +757,13 @@ namespace Utf8Json.Formatters
 
                         ArrayPool<byte>.Shared.Return(array);
                         array = tmp;
-                        span = <#if(t.Item2 != "byte"){#>MemoryMarshal.Cast<byte, <#= t.Item2 #>>(array.AsSpan())<#}else{#>array.AsSpan()<#}#>;
+                        span = MemoryMarshal.Cast<byte, int>(array.AsSpan());
                     }
 
-                    span[count - 1] = reader.Read<#= t.Item1.Name #>();
+                    span[count - 1] = reader.ReadInt32();
                 }
 
-                var answer = new List<<#= t.Item2 #>>(count);
+                var answer = new List<int>(count);
                 span = span.Slice(0, count);
                 // ReSharper disable once ForCanBeConvertedToForeach
                 for (var index = 0; index < span.Length; index++)
@@ -678,9 +781,9 @@ namespace Utf8Json.Formatters
         }
 
 #if CSHARP_8_OR_NEWER
-        public void DeserializeTo(ref List<<#= t.Item2 #>>? value, ref JsonReader reader, JsonSerializerOptions options)
+        public void DeserializeTo(ref List<int>? value, ref JsonReader reader, JsonSerializerOptions options)
 #else
-        public void DeserializeTo(ref List<<#= t.Item2 #>> value, ref JsonReader reader, JsonSerializerOptions options)
+        public void DeserializeTo(ref List<int> value, ref JsonReader reader, JsonSerializerOptions options)
 #endif
         {
             if (reader.ReadIsNull())
@@ -696,13 +799,11 @@ namespace Utf8Json.Formatters
             {
                 if (value == null)
                 {
-                    value = new List<<#= t.Item2 #>>();
+                    value = new List<int>();
                 }
 
-                value.Add(reader.Read<#= t.Item1.Name #>());
+                value.Add(reader.ReadInt32());
             }
         }
     }
-
-<# } #>
 }

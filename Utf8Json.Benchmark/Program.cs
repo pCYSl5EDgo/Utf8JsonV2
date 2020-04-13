@@ -9,7 +9,11 @@ namespace Utf8JsonBenchmark
     {
         private static void Main()
         {
-            BenchmarkRunner.Run<JsonInt32Tester>();
+            BenchmarkRunner.Run<JsonBooleanTester>();
+            /*BenchmarkRunner.Run<JsonInt32Tester>();
+            BenchmarkRunner.Run<JsonInt64Tester>();
+            BenchmarkRunner.Run<JsonStringTester>();
+            BenchmarkRunner.Run<JsonCharTester>();*/
         }
     }
 
@@ -29,6 +33,58 @@ namespace Utf8JsonBenchmark
         public byte[] SerializeUtf8JsonV2()
         {
             return V2::Utf8Json.JsonSerializer.Serialize(Value);
+        }
+    }
+
+    [MemoryDiagnoser]
+    public class JsonBooleanTester
+    {
+        [Benchmark]
+        public byte[] SerializeUtf8JsonV1True()
+        {
+            return global::Utf8Json.JsonSerializer.Serialize(true);
+        }
+
+        [Benchmark]
+        public byte[] SerializeUtf8JsonV2True()
+        {
+            return V2::Utf8Json.JsonSerializer.Serialize(true);
+        }
+
+        [Benchmark]
+        public byte[] SerializeUtf8JsonV1False()
+        {
+            return global::Utf8Json.JsonSerializer.Serialize(false);
+        }
+
+        [Benchmark]
+        public byte[] SerializeUtf8JsonV2False()
+        {
+            return V2::Utf8Json.JsonSerializer.Serialize(false);
+        }
+
+        [Benchmark]
+        public bool DeserializeUtf8JsonV1True()
+        {
+            return global::Utf8Json.JsonSerializer.Deserialize<bool>(new[] { (byte)'t', (byte)'r', (byte)'u', (byte)'e', });
+        }
+
+        [Benchmark]
+        public bool DeserializeUtf8JsonV2True()
+        {
+            return V2::Utf8Json.JsonSerializer.Deserialize<bool>(new[] { (byte)'t', (byte)'r', (byte)'u', (byte)'e', });
+        }
+
+        [Benchmark]
+        public bool DeserializeUtf8JsonV1False()
+        {
+            return global::Utf8Json.JsonSerializer.Deserialize<bool>(new[] { (byte)'f', (byte)'a', (byte)'l', (byte)'s', (byte)'e', });
+        }
+
+        [Benchmark]
+        public bool DeserializeUtf8JsonV2False()
+        {
+            return V2::Utf8Json.JsonSerializer.Deserialize<bool>(new[] { (byte)'f', (byte)'a', (byte)'l', (byte)'s', (byte)'e', });
         }
     }
 
@@ -67,6 +123,22 @@ namespace Utf8JsonBenchmark
         public byte[] SerializeUtf8JsonV2()
         {
             return V2::Utf8Json.JsonSerializer.Serialize<int>(Value);
+        }
+    }
+
+    [MemoryDiagnoser]
+    public class JsonCharTester
+    {
+        [Benchmark]
+        public byte[] SerializeUtf8JsonV1()
+        {
+            return global::Utf8Json.JsonSerializer.Serialize('\r');
+        }
+
+        [Benchmark]
+        public byte[] SerializeUtf8JsonV2()
+        {
+            return V2::Utf8Json.JsonSerializer.Serialize('\r');
         }
     }
 }
