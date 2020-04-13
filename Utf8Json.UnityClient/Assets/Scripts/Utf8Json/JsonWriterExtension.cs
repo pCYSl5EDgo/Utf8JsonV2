@@ -54,13 +54,12 @@ namespace Utf8Json
             long value1 = value;
             if (value < 0)
             {
-                var span = writer.Writer.GetSpan(1);
-                span[0] = (byte)'-';
+                writer.Writer.GetPointer(1) = (byte)'-';
                 writer.Writer.Advance(1);
                 value1 = unchecked(-value1);
             }
 
-            writer.Write((ulong)value1);
+            writer.Write((uint)value1);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -70,13 +69,12 @@ namespace Utf8Json
 
             if (value1 < 0)
             {
-                var span = writer.Writer.GetSpan(1);
-                span[0] = (byte)'-';
+                writer.Writer.GetPointer(1) = (byte)'-';
                 writer.Writer.Advance(1);
                 value1 = unchecked(-value1);
             }
 
-            writer.Write((ulong)value1);
+            writer.Write((uint)value1);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -86,13 +84,12 @@ namespace Utf8Json
 
             if (value1 < 0)
             {
-                var span = writer.Writer.GetSpan(1);
-                span[0] = (byte)'-';
+                writer.Writer.GetPointer(1) = (byte)'-';
                 writer.Writer.Advance(1);
                 value1 = unchecked(-value1);
             }
 
-            writer.Write((ulong)value1);
+            writer.Write((uint)value1);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -129,8 +126,7 @@ namespace Utf8Json
 
             if (value < 0)
             {
-                var span = writer.Writer.GetSpan(1);
-                span[0] = (byte)'-';
+                writer.Writer.GetPointer(1) = (byte)'-';
                 writer.Writer.Advance(1);
                 value = unchecked(-value);
             }

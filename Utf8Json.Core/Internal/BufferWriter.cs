@@ -118,23 +118,76 @@ namespace Utf8Json.Internal
 
         public Span<byte> GetSpan(int sizeHint)
         {
-            Ensure(sizeHint);
-            return this.Span;
+            if (innerSpan.Length < sizeHint)
+            {
+                EnsureMore(sizeHint);
+            }
+            
+            return this.innerSpan;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref byte GetPointer(int sizeHint)
         {
-            Ensure(sizeHint);
+            if (innerSpan.Length < sizeHint)
+            {
+                EnsureMore(sizeHint);
+            }
 
             if (segment.Array != null)
             {
                 return ref segment.Array[segment.Offset + buffered];
             }
-            else
+
+            return ref innerSpan.GetPinnableReference();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref ushort GetUInt16()
+        {
+            if (innerSpan.Length < 2)
             {
-                return ref innerSpan.GetPinnableReference();
+                EnsureMore(2);
             }
+
+            if (segment.Array != null)
+            {
+                return ref Unsafe.As<byte, ushort>(ref segment.Array[segment.Offset + buffered]);
+            }
+
+            return ref Unsafe.As<byte, ushort>(ref innerSpan.GetPinnableReference());
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref uint GetUInt32()
+        {
+            if (innerSpan.Length < 4)
+            {
+                EnsureMore(4);
+            }
+
+            if (segment.Array != null)
+            {
+                return ref Unsafe.As<byte, uint>(ref segment.Array[segment.Offset + buffered]);
+            }
+
+            return ref Unsafe.As<byte, uint>(ref innerSpan.GetPinnableReference());
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref ulong GetUInt64()
+        {
+            if (innerSpan.Length < 8)
+            {
+                EnsureMore(8);
+            }
+
+            if (segment.Array != null)
+            {
+                return ref Unsafe.As<byte, ulong>(ref segment.Array[segment.Offset + buffered]);
+            }
+
+            return ref Unsafe.As<byte, ulong>(ref innerSpan.GetPinnableReference());
         }
 
         /// <summary>
@@ -196,7 +249,7 @@ namespace Utf8Json.Internal
         /// </summary>
         /// <param name="count">The number of bytes that must be allocated in a single buffer.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Ensure(int count = 1)
+        public void Ensure(int count)
         {
             if (innerSpan.Length < count)
             {

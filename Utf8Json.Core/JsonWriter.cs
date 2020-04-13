@@ -74,11 +74,17 @@ namespace Utf8Json
         /// </summary>
         public void WriteNull()
         {
-            var span = Writer.GetSpan(4);
-            span[0] = (byte)'n';
-            span[1] = (byte)'u';
-            span[2] = (byte)'l';
-            span[3] = (byte)'l';
+            if (BitConverter.IsLittleEndian)
+            {
+                const int nullLittleEndian = 'n' | ('u' << 8) | ('l' << 16) | ('l' << 24);
+                Writer.GetUInt32() = nullLittleEndian;
+            }
+            else
+            {
+                const int nullBigEndian = ('n' << 24) | ('u' << 16) | ('l' << 8) | 'l';
+                Writer.GetUInt32() = nullBigEndian;
+            }
+
             Writer.Advance(4);
         }
 
@@ -150,11 +156,17 @@ namespace Utf8Json
         {
             if (value)
             {
-                var span = Writer.GetSpan(4);
-                span[0] = (byte)'t';
-                span[1] = (byte)'r';
-                span[2] = (byte)'u';
-                span[3] = (byte)'e';
+                if (BitConverter.IsLittleEndian)
+                {
+                    const int trueLittleEndian = 't' | ('r' << 8) | ('u' << 16) | ('e' << 24);
+                    Writer.GetUInt32() = trueLittleEndian;
+                }
+                else
+                {
+                    const int trueBigEndian = ('t' << 24) | ('r' << 16) | ('u' << 8) | 'e';
+                    Writer.GetUInt32() = trueBigEndian;
+                }
+
                 Writer.Advance(4);
             }
             else
@@ -186,11 +198,7 @@ namespace Utf8Json
                     break;
                 case '\\':
                     {
-                        var span = Writer.GetSpan(4);
-                        span[0] = (byte)'"';
-                        span[1] = (byte)'\\';
-                        span[2] = (byte)'\\';
-                        span[3] = (byte)'"';
+                        Writer.GetUInt32() = ('"' << 24) | ('\\' << 16) | ('\\' << 8) | '"';
                         Writer.Advance(4);
                     }
                     break;
@@ -261,10 +269,11 @@ namespace Utf8Json
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Write(ulong value)
+        public void Write(uint value)
         {
-            var buffer = default(Span<byte>);
+            Span<byte> buffer;
             var offset = 0;
+            //4294967295 == uint.MaxValue 10 chars
             if (value < 10000)
             {
                 if (value < 10)
@@ -307,15 +316,65 @@ namespace Utf8Json
                 buffer = Writer.GetSpan(8);
                 goto L8;
             }
+
+            var num3 = num2 / 10000;
+            num2 -= num3 * 10000;
+            if (num3 < 10)
+            {
+                buffer = Writer.GetSpan(9);
+                goto L9;
+            }
+
+            buffer = Writer.GetSpan(10);
+
+            uint div;
+            buffer[offset++] = (byte)('0' + (div = (num3 * 6554U) >> 16));
+            num3 -= div * 10U;
+        L9:
+            buffer[offset++] = (byte)('0' + num3);
+        L8:
+            buffer[offset++] = (byte)('0' + (div = (num2 * 8389U) >> 23));
+            num2 -= div * 1000U;
+        L7:
+            buffer[offset++] = (byte)('0' + (div = (num2 * 5243U) >> 19));
+            num2 -= div * 100U;
+        L6:
+            buffer[offset++] = (byte)('0' + (div = (num2 * 6554U) >> 16));
+            num2 -= div * 10U;
+        L5:
+            buffer[offset++] = (byte)('0' + num2);
+        L4:
+            buffer[offset++] = (byte)('0' + (div = (value * 8389U) >> 23));
+            value -= div * 1000U;
+        L3:
+            buffer[offset++] = (byte)('0' + (div = (value * 5243U) >> 19));
+            value -= div * 100U;
+        L2:
+            buffer[offset++] = (byte)('0' + (div = (value * 6554U) >> 16));
+            value -= div * 10U;
+        L1:
+            buffer[offset++] = (byte)('0' + value);
+            Writer.Advance(offset);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Write(ulong value)
+        {
+            if (value >> 32 == 0)
+            {
+                Write((uint)value);
+                return;
+            }
+
+            Span<byte> buffer;
+            var offset = 0;
+            var value1 = value;
+            var num2 = value1 / 10000;
+            value1 -= num2 * 10000;
             var num3 = num2 / 10000;
             num2 -= num3 * 10000;
             if (num3 < 10000)
             {
-                if (num3 < 10)
-                {
-                    buffer = Writer.GetSpan(9);
-                    goto L9;
-                }
                 if (num3 < 100)
                 {
                     buffer = Writer.GetSpan(10);
@@ -355,25 +414,23 @@ namespace Utf8Json
 
             var num5 = num4 / 10000;
             num4 -= num5 * 10000;
-            if (num5 < 10000)
+            if (num5 < 10)
             {
-                if (num5 < 10)
-                {
-                    buffer = Writer.GetSpan(17);
-                    goto L17;
-                }
-                if (num5 < 100)
-                {
-                    buffer = Writer.GetSpan(18);
-                    goto L18;
-                }
-                if (num5 < 1000)
-                {
-                    buffer = Writer.GetSpan(19);
-                    goto L19;
-                }
-                buffer = Writer.GetSpan(20);
+                buffer = Writer.GetSpan(17);
+                goto L17;
             }
+            if (num5 < 100)
+            {
+                buffer = Writer.GetSpan(18);
+                goto L18;
+            }
+            if (num5 < 1000)
+            {
+                buffer = Writer.GetSpan(19);
+                goto L19;
+            }
+
+            buffer = Writer.GetSpan(20);
             ulong div;
             buffer[offset++] = (byte)('0' + (div = (num5 * 8389UL) >> 23));
             num5 -= div * 1000;
@@ -384,7 +441,7 @@ namespace Utf8Json
             buffer[offset++] = (byte)('0' + (div = (num5 * 6554UL) >> 16));
             num5 -= div * 10;
         L17:
-            buffer[offset++] = (byte)('0' + (num5));
+            buffer[offset++] = (byte)('0' + num5);
         L16:
             buffer[offset++] = (byte)('0' + (div = (num4 * 8389UL) >> 23));
             num4 -= div * 1000;
@@ -395,7 +452,7 @@ namespace Utf8Json
             buffer[offset++] = (byte)('0' + (div = (num4 * 6554UL) >> 16));
             num4 -= div * 10;
         L13:
-            buffer[offset++] = (byte)('0' + (num4));
+            buffer[offset++] = (byte)('0' + num4);
         L12:
             buffer[offset++] = (byte)('0' + (div = (num3 * 8389UL) >> 23));
             num3 -= div * 1000;
@@ -404,31 +461,19 @@ namespace Utf8Json
             num3 -= div * 100;
         L10:
             buffer[offset++] = (byte)('0' + (div = (num3 * 6554UL) >> 16));
-            num3 -= div * 10;
-        L9:
-            buffer[offset++] = (byte)('0' + (num3));
-        L8:
+            buffer[offset++] = (byte)('0' + num3 - div * 10);
             buffer[offset++] = (byte)('0' + (div = (num2 * 8389UL) >> 23));
             num2 -= div * 1000;
-        L7:
             buffer[offset++] = (byte)('0' + (div = (num2 * 5243UL) >> 19));
             num2 -= div * 100;
-        L6:
             buffer[offset++] = (byte)('0' + (div = (num2 * 6554UL) >> 16));
-            num2 -= div * 10;
-        L5:
-            buffer[offset++] = (byte)('0' + (num2));
-        L4:
-            buffer[offset++] = (byte)('0' + (div = (value * 8389UL) >> 23));
-            value -= div * 1000;
-        L3:
-            buffer[offset++] = (byte)('0' + (div = (value * 5243UL) >> 19));
-            value -= div * 100;
-        L2:
-            buffer[offset++] = (byte)('0' + (div = (value * 6554UL) >> 16));
-            value -= div * 10;
-        L1:
-            buffer[offset++] = (byte)('0' + value);
+            buffer[offset++] = (byte)('0' + num2 - div * 10);
+            buffer[offset++] = (byte)('0' + (div = (value1 * 8389UL) >> 23));
+            value1 -= div * 1000;
+            buffer[offset++] = (byte)('0' + (div = (value1 * 5243UL) >> 19));
+            value1 -= div * 100;
+            buffer[offset++] = (byte)('0' + (div = (value1 * 6554UL) >> 16));
+            buffer[offset++] = (byte)('0' + value1 - div * 10);
             Writer.Advance(offset);
         }
 

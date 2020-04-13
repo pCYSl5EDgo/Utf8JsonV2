@@ -13,7 +13,7 @@ namespace Utf8Json.Resolvers
         public IJsonFormatter<T> GetFormatter<T>()
 #endif
         {
-            return FormatterCache<T>.Formatter;
+            return default;
         }
 
         public IntPtr GetSerializeStatic<T>()
@@ -28,22 +28,13 @@ namespace Utf8Json.Resolvers
 
         private static class FormatterCache<T>
         {
-#if CSHARP_8_OR_NEWER
-            public static readonly IJsonFormatter<T>? Formatter;
-#else
-            public static readonly IJsonFormatter<T> Formatter;
-#endif
-
             public static readonly IntPtr SerializeFunctionPointer;
             public static readonly IntPtr DeserializeFunctionPointer;
 
             static FormatterCache()
             {
                 // Reduce IL2CPP code generate size(don't write long code in <T>)
-                var type = typeof(T);
-                Formatter = BuiltinResolverGetFormatterHelper.GetFormatter(type) as IJsonFormatter<T>;
-
-                (SerializeFunctionPointer, DeserializeFunctionPointer) = BuiltinResolverGetFormatterHelper.GetFunctionPointers(type);
+                (SerializeFunctionPointer, DeserializeFunctionPointer) = BuiltinResolverGetFormatterHelper.GetFunctionPointers(typeof(T));
             }
         }
     }

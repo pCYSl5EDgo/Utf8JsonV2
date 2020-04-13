@@ -6,11 +6,7 @@
 <#@ output extension=".cs" #>
 <#
 var primitives = new Type[]{
-typeof(int),
-typeof(long),
-typeof(ulong),
 typeof(char),
-typeof(bool),
 typeof(float),
 typeof(double),
 };
@@ -35,28 +31,6 @@ namespace Utf8Json
     {
 <#foreach(var t in primitives){
 var name = t.Name;#>
-        public static byte[] Serialize(<#= name #> value, JsonSerializerOptions options)
-        {
-            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
-            try
-            {
-                var writer = new JsonWriter(SequencePool.Shared, array);
-                try
-                {
-                    writer.Write(value);
-                }
-                catch (Exception ex)
-                {
-                    throw new JsonSerializationException("Failed to serialize <#= t.FullName #> value.", ex);
-                }
-                return writer.FlushAndGetArray();
-            }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return(array);
-            }
-        }
-
         public static byte[] Serialize(<#= name #> value)
         {
             var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
@@ -79,43 +53,6 @@ var name = t.Name;#>
             }
         }
 
-#if SPAN_BUILTIN
-        public static void Serialize(Stream stream, <#= name #> value)
-        {
-            var sequenceRental = SequencePool.Shared.Rent();
-            try
-            {
-                var fastWriter = new JsonWriter(sequenceRental.Value);
-                try
-                {
-                    fastWriter.Write(value);
-                }
-                catch (Exception ex)
-                {
-                    throw new JsonSerializationException("Failed to serialize <#= t.FullName #> value.", ex);
-                }
-                fastWriter.Flush();
-
-                try
-                {
-                    foreach (var segment in (ReadOnlySequence<byte>)sequenceRental.Value)
-                    {
-                        stream.Write(segment.Span);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    throw new JsonSerializationException("Error occurred while writing the serialized data to the stream.", ex);
-                }
-            }
-            finally
-            {
-                sequenceRental.Dispose();
-            }
-        }
-#endif
-
 <#}#>
     }
 }
-#pragma warning restore IDE0060

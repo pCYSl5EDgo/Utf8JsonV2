@@ -25,7 +25,7 @@ namespace Utf8Json.Resolvers
         internal static class BuiltinResolverGetFormatterHelper
         {
             private static readonly ThreadSafeTypeKeyFormatterHashTable formatterHashTable
-            #region table
+#region table
             = new ThreadSafeTypeKeyFormatterHashTable(new[]
             {
 #if CSHARP_8_OR_NEWER
@@ -293,147 +293,7 @@ namespace Utf8Json.Resolvers
                 new ThreadSafeTypeKeyFormatterHashTable.Entry(typeof(ExpandoObject), StaticHelper.GetSerializeStatic<ExpandoObject, ExpandoObjectFormatter>(), StaticHelper.GetDeserializeStatic<ExpandoObject, ExpandoObjectFormatter>()),
 #endif
             }, 0.5d);
-            #endregion
-
-            private static readonly ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter> formatterInstanceMap
-            #region table
-            = new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>(new[]
-            {
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(string[]), new NullableStringArrayFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(  byte), new ByteFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(  char), new CharFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof( short), new Int16Formatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(   int), new Int32Formatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(  long), new Int64Formatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof( sbyte), new SByteFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(ushort), new UInt16Formatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(  uint), new UInt32Formatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof( ulong), new UInt64Formatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof( float), new SingleFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(double), new DoubleFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(  bool), new BooleanFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof( short?), new NullableInt16Formatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof( int?  ), new NullableInt32Formatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof( long?  ), new NullableInt64Formatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof( ushort?), new NullableUInt16Formatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(   uint?), new NullableUInt32Formatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(  ulong?), new NullableUInt64Formatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(  byte?), new NullableByteFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof( sbyte?), new NullableSByteFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(  bool?), new NullableBooleanFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(  char?), new NullableCharFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof( float?), new NullableSingleFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(double?), new NullableDoubleFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof( short[]), new Int16ArrayFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(   int[]), new Int32ArrayFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(  long[]), new Int64ArrayFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(ushort[]), new UInt16ArrayFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(  uint[]), new UInt32ArrayFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof( ulong[]), new UInt64ArrayFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(  byte[]), new ByteArrayFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof( sbyte[]), new SByteArrayFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(  bool[]), new BooleanArrayFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(  char[]), new CharArrayFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof( float[]), new SingleArrayFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(double[]), new DoubleArrayFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(List<  byte>), new ByteListFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(List<  char>), new CharListFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(List< short>), new Int16ListFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(List<   int>), new Int32ListFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(List<  long>), new Int64ListFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(List< sbyte>), new SByteListFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(List<ushort>), new UInt16ListFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(List<  uint>), new UInt32ListFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(List< ulong>), new UInt64ListFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(List< float>), new SingleListFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(List<double>), new DoubleListFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(List<  bool>), new BooleanListFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(Memory<  byte>), new ByteMemoryFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(Memory<  char>), new CharMemoryFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(Memory< short>), new Int16MemoryFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(Memory<   int>), new Int32MemoryFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(Memory<  long>), new Int64MemoryFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(Memory< sbyte>), new SByteMemoryFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(Memory<ushort>), new UInt16MemoryFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(Memory<  uint>), new UInt32MemoryFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(Memory< ulong>), new UInt64MemoryFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(Memory< float>), new SingleMemoryFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(Memory<double>), new DoubleMemoryFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(Memory<  bool>), new BooleanMemoryFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(ReadOnlyMemory<  byte>), new ByteReadOnlyMemoryFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(ReadOnlyMemory<  char>), new CharReadOnlyMemoryFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(ReadOnlyMemory< short>), new Int16ReadOnlyMemoryFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(ReadOnlyMemory<   int>), new Int32ReadOnlyMemoryFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(ReadOnlyMemory<  long>), new Int64ReadOnlyMemoryFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(ReadOnlyMemory< sbyte>), new SByteReadOnlyMemoryFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(ReadOnlyMemory<ushort>), new UInt16ReadOnlyMemoryFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(ReadOnlyMemory<  uint>), new UInt32ReadOnlyMemoryFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(ReadOnlyMemory< ulong>), new UInt64ReadOnlyMemoryFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(ReadOnlyMemory< float>), new SingleReadOnlyMemoryFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(ReadOnlyMemory<double>), new DoubleReadOnlyMemoryFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(ReadOnlyMemory<  bool>), new BooleanReadOnlyMemoryFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(Dictionary<string, string>), new DictionaryFormatter<string, string>()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(IDictionary<string, string>), new InterfaceDictionaryFormatter<string, string>()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(IDictionary<string, object>), new InterfaceDictionaryFormatter<string, object>()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(BigInteger), new BigIntegerFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(BigInteger?), new NullableBigIntegerFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(Complex), new ComplexFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(Complex?), new NullableComplexFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(Task), new TaskUnitFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(      DateTime), new ISO8601DateTimeFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(DateTimeOffset), new ISO8601DateTimeOffsetFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(      TimeSpan), new ISO8601TimeSpanFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(      DateTime?), new NullableISO8601DateTimeFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(DateTimeOffset?), new NullableISO8601DateTimeOffsetFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(      TimeSpan?), new NullableISO8601TimeSpanFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(string), new NullableStringFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(List<string>), new ListFormatter<string>()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(              Guid), new GuidFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(ArraySegment<byte>), new ArraySegmentFormatter<byte>()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(decimal), new DecimalFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(              Guid?), new NullableGuidFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(ArraySegment<byte>?), new NullableArraySegmentFormatter<byte>()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(           decimal?), new NullableDecimalFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(StringBuilder), new StringBuilderFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(BitArray), new BitArrayFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(Type), new TypeFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(Uri), new UriFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(Version), new VersionFormatter()),
-
-#if UNITY_2018_4_OR_NEWER
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(NativeArray<  byte>), new ByteNativeArrayFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(NativeArray<  char>), new CharNativeArrayFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(NativeArray< short>), new Int16NativeArrayFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(NativeArray<   int>), new Int32NativeArrayFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(NativeArray<  long>), new Int64NativeArrayFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(NativeArray< sbyte>), new SByteNativeArrayFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(NativeArray<ushort>), new UInt16NativeArrayFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(NativeArray<  uint>), new UInt32NativeArrayFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(NativeArray< ulong>), new UInt64NativeArrayFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(NativeArray< float>), new SingleNativeArrayFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(NativeArray<double>), new DoubleNativeArrayFormatter()),
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(NativeArray<  bool>), new BooleanNativeArrayFormatter()),
-#endif
-
-#if !ENABLE_IL2CPP
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(ExpandoObject), new ExpandoObjectFormatter()),
-#endif
-            }, 0.5d);
-            #endregion
-
-#if CSHARP_8_OR_NEWER
-            internal static IJsonFormatter? GetFormatter(Type t)
-#else
-            internal static IJsonFormatter GetFormatter(Type t)
-#endif
-            {
-                if (formatterInstanceMap.TryGetValue(t, out var formatter))
-                {
-                    return formatter;
-                }
-
-                return null;
-            }
+#endregion
 
             internal static ThreadSafeTypeKeyFormatterHashTable.FunctionPair GetFunctionPointers(Type t)
             {

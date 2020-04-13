@@ -35,6 +35,20 @@ namespace Utf8Json.Test
             Assert.AreEqual(value, deserialize);
         }
 
+        [TestCase(0U)]
+        [TestCase(uint.MaxValue)]
+        [TestCase(1U)]
+        [TestCase(334U)]
+        [TestCase(1145141919U)]
+        [TestCase(810U)]
+        [TestCase(unchecked((uint)-34))]
+        public void SameUInt32(uint value)
+        {
+            var bytes = JsonSerializer.Serialize(value);
+            var deserialize = JsonSerializer.Deserialize<uint>(bytes);
+            Assert.AreEqual(value, deserialize);
+        }
+
         [TestCase(0L)]
         [TestCase((long)int.MaxValue)]
         [TestCase((long)int.MinValue)]
@@ -48,6 +62,23 @@ namespace Utf8Json.Test
         {
             var bytes = JsonSerializer.Serialize(value);
             var deserialize = JsonSerializer.Deserialize<long>(bytes);
+            Assert.AreEqual(value, deserialize);
+        }
+
+        [TestCase(0UL)]
+        [TestCase((ulong)int.MaxValue)]
+        [TestCase(unchecked((ulong)int.MinValue))]
+        [TestCase((ulong)long.MaxValue)]
+        [TestCase(unchecked((ulong)long.MinValue))]
+        [TestCase(ulong.MaxValue)]
+        [TestCase(1UL)]
+        [TestCase(334UL)]
+        [TestCase(unchecked((ulong)-1145141919L))]
+        [TestCase(810UL)]
+        public void SameUInt64(ulong value)
+        {
+            var bytes = JsonSerializer.Serialize(value);
+            var deserialize = JsonSerializer.Deserialize<ulong>(bytes);
             Assert.AreEqual(value, deserialize);
         }
 
@@ -80,9 +111,7 @@ namespace Utf8Json.Test
         public void SameString(string value)
         {
             var bytes = JsonSerializer.Serialize(value);
-            Console.WriteLine(bytes.ToArrayString());
             var deserialize = JsonSerializer.Deserialize<string>(bytes);
-            Console.WriteLine(deserialize);
             Assert.True(value == deserialize);
         }
 
@@ -90,7 +119,6 @@ namespace Utf8Json.Test
         public void CanReadNull()
         {
             var bytes = JsonSerializer.Serialize(null);
-            Console.WriteLine(bytes.ToArrayString());
             var deserialize = JsonSerializer.Deserialize<string>(bytes);
             Assert.IsNull(deserialize);
         }

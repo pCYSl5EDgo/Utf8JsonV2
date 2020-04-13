@@ -200,43 +200,6 @@ namespace Utf8Json.Resolvers
             }, 0.5d);
 #endregion
 
-            private static readonly ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter> formatterInstanceMap
-#region table
-            = new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>(new[]
-            {
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(string[]), new NullableStringArrayFormatter()),
-<#foreach(var t in tuples){#>
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(<#= t.Item1 #>), new <#= t.Item2 #>()),
-<#}#>
-
-#if UNITY_2018_4_OR_NEWER
-<#foreach(var t in unityTuples){#>
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(<#= t.Item1 #>), new <#= t.Item2 #>()),
-<#}#>
-#endif
-
-#if !ENABLE_IL2CPP
-<#foreach(var t in notEnableIL2CPPTuples){#>
-                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(<#= t.Item1 #>), new <#= t.Item2 #>()),
-<#}#>
-#endif
-            }, 0.5d);
-#endregion
-
-#if CSHARP_8_OR_NEWER
-            internal static IJsonFormatter? GetFormatter(Type t)
-#else
-            internal static IJsonFormatter GetFormatter(Type t)
-#endif
-            {
-                if (formatterInstanceMap.TryGetValue(t, out var formatter))
-                {
-                    return formatter;
-                }
-
-                return null;
-            }
-
             internal static ThreadSafeTypeKeyFormatterHashTable.FunctionPair GetFunctionPointers(Type t)
             {
                 return formatterHashTable[t];

@@ -9,7 +9,7 @@ namespace Utf8JsonBenchmark
     {
         private static void Main()
         {
-            BenchmarkRunner.Run<JsonStringTester>();
+            BenchmarkRunner.Run<JsonInt32Tester>();
         }
     }
 
@@ -37,6 +37,25 @@ namespace Utf8JsonBenchmark
     {
         [Params(1L, 32L, -11451419191810334L, -1L, 0, long.MinValue, long.MaxValue)]
         public long Value;
+
+        [Benchmark]
+        public byte[] SerializeUtf8JsonV1()
+        {
+            return global::Utf8Json.JsonSerializer.Serialize(Value);
+        }
+
+        [Benchmark]
+        public byte[] SerializeUtf8JsonV2()
+        {
+            return V2::Utf8Json.JsonSerializer.Serialize(Value);
+        }
+    }
+
+    [MemoryDiagnoser]
+    public class JsonInt32Tester
+    {
+        [Params(1, 32, -1145141, -1, 0, 10245, int.MinValue, int.MaxValue)]
+        public int Value;
 
         [Benchmark]
         public byte[] SerializeUtf8JsonV1()

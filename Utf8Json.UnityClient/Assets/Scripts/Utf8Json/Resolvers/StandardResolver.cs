@@ -26,12 +26,12 @@ namespace Utf8Json.Resolvers
         {
             Instance = new StandardResolver();
             Options = new JsonSerializerOptions(Instance);
-#if ENABLE_IL2CPP
             resolvers = StandardResolverHelper.DefaultResolvers;
+#if ENABLE_IL2CPP
 #else
-            var defaultResolversLength = StandardResolverHelper.DefaultResolvers.Length;
+            /*var defaultResolversLength = StandardResolverHelper.DefaultResolvers.Length;
             resolvers = new IFormatterResolver[defaultResolversLength + 1];
-            Array.Copy(StandardResolverHelper.DefaultResolvers, resolvers, defaultResolversLength);
+            Array.Copy(StandardResolverHelper.DefaultResolvers, resolvers, defaultResolversLength);*/
             // Resolvers[defaultResolversLength] = DynamicObjectResolver.Instance; // Try Object
 #endif
         }
@@ -82,25 +82,28 @@ namespace Utf8Json.Resolvers
 
                 foreach (var formatterResolver in resolvers)
                 {
-                    var f = formatterResolver.GetFormatter<T>();
-                    if (f == null)
+                    if (SerializeFunctionPointer == IntPtr.Zero)
                     {
-                        continue;
+                        SerializeFunctionPointer = formatterResolver.GetSerializeStatic<T>();
+                        if (DeserializeFunctionPointer != IntPtr.Zero)
+                        {
+                            return;
+                        }
                     }
 
-                    if (Formatter == null)
+                    if (DeserializeFunctionPointer == IntPtr.Zero)
                     {
-                        Formatter = f;
+                        DeserializeFunctionPointer = formatterResolver.GetDeserializeStatic<T>();
+                        if (SerializeFunctionPointer != IntPtr.Zero)
+                        {
+                            return;
+                        }
                     }
 
-                    SerializeFunctionPointer = formatterResolver.GetSerializeStatic<T>();
-                    if (SerializeFunctionPointer == null)
+                    if (Formatter is null)
                     {
-                        continue;
+                        Formatter = formatterResolver.GetFormatter<T>();
                     }
-
-                    DeserializeFunctionPointer = formatterResolver.GetDeserializeStatic<T>();
-                    return;
                 }
             }
         }
