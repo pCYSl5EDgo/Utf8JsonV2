@@ -7,27 +7,27 @@ namespace Utf8Json.Internal
 {
     public static class StaticHelper
     {
-        public static IntPtr GetSerializeStatic<TFormatter>()
+        public static IntPtr GetSerializeStatic(Type formatterType)
         {
-            var serialize = typeof(TFormatter).GetMethod("SerializeStatic");
+            var serialize = formatterType.GetMethod("SerializeStatic");
             return serialize == null ? IntPtr.Zero : serialize.MethodHandle.GetFunctionPointer();
         }
 
-        public static IntPtr GetDeserializeStatic<TFormatter>()
+        public static IntPtr GetDeserializeStatic(Type formatterType)
         {
-            var deserialize = typeof(TFormatter).GetMethod("DeserializeStatic");
+            var deserialize = formatterType.GetMethod("DeserializeStatic");
             return deserialize == null ? IntPtr.Zero : deserialize.MethodHandle.GetFunctionPointer();
         }
 
-        public static IntPtr GetCalcByteLengthForSerialization<T>()
+        public static IntPtr GetCalcByteLengthForSerialization(Type formatterType)
         {
-            var method = typeof(T).GetMethod("CalcByteLengthForSerialization");
+            var method = formatterType.GetMethod("CalcByteLengthForSerialization");
             return method == null ? IntPtr.Zero : method.MethodHandle.GetFunctionPointer();
         }
 
-        public static IntPtr GetSerializeSpan<T>()
+        public static IntPtr GetSerializeSpan(Type formatterType)
         {
-            var method = typeof(T).GetMethod("SerializeSpan");
+            var method = formatterType.GetMethod("SerializeSpan");
             return method == null ? IntPtr.Zero : method.MethodHandle.GetFunctionPointer();
         }
     }

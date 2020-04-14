@@ -1,6 +1,7 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using NUnit.Framework;
 using Utf8Json.Resolvers;
 
@@ -27,6 +28,75 @@ namespace Utf8Json.Test
             var bytes = JsonSerializer.Serialize(value);
             var deserialize = JsonSerializer.Deserialize<bool>(bytes);
             Assert.AreEqual(value, deserialize);
+        }
+
+        [Test]
+        public void SameByte()
+        {
+            for (byte value = 0; value < byte.MaxValue; value++)
+            {
+                var bytes = JsonSerializer.Serialize<byte>(value);
+                var deserialize = JsonSerializer.Deserialize<byte>(bytes);
+                Assert.IsTrue(value == deserialize);
+            }
+
+            {
+                var bytes = JsonSerializer.Serialize<byte>(byte.MaxValue);
+                var deserialize = JsonSerializer.Deserialize<byte>(bytes);
+                Assert.IsTrue(byte.MaxValue == deserialize);
+            }
+        }
+
+        [Test]
+        public void SameSByte()
+        {
+            for (sbyte value = sbyte.MinValue; value < sbyte.MaxValue; value++)
+            {
+                var bytes = JsonSerializer.Serialize<sbyte>(value);
+                var deserialize = JsonSerializer.Deserialize<sbyte>(bytes);
+                Assert.IsTrue(value == deserialize);
+            }
+
+            {
+                var bytes = JsonSerializer.Serialize<sbyte>(sbyte.MaxValue);
+                Console.WriteLine(bytes.ToArrayString());
+                var deserialize = JsonSerializer.Deserialize<sbyte>(bytes);
+                Assert.IsTrue(sbyte.MaxValue == deserialize);
+            }
+        }
+
+        [Test]
+        public void SameUInt16()
+        {
+            for (ushort value = 0; value < ushort.MaxValue; value++)
+            {
+                var bytes = JsonSerializer.Serialize<ushort>(value);
+                var deserialize = JsonSerializer.Deserialize<ushort>(bytes);
+                Assert.AreEqual(value, deserialize);
+            }
+
+            {
+                var bytes = JsonSerializer.Serialize(ushort.MaxValue);
+                var deserialize = JsonSerializer.Deserialize<ushort>(bytes);
+                Assert.AreEqual(ushort.MaxValue, deserialize);
+            }
+        }
+
+        [Test]
+        public void SameInt16()
+        {
+            for (short value = short.MinValue; value < short.MaxValue; value++)
+            {
+                var bytes = JsonSerializer.Serialize<short>(value);
+                var deserialize = JsonSerializer.Deserialize<short>(bytes);
+                Assert.AreEqual(value, deserialize);
+            }
+
+            {
+                var bytes = JsonSerializer.Serialize<short>(short.MaxValue);
+                var deserialize = JsonSerializer.Deserialize<short>(bytes);
+                Assert.AreEqual(short.MaxValue, deserialize);
+            }
         }
 
         [TestCase(0)]

@@ -10,6 +10,7 @@ using Unity.Collections.LowLevel.Unsafe;
 #else
 using System.Buffers;
 using System.Runtime.InteropServices;
+// ReSharper disable UseIndexFromEndExpression
 #endif
 
 namespace Utf8Json.Formatters
@@ -43,12 +44,12 @@ namespace Utf8Json.Formatters
 
         public static void SerializeSpan(JsonSerializerOptions options, bool value, Span<byte> span)
         {
-            span[span.Length - 1] = (byte)'e';
             if (value)
             {
                 span[0] = (byte)'t';
                 span[1] = (byte)'r';
                 span[2] = (byte)'u';
+                span[3] = (byte)'e';
             }
             else
             {
@@ -56,6 +57,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'a';
                 span[2] = (byte)'l';
                 span[3] = (byte)'s';
+                span[4] = (byte)'e';
             }
         }
     }
@@ -94,6 +96,49 @@ namespace Utf8Json.Formatters
         public bool? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
             return reader.ReadIsNull() ? default : reader.ReadBoolean();
+        }
+
+        public static int CalcByteLengthForSerialization(JsonSerializerOptions options, bool? value)
+        {
+            if (!value.HasValue)
+            {
+                return 4;
+            }
+
+            if (value.Value)
+            {
+                return 4;
+            }
+
+            return 5;
+        }
+
+        public static void SerializeSpan(JsonSerializerOptions options, bool? value, Span<byte> span)
+        {
+            if (span.Length == 5)
+            {
+                span[0] = (byte)'f';
+                span[1] = (byte)'a';
+                span[2] = (byte)'l';
+                span[3] = (byte)'s';
+                span[4] = (byte)'e';
+                return;
+            }
+
+            if (value.HasValue)
+            {
+                span[0] = (byte)'t';
+                span[1] = (byte)'r';
+                span[2] = (byte)'u';
+                span[3] = (byte)'e';
+            }
+            else
+            {
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+            }
         }
     }
 
@@ -215,6 +260,99 @@ namespace Utf8Json.Formatters
 #endif
         {
             return DeserializeStatic(ref reader, options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public static int CalcByteLengthForSerialization(JsonSerializerOptions options, bool[]? value)
+#else
+        public static int CalcByteLengthForSerialization(JsonSerializerOptions options, bool[] value)
+#endif
+        {
+            if (value == null)
+            {
+                return 4;
+            }
+
+            if (value.Length == 0)
+            {
+                return 2;
+            }
+
+            var answer = 1 + value.Length * 5;
+
+            for (var i = 0; i < value.Length; i++)
+            {
+                if (!value[i])
+                {
+                    answer++;
+                }
+            }
+
+            return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public static void SerializeSpan(JsonSerializerOptions options, bool[]? value, Span<byte> span)
+#else
+        public static void SerializeSpan(JsonSerializerOptions options, bool[] value, Span<byte> span)
+#endif
+        {
+            if (value == null)
+            {
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                return;
+            }
+
+            span[0] = (byte)'[';
+            span[span.Length - 1] = (byte)']';
+            span = span.Slice(1, span.Length - 2);
+            if (span.IsEmpty)
+            {
+                return;
+            }
+
+            if (value[0])
+            {
+                span[0] = (byte)'t';
+                span[1] = (byte)'r';
+                span[2] = (byte)'u';
+                span[3] = (byte)'e';
+                span = span.Slice(4);
+            }
+            else
+            {
+                span[0] = (byte)'f';
+                span[1] = (byte)'a';
+                span[2] = (byte)'l';
+                span[3] = (byte)'s';
+                span[4] = (byte)'e';
+                span = span.Slice(5);
+            }
+
+            for (var index = 1; index < value.Length; index++)
+            {
+                span[0] = (byte)',';
+                if (value[index])
+                {
+                    span[1] = (byte)'t';
+                    span[2] = (byte)'r';
+                    span[3] = (byte)'u';
+                    span[4] = (byte)'e';
+                    span = span.Slice(5);
+                }
+                else
+                {
+                    span[1] = (byte)'f';
+                    span[2] = (byte)'a';
+                    span[3] = (byte)'l';
+                    span[4] = (byte)'s';
+                    span[5] = (byte)'e';
+                    span = span.Slice(6);
+                }
+            }
         }
     }
 
