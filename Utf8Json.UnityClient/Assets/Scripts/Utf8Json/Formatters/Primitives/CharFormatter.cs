@@ -2,11 +2,17 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using Utf8Json.Internal;
+
+#if UNITY_2018_4_OR_NEWER
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
+#else
+using System.Buffers;
+using System.Runtime.InteropServices;
+#endif
 
 namespace Utf8Json.Formatters
 {

@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using NUnit.Framework;
-using System;
 using Utf8Json.Resolvers;
 
 namespace Utf8Json.Test
@@ -127,7 +126,7 @@ namespace Utf8Json.Test
         [Test]
         public void CanReadNull()
         {
-            var bytes = JsonSerializer.Serialize(null);
+            var bytes = JsonSerializer.Serialize<string>(null);
             var deserialize = JsonSerializer.Deserialize<string>(bytes);
             Assert.IsNull(deserialize);
         }

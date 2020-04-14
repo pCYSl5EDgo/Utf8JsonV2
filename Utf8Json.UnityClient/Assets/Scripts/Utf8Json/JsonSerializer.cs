@@ -149,11 +149,6 @@ namespace Utf8Json
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
         public static unsafe byte[] Serialize<T>(T value, JsonSerializerOptions options)
         {
-            if (options == null)
-            {
-                options = DefaultOptions;
-            }
-
             var calculator = options.Resolver.GetCalcByteLengthForSerialization<T>();
             if (calculator.ToPointer() == null)
             {

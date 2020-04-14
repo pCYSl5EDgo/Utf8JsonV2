@@ -16,4 +16,8 @@
     <ProjectReference Include="..\Utf8Json\Utf8JsonV2.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json.Tests\**\*.cs" />
+  </ItemGroup>
+
 </Project>
