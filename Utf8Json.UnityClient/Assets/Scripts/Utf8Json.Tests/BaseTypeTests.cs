@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Linq;
 using NUnit.Framework;
 using Utf8Json.Resolvers;
 
@@ -45,6 +46,22 @@ namespace Utf8Json.Test
                 var deserialize = JsonSerializer.Deserialize<byte>(bytes);
                 Assert.IsTrue(byte.MaxValue == deserialize);
             }
+        }
+
+        [TestCase(0)]
+        [TestCase(1)]
+        [TestCase(16)]
+        [TestCase(256)]
+        public void SameByteArray(int length)
+        {
+            var value = length == 0 ? Array.Empty<byte>() : new byte[length];
+            for (var i = 0; i < value.Length; i++)
+            {
+                value[i] = (byte)i;
+            }
+            var bytes = JsonSerializer.Serialize(value);
+            var deserialize = JsonSerializer.Deserialize<byte[]>(bytes);
+            Assert.IsTrue(value.SequenceEqual(deserialize));
         }
 
         [Test]
