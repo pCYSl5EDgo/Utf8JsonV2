@@ -29,6 +29,11 @@ namespace Utf8Json.Resolvers
         {
         }
 
+        public IntPtr GetSerializeStatic<T>() => default;
+        public IntPtr GetDeserializeStatic<T>() => default;
+        public IntPtr GetCalcByteLengthForSerialization<T>() => default;
+        public IntPtr GetSerializeSpan<T>() => default;
+
 #if CSHARP_8_OR_NEWER
         public IJsonFormatter<T>? GetFormatter<T>()
         {
