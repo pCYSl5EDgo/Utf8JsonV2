@@ -1,5 +1,5 @@
 ﻿extern alias V2;
-
+using System;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 
@@ -10,10 +10,42 @@ namespace Utf8JsonBenchmark
         private static void Main()
         {
             BenchmarkRunner.Run<JsonBooleanTester>();
-            /*BenchmarkRunner.Run<JsonInt32Tester>();
+            BenchmarkRunner.Run<JsonUInt32ArrayTester>();
+            BenchmarkRunner.Run<JsonInt32Tester>();
             BenchmarkRunner.Run<JsonInt64Tester>();
             BenchmarkRunner.Run<JsonStringTester>();
-            BenchmarkRunner.Run<JsonCharTester>();*/
+            BenchmarkRunner.Run<JsonCharTester>();
+        }
+    }
+
+    [MemoryDiagnoser]
+    public class JsonUInt32ArrayTester
+    {
+        [Params(0, 1, 16, 256, 1024)]
+        public int Length;
+
+        public uint[] Value;
+
+        [GlobalSetup]
+        public void GlobalSetUp()
+        {
+            Value = Length == 0 ? Array.Empty<uint>() : new uint[Length];
+            for (uint i = 0; i < Value.Length; i++)
+            {
+                Value[i] = i;
+            }
+        }
+
+        [Benchmark]
+        public byte[] SerializeUtf8JsonV1()
+        {
+            return global::Utf8Json.JsonSerializer.Serialize(Value);
+        }
+
+        [Benchmark]
+        public byte[] SerializeUtf8JsonV2()
+        {
+            return V2::Utf8Json.JsonSerializer.Serialize(Value);
         }
     }
 
