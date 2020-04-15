@@ -12,9 +12,66 @@ namespace Utf8JsonBenchmark
             BenchmarkRunner.Run<JsonBooleanTester>();
             BenchmarkRunner.Run<JsonUInt32ArrayTester>();
             BenchmarkRunner.Run<JsonInt32Tester>();
+            BenchmarkRunner.Run<JsonInt32DeserializeTester>();
             BenchmarkRunner.Run<JsonInt64Tester>();
+            BenchmarkRunner.Run<JsonInt64DeserializeTester>();
             BenchmarkRunner.Run<JsonStringTester>();
+            BenchmarkRunner.Run<JsonStringDeserializeTester>();
             BenchmarkRunner.Run<JsonCharTester>();
+        }
+    }
+
+    [MemoryDiagnoser]
+    public class JsonInt32DeserializeTester
+    {
+        [Params(1, 32, 334810, -1145141, -1, 0, 10245, int.MinValue, int.MaxValue)]
+        public int Value;
+
+        public byte[] Bytes;
+
+        [GlobalSetup]
+        public void GlobalSetUp()
+        {
+            Bytes = V2::Utf8Json.JsonSerializer.Serialize(Value);
+        }
+
+        [Benchmark]
+        public int DeserializeUtf8JsonV1()
+        {
+            return global::Utf8Json.JsonSerializer.Deserialize<int>(Bytes);
+        }
+
+        [Benchmark]
+        public int DeserializeUtf8JsonV2()
+        {
+            return V2::Utf8Json.JsonSerializer.Deserialize<int>(Bytes);
+        }
+    }
+
+    [MemoryDiagnoser]
+    public class JsonInt64DeserializeTester
+    {
+        [Params(1L, 32L, 334810L, -1145141L, -1L, 0L, 10245L, (long)int.MinValue, (long)int.MaxValue << 7, long.MinValue, long.MaxValue)]
+        public long Value;
+
+        public byte[] Bytes;
+
+        [GlobalSetup]
+        public void GlobalSetUp()
+        {
+            Bytes = V2::Utf8Json.JsonSerializer.Serialize(Value);
+        }
+
+        [Benchmark]
+        public long DeserializeUtf8JsonV1()
+        {
+            return global::Utf8Json.JsonSerializer.Deserialize<long>(Bytes);
+        }
+
+        [Benchmark]
+        public long DeserializeUtf8JsonV2()
+        {
+            return V2::Utf8Json.JsonSerializer.Deserialize<long>(Bytes);
         }
     }
 
@@ -52,7 +109,7 @@ namespace Utf8JsonBenchmark
     [MemoryDiagnoser]
     public class JsonStringTester
     {
-        [Params("", "1145141919810334", "どげんかせんといかんいかん", "文章として崩壊しているのでそのあたり\\\"勘弁してクレメンス\"\\")]
+        [Params("", "1145141919810334", "どげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかん", "文章として崩壊しているのでそのあたり\\\"勘弁してクレメンス\"\\")]
         public string Value;
 
         [Benchmark]
@@ -65,6 +122,33 @@ namespace Utf8JsonBenchmark
         public byte[] SerializeUtf8JsonV2()
         {
             return V2::Utf8Json.JsonSerializer.Serialize(Value);
+        }
+    }
+
+    [MemoryDiagnoser]
+    public class JsonStringDeserializeTester
+    {
+        [Params("", "1145141919810334", "どげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかんどげんかせんといかんいかん", "文章として崩壊して\t\tいるのでそのあたり\\\"勘弁してクレメンス\"\\")]
+        public string Value;
+
+        public byte[] Bytes;
+
+        [GlobalSetup]
+        public void GlobalSetUp()
+        {
+            Bytes = V2::Utf8Json.JsonSerializer.Serialize(Value);
+        }
+
+        [Benchmark]
+        public string SerializeUtf8JsonV1()
+        {
+            return global::Utf8Json.JsonSerializer.Deserialize<string>(Bytes);
+        }
+
+        [Benchmark]
+        public string SerializeUtf8JsonV2()
+        {
+            return V2::Utf8Json.JsonSerializer.Deserialize<string>(Bytes);
         }
     }
 
