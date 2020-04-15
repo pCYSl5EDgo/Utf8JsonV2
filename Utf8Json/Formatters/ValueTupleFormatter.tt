@@ -1,0 +1,141 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using StaticFunctionPointerHelper;
+
+namespace Utf8Json.Formatters
+{
+<#for (var dimension = 2; dimension <= 7; dimension++){
+    string typeArguments;
+    {
+        var buffer = new StringBuilder().Append("T1");
+        for (var i = 2; i <= dimension; i++)
+        {
+            buffer.Append(", T").Append(i);
+        }
+
+        typeArguments = buffer.ToString();
+    }
+#>
+    public sealed unsafe class ValueTupleFormatter<<#= typeArguments #>> : IJsonFormatter<(<#= typeArguments #>)>
+    {
+        public void Serialize(ref JsonWriter writer, (<#= typeArguments #>) value, JsonSerializerOptions options)
+        {
+            SerializeStatic(ref writer, value, options);
+        }
+
+        public static void SerializeStatic(ref JsonWriter writer, (<#= typeArguments #>) value, JsonSerializerOptions options)
+        {
+            var resolver = options.Resolver;
+            {
+                const int sizeHint = 9;
+                var span = writer.Writer.GetSpan(sizeHint);
+                span[0] = (byte)'{';
+                span[1] = (byte)'"';
+                span[2] = (byte)'I';
+                span[3] = (byte)'t';
+                span[4] = (byte)'e';
+                span[5] = (byte)'m';
+                span[6] = (byte)'1';
+                span[7] = (byte)'"';
+                span[8] = (byte)':';
+                writer.Writer.Advance(sizeHint);
+            }
+
+            {
+                var serializer = resolver.GetSerializeStatic<T1>();
+                if (serializer.ToPointer() == null)
+                {
+                    var formatter = resolver.GetFormatterWithVerify<T1>();
+                    formatter.Serialize(ref writer, value.Item1, options);
+                }
+                else
+                {
+                    writer.Serialize(value.Item1, options, serializer);
+                }
+            }
+<#for (var i = 2; i <= dimension; i++){#>
+
+            {
+                const int sizeHint = 9;
+                var span = writer.Writer.GetSpan(sizeHint);
+                span[0] = (byte)',';
+                span[1] = (byte)'"';
+                span[2] = (byte)'I';
+                span[3] = (byte)'t';
+                span[4] = (byte)'e';
+                span[5] = (byte)'m';
+                span[6] = (byte)'<#= i #>';
+                span[7] = (byte)'"';
+                span[8] = (byte)':';
+                writer.Writer.Advance(sizeHint);
+            }
+
+            
+            {
+                var serializer = resolver.GetSerializeStatic<T<#= i #>>();
+                if (serializer.ToPointer() == null)
+                {
+                    var formatter = resolver.GetFormatterWithVerify<T<#= i #>>();
+                    formatter.Serialize(ref writer, value.Item<#= i #>, options);
+                }
+                else
+                {
+                    writer.Serialize(value.Item<#= i #>, options, serializer);
+                }
+            }
+<#}#>
+        }
+
+        public (<#= typeArguments #>) Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            return DeserializeStatic(ref reader, options);
+        }
+
+        public static (<#= typeArguments #>) DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            reader.ReadIsBeginObjectWithVerify();
+            var answer = default((<#= typeArguments #>));
+            var resolver = options.Resolver;
+            var count = 0;
+            while (reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
+            {
+                var keySpan = reader.ReadNotNullStringSegmentRaw();
+                if (keySpan.Length == 5 && keySpan[0] == 'I' && keySpan[1] == 't' && keySpan[2] == 'e' && keySpan[3] == 'm')
+                {
+                    switch (keySpan[4])
+                    {
+<#for (var i = 1; i <= dimension; i++){#>
+                        case (byte)'<#= i #>':
+                            {
+                                var deserializer = resolver.GetDeserializeStatic<T<#= i #>>();
+                                if (deserializer.ToPointer() == null)
+                                {
+                                    var formatter = resolver.GetFormatterWithVerify<T<#= i#>>();
+                                    answer.Item<#= i #> = formatter.Deserialize(ref reader, options);
+                                }
+                                else
+                                {
+                                    answer.Item<#= i #> = reader.Deserialize<T<#= i #>>(options, deserializer);
+                                }
+                            }
+                            continue;
+<#}#>
+                    }
+                }
+                
+                reader.ReadNextBlock();
+            }
+
+            return answer;
+        }
+    }
+
+<#}#>
+}
