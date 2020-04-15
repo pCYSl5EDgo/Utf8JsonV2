@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Runtime.CompilerServices;
 using Utf8Json.Internal;
 
 namespace Utf8Json.Resolvers
@@ -117,7 +116,7 @@ namespace Utf8Json.Resolvers
                 formattersCache.TryAdd(new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(T), formatter));
 
             RETURN:
-                return Unsafe.As<IJsonFormatter<T>>(formatter);
+                return formatter as IJsonFormatter<T>;
             }
 
             public unsafe IntPtr GetSerializeStatic<T>()

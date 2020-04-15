@@ -1,6 +1,7 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+#pragma warning disable IDE0060 // 未使用のパラメーターを削除します
 using System;
 
 namespace Utf8Json.Formatters

@@ -23,6 +23,7 @@ namespace Utf8Json.Resolvers
                 if (t.IsArray)
                 {
                     Type arrayFormatterBase;
+                    // ReSharper disable once ConvertSwitchStatementToSwitchExpression
                     switch (t.GetArrayRank())
                     {
                         case 1: arrayFormatterBase = typeof(AddArrayFormatter<>); break;

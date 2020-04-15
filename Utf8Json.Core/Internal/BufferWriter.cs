@@ -142,54 +142,6 @@ namespace Utf8Json.Internal
             return ref innerSpan.GetPinnableReference();
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref ushort GetUInt16()
-        {
-            if (innerSpan.Length < 2)
-            {
-                EnsureMore(2);
-            }
-
-            if (segment.Array != null)
-            {
-                return ref Unsafe.As<byte, ushort>(ref segment.Array[segment.Offset + buffered]);
-            }
-
-            return ref Unsafe.As<byte, ushort>(ref innerSpan.GetPinnableReference());
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref uint GetUInt32()
-        {
-            if (innerSpan.Length < 4)
-            {
-                EnsureMore(4);
-            }
-
-            if (segment.Array != null)
-            {
-                return ref Unsafe.As<byte, uint>(ref segment.Array[segment.Offset + buffered]);
-            }
-
-            return ref Unsafe.As<byte, uint>(ref innerSpan.GetPinnableReference());
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref ulong GetUInt64()
-        {
-            if (innerSpan.Length < 8)
-            {
-                EnsureMore(8);
-            }
-
-            if (segment.Array != null)
-            {
-                return ref Unsafe.As<byte, ulong>(ref segment.Array[segment.Offset + buffered]);
-            }
-
-            return ref Unsafe.As<byte, ulong>(ref innerSpan.GetPinnableReference());
-        }
-
         /// <summary>
         /// Calls <see cref="IBufferWriter{T}.Advance(int)"/> on the underlying writer
         /// with the number of uncommitted bytes.

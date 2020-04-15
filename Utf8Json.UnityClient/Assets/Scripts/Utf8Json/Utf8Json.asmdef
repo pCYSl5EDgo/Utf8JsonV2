@@ -12,7 +12,6 @@
     "precompiledReferences": [
         "System.Buffers.dll",
         "System.Memory.dll",
-        "System.Runtime.CompilerServices.Unsafe.dll",
         "System.Threading.Tasks.Extensions.dll",
         "StaticFunctionPointerHelper.dll",
         "Utf8Json.Core.dll"

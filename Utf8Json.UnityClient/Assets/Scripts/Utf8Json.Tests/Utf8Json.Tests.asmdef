@@ -11,8 +11,13 @@
     ],
     "excludePlatforms": [],
     "allowUnsafeCode": true,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "StaticFunctionPointerHelper.dll",
+        "System.Memory.dll",
+        "System.Buffers.dll",
+        "Utf8Json.Core.dll"
+    ],
+    "autoReferenced": false,
     "defineConstraints": []
 }
