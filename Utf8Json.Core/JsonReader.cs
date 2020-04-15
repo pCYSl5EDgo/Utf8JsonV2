@@ -272,7 +272,8 @@ namespace Utf8Json
         public bool ReadIsEndObjectWithSkipValueSeparator(ref int count)
         {
             SkipWhiteSpace();
-            if (Reader.TryPeek(out var b) && b == '}')
+            var peek = Reader.TryPeek(out var b);
+            if (peek && b == '}')
             {
                 Reader.Advance(1);
                 return true;

@@ -30,7 +30,6 @@ namespace Utf8Json.Formatters
             var buffer = pool.Rent(256);
             try
             {
-
                 for (var index = 0; index < fieldInfos.Length; index++)
                 {
                     var item = fieldInfos[index];

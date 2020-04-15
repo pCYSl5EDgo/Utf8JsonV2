@@ -58,7 +58,6 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            
             {
                 var serializer = resolver.GetSerializeStatic<T2>();
                 if (serializer.ToPointer() == null)
@@ -71,6 +70,8 @@ namespace Utf8Json.Formatters
                     writer.Serialize(value.Item2, options, serializer);
                 }
             }
+
+            writer.WriteEndObject();
         }
 
         public (T1, T2) Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -84,9 +85,9 @@ namespace Utf8Json.Formatters
             var answer = default((T1, T2));
             var resolver = options.Resolver;
             var count = 0;
-            while (reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
+            while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
             {
-                var keySpan = reader.ReadNotNullStringSegmentRaw();
+                var keySpan = reader.ReadPropertyNameSegmentRaw();
                 if (keySpan.Length == 5 && keySpan[0] == 'I' && keySpan[1] == 't' && keySpan[2] == 'e' && keySpan[3] == 'm')
                 {
                     switch (keySpan[4])
@@ -182,7 +183,6 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            
             {
                 var serializer = resolver.GetSerializeStatic<T2>();
                 if (serializer.ToPointer() == null)
@@ -211,7 +211,6 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            
             {
                 var serializer = resolver.GetSerializeStatic<T3>();
                 if (serializer.ToPointer() == null)
@@ -224,6 +223,8 @@ namespace Utf8Json.Formatters
                     writer.Serialize(value.Item3, options, serializer);
                 }
             }
+
+            writer.WriteEndObject();
         }
 
         public (T1, T2, T3) Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -237,9 +238,9 @@ namespace Utf8Json.Formatters
             var answer = default((T1, T2, T3));
             var resolver = options.Resolver;
             var count = 0;
-            while (reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
+            while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
             {
-                var keySpan = reader.ReadNotNullStringSegmentRaw();
+                var keySpan = reader.ReadPropertyNameSegmentRaw();
                 if (keySpan.Length == 5 && keySpan[0] == 'I' && keySpan[1] == 't' && keySpan[2] == 'e' && keySpan[3] == 'm')
                 {
                     switch (keySpan[4])
@@ -349,7 +350,6 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            
             {
                 var serializer = resolver.GetSerializeStatic<T2>();
                 if (serializer.ToPointer() == null)
@@ -378,7 +378,6 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            
             {
                 var serializer = resolver.GetSerializeStatic<T3>();
                 if (serializer.ToPointer() == null)
@@ -407,7 +406,6 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            
             {
                 var serializer = resolver.GetSerializeStatic<T4>();
                 if (serializer.ToPointer() == null)
@@ -420,6 +418,8 @@ namespace Utf8Json.Formatters
                     writer.Serialize(value.Item4, options, serializer);
                 }
             }
+
+            writer.WriteEndObject();
         }
 
         public (T1, T2, T3, T4) Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -433,9 +433,9 @@ namespace Utf8Json.Formatters
             var answer = default((T1, T2, T3, T4));
             var resolver = options.Resolver;
             var count = 0;
-            while (reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
+            while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
             {
-                var keySpan = reader.ReadNotNullStringSegmentRaw();
+                var keySpan = reader.ReadPropertyNameSegmentRaw();
                 if (keySpan.Length == 5 && keySpan[0] == 'I' && keySpan[1] == 't' && keySpan[2] == 'e' && keySpan[3] == 'm')
                 {
                     switch (keySpan[4])
@@ -559,7 +559,6 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            
             {
                 var serializer = resolver.GetSerializeStatic<T2>();
                 if (serializer.ToPointer() == null)
@@ -588,7 +587,6 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            
             {
                 var serializer = resolver.GetSerializeStatic<T3>();
                 if (serializer.ToPointer() == null)
@@ -617,7 +615,6 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            
             {
                 var serializer = resolver.GetSerializeStatic<T4>();
                 if (serializer.ToPointer() == null)
@@ -646,7 +643,6 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            
             {
                 var serializer = resolver.GetSerializeStatic<T5>();
                 if (serializer.ToPointer() == null)
@@ -659,6 +655,8 @@ namespace Utf8Json.Formatters
                     writer.Serialize(value.Item5, options, serializer);
                 }
             }
+
+            writer.WriteEndObject();
         }
 
         public (T1, T2, T3, T4, T5) Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -672,9 +670,9 @@ namespace Utf8Json.Formatters
             var answer = default((T1, T2, T3, T4, T5));
             var resolver = options.Resolver;
             var count = 0;
-            while (reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
+            while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
             {
-                var keySpan = reader.ReadNotNullStringSegmentRaw();
+                var keySpan = reader.ReadPropertyNameSegmentRaw();
                 if (keySpan.Length == 5 && keySpan[0] == 'I' && keySpan[1] == 't' && keySpan[2] == 'e' && keySpan[3] == 'm')
                 {
                     switch (keySpan[4])
@@ -812,7 +810,6 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            
             {
                 var serializer = resolver.GetSerializeStatic<T2>();
                 if (serializer.ToPointer() == null)
@@ -841,7 +838,6 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            
             {
                 var serializer = resolver.GetSerializeStatic<T3>();
                 if (serializer.ToPointer() == null)
@@ -870,7 +866,6 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            
             {
                 var serializer = resolver.GetSerializeStatic<T4>();
                 if (serializer.ToPointer() == null)
@@ -899,7 +894,6 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            
             {
                 var serializer = resolver.GetSerializeStatic<T5>();
                 if (serializer.ToPointer() == null)
@@ -928,7 +922,6 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            
             {
                 var serializer = resolver.GetSerializeStatic<T6>();
                 if (serializer.ToPointer() == null)
@@ -941,6 +934,8 @@ namespace Utf8Json.Formatters
                     writer.Serialize(value.Item6, options, serializer);
                 }
             }
+
+            writer.WriteEndObject();
         }
 
         public (T1, T2, T3, T4, T5, T6) Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -954,9 +949,9 @@ namespace Utf8Json.Formatters
             var answer = default((T1, T2, T3, T4, T5, T6));
             var resolver = options.Resolver;
             var count = 0;
-            while (reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
+            while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
             {
-                var keySpan = reader.ReadNotNullStringSegmentRaw();
+                var keySpan = reader.ReadPropertyNameSegmentRaw();
                 if (keySpan.Length == 5 && keySpan[0] == 'I' && keySpan[1] == 't' && keySpan[2] == 'e' && keySpan[3] == 'm')
                 {
                     switch (keySpan[4])
@@ -1108,7 +1103,6 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            
             {
                 var serializer = resolver.GetSerializeStatic<T2>();
                 if (serializer.ToPointer() == null)
@@ -1137,7 +1131,6 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            
             {
                 var serializer = resolver.GetSerializeStatic<T3>();
                 if (serializer.ToPointer() == null)
@@ -1166,7 +1159,6 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            
             {
                 var serializer = resolver.GetSerializeStatic<T4>();
                 if (serializer.ToPointer() == null)
@@ -1195,7 +1187,6 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            
             {
                 var serializer = resolver.GetSerializeStatic<T5>();
                 if (serializer.ToPointer() == null)
@@ -1224,7 +1215,6 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            
             {
                 var serializer = resolver.GetSerializeStatic<T6>();
                 if (serializer.ToPointer() == null)
@@ -1253,7 +1243,6 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            
             {
                 var serializer = resolver.GetSerializeStatic<T7>();
                 if (serializer.ToPointer() == null)
@@ -1266,6 +1255,8 @@ namespace Utf8Json.Formatters
                     writer.Serialize(value.Item7, options, serializer);
                 }
             }
+
+            writer.WriteEndObject();
         }
 
         public (T1, T2, T3, T4, T5, T6, T7) Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -1279,9 +1270,9 @@ namespace Utf8Json.Formatters
             var answer = default((T1, T2, T3, T4, T5, T6, T7));
             var resolver = options.Resolver;
             var count = 0;
-            while (reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
+            while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
             {
-                var keySpan = reader.ReadNotNullStringSegmentRaw();
+                var keySpan = reader.ReadPropertyNameSegmentRaw();
                 if (keySpan.Length == 5 && keySpan[0] == 'I' && keySpan[1] == 't' && keySpan[2] == 'e' && keySpan[3] == 'm')
                 {
                     switch (keySpan[4])

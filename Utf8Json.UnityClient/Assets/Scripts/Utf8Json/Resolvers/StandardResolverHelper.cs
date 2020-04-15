@@ -10,11 +10,9 @@ namespace Utf8Json.Internal.Resolvers
         public static readonly IFormatterResolver[] DefaultResolvers =
         {
             new BuiltinResolver(), // Try Builtin
+            new BasicGenericsResolver(), 
             //AttributeFormatterResolver.Instance, // Try use [MessagePackFormatter]
 
-#if UNITY_2018_4_OR_NEWER
-            //MessagePack.Unity.UnityResolver.Instance,
-#endif
 #if !ENABLE_IL2CPP
 #if !NET_STANDARD_2_0
             //DynamicEnumResolver.Instance, // Try Enum

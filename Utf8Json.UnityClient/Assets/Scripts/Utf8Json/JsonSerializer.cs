@@ -204,24 +204,24 @@ namespace Utf8Json
             var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
-                var jsonWriter = new JsonWriter(SequencePool.Shared, array);
+                var writer = new JsonWriter(SequencePool.Shared, array);
                 try
                 {
                     var serializer = options.Resolver.GetSerializeStatic<T>();
                     if (serializer.ToPointer() == null)
                     {
-                        options.Resolver.GetFormatterWithVerify<T>().Serialize(ref jsonWriter, value, options);
+                        options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value, options);
                     }
                     else
                     {
-                        jsonWriter.Serialize(value, options, serializer);
+                        writer.Serialize(value, options, serializer);
                     }
                 }
                 catch (Exception ex)
                 {
                     throw new JsonSerializationException($"Failed to serialize {typeof(T).FullName} value.", ex);
                 }
-                return jsonWriter.FlushAndGetArray();
+                return writer.FlushAndGetArray();
             }
             finally
             {
@@ -386,9 +386,13 @@ namespace Utf8Json
             try
             {
                 var deserializer = options.Resolver.GetDeserializeStatic<T>();
-                return deserializer.ToPointer() == null
-                    ? options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options)
-                    : reader.Deserialize<T>(options, deserializer);
+                if (deserializer.ToPointer() == null)
+                {
+                    var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                    return formatter.Deserialize(ref reader, options);
+                }
+
+                return reader.Deserialize<T>(options, deserializer);
             }
             catch (Exception ex)
             {
@@ -410,9 +414,13 @@ namespace Utf8Json
             try
             {
                 var deserializer = options.Resolver.GetDeserializeStatic<T>();
-                return deserializer.ToPointer() == null
-                    ? options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options)
-                    : reader.Deserialize<T>(options, deserializer);
+                if (deserializer.ToPointer() == null)
+                {
+                    var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                    return formatter.Deserialize(ref reader, options);
+                }
+                
+                return reader.Deserialize<T>(options, deserializer);
             }
             catch (Exception ex)
             {
@@ -434,9 +442,13 @@ namespace Utf8Json
             try
             {
                 var deserializer = options.Resolver.GetDeserializeStatic<T>();
-                return deserializer.ToPointer() == null
-                    ? options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options)
-                    : reader.Deserialize<T>(options, deserializer);
+                if (deserializer.ToPointer() == null)
+                {
+                    var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                    return formatter.Deserialize(ref reader, options);
+                }
+                
+                return reader.Deserialize<T>(options, deserializer);
             }
             catch (Exception ex)
             {
@@ -459,9 +471,17 @@ namespace Utf8Json
             try
             {
                 var deserializer = options.Resolver.GetDeserializeStatic<T>();
-                var result = deserializer.ToPointer() == null
-                    ? options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options)
-                    : reader.Deserialize<T>(options, deserializer);
+                T result;
+                if (deserializer.ToPointer() == null)
+                {
+                    var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                    result = formatter.Deserialize(ref reader, options);
+                }
+                else
+                {
+                    result = reader.Deserialize<T>(options, deserializer);
+                }
+
                 bytesRead = reader.Consumed;
                 return result;
             }

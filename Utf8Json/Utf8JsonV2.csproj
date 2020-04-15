@@ -55,6 +55,10 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>DictionaryFormatter.cs</LastGenOutput>
     </None>
+    <None Update="Formatters\ValueTupleFormatter.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>ValueTupleFormatter.cs</LastGenOutput>
+    </None>
     <None Update="Formatters\PrimitiveFormatter.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>PrimitiveFormatter.cs</LastGenOutput>
@@ -80,6 +84,11 @@
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>DictionaryFormatter.tt</DependentUpon>
+    </Compile>
+    <Compile Update="Formatters\ValueTupleFormatter.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ValueTupleFormatter.tt</DependentUpon>
     </Compile>
     <Compile Update="Formatters\PrimitiveFormatter.cs">
       <DesignTime>True</DesignTime>

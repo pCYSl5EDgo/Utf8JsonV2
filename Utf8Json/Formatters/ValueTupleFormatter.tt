@@ -77,7 +77,6 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            
             {
                 var serializer = resolver.GetSerializeStatic<T<#= i #>>();
                 if (serializer.ToPointer() == null)
@@ -91,6 +90,8 @@ namespace Utf8Json.Formatters
                 }
             }
 <#}#>
+
+            writer.WriteEndObject();
         }
 
         public (<#= typeArguments #>) Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -104,9 +105,9 @@ namespace Utf8Json.Formatters
             var answer = default((<#= typeArguments #>));
             var resolver = options.Resolver;
             var count = 0;
-            while (reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
+            while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
             {
-                var keySpan = reader.ReadNotNullStringSegmentRaw();
+                var keySpan = reader.ReadPropertyNameSegmentRaw();
                 if (keySpan.Length == 5 && keySpan[0] == 'I' && keySpan[1] == 't' && keySpan[2] == 'e' && keySpan[3] == 'm')
                 {
                     switch (keySpan[4])
