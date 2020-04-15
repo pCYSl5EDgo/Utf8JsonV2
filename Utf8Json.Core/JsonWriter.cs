@@ -480,7 +480,7 @@ namespace Utf8Json
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Write(ReadOnlySpan<char> value)
         {
-            var span = Writer.GetSpan(value.Length * 3 + 2);
+            var span = Writer.GetSpan(value.Length * 6 + 2);
             span[0] = (byte)'"';
             span = span.Slice(1);
             var actualLength = 2;
@@ -488,57 +488,44 @@ namespace Utf8Json
             for (var index = 0; index < value.Length;)
             {
                 byte escapedChar;
+                byte escapedChar2;
                 switch (value[index])
                 {
-                    case '"':
-                        escapedChar = (byte)'"';
-                        break;
-                    case '\\':
-                        escapedChar = (byte)'\\';
-                        break;
-                    case '\b':
-                        escapedChar = (byte)'b';
-                        break;
-                    case '\f':
-                        escapedChar = (byte)'f';
-                        break;
-                    case '\n':
-                        escapedChar = (byte)'n';
-                        break;
-                    case '\r':
-                        escapedChar = (byte)'r';
-                        break;
-                    case '\t':
-                        escapedChar = (byte)'t';
-                        break;
+                    case '"': escapedChar = (byte)'"'; goto ESCAPE_SINGLE;
+                    case '\\': escapedChar = (byte)'\\'; goto ESCAPE_SINGLE;
+                    case '\b': escapedChar = (byte)'b'; goto ESCAPE_SINGLE;
+                    case '\f': escapedChar = (byte)'f'; goto ESCAPE_SINGLE;
+                    case '\n': escapedChar = (byte)'n'; goto ESCAPE_SINGLE;
+                    case '\r': escapedChar = (byte)'r'; goto ESCAPE_SINGLE;
+                    case '\t': escapedChar = (byte)'t'; goto ESCAPE_SINGLE;
+                    case (char)0: escapedChar = (byte)'0'; escapedChar2 = (byte)'0'; goto ESCAPE_HEX;
+                    case (char)1: escapedChar = (byte)'0'; escapedChar2 = (byte)'1'; goto ESCAPE_HEX;
+                    case (char)2: escapedChar = (byte)'0'; escapedChar2 = (byte)'2'; goto ESCAPE_HEX;
+                    case (char)3: escapedChar = (byte)'0'; escapedChar2 = (byte)'3'; goto ESCAPE_HEX;
+                    case (char)4: escapedChar = (byte)'0'; escapedChar2 = (byte)'4'; goto ESCAPE_HEX;
+                    case (char)5: escapedChar = (byte)'0'; escapedChar2 = (byte)'5'; goto ESCAPE_HEX;
+                    case (char)6: escapedChar = (byte)'0'; escapedChar2 = (byte)'6'; goto ESCAPE_HEX;
+                    case (char)7: escapedChar = (byte)'0'; escapedChar2 = (byte)'7'; goto ESCAPE_HEX;
+                    case (char)11: escapedChar = (byte)'0'; escapedChar2 = (byte)'b'; goto ESCAPE_HEX;
+                    case (char)14: escapedChar = (byte)'0'; escapedChar2 = (byte)'e'; goto ESCAPE_HEX;
+                    case (char)15: escapedChar = (byte)'0'; escapedChar2 = (byte)'f'; goto ESCAPE_HEX;
+                    case (char)16: escapedChar = (byte)'1'; escapedChar2 = (byte)'0'; goto ESCAPE_HEX;
+                    case (char)17: escapedChar = (byte)'1'; escapedChar2 = (byte)'1'; goto ESCAPE_HEX;
+                    case (char)18: escapedChar = (byte)'1'; escapedChar2 = (byte)'2'; goto ESCAPE_HEX;
+                    case (char)19: escapedChar = (byte)'1'; escapedChar2 = (byte)'3'; goto ESCAPE_HEX;
+                    case (char)20: escapedChar = (byte)'1'; escapedChar2 = (byte)'4'; goto ESCAPE_HEX;
+                    case (char)21: escapedChar = (byte)'1'; escapedChar2 = (byte)'5'; goto ESCAPE_HEX;
+                    case (char)22: escapedChar = (byte)'1'; escapedChar2 = (byte)'6'; goto ESCAPE_HEX;
+                    case (char)23: escapedChar = (byte)'1'; escapedChar2 = (byte)'7'; goto ESCAPE_HEX;
+                    case (char)24: escapedChar = (byte)'1'; escapedChar2 = (byte)'8'; goto ESCAPE_HEX;
+                    case (char)25: escapedChar = (byte)'1'; escapedChar2 = (byte)'9'; goto ESCAPE_HEX;
+                    case (char)26: escapedChar = (byte)'1'; escapedChar2 = (byte)'a'; goto ESCAPE_HEX;
+                    case (char)27: escapedChar = (byte)'1'; escapedChar2 = (byte)'b'; goto ESCAPE_HEX;
+                    case (char)28: escapedChar = (byte)'1'; escapedChar2 = (byte)'c'; goto ESCAPE_HEX;
+                    case (char)29: escapedChar = (byte)'1'; escapedChar2 = (byte)'d'; goto ESCAPE_HEX;
+                    case (char)30: escapedChar = (byte)'1'; escapedChar2 = (byte)'e'; goto ESCAPE_HEX;
+                    case (char)31: escapedChar = (byte)'1'; escapedChar2 = (byte)'f'; goto ESCAPE_HEX;
                     #region Other
-                    case (char)0:
-                    case (char)1:
-                    case (char)2:
-                    case (char)3:
-                    case (char)4:
-                    case (char)5:
-                    case (char)6:
-                    case (char)7:
-                    case (char)11:
-                    case (char)14:
-                    case (char)15:
-                    case (char)16:
-                    case (char)17:
-                    case (char)18:
-                    case (char)19:
-                    case (char)20:
-                    case (char)21:
-                    case (char)22:
-                    case (char)23:
-                    case (char)24:
-                    case (char)25:
-                    case (char)26:
-                    case (char)27:
-                    case (char)28:
-                    case (char)29:
-                    case (char)30:
-                    case (char)31:
                     case (char)32:
                     case (char)33:
                     case (char)35:
@@ -604,6 +591,7 @@ namespace Utf8Json
                         continue;
                 }
 
+            ESCAPE_SINGLE:
                 if (index != 0)
                 {
 #if SPAN_BUILTIN
@@ -626,6 +614,36 @@ namespace Utf8Json
                 value = value.Slice(index + 1);
                 index = 0;
                 actualLength += 2;
+                continue;
+
+            ESCAPE_HEX:
+                if (index != 0)
+                {
+#if SPAN_BUILTIN
+                    var consumed = StringEncoding.Utf8.GetBytes(value.Slice(0, index), span);
+#else
+                    int consumed;
+                    fixed (char* src = &value[0])
+                    fixed (byte* dst = &span[0])
+                    {
+                        consumed = StringEncoding.Utf8.GetBytes(src, index, dst, span.Length);
+                    }
+#endif
+                    actualLength += consumed;
+                    span = span.Slice(consumed);
+                }
+
+                span[0] = (byte)'\\';
+                span[1] = (byte)'u';
+                span[2] = (byte)'0';
+                span[3] = (byte)'0';
+                span[4] = escapedChar;
+                span[5] = escapedChar2;
+
+                span = span.Slice(6);
+                value = value.Slice(index + 1);
+                index = 0;
+                actualLength += 6;
             }
 
             if (!value.IsEmpty)

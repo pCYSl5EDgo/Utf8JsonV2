@@ -202,6 +202,7 @@ namespace Utf8Json.Test
         [TestCase("")]
         [TestCase(default(string))]
         [TestCase("とてつもなく大きな力が我々の前に立ちはだかるだろう。心せよ。探索者たちよ。")]
+        [TestCase("\"\u0002\r\n\0\0\0\0\\")]
         [TestCase("とてつもな\\\\\\\\\r\nく大きな力が我々の前に立ちはだかるだろう。心せよ。探索者たちよ。")]
         public void SameString(string value)
         {
