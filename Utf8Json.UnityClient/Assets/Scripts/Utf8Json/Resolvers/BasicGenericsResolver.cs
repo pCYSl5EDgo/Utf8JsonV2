@@ -13,7 +13,11 @@ namespace Utf8Json.Resolvers
         public IJsonFormatter<T> GetFormatter<T>()
 #endif
         {
+#if UNITY_2018_4_OR_NEWER
+            return FormatterCache<T>.Formatter;
+#else
             return default;
+#endif
         }
 
         public IntPtr GetSerializeStatic<T>()
@@ -43,10 +47,22 @@ namespace Utf8Json.Resolvers
             public static readonly IntPtr CalcByteLengthForSerializationFunctionPointer;
             public static readonly IntPtr SerializeSpanFunctionPointer;
 
+#if UNITY_2018_4_OR_NEWER
+#if CSHARP_8_OR_NEWER
+            public static readonly IJsonFormatter<T>? Formatter;
+#else
+            public static readonly IJsonFormatter<T> Formatter;
+#endif
+#endif
+
             static FormatterCache()
             {
+                var type = typeof(T);
                 (SerializeFunctionPointer, DeserializeFunctionPointer, CalcByteLengthForSerializationFunctionPointer, SerializeSpanFunctionPointer)
-                    = BasicGenericsResolverGetFormatterHelper.GetFunctionPointers(typeof(T));
+                    = BasicGenericsResolverGetFormatterHelper.GetFunctionPointers(type);
+#if UNITY_2018_4_OR_NEWER
+                Formatter = BasicGenericsResolverGetFormatterHelper.CreateFormatter(type) as IJsonFormatter<T>;
+#endif
             }
         }
     }

@@ -5,10 +5,11 @@ namespace Utf8Json.Internal
 {
     public static class FromTypeToMethodHandles
     {
-        public static ThreadSafeTypeKeyFormatterHashTable.Entry GetEntry<T, TFormatter>()
+        public static ThreadSafeTypeKeyFormatterHashTable.Entry GetEntry<TTarget, TFormatter>()
         {
             var formatterType = typeof(TFormatter);
-            return new ThreadSafeTypeKeyFormatterHashTable.Entry(typeof(T),
+            var targetType = typeof(TTarget);
+            return new ThreadSafeTypeKeyFormatterHashTable.Entry(targetType,
                 StaticHelper.GetSerializeStatic(formatterType),
                 StaticHelper.GetDeserializeStatic(formatterType),
                 StaticHelper.GetCalcByteLengthForSerialization(formatterType),

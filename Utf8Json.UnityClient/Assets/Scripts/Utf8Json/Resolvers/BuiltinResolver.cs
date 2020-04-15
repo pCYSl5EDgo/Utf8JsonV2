@@ -45,7 +45,7 @@ namespace Utf8Json.Resolvers
 
             static FormatterCache()
             {
-                (SerializeFunctionPointer, DeserializeFunctionPointer, CalcByteLengthForSerializationFunctionPointer, SerializeSpanFunctionPointer) 
+                (SerializeFunctionPointer, DeserializeFunctionPointer, CalcByteLengthForSerializationFunctionPointer, SerializeSpanFunctionPointer)
                     = BuiltinResolverGetFormatterHelper.GetFunctionPointers(typeof(T));
             }
         }
