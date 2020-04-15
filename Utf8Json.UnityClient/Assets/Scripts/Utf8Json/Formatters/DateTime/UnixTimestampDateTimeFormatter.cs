@@ -18,9 +18,13 @@ namespace Utf8Json.Formatters
         public static void SerializeStatic(ref JsonWriter writer, DateTime value)
         {
             var ticks = (long)(value.ToUniversalTime() - unixEpoch).TotalSeconds;
-            writer.WriteQuotation();
+            var span = writer.Writer.GetSpan(1);
+            span[0] = (byte)'"';
+            writer.Writer.Advance(1);
             writer.Write(ticks);
-            writer.WriteQuotation();
+            var span1 = writer.Writer.GetSpan(1);
+            span1[0] = (byte)'"';
+            writer.Writer.Advance(1);
         }
 
         public DateTime Deserialize(ref JsonReader reader, JsonSerializerOptions options)

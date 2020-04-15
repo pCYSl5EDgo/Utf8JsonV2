@@ -42,7 +42,9 @@ namespace Utf8Json.Formatters
             }
 
             var enumerator = value.GetEnumerator();
-            writer.WriteBeginArray();
+            var span1 = writer.Writer.GetSpan(1);
+            span1[0] = (byte)'[';
+            writer.Writer.Advance(1);
             try
             {
                 if (!enumerator.MoveNext())
@@ -58,7 +60,9 @@ namespace Utf8Json.Formatters
 
                     while (enumerator.MoveNext())
                     {
-                        writer.WriteValueSeparator();
+                        var span = writer.Writer.GetSpan(1);
+                        span[0] = (byte)',';
+                        writer.Writer.Advance(1);
                         formatter.Serialize(ref writer, enumerator.Current, options);
                     }
                 }
@@ -68,7 +72,9 @@ namespace Utf8Json.Formatters
 
                     while (enumerator.MoveNext())
                     {
-                        writer.WriteValueSeparator();
+                        var span = writer.Writer.GetSpan(1);
+                        span[0] = (byte)',';
+                        writer.Writer.Advance(1);
                         writer.Serialize(enumerator.Current, options, serializer);
                     }
                 }
@@ -79,7 +85,9 @@ namespace Utf8Json.Formatters
             }
 
         END:
-            writer.WriteEndArray();
+        var span2 = writer.Writer.GetSpan(1);
+        span2[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER

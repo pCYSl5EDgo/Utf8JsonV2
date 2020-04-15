@@ -19,12 +19,48 @@ namespace Utf8Json.Formatters
     {
         public static void SerializeStatic(ref JsonWriter writer, bool value, JsonSerializerOptions options)
         {
-            writer.Write(value);
+            if (value)
+            {
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'t';
+                span[1] = (byte)'r';
+                span[2] = (byte)'u';
+                span[3] = (byte)'e';
+                writer.Writer.Advance(4);
+            }
+            else
+            {
+                var span = writer.Writer.GetSpan(5);
+                span[0] = (byte)'f';
+                span[1] = (byte)'a';
+                span[2] = (byte)'l';
+                span[3] = (byte)'s';
+                span[4] = (byte)'e';
+                writer.Writer.Advance(5);
+            }
         }
 
         public void Serialize(ref JsonWriter writer, bool value, JsonSerializerOptions options)
         {
-            writer.Write(value);
+            if (value)
+            {
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'t';
+                span[1] = (byte)'r';
+                span[2] = (byte)'u';
+                span[3] = (byte)'e';
+                writer.Writer.Advance(4);
+            }
+            else
+            {
+                var span = writer.Writer.GetSpan(5);
+                span[0] = (byte)'f';
+                span[1] = (byte)'a';
+                span[2] = (byte)'l';
+                span[3] = (byte)'s';
+                span[4] = (byte)'e';
+                writer.Writer.Advance(5);
+            }
         }
 
         public static bool DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -68,11 +104,34 @@ namespace Utf8Json.Formatters
         {
             if (value.HasValue)
             {
-                writer.Write(value.Value);
+                if (value.Value)
+                {
+                    var span = writer.Writer.GetSpan(4);
+                    span[0] = (byte)'t';
+                    span[1] = (byte)'r';
+                    span[2] = (byte)'u';
+                    span[3] = (byte)'e';
+                    writer.Writer.Advance(4);
+                }
+                else
+                {
+                    var span = writer.Writer.GetSpan(5);
+                    span[0] = (byte)'f';
+                    span[1] = (byte)'a';
+                    span[2] = (byte)'l';
+                    span[3] = (byte)'s';
+                    span[4] = (byte)'e';
+                    writer.Writer.Advance(5);
+                }
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
@@ -80,11 +139,34 @@ namespace Utf8Json.Formatters
         {
             if (value.HasValue)
             {
-                writer.Write(value.Value);
+                if (value.Value)
+                {
+                    var span = writer.Writer.GetSpan(4);
+                    span[0] = (byte)'t';
+                    span[1] = (byte)'r';
+                    span[2] = (byte)'u';
+                    span[3] = (byte)'e';
+                    writer.Writer.Advance(4);
+                }
+                else
+                {
+                    var span = writer.Writer.GetSpan(5);
+                    span[0] = (byte)'f';
+                    span[1] = (byte)'a';
+                    span[2] = (byte)'l';
+                    span[3] = (byte)'s';
+                    span[4] = (byte)'e';
+                    writer.Writer.Advance(5);
+                }
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
@@ -157,22 +239,69 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
             else
             {
-                writer.WriteBeginArray();
+                var span2 = writer.Writer.GetSpan(1);
+                span2[0] = (byte)'[';
+                writer.Writer.Advance(1);
                 if (value.Length != 0)
                 {
-                    writer.Write(value[0]);
+                    if (value[0])
+                    {
+                        var span = writer.Writer.GetSpan(4);
+                        span[0] = (byte)'t';
+                        span[1] = (byte)'r';
+                        span[2] = (byte)'u';
+                        span[3] = (byte)'e';
+                        writer.Writer.Advance(4);
+                    }
+                    else
+                    {
+                        var span = writer.Writer.GetSpan(5);
+                        span[0] = (byte)'f';
+                        span[1] = (byte)'a';
+                        span[2] = (byte)'l';
+                        span[3] = (byte)'s';
+                        span[4] = (byte)'e';
+                        writer.Writer.Advance(5);
+                    }
                     for (int i = 1; i < value.Length; i++)
                     {
-                        writer.WriteValueSeparator();
-                        writer.Write(value[i]);
+                        var span1 = writer.Writer.GetSpan(1);
+                        span1[0] = (byte)',';
+                        writer.Writer.Advance(1);
+                        if (value[i])
+                        {
+                            var span = writer.Writer.GetSpan(4);
+                            span[0] = (byte)'t';
+                            span[1] = (byte)'r';
+                            span[2] = (byte)'u';
+                            span[3] = (byte)'e';
+                            writer.Writer.Advance(4);
+                        }
+                        else
+                        {
+                            var span = writer.Writer.GetSpan(5);
+                            span[0] = (byte)'f';
+                            span[1] = (byte)'a';
+                            span[2] = (byte)'l';
+                            span[3] = (byte)'s';
+                            span[4] = (byte)'e';
+                            writer.Writer.Advance(5);
+                        }
                     }
                 }
 
-                writer.WriteEndArray();
+                var span3 = writer.Writer.GetSpan(1);
+                span3[0] = (byte)']';
+                writer.Writer.Advance(1);
             }
         }
 
@@ -186,9 +315,9 @@ namespace Utf8Json.Formatters
         }
 
 #if CSHARP_8_OR_NEWER
-        public static bool[]? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+        public static unsafe bool[]? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #else
-        public static bool[] DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+        public static unsafe bool[] DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #endif
         {
             if (reader.ReadIsNull())
@@ -197,59 +326,85 @@ namespace Utf8Json.Formatters
             }
 
             reader.ReadIsBeginArrayWithVerify();
+            var count = 0;
 #if UNITY_2018_4_OR_NEWER
-            unsafe
+            const Allocator allocator = Allocator.Temp;
+            var ptr = (bool*)UnsafeUtility.Malloc(32 * 1, 4, allocator);
+            var capacity = 32;
+            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
             {
-                const Allocator allocator = Allocator.Temp;
-                var ptr = (bool*)UnsafeUtility.Malloc(32 * 1, 4, allocator);
-                var count = 0;
-                var capacity = 32;
+                if (capacity < count)
+                {
+                    long size = 1 * capacity;
+                    var tmp = (bool*)UnsafeUtility.Malloc(size << 1, 4, allocator);
+                    UnsafeUtility.MemCpy(tmp, ptr, size);
+                    capacity <<= 1;
+                    UnsafeUtility.Free(ptr, allocator);
+                    ptr = tmp;
+                }
+                
+                ptr[count - 1] = reader.ReadBoolean();
+            }
+
+            if (count == 0)
+            {
+                UnsafeUtility.Free(ptr, allocator);
+                return Array.Empty<bool>();
+            }
+
+            var answer = new bool[count];
+            fixed (void* dest = &answer[0])
+            {
+                UnsafeUtility.MemCpy(dest, ptr, 1 * count);
+            }
+
+            UnsafeUtility.Free(ptr, allocator);
+            return answer;
+#else
+            var pool = ArrayPool<byte>.Shared;
+            var array = pool.Rent(256);
+            var span = MemoryMarshal.Cast<byte, bool>(array.AsSpan());
+            try
+            {
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
                 {
-                    if (capacity < count)
+                    if (span.Length < count)
                     {
-                        long size = 1 * capacity;
-                        var tmp = (bool*)UnsafeUtility.Malloc(size << 1, 4, allocator);
-                        UnsafeUtility.MemCpy(tmp, ptr, size);
-                        capacity <<= 1;
-                        UnsafeUtility.Free(ptr, allocator);
-                        ptr = tmp;
+                        var size = span.Length;
+                        var tmp = pool.Rent(size << 1);
+                        fixed (byte* src = &array[0])
+                        fixed (byte* dest = &tmp[0])
+                        {
+                            Buffer.MemoryCopy(src, dest, tmp.LongLength, size);
+                        }
+
+                        pool.Return(array);
+                        array = tmp;
+                        span = MemoryMarshal.Cast<byte, bool>(array.AsSpan());
                     }
-                    
-                    ptr[count - 1] = reader.ReadBoolean();
+
+                    span[count - 1] = reader.ReadBoolean();
                 }
 
                 if (count == 0)
                 {
-                    UnsafeUtility.Free(ptr, allocator);
                     return Array.Empty<bool>();
                 }
 
                 var answer = new bool[count];
-                fixed (void* dest = &answer[0])
+                fixed (void* dst = &answer[0])
+                fixed (void* src = &array[0])
                 {
-                    UnsafeUtility.MemCpy(dest, ptr, 1 * count);
+                    var size = count;
+                    Buffer.MemoryCopy(src, dst, size, size);
                 }
 
-                UnsafeUtility.Free(ptr, allocator);
                 return answer;
             }
-#else
-            Span<bool> span = stackalloc bool[16];
-            var count = 0;
-            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+            finally
             {
-                if (span.Length < count)
-                {
-                    Span<bool> tmp = stackalloc bool[span.Length << 1];
-                    span.CopyTo(tmp);
-                    span = tmp;
-                }
-
-                span[count - 1] = reader.ReadBoolean();
+                pool.Return(array);
             }
-
-            return count == 0 ? Array.Empty<bool>() : span.Slice(0, count).ToArray();
 #endif
         }
 
@@ -359,31 +514,77 @@ namespace Utf8Json.Formatters
     public sealed class BooleanReadOnlyMemoryFormatter : IJsonFormatter<ReadOnlyMemory<bool>>
     {
         public void Serialize(ref JsonWriter writer, ReadOnlyMemory<bool> value, JsonSerializerOptions options)
-            => SerializeStatic(ref writer, value, options);
+        {
+            SerializeStatic(ref writer, value, options);
+        }
 
         public static void SerializeStatic(ref JsonWriter writer, ReadOnlyMemory<bool> value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span4 = writer.Writer.GetSpan(1);
+            span4[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
             }
 
             var span = value.Span;
-            writer.Write(span[0]);
+            if (span[0])
+            {
+                var span1 = writer.Writer.GetSpan(4);
+                span1[0] = (byte)'t';
+                span1[1] = (byte)'r';
+                span1[2] = (byte)'u';
+                span1[3] = (byte)'e';
+                writer.Writer.Advance(4);
+            }
+            else
+            {
+                var span2 = writer.Writer.GetSpan(5);
+                span2[0] = (byte)'f';
+                span2[1] = (byte)'a';
+                span2[2] = (byte)'l';
+                span2[3] = (byte)'s';
+                span2[4] = (byte)'e';
+                writer.Writer.Advance(5);
+            }
 
             for (var i = 1; i < span.Length; i++)
             {
-                writer.WriteValueSeparator();
-                writer.Write(span[i]);
+                var span3 = writer.Writer.GetSpan(1);
+                span3[0] = (byte)',';
+                writer.Writer.Advance(1);
+                if (span[i])
+                {
+                    var span1 = writer.Writer.GetSpan(4);
+                    span1[0] = (byte)'t';
+                    span1[1] = (byte)'r';
+                    span1[2] = (byte)'u';
+                    span1[3] = (byte)'e';
+                    writer.Writer.Advance(4);
+                }
+                else
+                {
+                    var span2 = writer.Writer.GetSpan(5);
+                    span2[0] = (byte)'f';
+                    span2[1] = (byte)'a';
+                    span2[2] = (byte)'l';
+                    span2[3] = (byte)'s';
+                    span2[4] = (byte)'e';
+                    writer.Writer.Advance(5);
+                }
             }
 
         END:
-            writer.WriteEndArray();
+        var span5 = writer.Writer.GetSpan(1);
+        span5[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public ReadOnlyMemory<bool> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
-            => DeserializeStatic(ref reader, options);
+        {
+            return DeserializeStatic(ref reader, options);
+        }
 
         public static unsafe ReadOnlyMemory<bool> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
@@ -483,10 +684,14 @@ namespace Utf8Json.Formatters
     public sealed class BooleanNativeArrayFormatter : IJsonFormatter<NativeArray<bool>>
     {
         public void Serialize(ref JsonWriter writer, NativeArray<bool> value, JsonSerializerOptions options)
-            => SerializeStatic(ref writer, value, options);
+        {
+            SerializeStatic(ref writer, value, options);
+        }
 
         public NativeArray<bool> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
-            => DeserializeStatic(ref reader, options);
+        {
+            return DeserializeStatic(ref reader, options);
+        }
 
         public static void SerializeStatic(ref JsonWriter writer, NativeArray<bool> value, JsonSerializerOptions options)
         {
@@ -557,31 +762,77 @@ namespace Utf8Json.Formatters
     public sealed class BooleanMemoryFormatter : IJsonFormatter<Memory<bool>>
     {
         public void Serialize(ref JsonWriter writer, Memory<bool> value, JsonSerializerOptions options)
-            => SerializeStatic(ref writer, value, options);
+        {
+            SerializeStatic(ref writer, value, options);
+        }
 
         public static void SerializeStatic(ref JsonWriter writer, Memory<bool> value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span4 = writer.Writer.GetSpan(1);
+            span4[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
             }
 
             var span = value.Span;
-            writer.Write(span[0]);
+            if (span[0])
+            {
+                var span1 = writer.Writer.GetSpan(4);
+                span1[0] = (byte)'t';
+                span1[1] = (byte)'r';
+                span1[2] = (byte)'u';
+                span1[3] = (byte)'e';
+                writer.Writer.Advance(4);
+            }
+            else
+            {
+                var span2 = writer.Writer.GetSpan(5);
+                span2[0] = (byte)'f';
+                span2[1] = (byte)'a';
+                span2[2] = (byte)'l';
+                span2[3] = (byte)'s';
+                span2[4] = (byte)'e';
+                writer.Writer.Advance(5);
+            }
 
             for (var i = 1; i < span.Length; i++)
             {
-                writer.WriteValueSeparator();
-                writer.Write(span[i]);
+                var span3 = writer.Writer.GetSpan(1);
+                span3[0] = (byte)',';
+                writer.Writer.Advance(1);
+                if (span[i])
+                {
+                    var span1 = writer.Writer.GetSpan(4);
+                    span1[0] = (byte)'t';
+                    span1[1] = (byte)'r';
+                    span1[2] = (byte)'u';
+                    span1[3] = (byte)'e';
+                    writer.Writer.Advance(4);
+                }
+                else
+                {
+                    var span2 = writer.Writer.GetSpan(5);
+                    span2[0] = (byte)'f';
+                    span2[1] = (byte)'a';
+                    span2[2] = (byte)'l';
+                    span2[3] = (byte)'s';
+                    span2[4] = (byte)'e';
+                    writer.Writer.Advance(5);
+                }
             }
 
         END:
-            writer.WriteEndArray();
+        var span5 = writer.Writer.GetSpan(1);
+        span5[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public Memory<bool> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
-            => DeserializeStatic(ref reader, options);
+        {
+            return DeserializeStatic(ref reader, options);
+        }
 
         public static unsafe Memory<bool> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
@@ -692,26 +943,73 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 
-            writer.WriteBeginArray();
+            var span3 = writer.Writer.GetSpan(1);
+            span3[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Count == 0)
             {
                 goto END;
             }
 
-            writer.Write(value[0]);
+            if (value[0])
+            {
+                var span1 = writer.Writer.GetSpan(4);
+                span1[0] = (byte)'t';
+                span1[1] = (byte)'r';
+                span1[2] = (byte)'u';
+                span1[3] = (byte)'e';
+                writer.Writer.Advance(4);
+            }
+            else
+            {
+                var span2 = writer.Writer.GetSpan(5);
+                span2[0] = (byte)'f';
+                span2[1] = (byte)'a';
+                span2[2] = (byte)'l';
+                span2[3] = (byte)'s';
+                span2[4] = (byte)'e';
+                writer.Writer.Advance(5);
+            }
 
             for (var i = 1; i < value.Count; i++)
             {
-                writer.WriteValueSeparator();
-                writer.Write(value[i]);
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
+                if (value[i])
+                {
+                    var span = writer.Writer.GetSpan(4);
+                    span[0] = (byte)'t';
+                    span[1] = (byte)'r';
+                    span[2] = (byte)'u';
+                    span[3] = (byte)'e';
+                    writer.Writer.Advance(4);
+                }
+                else
+                {
+                    var span = writer.Writer.GetSpan(5);
+                    span[0] = (byte)'f';
+                    span[1] = (byte)'a';
+                    span[2] = (byte)'l';
+                    span[3] = (byte)'s';
+                    span[4] = (byte)'e';
+                    writer.Writer.Advance(5);
+                }
             }
 
         END:
-            writer.WriteEndArray();
+        var span4 = writer.Writer.GetSpan(1);
+        span4[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -728,7 +1026,9 @@ namespace Utf8Json.Formatters
 #else
         public List<bool> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
 #endif
-            => DeserializeStatic(ref reader, options);
+        {
+            return DeserializeStatic(ref reader, options);
+        }
 
 #if CSHARP_8_OR_NEWER
         public static unsafe List<bool>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)

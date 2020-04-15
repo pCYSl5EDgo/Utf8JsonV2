@@ -54,7 +54,9 @@ namespace Utf8Json.Formatters
                     {
                         var tuple = e.Current;
                         keyFormatter.SerializeToPropertyName(ref writer, tuple.Key, options);
-                        writer.WriteNameSeparator();
+                        var span = writer.Writer.GetSpan(1);
+                        span[0] = (byte)':';
+                        writer.Writer.Advance(1);
                         valueFormatter.Serialize(ref writer, tuple.Value, options);
                     }
                     else
@@ -64,10 +66,14 @@ namespace Utf8Json.Formatters
 
                     while (e.MoveNext())
                     {
-                        writer.WriteValueSeparator();
+                        var span1 = writer.Writer.GetSpan(1);
+                        span1[0] = (byte)',';
+                        writer.Writer.Advance(1);
                         var tuple = e.Current;
                         keyFormatter.SerializeToPropertyName(ref writer, tuple.Key, options);
-                        writer.WriteNameSeparator();
+                        var span = writer.Writer.GetSpan(1);
+                        span[0] = (byte)':';
+                        writer.Writer.Advance(1);
                         valueFormatter.Serialize(ref writer, tuple.Value, options);
                     }
                 }
@@ -88,7 +94,9 @@ namespace Utf8Json.Formatters
 
                     while (e.MoveNext())
                     {
-                        writer.WriteValueSeparator();
+                        var span = writer.Writer.GetSpan(1);
+                        span[0] = (byte)',';
+                        writer.Writer.Advance(1);
                         var tuple = e.Current;
                         var propertyName = tuple.Key.ToString();
                         Debug.Assert(propertyName != null, nameof(propertyName) + " != null");
@@ -103,7 +111,9 @@ namespace Utf8Json.Formatters
             }
 
         END:
-            writer.WriteEndObject();
+        var span2 = writer.Writer.GetSpan(1);
+        span2[0] = (byte)'}';
+        writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER

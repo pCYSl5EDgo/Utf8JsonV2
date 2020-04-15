@@ -81,7 +81,9 @@ namespace Utf8Json.Formatters
                 writer.Serialize<IEnumerable<TElement>>(value, options, enumerableSerializer);
             }
 
-            writer.WriteEndObject();
+            var span1 = writer.Writer.GetSpan(1);
+            span1[0] = (byte)'}';
+            writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER

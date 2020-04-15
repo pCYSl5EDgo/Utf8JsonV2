@@ -15,11 +15,17 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, Complex value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span1 = writer.Writer.GetSpan(1);
+            span1[0] = (byte)'[';
+            writer.Writer.Advance(1);
             writer.Write(value.Real);
-            writer.WriteValueSeparator();
+            var span = writer.Writer.GetSpan(1);
+            span[0] = (byte)',';
+            writer.Writer.Advance(1);
             writer.Write(value.Imaginary);
-            writer.WriteEndArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)']';
+            writer.Writer.Advance(1);
         }
 
         public Complex Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -51,11 +57,17 @@ namespace Utf8Json.Formatters
             if (value.HasValue)
             {
                 var inner = value.Value;
-                writer.WriteBeginArray();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)'[';
+                writer.Writer.Advance(1);
                 writer.Write(inner.Real);
-                writer.WriteValueSeparator();
+                var span = writer.Writer.GetSpan(1);
+                span[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(inner.Imaginary);
-                writer.WriteEndArray();
+                var span2 = writer.Writer.GetSpan(1);
+                span2[0] = (byte)']';
+                writer.Writer.Advance(1);
             }
             else
             {

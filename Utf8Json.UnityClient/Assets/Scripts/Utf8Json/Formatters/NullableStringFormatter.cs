@@ -112,7 +112,9 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(4);
                 return;
             }
-            writer.WriteBeginArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -135,7 +137,9 @@ namespace Utf8Json.Formatters
 
             for (var i = 1; i < value.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
                 str = value[i];
                 if (str == null)
                 {
@@ -153,7 +157,9 @@ namespace Utf8Json.Formatters
             }
 
         END:
-            writer.WriteEndArray();
+        var span3 = writer.Writer.GetSpan(1);
+        span3[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER

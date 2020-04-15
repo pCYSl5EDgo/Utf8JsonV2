@@ -71,7 +71,9 @@ namespace Utf8Json.Formatters
                     writer.Serialize(value.Value, options, serializer);
                 }
             }
-            writer.WriteEndObject();
+            var span1 = writer.Writer.GetSpan(1);
+            span1[0] = (byte)'}';
+            writer.Writer.Advance(1);
         }
 
         public KeyValuePair<TKey, TValue> Deserialize(ref JsonReader reader, JsonSerializerOptions options)

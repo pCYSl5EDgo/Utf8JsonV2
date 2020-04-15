@@ -31,20 +31,18 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
         public void Serialize(ref JsonWriter writer, byte? value, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                writer.Write(value.Value);
-            }
-            else
-            {
-                writer.WriteNull();
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
         public static byte? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -54,7 +52,7 @@ namespace Utf8Json.Formatters
 
         public byte? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : reader.ReadByte();
+            return DeserializeStatic(ref reader, options);
         }
 
         public static int CalcByteLengthForSerialization(JsonSerializerOptions options, byte? value)
@@ -158,22 +156,33 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
             else
             {
-                writer.WriteBeginArray();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)'[';
+                writer.Writer.Advance(1);
                 if (value.Length != 0)
                 {
                     writer.Write(value[0]);
                     for (int i = 1; i < value.Length; i++)
                     {
-                        writer.WriteValueSeparator();
+                        var span = writer.Writer.GetSpan(1);
+                        span[0] = (byte)',';
+                        writer.Writer.Advance(1);
                         writer.Write(value[i]);
                     }
                 }
 
-                writer.WriteEndArray();
+                var span2 = writer.Writer.GetSpan(1);
+                span2[0] = (byte)']';
+                writer.Writer.Advance(1);
             }
         }
 
@@ -302,7 +311,9 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, ReadOnlyMemory<byte> value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -313,12 +324,16 @@ namespace Utf8Json.Formatters
             
             for (var i = 1; i < span.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(span[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span3 = writer.Writer.GetSpan(1);
+        span3[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public ReadOnlyMemory<byte> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -508,7 +523,9 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, Memory<byte> value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -519,12 +536,16 @@ namespace Utf8Json.Formatters
             
             for (var i = 1; i < span.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(span[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span3 = writer.Writer.GetSpan(1);
+        span3[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public Memory<byte> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -641,11 +662,18 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 
-            writer.WriteBeginArray();
+            var span1 = writer.Writer.GetSpan(1);
+            span1[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Count == 0)
             {
                 goto END;
@@ -655,12 +683,16 @@ namespace Utf8Json.Formatters
 
             for (var i = 1; i < value.Count; i++)
             {
-                writer.WriteValueSeparator();
+                var span = writer.Writer.GetSpan(1);
+                span[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(value[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span2 = writer.Writer.GetSpan(1);
+        span2[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -801,20 +833,18 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
         public void Serialize(ref JsonWriter writer, sbyte? value, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                writer.Write(value.Value);
-            }
-            else
-            {
-                writer.WriteNull();
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
         public static sbyte? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -824,7 +854,7 @@ namespace Utf8Json.Formatters
 
         public sbyte? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : reader.ReadSByte();
+            return DeserializeStatic(ref reader, options);
         }
 
         public static int CalcByteLengthForSerialization(JsonSerializerOptions options, sbyte? value)
@@ -928,22 +958,33 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
             else
             {
-                writer.WriteBeginArray();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)'[';
+                writer.Writer.Advance(1);
                 if (value.Length != 0)
                 {
                     writer.Write(value[0]);
                     for (int i = 1; i < value.Length; i++)
                     {
-                        writer.WriteValueSeparator();
+                        var span = writer.Writer.GetSpan(1);
+                        span[0] = (byte)',';
+                        writer.Writer.Advance(1);
                         writer.Write(value[i]);
                     }
                 }
 
-                writer.WriteEndArray();
+                var span2 = writer.Writer.GetSpan(1);
+                span2[0] = (byte)']';
+                writer.Writer.Advance(1);
             }
         }
 
@@ -1072,7 +1113,9 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, ReadOnlyMemory<sbyte> value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -1083,12 +1126,16 @@ namespace Utf8Json.Formatters
             
             for (var i = 1; i < span.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(span[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span3 = writer.Writer.GetSpan(1);
+        span3[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public ReadOnlyMemory<sbyte> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -1278,7 +1325,9 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, Memory<sbyte> value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -1289,12 +1338,16 @@ namespace Utf8Json.Formatters
             
             for (var i = 1; i < span.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(span[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span3 = writer.Writer.GetSpan(1);
+        span3[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public Memory<sbyte> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -1411,11 +1464,18 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 
-            writer.WriteBeginArray();
+            var span1 = writer.Writer.GetSpan(1);
+            span1[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Count == 0)
             {
                 goto END;
@@ -1425,12 +1485,16 @@ namespace Utf8Json.Formatters
 
             for (var i = 1; i < value.Count; i++)
             {
-                writer.WriteValueSeparator();
+                var span = writer.Writer.GetSpan(1);
+                span[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(value[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span2 = writer.Writer.GetSpan(1);
+        span2[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -1571,20 +1635,18 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
         public void Serialize(ref JsonWriter writer, short? value, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                writer.Write(value.Value);
-            }
-            else
-            {
-                writer.WriteNull();
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
         public static short? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -1594,7 +1656,7 @@ namespace Utf8Json.Formatters
 
         public short? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : reader.ReadInt16();
+            return DeserializeStatic(ref reader, options);
         }
 
         public static int CalcByteLengthForSerialization(JsonSerializerOptions options, short? value)
@@ -1698,22 +1760,33 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
             else
             {
-                writer.WriteBeginArray();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)'[';
+                writer.Writer.Advance(1);
                 if (value.Length != 0)
                 {
                     writer.Write(value[0]);
                     for (int i = 1; i < value.Length; i++)
                     {
-                        writer.WriteValueSeparator();
+                        var span = writer.Writer.GetSpan(1);
+                        span[0] = (byte)',';
+                        writer.Writer.Advance(1);
                         writer.Write(value[i]);
                     }
                 }
 
-                writer.WriteEndArray();
+                var span2 = writer.Writer.GetSpan(1);
+                span2[0] = (byte)']';
+                writer.Writer.Advance(1);
             }
         }
 
@@ -1842,7 +1915,9 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, ReadOnlyMemory<short> value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -1853,12 +1928,16 @@ namespace Utf8Json.Formatters
             
             for (var i = 1; i < span.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(span[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span3 = writer.Writer.GetSpan(1);
+        span3[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public ReadOnlyMemory<short> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -2048,7 +2127,9 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, Memory<short> value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -2059,12 +2140,16 @@ namespace Utf8Json.Formatters
             
             for (var i = 1; i < span.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(span[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span3 = writer.Writer.GetSpan(1);
+        span3[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public Memory<short> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -2181,11 +2266,18 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 
-            writer.WriteBeginArray();
+            var span1 = writer.Writer.GetSpan(1);
+            span1[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Count == 0)
             {
                 goto END;
@@ -2195,12 +2287,16 @@ namespace Utf8Json.Formatters
 
             for (var i = 1; i < value.Count; i++)
             {
-                writer.WriteValueSeparator();
+                var span = writer.Writer.GetSpan(1);
+                span[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(value[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span2 = writer.Writer.GetSpan(1);
+        span2[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -2341,20 +2437,18 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
         public void Serialize(ref JsonWriter writer, ushort? value, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                writer.Write(value.Value);
-            }
-            else
-            {
-                writer.WriteNull();
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
         public static ushort? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -2364,7 +2458,7 @@ namespace Utf8Json.Formatters
 
         public ushort? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : reader.ReadUInt16();
+            return DeserializeStatic(ref reader, options);
         }
 
         public static int CalcByteLengthForSerialization(JsonSerializerOptions options, ushort? value)
@@ -2468,22 +2562,33 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
             else
             {
-                writer.WriteBeginArray();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)'[';
+                writer.Writer.Advance(1);
                 if (value.Length != 0)
                 {
                     writer.Write(value[0]);
                     for (int i = 1; i < value.Length; i++)
                     {
-                        writer.WriteValueSeparator();
+                        var span = writer.Writer.GetSpan(1);
+                        span[0] = (byte)',';
+                        writer.Writer.Advance(1);
                         writer.Write(value[i]);
                     }
                 }
 
-                writer.WriteEndArray();
+                var span2 = writer.Writer.GetSpan(1);
+                span2[0] = (byte)']';
+                writer.Writer.Advance(1);
             }
         }
 
@@ -2612,7 +2717,9 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, ReadOnlyMemory<ushort> value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -2623,12 +2730,16 @@ namespace Utf8Json.Formatters
             
             for (var i = 1; i < span.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(span[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span3 = writer.Writer.GetSpan(1);
+        span3[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public ReadOnlyMemory<ushort> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -2818,7 +2929,9 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, Memory<ushort> value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -2829,12 +2942,16 @@ namespace Utf8Json.Formatters
             
             for (var i = 1; i < span.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(span[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span3 = writer.Writer.GetSpan(1);
+        span3[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public Memory<ushort> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -2951,11 +3068,18 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 
-            writer.WriteBeginArray();
+            var span1 = writer.Writer.GetSpan(1);
+            span1[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Count == 0)
             {
                 goto END;
@@ -2965,12 +3089,16 @@ namespace Utf8Json.Formatters
 
             for (var i = 1; i < value.Count; i++)
             {
-                writer.WriteValueSeparator();
+                var span = writer.Writer.GetSpan(1);
+                span[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(value[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span2 = writer.Writer.GetSpan(1);
+        span2[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -3111,20 +3239,18 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
         public void Serialize(ref JsonWriter writer, int? value, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                writer.Write(value.Value);
-            }
-            else
-            {
-                writer.WriteNull();
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
         public static int? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -3134,7 +3260,7 @@ namespace Utf8Json.Formatters
 
         public int? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : reader.ReadInt32();
+            return DeserializeStatic(ref reader, options);
         }
 
         public static int CalcByteLengthForSerialization(JsonSerializerOptions options, int? value)
@@ -3238,22 +3364,33 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
             else
             {
-                writer.WriteBeginArray();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)'[';
+                writer.Writer.Advance(1);
                 if (value.Length != 0)
                 {
                     writer.Write(value[0]);
                     for (int i = 1; i < value.Length; i++)
                     {
-                        writer.WriteValueSeparator();
+                        var span = writer.Writer.GetSpan(1);
+                        span[0] = (byte)',';
+                        writer.Writer.Advance(1);
                         writer.Write(value[i]);
                     }
                 }
 
-                writer.WriteEndArray();
+                var span2 = writer.Writer.GetSpan(1);
+                span2[0] = (byte)']';
+                writer.Writer.Advance(1);
             }
         }
 
@@ -3382,7 +3519,9 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, ReadOnlyMemory<int> value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -3393,12 +3532,16 @@ namespace Utf8Json.Formatters
             
             for (var i = 1; i < span.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(span[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span3 = writer.Writer.GetSpan(1);
+        span3[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public ReadOnlyMemory<int> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -3588,7 +3731,9 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, Memory<int> value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -3599,12 +3744,16 @@ namespace Utf8Json.Formatters
             
             for (var i = 1; i < span.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(span[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span3 = writer.Writer.GetSpan(1);
+        span3[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public Memory<int> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -3721,11 +3870,18 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 
-            writer.WriteBeginArray();
+            var span1 = writer.Writer.GetSpan(1);
+            span1[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Count == 0)
             {
                 goto END;
@@ -3735,12 +3891,16 @@ namespace Utf8Json.Formatters
 
             for (var i = 1; i < value.Count; i++)
             {
-                writer.WriteValueSeparator();
+                var span = writer.Writer.GetSpan(1);
+                span[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(value[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span2 = writer.Writer.GetSpan(1);
+        span2[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -3881,20 +4041,18 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
         public void Serialize(ref JsonWriter writer, uint? value, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                writer.Write(value.Value);
-            }
-            else
-            {
-                writer.WriteNull();
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
         public static uint? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -3904,7 +4062,7 @@ namespace Utf8Json.Formatters
 
         public uint? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : reader.ReadUInt32();
+            return DeserializeStatic(ref reader, options);
         }
 
         public static int CalcByteLengthForSerialization(JsonSerializerOptions options, uint? value)
@@ -4008,22 +4166,33 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
             else
             {
-                writer.WriteBeginArray();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)'[';
+                writer.Writer.Advance(1);
                 if (value.Length != 0)
                 {
                     writer.Write(value[0]);
                     for (int i = 1; i < value.Length; i++)
                     {
-                        writer.WriteValueSeparator();
+                        var span = writer.Writer.GetSpan(1);
+                        span[0] = (byte)',';
+                        writer.Writer.Advance(1);
                         writer.Write(value[i]);
                     }
                 }
 
-                writer.WriteEndArray();
+                var span2 = writer.Writer.GetSpan(1);
+                span2[0] = (byte)']';
+                writer.Writer.Advance(1);
             }
         }
 
@@ -4152,7 +4321,9 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, ReadOnlyMemory<uint> value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -4163,12 +4334,16 @@ namespace Utf8Json.Formatters
             
             for (var i = 1; i < span.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(span[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span3 = writer.Writer.GetSpan(1);
+        span3[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public ReadOnlyMemory<uint> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -4358,7 +4533,9 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, Memory<uint> value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -4369,12 +4546,16 @@ namespace Utf8Json.Formatters
             
             for (var i = 1; i < span.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(span[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span3 = writer.Writer.GetSpan(1);
+        span3[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public Memory<uint> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -4491,11 +4672,18 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 
-            writer.WriteBeginArray();
+            var span1 = writer.Writer.GetSpan(1);
+            span1[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Count == 0)
             {
                 goto END;
@@ -4505,12 +4693,16 @@ namespace Utf8Json.Formatters
 
             for (var i = 1; i < value.Count; i++)
             {
-                writer.WriteValueSeparator();
+                var span = writer.Writer.GetSpan(1);
+                span[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(value[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span2 = writer.Writer.GetSpan(1);
+        span2[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -4651,20 +4843,18 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
         public void Serialize(ref JsonWriter writer, long? value, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                writer.Write(value.Value);
-            }
-            else
-            {
-                writer.WriteNull();
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
         public static long? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -4674,7 +4864,7 @@ namespace Utf8Json.Formatters
 
         public long? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : reader.ReadInt64();
+            return DeserializeStatic(ref reader, options);
         }
 
         public static int CalcByteLengthForSerialization(JsonSerializerOptions options, long? value)
@@ -4778,22 +4968,33 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
             else
             {
-                writer.WriteBeginArray();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)'[';
+                writer.Writer.Advance(1);
                 if (value.Length != 0)
                 {
                     writer.Write(value[0]);
                     for (int i = 1; i < value.Length; i++)
                     {
-                        writer.WriteValueSeparator();
+                        var span = writer.Writer.GetSpan(1);
+                        span[0] = (byte)',';
+                        writer.Writer.Advance(1);
                         writer.Write(value[i]);
                     }
                 }
 
-                writer.WriteEndArray();
+                var span2 = writer.Writer.GetSpan(1);
+                span2[0] = (byte)']';
+                writer.Writer.Advance(1);
             }
         }
 
@@ -4922,7 +5123,9 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, ReadOnlyMemory<long> value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -4933,12 +5136,16 @@ namespace Utf8Json.Formatters
             
             for (var i = 1; i < span.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(span[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span3 = writer.Writer.GetSpan(1);
+        span3[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public ReadOnlyMemory<long> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -5128,7 +5335,9 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, Memory<long> value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -5139,12 +5348,16 @@ namespace Utf8Json.Formatters
             
             for (var i = 1; i < span.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(span[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span3 = writer.Writer.GetSpan(1);
+        span3[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public Memory<long> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -5261,11 +5474,18 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 
-            writer.WriteBeginArray();
+            var span1 = writer.Writer.GetSpan(1);
+            span1[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Count == 0)
             {
                 goto END;
@@ -5275,12 +5495,16 @@ namespace Utf8Json.Formatters
 
             for (var i = 1; i < value.Count; i++)
             {
-                writer.WriteValueSeparator();
+                var span = writer.Writer.GetSpan(1);
+                span[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(value[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span2 = writer.Writer.GetSpan(1);
+        span2[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -5421,20 +5645,18 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
         public void Serialize(ref JsonWriter writer, ulong? value, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                writer.Write(value.Value);
-            }
-            else
-            {
-                writer.WriteNull();
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
         public static ulong? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -5444,7 +5666,7 @@ namespace Utf8Json.Formatters
 
         public ulong? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : reader.ReadUInt64();
+            return DeserializeStatic(ref reader, options);
         }
 
         public static int CalcByteLengthForSerialization(JsonSerializerOptions options, ulong? value)
@@ -5548,22 +5770,33 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
             else
             {
-                writer.WriteBeginArray();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)'[';
+                writer.Writer.Advance(1);
                 if (value.Length != 0)
                 {
                     writer.Write(value[0]);
                     for (int i = 1; i < value.Length; i++)
                     {
-                        writer.WriteValueSeparator();
+                        var span = writer.Writer.GetSpan(1);
+                        span[0] = (byte)',';
+                        writer.Writer.Advance(1);
                         writer.Write(value[i]);
                     }
                 }
 
-                writer.WriteEndArray();
+                var span2 = writer.Writer.GetSpan(1);
+                span2[0] = (byte)']';
+                writer.Writer.Advance(1);
             }
         }
 
@@ -5692,7 +5925,9 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, ReadOnlyMemory<ulong> value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -5703,12 +5938,16 @@ namespace Utf8Json.Formatters
             
             for (var i = 1; i < span.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(span[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span3 = writer.Writer.GetSpan(1);
+        span3[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public ReadOnlyMemory<ulong> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -5898,7 +6137,9 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, Memory<ulong> value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -5909,12 +6150,16 @@ namespace Utf8Json.Formatters
             
             for (var i = 1; i < span.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(span[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span3 = writer.Writer.GetSpan(1);
+        span3[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public Memory<ulong> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -6031,11 +6276,18 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 
-            writer.WriteBeginArray();
+            var span1 = writer.Writer.GetSpan(1);
+            span1[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Count == 0)
             {
                 goto END;
@@ -6045,12 +6297,16 @@ namespace Utf8Json.Formatters
 
             for (var i = 1; i < value.Count; i++)
             {
-                writer.WriteValueSeparator();
+                var span = writer.Writer.GetSpan(1);
+                span[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(value[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span2 = writer.Writer.GetSpan(1);
+        span2[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -6215,20 +6471,18 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
         public void Serialize(ref JsonWriter writer, float? value, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                writer.Write(value.Value);
-            }
-            else
-            {
-                writer.WriteNull();
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
         public static float? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -6238,7 +6492,7 @@ namespace Utf8Json.Formatters
 
         public float? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : reader.ReadSingle();
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -6257,22 +6511,33 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
             else
             {
-                writer.WriteBeginArray();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)'[';
+                writer.Writer.Advance(1);
                 if (value.Length != 0)
                 {
                     writer.Write(value[0]);
                     for (int i = 1; i < value.Length; i++)
                     {
-                        writer.WriteValueSeparator();
+                        var span = writer.Writer.GetSpan(1);
+                        span[0] = (byte)',';
+                        writer.Writer.Advance(1);
                         writer.Write(value[i]);
                     }
                 }
 
-                writer.WriteEndArray();
+                var span2 = writer.Writer.GetSpan(1);
+                span2[0] = (byte)']';
+                writer.Writer.Advance(1);
             }
         }
 
@@ -6401,7 +6666,9 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, ReadOnlyMemory<float> value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -6412,12 +6679,16 @@ namespace Utf8Json.Formatters
             
             for (var i = 1; i < span.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(span[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span3 = writer.Writer.GetSpan(1);
+        span3[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public ReadOnlyMemory<float> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -6607,7 +6878,9 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, Memory<float> value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -6618,12 +6891,16 @@ namespace Utf8Json.Formatters
             
             for (var i = 1; i < span.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(span[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span3 = writer.Writer.GetSpan(1);
+        span3[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public Memory<float> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -6740,11 +7017,18 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 
-            writer.WriteBeginArray();
+            var span1 = writer.Writer.GetSpan(1);
+            span1[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Count == 0)
             {
                 goto END;
@@ -6754,12 +7038,16 @@ namespace Utf8Json.Formatters
 
             for (var i = 1; i < value.Count; i++)
             {
-                writer.WriteValueSeparator();
+                var span = writer.Writer.GetSpan(1);
+                span[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(value[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span2 = writer.Writer.GetSpan(1);
+        span2[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -6924,20 +7212,18 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
         public void Serialize(ref JsonWriter writer, double? value, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                writer.Write(value.Value);
-            }
-            else
-            {
-                writer.WriteNull();
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
         public static double? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -6947,7 +7233,7 @@ namespace Utf8Json.Formatters
 
         public double? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : reader.ReadDouble();
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -6966,22 +7252,33 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
             else
             {
-                writer.WriteBeginArray();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)'[';
+                writer.Writer.Advance(1);
                 if (value.Length != 0)
                 {
                     writer.Write(value[0]);
                     for (int i = 1; i < value.Length; i++)
                     {
-                        writer.WriteValueSeparator();
+                        var span = writer.Writer.GetSpan(1);
+                        span[0] = (byte)',';
+                        writer.Writer.Advance(1);
                         writer.Write(value[i]);
                     }
                 }
 
-                writer.WriteEndArray();
+                var span2 = writer.Writer.GetSpan(1);
+                span2[0] = (byte)']';
+                writer.Writer.Advance(1);
             }
         }
 
@@ -7110,7 +7407,9 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, ReadOnlyMemory<double> value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -7121,12 +7420,16 @@ namespace Utf8Json.Formatters
             
             for (var i = 1; i < span.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(span[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span3 = writer.Writer.GetSpan(1);
+        span3[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public ReadOnlyMemory<double> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -7316,7 +7619,9 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, Memory<double> value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -7327,12 +7632,16 @@ namespace Utf8Json.Formatters
             
             for (var i = 1; i < span.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(span[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span3 = writer.Writer.GetSpan(1);
+        span3[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public Memory<double> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -7449,11 +7758,18 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 
-            writer.WriteBeginArray();
+            var span1 = writer.Writer.GetSpan(1);
+            span1[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Count == 0)
             {
                 goto END;
@@ -7463,12 +7779,16 @@ namespace Utf8Json.Formatters
 
             for (var i = 1; i < value.Count; i++)
             {
-                writer.WriteValueSeparator();
+                var span = writer.Writer.GetSpan(1);
+                span[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(value[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span2 = writer.Writer.GetSpan(1);
+        span2[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -7633,20 +7953,18 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
         public void Serialize(ref JsonWriter writer, DateTime? value, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                writer.Write(value.Value);
-            }
-            else
-            {
-                writer.WriteNull();
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
         public static DateTime? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -7656,7 +7974,7 @@ namespace Utf8Json.Formatters
 
         public DateTime? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : reader.ReadDateTime();
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -7675,22 +7993,33 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
             else
             {
-                writer.WriteBeginArray();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)'[';
+                writer.Writer.Advance(1);
                 if (value.Length != 0)
                 {
                     writer.Write(value[0]);
                     for (int i = 1; i < value.Length; i++)
                     {
-                        writer.WriteValueSeparator();
+                        var span = writer.Writer.GetSpan(1);
+                        span[0] = (byte)',';
+                        writer.Writer.Advance(1);
                         writer.Write(value[i]);
                     }
                 }
 
-                writer.WriteEndArray();
+                var span2 = writer.Writer.GetSpan(1);
+                span2[0] = (byte)']';
+                writer.Writer.Advance(1);
             }
         }
 
@@ -7819,7 +8148,9 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, ReadOnlyMemory<DateTime> value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -7830,12 +8161,16 @@ namespace Utf8Json.Formatters
             
             for (var i = 1; i < span.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(span[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span3 = writer.Writer.GetSpan(1);
+        span3[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public ReadOnlyMemory<DateTime> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -8025,7 +8360,9 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, Memory<DateTime> value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -8036,12 +8373,16 @@ namespace Utf8Json.Formatters
             
             for (var i = 1; i < span.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(span[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span3 = writer.Writer.GetSpan(1);
+        span3[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public Memory<DateTime> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -8158,11 +8499,18 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 
-            writer.WriteBeginArray();
+            var span1 = writer.Writer.GetSpan(1);
+            span1[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Count == 0)
             {
                 goto END;
@@ -8172,12 +8520,16 @@ namespace Utf8Json.Formatters
 
             for (var i = 1; i < value.Count; i++)
             {
-                writer.WriteValueSeparator();
+                var span = writer.Writer.GetSpan(1);
+                span[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(value[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span2 = writer.Writer.GetSpan(1);
+        span2[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -8342,20 +8694,18 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
         public void Serialize(ref JsonWriter writer, decimal? value, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                writer.Write(value.Value);
-            }
-            else
-            {
-                writer.WriteNull();
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
         public static decimal? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -8365,7 +8715,7 @@ namespace Utf8Json.Formatters
 
         public decimal? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : reader.ReadDecimal();
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -8384,22 +8734,33 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
             else
             {
-                writer.WriteBeginArray();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)'[';
+                writer.Writer.Advance(1);
                 if (value.Length != 0)
                 {
                     writer.Write(value[0]);
                     for (int i = 1; i < value.Length; i++)
                     {
-                        writer.WriteValueSeparator();
+                        var span = writer.Writer.GetSpan(1);
+                        span[0] = (byte)',';
+                        writer.Writer.Advance(1);
                         writer.Write(value[i]);
                     }
                 }
 
-                writer.WriteEndArray();
+                var span2 = writer.Writer.GetSpan(1);
+                span2[0] = (byte)']';
+                writer.Writer.Advance(1);
             }
         }
 
@@ -8528,7 +8889,9 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, ReadOnlyMemory<decimal> value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -8539,12 +8902,16 @@ namespace Utf8Json.Formatters
             
             for (var i = 1; i < span.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(span[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span3 = writer.Writer.GetSpan(1);
+        span3[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public ReadOnlyMemory<decimal> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -8734,7 +9101,9 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, Memory<decimal> value, JsonSerializerOptions options)
         {
-            writer.WriteBeginArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -8745,12 +9114,16 @@ namespace Utf8Json.Formatters
             
             for (var i = 1; i < span.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(span[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span3 = writer.Writer.GetSpan(1);
+        span3[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public Memory<decimal> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -8867,11 +9240,18 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 
-            writer.WriteBeginArray();
+            var span1 = writer.Writer.GetSpan(1);
+            span1[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Count == 0)
             {
                 goto END;
@@ -8881,12 +9261,16 @@ namespace Utf8Json.Formatters
 
             for (var i = 1; i < value.Count; i++)
             {
-                writer.WriteValueSeparator();
+                var span = writer.Writer.GetSpan(1);
+                span[0] = (byte)',';
+                writer.Writer.Advance(1);
                 writer.Write(value[i]);
             }
 
         END:
-            writer.WriteEndArray();
+        var span2 = writer.Writer.GetSpan(1);
+        span2[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER

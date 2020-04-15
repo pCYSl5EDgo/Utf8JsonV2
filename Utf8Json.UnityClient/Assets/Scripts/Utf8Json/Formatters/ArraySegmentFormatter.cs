@@ -27,7 +27,9 @@ namespace Utf8Json.Formatters
 
             var span = value.AsSpan();
 
-            writer.WriteBeginArray();
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (span.IsEmpty)
             {
                 goto END;
@@ -41,7 +43,9 @@ namespace Utf8Json.Formatters
 
                 for (var i = 1; i < span.Length; i++)
                 {
-                    writer.WriteValueSeparator();
+                    var span1 = writer.Writer.GetSpan(1);
+                    span1[0] = (byte)',';
+                    writer.Writer.Advance(1);
                     formatter.Serialize(ref writer, span[i], options);
                 }
             }
@@ -51,13 +55,17 @@ namespace Utf8Json.Formatters
 
                 for (var i = 1; i < span.Length; i++)
                 {
-                    writer.WriteValueSeparator();
+                    var span1 = writer.Writer.GetSpan(1);
+                    span1[0] = (byte)',';
+                    writer.Writer.Advance(1);
                     writer.Serialize(span[i], options, serializer);
                 }
             }
 
         END:
-            writer.WriteEndArray();
+        var span3 = writer.Writer.GetSpan(1);
+        span3[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         public ArraySegment<T> Deserialize(ref JsonReader reader, JsonSerializerOptions options)

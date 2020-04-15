@@ -23,7 +23,7 @@ namespace Utf8Json.Formatters
             // can not negate, use cache
             if (value == TimeSpan.MinValue)
             {
-                writer.WriteRaw(minValue);
+                writer.Writer.Write((ReadOnlySpan<byte>) minValue);
                 return;
             }
 

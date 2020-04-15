@@ -31,20 +31,18 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
         public void Serialize(ref JsonWriter writer, byte? value, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                writer.Write(value.Value);
-            }
-            else
-            {
-                writer.WriteNull();
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
         public static byte? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -54,7 +52,7 @@ namespace Utf8Json.Formatters
 
         public byte? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : reader.ReadByte();
+            return DeserializeStatic(ref reader, options);
         }
 
         public static int CalcByteLengthForSerialization(JsonSerializerOptions options, byte? value)
@@ -158,7 +156,12 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
             else
             {
@@ -641,7 +644,12 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 
@@ -801,20 +809,18 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
         public void Serialize(ref JsonWriter writer, sbyte? value, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                writer.Write(value.Value);
-            }
-            else
-            {
-                writer.WriteNull();
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
         public static sbyte? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -824,7 +830,7 @@ namespace Utf8Json.Formatters
 
         public sbyte? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : reader.ReadSByte();
+            return DeserializeStatic(ref reader, options);
         }
 
         public static int CalcByteLengthForSerialization(JsonSerializerOptions options, sbyte? value)
@@ -928,7 +934,12 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
             else
             {
@@ -1411,7 +1422,12 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 
@@ -1571,20 +1587,18 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
         public void Serialize(ref JsonWriter writer, short? value, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                writer.Write(value.Value);
-            }
-            else
-            {
-                writer.WriteNull();
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
         public static short? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -1594,7 +1608,7 @@ namespace Utf8Json.Formatters
 
         public short? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : reader.ReadInt16();
+            return DeserializeStatic(ref reader, options);
         }
 
         public static int CalcByteLengthForSerialization(JsonSerializerOptions options, short? value)
@@ -1698,7 +1712,12 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
             else
             {
@@ -2181,7 +2200,12 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 
@@ -2341,20 +2365,18 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
         public void Serialize(ref JsonWriter writer, ushort? value, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                writer.Write(value.Value);
-            }
-            else
-            {
-                writer.WriteNull();
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
         public static ushort? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -2364,7 +2386,7 @@ namespace Utf8Json.Formatters
 
         public ushort? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : reader.ReadUInt16();
+            return DeserializeStatic(ref reader, options);
         }
 
         public static int CalcByteLengthForSerialization(JsonSerializerOptions options, ushort? value)
@@ -2468,7 +2490,12 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
             else
             {
@@ -2951,7 +2978,12 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 
@@ -3111,20 +3143,18 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
         public void Serialize(ref JsonWriter writer, int? value, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                writer.Write(value.Value);
-            }
-            else
-            {
-                writer.WriteNull();
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
         public static int? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -3134,7 +3164,7 @@ namespace Utf8Json.Formatters
 
         public int? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : reader.ReadInt32();
+            return DeserializeStatic(ref reader, options);
         }
 
         public static int CalcByteLengthForSerialization(JsonSerializerOptions options, int? value)
@@ -3238,7 +3268,12 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
             else
             {
@@ -3721,7 +3756,12 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 
@@ -3881,20 +3921,18 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
         public void Serialize(ref JsonWriter writer, uint? value, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                writer.Write(value.Value);
-            }
-            else
-            {
-                writer.WriteNull();
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
         public static uint? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -3904,7 +3942,7 @@ namespace Utf8Json.Formatters
 
         public uint? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : reader.ReadUInt32();
+            return DeserializeStatic(ref reader, options);
         }
 
         public static int CalcByteLengthForSerialization(JsonSerializerOptions options, uint? value)
@@ -4008,7 +4046,12 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
             else
             {
@@ -4491,7 +4534,12 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 
@@ -4651,20 +4699,18 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
         public void Serialize(ref JsonWriter writer, long? value, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                writer.Write(value.Value);
-            }
-            else
-            {
-                writer.WriteNull();
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
         public static long? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -4674,7 +4720,7 @@ namespace Utf8Json.Formatters
 
         public long? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : reader.ReadInt64();
+            return DeserializeStatic(ref reader, options);
         }
 
         public static int CalcByteLengthForSerialization(JsonSerializerOptions options, long? value)
@@ -4778,7 +4824,12 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
             else
             {
@@ -5261,7 +5312,12 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 
@@ -5421,20 +5477,18 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
         public void Serialize(ref JsonWriter writer, ulong? value, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                writer.Write(value.Value);
-            }
-            else
-            {
-                writer.WriteNull();
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
         public static ulong? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -5444,7 +5498,7 @@ namespace Utf8Json.Formatters
 
         public ulong? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : reader.ReadUInt64();
+            return DeserializeStatic(ref reader, options);
         }
 
         public static int CalcByteLengthForSerialization(JsonSerializerOptions options, ulong? value)
@@ -5548,7 +5602,12 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
             else
             {
@@ -6031,7 +6090,12 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 
@@ -6215,20 +6279,18 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
         public void Serialize(ref JsonWriter writer, float? value, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                writer.Write(value.Value);
-            }
-            else
-            {
-                writer.WriteNull();
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
         public static float? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -6238,7 +6300,7 @@ namespace Utf8Json.Formatters
 
         public float? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : reader.ReadSingle();
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -6257,7 +6319,12 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
             else
             {
@@ -6740,7 +6807,12 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 
@@ -6924,20 +6996,18 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
         public void Serialize(ref JsonWriter writer, double? value, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                writer.Write(value.Value);
-            }
-            else
-            {
-                writer.WriteNull();
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
         public static double? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -6947,7 +7017,7 @@ namespace Utf8Json.Formatters
 
         public double? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : reader.ReadDouble();
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -6966,7 +7036,12 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
             else
             {
@@ -7449,7 +7524,12 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 
@@ -7633,20 +7713,18 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
         public void Serialize(ref JsonWriter writer, DateTime? value, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                writer.Write(value.Value);
-            }
-            else
-            {
-                writer.WriteNull();
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
         public static DateTime? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -7656,7 +7734,7 @@ namespace Utf8Json.Formatters
 
         public DateTime? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : reader.ReadDateTime();
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -7675,7 +7753,12 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
             else
             {
@@ -8158,7 +8241,12 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 
@@ -8342,20 +8430,18 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
         }
 
         public void Serialize(ref JsonWriter writer, decimal? value, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                writer.Write(value.Value);
-            }
-            else
-            {
-                writer.WriteNull();
-            }
+            SerializeStatic(ref writer, value, options);
         }
 
         public static decimal? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -8365,7 +8451,7 @@ namespace Utf8Json.Formatters
 
         public decimal? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : reader.ReadDecimal();
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -8384,7 +8470,12 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
             }
             else
             {
@@ -8867,7 +8958,12 @@ namespace Utf8Json.Formatters
         {
             if (value == null)
             {
-                writer.WriteNull();
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
                 return;
             }
 

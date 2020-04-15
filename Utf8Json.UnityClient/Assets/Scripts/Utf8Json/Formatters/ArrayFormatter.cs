@@ -40,10 +40,16 @@ namespace Utf8Json.Formatters
                 return;
             }
 
-            writer.WriteBeginArray();
+            {
+                var span = writer.Writer.GetSpan(1);
+                span[0] = (byte) '[';
+                writer.Writer.Advance(1);
+            }
             if (value.Length == 0)
             {
-                writer.WriteEndArray();
+                var span = writer.Writer.GetSpan(1);
+                span[0] = (byte)']';
+                writer.Writer.Advance(1);
                 return;
             }
 
@@ -57,12 +63,16 @@ namespace Utf8Json.Formatters
                 writer.Serialize(value[0], options, serializer);
                 for (var i = 1; i < value.Length; i++)
                 {
-                    writer.WriteValueSeparator();
+                    var span = writer.Writer.GetSpan(1);
+                    span[0] = (byte)',';
+                    writer.Writer.Advance(1);
                     writer.Serialize(value[i], options, serializer);
                 }
             }
 
-            writer.WriteEndArray();
+            var span1 = writer.Writer.GetSpan(1);
+            span1[0] = (byte)']';
+            writer.Writer.Advance(1);
         }
 
         private static void SerializeWithFormatter(ref JsonWriter writer, T[] value, JsonSerializerOptions options)
@@ -72,7 +82,9 @@ namespace Utf8Json.Formatters
 
             for (var i = 1; i < value.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span = writer.Writer.GetSpan(1);
+                span[0] = (byte)',';
+                writer.Writer.Advance(1);
                 formatter.Serialize(ref writer, value[i], options);
             }
         }
@@ -294,7 +306,9 @@ namespace Utf8Json.Formatters
                 return;
             }
 
-            writer.WriteBeginArray();
+            var span1 = writer.Writer.GetSpan(1);
+            span1[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -311,12 +325,16 @@ namespace Utf8Json.Formatters
 
                 for (var i = 1; i < value.Length; i++)
                 {
-                    writer.WriteValueSeparator();
+                    var span = writer.Writer.GetSpan(1);
+                    span[0] = (byte)',';
+                    writer.Writer.Advance(1);
                     writer.Serialize(value[i], options, serializer);
                 }
             }
         END:
-            writer.WriteEndArray();
+        var span2 = writer.Writer.GetSpan(1);
+        span2[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
         private static void SerializeWithFormatter(ref JsonWriter writer, T[] value, JsonSerializerOptions options)
@@ -326,7 +344,9 @@ namespace Utf8Json.Formatters
 
             for (var i = 1; i < value.Length; i++)
             {
-                writer.WriteValueSeparator();
+                var span = writer.Writer.GetSpan(1);
+                span[0] = (byte)',';
+                writer.Writer.Advance(1);
                 formatter.Serialize(ref writer, value[i], options);
             }
         }

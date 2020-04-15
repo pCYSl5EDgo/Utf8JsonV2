@@ -161,7 +161,7 @@ namespace Utf8Json
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Write(ref this JsonWriter writer, decimal value)
         {
-            writer.WriteRaw(StringEncoding.Utf8.GetBytes(value.ToString(CultureInfo.InvariantCulture)));
+            writer.Writer.Write((ReadOnlySpan<byte>) StringEncoding.Utf8.GetBytes(value.ToString(CultureInfo.InvariantCulture)));
         }
     }
 }

@@ -68,7 +68,9 @@ namespace Utf8Json.Formatters
 
                 while (e.MoveNext())
                 {
-                    writer.WriteValueSeparator();
+                    var span = writer.Writer.GetSpan(1);
+                    span[0] = (byte)',';
+                    writer.Writer.Advance(1);
                     Debug.Assert(e.Current != null, "e.Current != null");
                     var item = (DictionaryEntry)e.Current;
                     var propertyName = item.Key.ToString();
@@ -86,7 +88,9 @@ namespace Utf8Json.Formatters
             }
 
         END:
-            writer.WriteEndObject();
+        var span1 = writer.Writer.GetSpan(1);
+        span1[0] = (byte)'}';
+        writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER

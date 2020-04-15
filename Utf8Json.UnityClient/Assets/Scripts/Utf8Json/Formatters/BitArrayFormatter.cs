@@ -57,21 +57,63 @@ namespace Utf8Json.Formatters
                 return;
             }
 
-            writer.WriteBeginArray();
+            var span3 = writer.Writer.GetSpan(1);
+            span3[0] = (byte)'[';
+            writer.Writer.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
             }
 
-            writer.Write(value[0]);
+            if (value[0])
+            {
+                var span1 = writer.Writer.GetSpan(4);
+                span1[0] = (byte)'t';
+                span1[1] = (byte)'r';
+                span1[2] = (byte)'u';
+                span1[3] = (byte)'e';
+                writer.Writer.Advance(4);
+            }
+            else
+            {
+                var span2 = writer.Writer.GetSpan(5);
+                span2[0] = (byte)'f';
+                span2[1] = (byte)'a';
+                span2[2] = (byte)'l';
+                span2[3] = (byte)'s';
+                span2[4] = (byte)'e';
+                writer.Writer.Advance(5);
+            }
             for (var i = 1; i < value.Length; i++)
             {
-                writer.WriteValueSeparator();
-                writer.Write(value[i]);
+                var span1 = writer.Writer.GetSpan(1);
+                span1[0] = (byte)',';
+                writer.Writer.Advance(1);
+                if (value[i])
+                {
+                    var span = writer.Writer.GetSpan(4);
+                    span[0] = (byte)'t';
+                    span[1] = (byte)'r';
+                    span[2] = (byte)'u';
+                    span[3] = (byte)'e';
+                    writer.Writer.Advance(4);
+                }
+                else
+                {
+                    var span = writer.Writer.GetSpan(5);
+                    span[0] = (byte)'f';
+                    span[1] = (byte)'a';
+                    span[2] = (byte)'l';
+                    span[3] = (byte)'s';
+                    span[4] = (byte)'e';
+                    writer.Writer.Advance(5);
+                }
             }
 
         END:
-            writer.WriteEndArray();
+        var span4 = writer.Writer.GetSpan(1);
+        span4[0] = (byte)']';
+        writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER
