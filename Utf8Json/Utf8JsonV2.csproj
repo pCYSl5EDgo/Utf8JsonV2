@@ -27,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\PrimitiveFormatter.cs;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\CollectionFormatter.cs;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\Dictionary\DictionaryFormatter.cs;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Resolvers\BuiltinResolverHelper.cs;" />
+    <Compile Remove="..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\PrimitiveFormatter.cs;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\CollectionFormatter.cs;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\Dictionary\DictionaryFormatter.cs;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Resolvers\BuiltinResolverHelper.cs;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\Array\MultiDimensionArrayFormatter.cs;" />
   </ItemGroup>
 
   <ItemGroup>
@@ -43,6 +43,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Formatters\Array\MultiDimensionArrayFormatter.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>MultiDimensionArrayFormatter.cs</LastGenOutput>
+    </None>
     <None Update="Formatters\CollectionFormatter.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>CollectionFormatter.cs</LastGenOutput>
@@ -62,6 +66,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Formatters\Array\MultiDimensionArrayFormatter.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>MultiDimensionArrayFormatter.tt</DependentUpon>
+    </Compile>
     <Compile Update="Formatters\CollectionFormatter.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>

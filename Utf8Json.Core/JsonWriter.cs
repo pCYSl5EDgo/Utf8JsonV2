@@ -783,7 +783,7 @@ namespace Utf8Json
                 if (index != 0)
                 {
 #if SPAN_BUILTIN
-                    var consumed = StringEncoding.Utf8.GetBytes(value.Slice(0, index), span);
+                    var consumed = StringEncoding.Utf8.GetBytes(value1.Slice(0, index), span);
 #else
                     int consumed;
                     fixed (char* src = &value1[0])
@@ -808,7 +808,7 @@ namespace Utf8Json
                 if (index != 0)
                 {
 #if SPAN_BUILTIN
-                    var consumed = StringEncoding.Utf8.GetBytes(value.Slice(0, index), span);
+                    var consumed = StringEncoding.Utf8.GetBytes(value1.Slice(0, index), span);
 #else
                     int consumed;
                     fixed (char* src = &value1[0])
@@ -837,7 +837,7 @@ namespace Utf8Json
             if (!value1.IsEmpty)
             {
 #if SPAN_BUILTIN
-                var consumed = StringEncoding.Utf8.GetBytes(value, span);
+                var consumed = StringEncoding.Utf8.GetBytes(value1, span);
 #else
                 int consumed;
                 fixed (char* src = &value1[0])

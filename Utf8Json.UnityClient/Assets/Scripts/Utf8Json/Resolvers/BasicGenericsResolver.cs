@@ -1,11 +1,11 @@
-﻿// Copyright (c) All contributors. All rights reserved.
+// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
 
 namespace Utf8Json.Resolvers
 {
-    public sealed partial class BuiltinResolver : IFormatterResolver
+    public sealed partial class BasicGenericsResolver : IFormatterResolver
     {
 #if CSHARP_8_OR_NEWER
         public IJsonFormatter<T>? GetFormatter<T>()
@@ -36,7 +36,7 @@ namespace Utf8Json.Resolvers
             return FormatterCache<T>.SerializeSpanFunctionPointer;
         }
 
-        private static class FormatterCache<T>
+        internal struct FormatterCache<T>
         {
             public static readonly IntPtr SerializeFunctionPointer;
             public static readonly IntPtr DeserializeFunctionPointer;
@@ -45,8 +45,8 @@ namespace Utf8Json.Resolvers
 
             static FormatterCache()
             {
-                (SerializeFunctionPointer, DeserializeFunctionPointer, CalcByteLengthForSerializationFunctionPointer, SerializeSpanFunctionPointer) 
-                    = BuiltinResolverGetFormatterHelper.GetFunctionPointers(typeof(T));
+                (SerializeFunctionPointer, DeserializeFunctionPointer, CalcByteLengthForSerializationFunctionPointer, SerializeSpanFunctionPointer)
+                    = BasicGenericsResolverGetFormatterHelper.GetFunctionPointers(typeof(T));
             }
         }
     }

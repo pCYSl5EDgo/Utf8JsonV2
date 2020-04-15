@@ -137,7 +137,9 @@ namespace Utf8Json.Formatters
             }
 
         END:
-            writer.WriteEndObject();
+        var span1 = writer.Writer.GetSpan(1);
+        span1[0] = (byte)'}';
+        writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -319,7 +321,9 @@ namespace Utf8Json.Formatters
             }
 
         END:
-            writer.WriteEndObject();
+        var span1 = writer.Writer.GetSpan(1);
+        span1[0] = (byte)'}';
+        writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -501,7 +505,9 @@ namespace Utf8Json.Formatters
             }
 
         END:
-            writer.WriteEndObject();
+        var span1 = writer.Writer.GetSpan(1);
+        span1[0] = (byte)'}';
+        writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -683,7 +689,9 @@ namespace Utf8Json.Formatters
             }
 
         END:
-            writer.WriteEndObject();
+        var span1 = writer.Writer.GetSpan(1);
+        span1[0] = (byte)'}';
+        writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -865,7 +873,9 @@ namespace Utf8Json.Formatters
             }
 
         END:
-            writer.WriteEndObject();
+        var span1 = writer.Writer.GetSpan(1);
+        span1[0] = (byte)'}';
+        writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -1047,7 +1057,9 @@ namespace Utf8Json.Formatters
             }
 
         END:
-            writer.WriteEndObject();
+        var span1 = writer.Writer.GetSpan(1);
+        span1[0] = (byte)'}';
+        writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER

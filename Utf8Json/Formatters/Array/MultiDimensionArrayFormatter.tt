@@ -1,0 +1,345 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using StaticFunctionPointerHelper;
+using System;
+using Utf8Json.Internal;
+
+namespace Utf8Json.Formatters
+{
+<#for(var dimension = 2; dimension <= 32; dimension++){
+    var typeText = "T[" + new string(',', dimension - 1) + "]";
+#>
+    public sealed unsafe class Dimension<#= dimension #>ArrayFormatter<T>
+#if CSHARP_8_OR_NEWER
+        : IJsonFormatter<<#= typeText #>?>
+#else
+        : IJsonFormatter<<#= typeText #>>
+#endif
+    {
+#if CSHARP_8_OR_NEWER
+        public void Serialize(ref JsonWriter writer, <#= typeText #>? value, JsonSerializerOptions options)
+#else
+        public void Serialize(ref JsonWriter writer, <#= typeText #> value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value, options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public static void SerializeStatic(ref JsonWriter writer, <#= typeText #>? value, JsonSerializerOptions options)
+#else
+        public static void SerializeStatic(ref JsonWriter writer, <#= typeText #> value, JsonSerializerOptions options)
+#endif
+        {
+            if (value == null)
+            {
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
+                return;
+            }
+
+<#for (var i = 0; i < dimension; i++){#>
+            var startIndexOf<#= i #> = value.GetLowerBound(<#= i #>);
+            var lengthOf<#= i #> = value.GetLength(<#= i #>);
+<#}#>
+            {
+                const int sizeHint = 12;
+                var span = writer.Writer.GetSpan(sizeHint);
+                span[ 0] = (byte)'{';
+                span[ 1] = (byte)'"';
+                span[ 2] = (byte)'l';
+                span[ 3] = (byte)'e';
+                span[ 4] = (byte)'n';
+                span[ 5] = (byte)'g';
+                span[ 6] = (byte)'t';
+                span[ 7] = (byte)'h';
+                span[ 8] = (byte)'s';
+                span[ 9] = (byte)'"';
+                span[10] = (byte)':';
+                span[11] = (byte)'[';
+                writer.Writer.Advance(sizeHint);
+            }
+
+            writer.Write(lengthOf0);
+<#for (var i = 1; i < dimension; i++){#>
+            {
+                var span = writer.Writer.GetSpan(1);
+                span[0] = (byte)',';
+                writer.Writer.Advance(1);
+            }
+            writer.Write(lengthOf<#= i #>);
+<#}#>
+
+            if (startIndexOf0 != 0<#for (var i = 1; i < dimension; i++){#> || startIndexOf<#= i #> != 0<#}#>)
+            {
+                {
+                    const int sizeHint = 12;
+                    var span = writer.Writer.GetSpan(sizeHint);
+                    span[ 0] = (byte)']';
+                    span[ 1] = (byte)',';
+                    span[ 2] = (byte)'"';
+                    span[ 3] = (byte)'s';
+                    span[ 4] = (byte)'t';
+                    span[ 5] = (byte)'a';
+                    span[ 6] = (byte)'r';
+                    span[ 7] = (byte)'t';
+                    span[ 8] = (byte)'s';
+                    span[ 9] = (byte)'"';
+                    span[10] = (byte)':';
+                    span[11] = (byte)'[';
+                    writer.Writer.Advance(sizeHint);
+                }
+
+                writer.Write(startIndexOf0);
+<#for (var i = 1; i < dimension; i++){#>
+                {
+                    var span = writer.Writer.GetSpan(1);
+                    span[0] = (byte)',';
+                    writer.Writer.Advance(1);
+                }
+                writer.Write(startIndexOf<#= i #>);
+<#}#>
+            }
+
+            {
+                const int sizeHint = 14;
+                var span = writer.Writer.GetSpan(sizeHint);
+                span[ 0] = (byte)']';
+                span[ 1] = (byte)',';
+                span[ 2] = (byte)'"';
+                span[ 3] = (byte)'e';
+                span[ 4] = (byte)'l';
+                span[ 5] = (byte)'e';
+                span[ 6] = (byte)'m';
+                span[ 7] = (byte)'e';
+                span[ 8] = (byte)'n';
+                span[ 9] = (byte)'t';
+                span[10] = (byte)'s';
+                span[11] = (byte)'"';
+                span[12] = (byte)':';
+                span[13] = (byte)'[';
+                writer.Writer.Advance(sizeHint);
+            }
+
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() == null)
+            {
+                throw new NullReferenceException();
+            }
+
+            var first = true;
+            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+            {
+<#for (var i = 1; i < dimension; i++){
+    var indent = new string('\t', i);#>
+<#= indent #>            for (var iteratorOf<#= i #> = 0; iteratorOf<#= i #> < lengthOf<#= i #>; iteratorOf<#= i #>++)
+<#= indent #>            {
+<# if (i == dimension - 1){#>
+<#= indent #>                if (first)
+<#= indent #>                {
+<#= indent #>                    first = false;
+<#= indent #>                }
+<#= indent #>                else
+<#= indent #>                {
+<#= indent #>                    var span = writer.Writer.GetSpan(1);
+<#= indent #>                    span[0] = (byte)',';
+<#= indent #>                    writer.Writer.Advance(1);
+<#= indent #>                }
+
+<#= indent #>                var element = value[
+<#= indent #>                    iteratorOf0 + startIndexOf0
+<#for (var j = 1; j < dimension; j++){#>
+<#= indent #>                    , iteratorOf<#= j #> + startIndexOf<#= j #>
+<#}#>
+<#= indent #>                ];
+<#= indent #>                writer.Serialize(element, options, serializer);
+<#}#>
+<#}#>
+<#for (var i = dimension; --i >= 1;){
+    var indent = new string('\t', i);#>
+            <#= indent #>}
+<#}#>
+            }
+
+            {
+                const int sizeHint = 2;
+                var span = writer.Writer.GetSpan(sizeHint);
+                span[0] = (byte)']';
+                span[1] = (byte)'}';
+                writer.Writer.Advance(sizeHint);
+            }
+        }
+
+#if CSHARP_8_OR_NEWER
+        public <#= typeText #>? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public <#= typeText #> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public static <#= typeText #>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public static <#= typeText #> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            if (reader.ReadIsNull())
+            {
+                return default;
+            }
+            
+            reader.ReadIsBeginObjectWithVerify();
+
+            var lengths = default(int[]);
+            var starts = default(int[]);
+            var elements = default(T[]);
+            var count = 0;
+            while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
+            {
+                var keySpan = reader.ReadPropertyNameSegmentRaw();
+                switch (keySpan.Length)
+                {
+                    case 6:
+                        if (keySpan[0] != 's' || keySpan[1] != 't' || keySpan[2] != 'a' || keySpan[3] != 'r' || keySpan[4] != 't' || keySpan[5] != 's')
+                        {
+                            goto default;
+                        }
+
+                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        if (starts != null && starts.Length != <#= dimension #>)
+                        {
+                            throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
+                        }
+
+                        continue;
+                    case 7:
+                        if (keySpan[0] != 'l' || keySpan[1] != 'e' || keySpan[2] != 'n' || keySpan[3] != 'g' || keySpan[4] != 't' || keySpan[5] != 'h' || keySpan[6] != 's')
+                        {
+                            goto default;
+                        }
+                            
+                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        if (lengths != null && lengths.Length != <#= dimension #>)
+                        {
+                            throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
+                        }
+
+                        continue;
+                    case 8:
+                        if (keySpan[0] != 'e' || keySpan[1] != 'l' || keySpan[2] != 'e' || keySpan[3] != 'm' || keySpan[4] != 'e' || keySpan[5] != 'n' || keySpan[6] != 't' || keySpan[7] != 's')
+                        {
+                            goto default;
+                        }
+
+                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        continue;
+                    default:
+                        reader.ReadNextBlock();
+                        continue;
+                }
+            }
+
+            if (lengths == null)
+            {
+                return default;
+            }
+
+            var totalLength = lengths[0]<#for(var i = 1; i < dimension; i++){#> * lengths[<#= i #>]<#}#>;
+
+            if (starts == null)
+            {
+                goto NO_STARTS;
+            }
+
+            foreach (var startIndex in starts)
+            {
+                if (startIndex != 0)
+                {
+                    goto STARTS_EXIST;
+                }
+            }
+
+            <#= typeText #> answer;
+
+        NO_STARTS:
+            answer = new T[lengths[0]<# for (var i = 1; i < dimension; i++){#>, lengths[<#= i #>]<#}#>];
+            if (elements == null)
+            {
+                return answer;
+            }
+            
+            if (elements.Length != totalLength)
+            {
+                throw new JsonParsingException("Does not match the length.");
+            }
+
+            for (int iterator0 = 0, end0 = lengths[0], index = 0; iterator0 < end0; iterator0++)
+            {
+<#for (var i = 1; i < dimension; i++){
+    var indent = new string('\t', i);#>
+            <#= indent #>for (int iterator<#= i #> = 0, end<#= i #> = lengths[<#= i #>]; iterator<#= i #> < end<#= i #>; iterator<#= i #>++)
+            <#= indent #>{
+<#if (i == dimension - 1){#>
+                <#= indent #>answer[iterator0<#for (var j = 1; j < dimension; j++) {#>, iterator<#= j #><#}#>] = elements[index++];
+<#}#>
+<#}#>
+<#for (var i = dimension; --i > 0;){
+    var indent = new string('\t', i);#>
+            <#= indent #>}
+<#}#>
+            }
+
+            return answer;
+
+        STARTS_EXIST:
+#if CSHARP_8_OR_NEWER
+            answer = (Array.CreateInstance(typeof(T), lengths, starts) as <#= typeText #>)!;
+#else
+            answer = Array.CreateInstance(typeof(T), lengths, starts) as <#= typeText #>;
+#endif
+
+            if (elements == null)
+            {
+                return answer;
+            }
+
+            if (elements.Length != totalLength)
+            {
+                throw new JsonParsingException("Does not match the length.");
+            }
+
+            for (int iterator0 = starts[0], end0 = starts[0] + lengths[0], index = 0; iterator0 < end0; iterator0++)
+            {
+<#for (var i = 1; i < dimension; i++){
+    var indent = new string('\t', i);#>
+            <#= indent #>for (int iterator<#= i #> = starts[<#= i #>], end<#= i #> = starts[<#= i #>] + lengths[<#= i #>]; iterator<#= i #> < end<#= i #>; iterator<#= i #>++)
+            <#= indent #>{
+<#if (i == dimension - 1){#>
+                <#= indent #>answer[iterator0<#for (var j = 1; j < dimension; j++) {#>, iterator<#= j #><#}#>] = elements[index++];
+<#}#>
+<#}#>
+<#for (var i = dimension; --i > 0;){
+    var indent = new string('\t', i);#>
+            <#= indent #>}
+<#}#>
+            }
+
+            return answer;
+        }
+    }
+
+<#}#>
+}

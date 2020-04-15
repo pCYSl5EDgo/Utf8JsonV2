@@ -146,8 +146,8 @@ namespace Utf8Json.Formatters
             reader.ReadIsBeginObjectWithVerify();
 
             var answer = new TDictionary();
-            var i = 0;
-            while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref i))
+            var count = 0;
+            while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
             {
                 var key = keyFormatter.DeserializeFromPropertyName(ref reader, options);
                 reader.ReadIsNameSeparatorWithVerify();
