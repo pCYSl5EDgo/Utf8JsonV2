@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 
 namespace Utf8Json
 {
@@ -15,6 +14,10 @@ namespace Utf8Json
         internal JsonSerializerOptions(IFormatterResolver resolver)
         {
             this.Resolver = resolver;
+            this.IgnoreNullValues = true;
+            this.IgnoreReadOnlyProperties = false;
+            this.MaxDepth = 64;
+            this.WriteIndented = false;
         }
 
         /// <summary>
@@ -25,8 +28,10 @@ namespace Utf8Json
         private JsonSerializerOptions(JsonSerializerOptions copyFrom)
         {
             this.Resolver = copyFrom.Resolver;
-            this.OmitAssemblyVersion = copyFrom.OmitAssemblyVersion;
-            this.AllowAssemblyVersionMismatch = copyFrom.AllowAssemblyVersionMismatch;
+            this.IgnoreNullValues = copyFrom.IgnoreNullValues;
+            this.IgnoreReadOnlyProperties = copyFrom.IgnoreReadOnlyProperties;
+            this.MaxDepth = copyFrom.MaxDepth;
+            this.WriteIndented = copyFrom.WriteIndented;
         }
 
         /// <summary>
@@ -35,47 +40,6 @@ namespace Utf8Json
         /// <value>An instance of <see cref="IFormatterResolver"/>. Never <c>null</c>.</value>
         /// <exception cref="ArgumentNullException">Thrown if an attempt is made to set this property to <c>null</c>.</exception>
         public IFormatterResolver Resolver { get; private set; }
-
-        /// <summary>
-        /// Gets a value indicating whether serialization should omit assembly version, culture and public key token metadata when using the typeless formatter.
-        /// </summary>
-        /// <value>The default value is <c>false</c>.</value>
-        public bool OmitAssemblyVersion { get; private set; }
-
-        /// <summary>
-        /// Gets a value indicating whether deserialization may instantiate types from an assembly with a different version if a matching version cannot be found.
-        /// </summary>
-        /// <value>The default value is <c>false</c>.</value>
-        public bool AllowAssemblyVersionMismatch { get; private set; }
-
-        internal static readonly Regex AssemblyNameVersionSelectorRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=[\w-]+, PublicKeyToken=(?:null|[a-f0-9]{16})$", RegexOptions.Compiled);
-
-        /// <summary>
-        /// Gets a type given a string representation of the type.
-        /// </summary>
-        /// <param name="typeName">The name of the type to load. This is typically the <see cref="Type.AssemblyQualifiedName"/> but may use the assembly's simple name.</param>
-        /// <returns>The loaded type or <c>null</c> if no matching type could be found.</returns>
-#if CSHARP_8_OR_NEWER
-        public Type? LoadType(string typeName)
-#else
-        public Type LoadType(string typeName)
-#endif
-        {
-            var result = Type.GetType(typeName, false);
-            if (result != null || !this.AllowAssemblyVersionMismatch)
-            {
-                goto RETURN;
-            }
-
-            var shortenedName = AssemblyNameVersionSelectorRegex.Replace(typeName, string.Empty);
-            if (shortenedName != typeName)
-            {
-                result = Type.GetType(shortenedName, false);
-            }
-
-        RETURN:
-            return result;
-        }
 
         /// <summary>
         /// A collection of known dangerous types that are not expected in a typical Json stream,
@@ -109,63 +73,102 @@ namespace Utf8Json
         /// <summary>
         /// Gets a copy of these options with the <see cref="Resolver"/> property set to a new value.
         /// </summary>
-        /// <param name="resolver">The new value for the <see cref="Resolver"/>.</param>
+        /// <param name="value">The new value for the <see cref="Resolver"/>.</param>
         /// <returns>The new instance; or the original if the value is unchanged.</returns>
-        public JsonSerializerOptions WithResolver(IFormatterResolver resolver)
+        public JsonSerializerOptions WithResolver(IFormatterResolver value)
         {
-            if (this.Resolver == resolver)
+            if (this.Resolver == value)
             {
                 return this;
             }
 
-            var result = this.Clone();
-            result.Resolver = resolver;
+            var result = new JsonSerializerOptions(this)
+            {
+                Resolver = value,
+            };
             return result;
         }
 
         /// <summary>
-        /// Gets a copy of these options with the <see cref="OmitAssemblyVersion"/> property set to a new value.
+        /// Get a value that indicates whether an extra comma at the end of a list of JSON values in an object or array is allowed (and ignored) within the JSON payload being deserialized.
+        /// Always false due to the RFC.
         /// </summary>
-        /// <param name="omitAssemblyVersion">The new value for the <see cref="OmitAssemblyVersion"/> property.</param>
-        /// <returns>The new instance; or the original if the value is unchanged.</returns>
-        public JsonSerializerOptions WithOmitAssemblyVersion(bool omitAssemblyVersion)
+        public bool AllowTrailingCommas => false;
+
+        public JsonSerializerOptions WithAllowTrailingCommas(bool value) => throw new NotSupportedException();
+
+        public bool IgnoreNullValues { get; private set; }
+
+        public JsonSerializerOptions WithIgnoreNullValues(bool value)
         {
-            if (this.OmitAssemblyVersion == omitAssemblyVersion)
+            if (this.IgnoreNullValues == value)
             {
                 return this;
             }
 
-            var result = this.Clone();
-            result.OmitAssemblyVersion = omitAssemblyVersion;
+            var result = new JsonSerializerOptions(this)
+            {
+                IgnoreNullValues = value,
+            };
             return result;
         }
 
-        /// <summary>
-        /// Gets a copy of these options with the <see cref="AllowAssemblyVersionMismatch"/> property set to a new value.
-        /// </summary>
-        /// <param name="allowAssemblyVersionMismatch">The new value for the <see cref="AllowAssemblyVersionMismatch"/> property.</param>
-        /// <returns>The new instance; or the original if the value is unchanged.</returns>
-        public JsonSerializerOptions WithAllowAssemblyVersionMismatch(bool allowAssemblyVersionMismatch)
+        public bool IgnoreReadOnlyProperties { get; private set; }
+
+        public JsonSerializerOptions WithIgnoreReadOnlyProperties(bool value)
         {
-            if (this.AllowAssemblyVersionMismatch == allowAssemblyVersionMismatch)
+            if (this.IgnoreReadOnlyProperties == value)
             {
                 return this;
             }
 
-            var result = this.Clone();
-            result.AllowAssemblyVersionMismatch = allowAssemblyVersionMismatch;
+            var result = new JsonSerializerOptions(this)
+            {
+                IgnoreReadOnlyProperties = value,
+            };
             return result;
         }
 
-        /// <summary>
-        /// Creates a clone of this instance with the same properties set.
-        /// </summary>
-        /// <returns>The cloned instance. Guaranteed to be a new instance.</returns>
-        /// <exception cref="NotSupportedException">Thrown if this instance is a derived type that doesn't override this method.</exception>
-        private JsonSerializerOptions Clone()
+        public uint MaxDepth { get; private set; }
+
+        public JsonSerializerOptions WithMaxDepth(uint value)
         {
-            var clone = new JsonSerializerOptions(this);
-            return clone;
+            if (value > 64)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+
+            if (value == 0)
+            {
+                value = 64;
+            }
+
+            if (this.MaxDepth == value)
+            {
+                return this;
+            }
+
+            var result = new JsonSerializerOptions(this)
+            {
+                MaxDepth = value,
+            };
+            return result;
+        }
+
+        public bool WriteIndented { get; private set; }
+
+        public JsonSerializerOptions WithWriteIndented(bool value)
+        {
+            if (this.WriteIndented == value)
+            {
+                return this;
+            }
+
+            var result = new JsonSerializerOptions(this)
+            {
+                WriteIndented = value,
+            };
+            return result;
         }
     }
 }
