@@ -46,6 +46,12 @@ namespace Utf8JsonBenchmark
         {
             return V2::Utf8Json.JsonSerializer.Deserialize<int>(Bytes);
         }
+
+        [Benchmark]
+        public int DeserializeSystemJsonText()
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<int>(Bytes);
+        }
     }
 
     [MemoryDiagnoser]
@@ -72,6 +78,12 @@ namespace Utf8JsonBenchmark
         public long DeserializeUtf8JsonV2()
         {
             return V2::Utf8Json.JsonSerializer.Deserialize<long>(Bytes);
+        }
+
+        [Benchmark]
+        public long DeserializeSystemJsonText()
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<long>(Bytes);
         }
     }
 
@@ -104,6 +116,12 @@ namespace Utf8JsonBenchmark
         {
             return V2::Utf8Json.JsonSerializer.Serialize(Value);
         }
+
+        [Benchmark]
+        public byte[] SerializeSystemJsonText()
+        {
+            return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(Value);
+        }
     }
 
     [MemoryDiagnoser]
@@ -123,6 +141,12 @@ namespace Utf8JsonBenchmark
         {
             return V2::Utf8Json.JsonSerializer.Serialize(Value);
         }
+
+        [Benchmark]
+        public byte[] SerializeSystemJsonText()
+        {
+            return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(Value);
+        }
     }
 
     [MemoryDiagnoser]
@@ -140,15 +164,21 @@ namespace Utf8JsonBenchmark
         }
 
         [Benchmark]
-        public string SerializeUtf8JsonV1()
+        public string DeserializeUtf8JsonV1()
         {
             return global::Utf8Json.JsonSerializer.Deserialize<string>(Bytes);
         }
 
         [Benchmark]
-        public string SerializeUtf8JsonV2()
+        public string DeserializeUtf8JsonV2()
         {
             return V2::Utf8Json.JsonSerializer.Deserialize<string>(Bytes);
+        }
+
+        [Benchmark]
+        public string DeserializeSystemJsonText()
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<string>(Bytes);
         }
     }
 
@@ -168,6 +198,12 @@ namespace Utf8JsonBenchmark
         }
 
         [Benchmark]
+        public byte[] SerializeSystemJsonTextTrue()
+        {
+            return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(true);
+        }
+
+        [Benchmark]
         public byte[] SerializeUtf8JsonV1False()
         {
             return global::Utf8Json.JsonSerializer.Serialize(false);
@@ -177,6 +213,12 @@ namespace Utf8JsonBenchmark
         public byte[] SerializeUtf8JsonV2False()
         {
             return V2::Utf8Json.JsonSerializer.Serialize(false);
+        }
+
+        [Benchmark]
+        public byte[] SerializeSystemJsonTextFalse()
+        {
+            return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(false);
         }
 
         [Benchmark]
@@ -192,6 +234,12 @@ namespace Utf8JsonBenchmark
         }
 
         [Benchmark]
+        public bool DeserializeSystemJsonTextTrue()
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<bool>(new[] { (byte)'t', (byte)'r', (byte)'u', (byte)'e', });
+        }
+
+        [Benchmark]
         public bool DeserializeUtf8JsonV1False()
         {
             return global::Utf8Json.JsonSerializer.Deserialize<bool>(new[] { (byte)'f', (byte)'a', (byte)'l', (byte)'s', (byte)'e', });
@@ -201,6 +249,12 @@ namespace Utf8JsonBenchmark
         public bool DeserializeUtf8JsonV2False()
         {
             return V2::Utf8Json.JsonSerializer.Deserialize<bool>(new[] { (byte)'f', (byte)'a', (byte)'l', (byte)'s', (byte)'e', });
+        }
+
+        [Benchmark]
+        public bool DeserializeSystemJsonTextFalse()
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<bool>(new[] { (byte)'f', (byte)'a', (byte)'l', (byte)'s', (byte)'e', });
         }
     }
 
@@ -221,6 +275,12 @@ namespace Utf8JsonBenchmark
         {
             return V2::Utf8Json.JsonSerializer.Serialize(Value);
         }
+
+        [Benchmark]
+        public byte[] SerializeSystemTextJson()
+        {
+            return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(Value);
+        }
     }
 
     [MemoryDiagnoser]
@@ -238,7 +298,13 @@ namespace Utf8JsonBenchmark
         [Benchmark]
         public byte[] SerializeUtf8JsonV2()
         {
-            return V2::Utf8Json.JsonSerializer.Serialize<int>(Value);
+            return V2::Utf8Json.JsonSerializer.Serialize(Value);
+        }
+
+        [Benchmark]
+        public byte[] SerializeSystemTextJson()
+        {
+            return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(Value);
         }
     }
 
@@ -255,6 +321,12 @@ namespace Utf8JsonBenchmark
         public byte[] SerializeUtf8JsonV2()
         {
             return V2::Utf8Json.JsonSerializer.Serialize('\r');
+        }
+
+        [Benchmark]
+        public byte[] SerializeSystemTextJson()
+        {
+            return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes('\r');
         }
     }
 }
