@@ -4,7 +4,6 @@
 using System;
 using System.Buffers;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using Utf8Json.Internal;
 // ReSharper disable RedundantCaseLabel
 #pragma warning disable IDE0057
@@ -13,6 +12,8 @@ namespace Utf8Json
 {
     public unsafe ref struct JsonWriter
     {
+        public uint Depth { get; set; }
+
         /// <summary>
         /// The writer to use.
         /// </summary>

@@ -58,6 +58,11 @@ namespace Utf8Json.Resolvers
             static FormatterCache()
             {
                 var type = typeof(T);
+                if (type == typeof(object))
+                {
+                    return;
+                }
+
                 (SerializeFunctionPointer, DeserializeFunctionPointer, CalcByteLengthForSerializationFunctionPointer, SerializeSpanFunctionPointer)
                     = BasicGenericsResolverGetFormatterHelper.GetFunctionPointers(type);
 #if UNITY_2018_4_OR_NEWER

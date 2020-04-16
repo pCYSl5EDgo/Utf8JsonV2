@@ -171,14 +171,13 @@ namespace Utf8Json.Resolvers
 #endif
             {
                 var definition = targetType.GetGenericTypeDefinition();
-                var definitionFullName = definition?.FullName;
+                var definitionFullName = definition.FullName;
                 if (definitionFullName == null)
                 {
                     return default;
                 }
 
                 var genericArguments = targetType.GetGenericArguments();
-
 
                 if (excludeReferenceType)
                 {
@@ -191,43 +190,94 @@ namespace Utf8Json.Resolvers
                     }
                 }
 
-                if (definitionFullName.Length == 19)
+                var formatterType = default(Type);
+                switch (definitionFullName)
                 {
-                    Type baseFormatterType;
-                    switch (definitionFullName)
-                    {
-                        case "System.ValueTuple`2":
-                            System.Diagnostics.Debug.Assert(genericArguments.Length == 2);
-                            baseFormatterType = typeof(ValueTupleFormatter<,>);
-                            break;
-                        case "System.ValueTuple`3":
-                            System.Diagnostics.Debug.Assert(genericArguments.Length == 3);
-                            baseFormatterType = typeof(ValueTupleFormatter<,,>);
-                            break;
-                        case "System.ValueTuple`4":
-                            System.Diagnostics.Debug.Assert(genericArguments.Length == 4);
-                            baseFormatterType = typeof(ValueTupleFormatter<,,,>);
-                            break;
-                        case "System.ValueTuple`5":
-                            System.Diagnostics.Debug.Assert(genericArguments.Length == 5);
-                            baseFormatterType = typeof(ValueTupleFormatter<,,,,>);
-                            break;
-                        case "System.ValueTuple`6":
-                            System.Diagnostics.Debug.Assert(genericArguments.Length == 6);
-                            baseFormatterType = typeof(ValueTupleFormatter<,,,,,>);
-                            break;
-                        case "System.ValueTuple`7":
-                            System.Diagnostics.Debug.Assert(genericArguments.Length == 7);
-                            baseFormatterType = typeof(ValueTupleFormatter<,,,,,,>);
-                            break;
-                        default: return default;
-                    }
-
-                    var formatterType = baseFormatterType.MakeGenericType(genericArguments);
-                    return formatterType;
+                    case "System.Collections.ObjectModel.ReadOnlyDictionary`2":
+                        formatterType = typeof(ReadOnlyDictionaryFormatter<,>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.Collections.Generic.Dictionary`2":
+                        formatterType = typeof(DictionaryFormatter<,>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.Collections.Generic.SortedDictionary`2":
+                        formatterType = typeof(SortedDictionaryFormatter<,>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.Collections.Generic.SortedList`2":
+                        formatterType = typeof(SortedListFormatter<,>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.Collections.Concurrent.ConcurrentDictionary`2":
+                        formatterType = typeof(ConcurrentDictionaryFormatter<,>).MakeGenericType(genericArguments);
+                        break;
+#if IMMUTABLE
+                    case "System.Collections.Immutable.ImmutableDictionary`2":
+                        formatterType = typeof(ImmutableDictionaryFormatter<,>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.Collections.Immutable.ImmutableSortedDictionary`2":
+                        formatterType = typeof(ImmutableSortedDictionaryFormatter<,>).MakeGenericType(genericArguments);
+                        break;
+#endif
+                    case "System.Collections.Generic.ImmutableDictionary`2":
+                        formatterType = typeof(SortedListFormatter<,>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.Collections.Generic.KeyValuePair`2":
+                        formatterType = typeof(KeyValuePairFormatter<,>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.ArraySegment`1":
+                        formatterType = typeof(ArraySegmentFormatter<>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.Threading.Tasks.ValueTask`1":
+                        formatterType = typeof(ValueTaskValueFormatter<>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.Threading.Task`1":
+                        formatterType = typeof(TaskValueFormatter<>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.Nullable`1":
+                        formatterType = typeof(NullableFormatter<>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.Collections.Generic.Queue`1":
+                        formatterType = typeof(AddQueueFormatter<>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.Collections.Generic.Stack`1":
+                        formatterType = typeof(AddStackFormatter<>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.Collections.Generic.HashSet`1":
+                        formatterType = typeof(AddHashSetFormatter<>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.Collections.Generic.LinkedList`1":
+                        formatterType = typeof(AddLinkedListFormatter<>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.Collections.Generic.List`1":
+                        formatterType = typeof(ListFormatter<>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.Collections.ObjectModel.ReadOnlyCollection`1":
+                        formatterType = typeof(ReadOnlyCollectionFormatter<>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.ValueTuple`2":
+                        formatterType = typeof(ValueTupleFormatter<,>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.ValueTuple`3":
+                        formatterType = typeof(ValueTupleFormatter<,,>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.ValueTuple`4":
+                        formatterType = typeof(ValueTupleFormatter<,,,>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.ValueTuple`5":
+                        formatterType = typeof(ValueTupleFormatter<,,,,>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.ValueTuple`6":
+                        formatterType = typeof(ValueTupleFormatter<,,,,,>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.ValueTuple`7":
+                        formatterType = typeof(ValueTupleFormatter<,,,,,,>).MakeGenericType(genericArguments);
+                        break;
+#if UNITY_2018_4_OR_NEWER
+                    case "Unity.Collections.NativeArray`1":
+                        formatterType = typeof(NativeArrayFormatter<>).MakeGenericType(genericArguments);
+                        break;
+#endif
                 }
 
-                return default;
+                return formatterType;
             }
 
 #if UNITY_2018_4_OR_NEWER
