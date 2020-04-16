@@ -190,34 +190,105 @@ namespace Utf8Json.Resolvers
                     }
                 }
 
-                var formatterType = default(Type);
+                Type formatterType;
                 switch (definitionFullName)
                 {
                     case "System.Collections.ObjectModel.ReadOnlyDictionary`2":
-                        formatterType = typeof(ReadOnlyDictionaryFormatter<,>).MakeGenericType(genericArguments);
+                        if (genericArguments[0] == typeof(string))
+                        {
+                            formatterType = typeof(StringKeyReadOnlyDictionaryFormatter<>).MakeGenericType(genericArguments[1]);
+                        }
+                        else
+                        {
+                            formatterType = typeof(ReadOnlyDictionaryFormatter<,>).MakeGenericType(genericArguments);
+                        }
+                        break;
+                    case "System.Collections.Generic.IDictionary`2":
+                        if (genericArguments[0] == typeof(string))
+                        {
+                            formatterType = typeof(StringKeyInterfaceDictionaryFormatter<>).MakeGenericType(genericArguments[1]);
+                        }
+                        else
+                        {
+                            formatterType = typeof(InterfaceDictionaryFormatter<,>).MakeGenericType(genericArguments);
+                        }
                         break;
                     case "System.Collections.Generic.Dictionary`2":
-                        formatterType = typeof(DictionaryFormatter<,>).MakeGenericType(genericArguments);
+                        if (genericArguments[0] == typeof(string))
+                        {
+                            formatterType = typeof(StringKeyDictionaryFormatter<>).MakeGenericType(genericArguments[1]);
+                        }
+                        else
+                        {
+                            formatterType = typeof(DictionaryFormatter<,>).MakeGenericType(genericArguments);
+                        }
                         break;
                     case "System.Collections.Generic.SortedDictionary`2":
-                        formatterType = typeof(SortedDictionaryFormatter<,>).MakeGenericType(genericArguments);
+                        if (genericArguments[0] == typeof(string))
+                        {
+                            formatterType = typeof(StringKeySortedDictionaryFormatter<>).MakeGenericType(genericArguments[1]);
+                        }
+                        else
+                        {
+                            formatterType = typeof(SortedDictionaryFormatter<,>).MakeGenericType(genericArguments);
+                        }
                         break;
                     case "System.Collections.Generic.SortedList`2":
-                        formatterType = typeof(SortedListFormatter<,>).MakeGenericType(genericArguments);
+                        if (genericArguments[0] == typeof(string))
+                        {
+                            formatterType = typeof(StringKeySortedListFormatter<>).MakeGenericType(genericArguments[1]);
+                        }
+                        else
+                        {
+                            formatterType = typeof(SortedListFormatter<,>).MakeGenericType(genericArguments);
+                        }
                         break;
                     case "System.Collections.Concurrent.ConcurrentDictionary`2":
-                        formatterType = typeof(ConcurrentDictionaryFormatter<,>).MakeGenericType(genericArguments);
+                        if (genericArguments[0] == typeof(string))
+                        {
+                            formatterType = typeof(StringKeyConcurrentDictionaryFormatter<>).MakeGenericType(genericArguments[1]);
+                        }
+                        else
+                        {
+                            formatterType = typeof(ConcurrentDictionaryFormatter<,>).MakeGenericType(genericArguments);
+                        }
                         break;
 #if IMMUTABLE
                     case "System.Collections.Immutable.ImmutableDictionary`2":
-                        formatterType = typeof(ImmutableDictionaryFormatter<,>).MakeGenericType(genericArguments);
+                        if (genericArguments[0] == typeof(string))
+                        {
+                            formatterType = typeof(StringKeyImmutableDictionaryFormatter<>).MakeGenericType(genericArguments[1]);
+                        }
+                        else
+                        {   
+                            formatterType = typeof(ImmutableDictionaryFormatter<,>).MakeGenericType(genericArguments);
+                        }
                         break;
                     case "System.Collections.Immutable.ImmutableSortedDictionary`2":
-                        formatterType = typeof(ImmutableSortedDictionaryFormatter<,>).MakeGenericType(genericArguments);
+                        if (genericArguments[0] == typeof(string))
+                        {
+                            formatterType = typeof(StringKeyImmutableSortedDictionaryFormatter<>).MakeGenericType(genericArguments[1]);
+                        }
+                        else
+                        {
+                            formatterType = typeof(ImmutableSortedDictionaryFormatter<,>).MakeGenericType(genericArguments);
+                        }
                         break;
 #endif
-                    case "System.Collections.Generic.ImmutableDictionary`2":
-                        formatterType = typeof(SortedListFormatter<,>).MakeGenericType(genericArguments);
+                    case "System.Collections.Generic.IEnumerable`1":
+                        formatterType = typeof(InterfaceEnumerableFormatter<>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.Collections.Generic.IList`1":
+                        formatterType = typeof(AddInterfaceListFormatter<>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.Collections.Generic.ICollection`1":
+                        formatterType = typeof(AddInterfaceCollectionFormatter<>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.Collections.Generic.ILookup`2":
+                        formatterType = typeof(InterfaceLookupFormatter<,>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.Collections.Generic.IGrouping`2":
+                        formatterType = typeof(InterfaceGroupingFormatter<,>).MakeGenericType(genericArguments);
                         break;
                     case "System.Collections.Generic.KeyValuePair`2":
                         formatterType = typeof(KeyValuePairFormatter<,>).MakeGenericType(genericArguments);
@@ -275,9 +346,78 @@ namespace Utf8Json.Resolvers
                         formatterType = typeof(NativeArrayFormatter<>).MakeGenericType(genericArguments);
                         break;
 #endif
+                    default:
+                        return MatchInterface(targetType);
                 }
 
                 return formatterType;
+            }
+
+#if CSHARP_8_OR_NEWER
+            private static Type? MatchInterface(Type targetType)
+#else
+            private static Type MatchInterface(Type targetType)
+#endif
+            {
+                var interfaces = targetType.GetInterfaces();
+                if (interfaces.Length == 0)
+                {
+                    return default;
+                }
+
+                var interfaceDefinitions = new Type[interfaces.Length];
+                for (var index = 0; index < interfaces.Length; index++)
+                {
+                    var @interface = interfaces[index];
+                    if (@interface.IsGenericType && !@interface.IsGenericTypeDefinition)
+                    {
+                        interfaceDefinitions[index] = @interface.GetGenericTypeDefinition();
+                    }
+                    else
+                    {
+                        interfaceDefinitions[index] = @interface;
+                    }
+                }
+
+                var answer = TryMatchInterfaceDictionary(targetType, interfaceDefinitions, interfaces);
+                if (answer != null)
+                {
+                    return answer;
+                }
+
+                return default;
+            }
+
+#if CSHARP_8_OR_NEWER
+            private static Type? TryMatchInterfaceDictionary(Type targetType, Type[] interfaceDefinitions, Type[] interfaces)
+#else
+            private static Type TryMatchInterfaceDictionary(Type targetType, Type[] interfaceDefinitions, Type[] interfaces)
+#endif
+            {
+                if (targetType.IsInterface)
+                {
+                    return default;
+                }
+
+                var defaultConstructor = targetType.GetConstructor(Array.Empty<Type>());
+                if (defaultConstructor == null)
+                {
+                    return default;
+                }
+
+                for (var index = 0; index < interfaceDefinitions.Length; index++)
+                {
+                    var genericTypeDefinition = interfaceDefinitions[index];
+                    if (genericTypeDefinition.FullName != "System.Collections.Generic.IDictionary`2")
+                    {
+                        continue;
+                    }
+
+                    var arguments = interfaces[index].GetGenericArguments();
+                    return typeof(GenericDictionaryFormatter<,,>).MakeGenericType(targetType, arguments[0], arguments[1]);
+                }
+
+                return default;
             }
 
 #if UNITY_2018_4_OR_NEWER

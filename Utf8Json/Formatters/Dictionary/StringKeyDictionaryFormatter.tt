@@ -1,0 +1,176 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+<#
+ValueTuple<string, string, string, string, string, string>[] tuples = new ValueTuple<string, string, string, string, string, string>[]{
+new ValueTuple<string, string, string, string, string, string>("Dictionary", "Dictionary<string, TValue>", "new Dictionary<string, TValue>()", "answer.Add(key, value)", "answer", null),
+new ValueTuple<string, string, string, string, string, string>("ReadOnlyDictionary", "ReadOnlyDictionary<string, TValue>", "new Dictionary<string, TValue>()", "answer.Add(key, value)", "new ReadOnlyDictionary<string, TValue>(answer)", null),
+new ValueTuple<string, string, string, string, string, string>("SortedDictionary", "SortedDictionary<string, TValue>", "new SortedDictionary<string, TValue>()", "answer.Add(key, value)", "answer", null),
+new ValueTuple<string, string, string, string, string, string>("SortedList", "SortedList<string, TValue>", "new SortedList<string, TValue>()", "answer.Add(key, value)", "answer", null),
+new ValueTuple<string, string, string, string, string, string>("InterfaceDictionary", "IDictionary<string, TValue>", "new Dictionary<string, TValue>()", "answer.Add(key, value)", "answer", null),
+new ValueTuple<string, string, string, string, string, string>("ConcurrentDictionary", "ConcurrentDictionary<string, TValue>", "new ConcurrentDictionary<string, TValue>()", "answer.TryAdd(key, value)", "answer", null),
+new ValueTuple<string, string, string, string, string, string>("ImmutableDictionary", "ImmutableDictionary<string, TValue>", "new List<KeyValuePair<string, TValue>>()", "answer.Add(new KeyValuePair<string, TValue>(key, value))", "ImmutableDictionary<string, TValue>.Empty.AddRange(answer)", "IMMUTABLE"),
+new ValueTuple<string, string, string, string, string, string>("ImmutableSortedDictionary", "ImmutableSortedDictionary<string, TValue>", "new List<KeyValuePair<string, TValue>>()", "answer.Add(new KeyValuePair<string, TValue>(key, value))", "ImmutableSortedDictionary<string, TValue>.Empty.AddRange(answer)", "IMMUTABLE"),
+};#>
+// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using StaticFunctionPointerHelper;
+
+#if IMMUTABLE
+using System.Collections.Immutable;
+#endif
+
+namespace Utf8Json.Formatters
+{
+<#foreach(var t in tuples){#>
+<#if(t.Item6 != null){#>#if <#= t.Item6 #><#}#>
+
+#if CSHARP_8_OR_NEWER
+    public sealed unsafe class StringKey<#= t.Item1 #>Formatter<TValue>
+        : IJsonFormatter<<#= t.Item2 #>?>
+    {
+        public void Serialize(ref JsonWriter writer, <#= t.Item2 #>? value, JsonSerializerOptions options)
+        {
+            SerializeStatic(ref writer, value, options);
+        }
+        
+        public static void SerializeStatic(ref JsonWriter writer, <#= t.Item2 #>? value, JsonSerializerOptions options)
+#else
+    public sealed unsafe class StringKey<#= t.Item1 #>Formatter<TValue>
+        : IJsonFormatter<<#= t.Item2 #>>
+    {
+        public void Serialize(ref JsonWriter writer, <#= t.Item2 #> value, JsonSerializerOptions options)
+        {
+            SerializeStatic(ref writer, value, options);
+        }
+        
+        public static void SerializeStatic(ref JsonWriter writer, <#= t.Item2 #> value, JsonSerializerOptions options)
+#endif
+        {
+            if (value == null)
+            {
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
+                return;
+            }
+
+            writer.WriteBeginObject();
+
+            var e = value.GetEnumerator();
+            try
+            {
+                if (!e.MoveNext())
+                {
+                    goto END;
+                }
+
+                var tuple = e.Current;
+                var propertyName = tuple.Key;
+                Debug.Assert(propertyName != null, nameof(propertyName) + " != null");
+                writer.WritePropertyName(propertyName);
+                    
+                var valueSerializer = options.Resolver.GetSerializeStatic<TValue>();
+                if (valueSerializer.ToPointer() == null)
+                {
+                    var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
+                    valueFormatter.Serialize(ref writer, tuple.Value, options);
+
+                    while (e.MoveNext())
+                    {
+                        writer.WriteValueSeparator();
+                        tuple = e.Current;
+                        propertyName = tuple.Key;
+                        Debug.Assert(propertyName != null, nameof(propertyName) + " != null");
+                        writer.WritePropertyName(propertyName);
+                        valueFormatter.Serialize(ref writer, tuple.Value, options);
+                    }
+                }
+                else
+                {
+                    writer.Serialize(tuple.Value, options, valueSerializer);
+
+                    while (e.MoveNext())
+                    {
+                        writer.WriteValueSeparator();
+                        tuple = e.Current;
+                        propertyName = tuple.Key;
+                        Debug.Assert(propertyName != null, nameof(propertyName) + " != null");
+                        writer.WritePropertyName(propertyName);
+                        writer.Serialize(tuple.Value, options, valueSerializer);
+                    }
+                }
+            }
+            finally
+            {
+                e.Dispose();
+            }
+
+        END:
+            writer.WriteEndObject();
+        }
+
+#if CSHARP_8_OR_NEWER
+        public <#= t.Item2 #>? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            return DeserializeStatic(ref reader, options);
+        }
+      
+        public static <#= t.Item2 #>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public <#= t.Item2 #> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            return DeserializeStatic(ref reader, options);
+        }
+
+        public static <#= t.Item2 #> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            if (reader.ReadIsNull())
+            {
+                return null;
+            }
+
+            reader.ReadIsBeginObjectWithVerify();
+
+            var answer = <#= t.Item3 #>;
+            var count = 0;
+            var valueDeserializer = options.Resolver.GetDeserializeStatic<TValue>();
+            if (valueDeserializer.ToPointer() == null)
+            {
+                var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
+                while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
+                {
+                    var key = reader.ReadPropertyName();
+                    var value = valueFormatter.Deserialize(ref reader, options);
+                    <#= t.Item4 #>;
+                }
+            }
+            else
+            {
+                while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
+                {
+                    var key = reader.ReadPropertyName();
+                    var value = reader.Deserialize<TValue>(options, valueDeserializer);
+                    <#= t.Item4 #>;
+                }
+            }
+
+            return <#= t.Item5 #>;
+        }
+    }
+<#if(t.Item6 != null){#>#endif<#}#>
+
+<#}#>
+}
