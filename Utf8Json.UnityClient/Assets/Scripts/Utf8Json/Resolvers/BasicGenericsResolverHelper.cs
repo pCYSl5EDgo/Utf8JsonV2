@@ -8,6 +8,9 @@ using FP = Utf8Json.Internal.ThreadSafeTypeKeyFormatterHashTable.FunctionPair;
 
 namespace Utf8Json.Resolvers
 {
+    /// <summary>
+    /// Unity2018というかUnityのMono基盤はcalliについてジェネリクスをサポートしていない
+    /// </summary>
     public sealed partial class BasicGenericsResolver
     {
         internal static class BasicGenericsResolverGetFormatterHelper
@@ -18,19 +21,19 @@ namespace Utf8Json.Resolvers
             }
 
 #if CSHARP_8_OR_NEWER
-            private static Type? FindFormatterType(Type targetType, bool excludeValueType)
+            private static Type? FindFormatterType(Type targetType, bool excludeReferenceType)
 #else
-            private static Type FindFormatterType(Type targetType, bool excludeValueType)
+            private static Type FindFormatterType(Type targetType, bool excludeReferenceType)
 #endif
             {
                 if (targetType.IsArray)
                 {
-                    return FindWhenArray(targetType, excludeValueType);
+                    return FindWhenArray(targetType, excludeReferenceType);
                 }
 
                 if (targetType.IsConstructedGenericType)
                 {
-                    return FindWhenConstructedGenericType(targetType, excludeValueType);
+                    return FindWhenConstructedGenericType(targetType, excludeReferenceType);
                 }
 
                 return default;
@@ -38,9 +41,9 @@ namespace Utf8Json.Resolvers
 
 
 #if CSHARP_8_OR_NEWER
-            private static Type? FindWhenArray(Type targetType, bool excludeValueType)
+            private static Type? FindWhenArray(Type targetType, bool excludeReferenceType)
 #else
-            private static Type FindWhenArray(Type targetType, bool excludeValueType)
+            private static Type FindWhenArray(Type targetType, bool excludeReferenceType)
 #endif
             {
                 Type arrayFormatterBase;
@@ -152,7 +155,7 @@ namespace Utf8Json.Resolvers
                     return default;
                 }
 
-                if (excludeValueType && !elementType.IsValueType)
+                if (excludeReferenceType && !elementType.IsValueType)
                 {
                     return default;
                 }
@@ -162,9 +165,9 @@ namespace Utf8Json.Resolvers
             }
 
 #if CSHARP_8_OR_NEWER
-            private static Type? FindWhenConstructedGenericType(Type targetType, bool excludeValueType)
+            private static Type? FindWhenConstructedGenericType(Type targetType, bool excludeReferenceType)
 #else
-            private static Type FindWhenConstructedGenericType(Type targetType, bool excludeValueType)
+            private static Type FindWhenConstructedGenericType(Type targetType, bool excludeReferenceType)
 #endif
             {
                 var definition = targetType.GetGenericTypeDefinition();
@@ -177,7 +180,7 @@ namespace Utf8Json.Resolvers
                 var genericArguments = targetType.GetGenericArguments();
 
 
-                if (excludeValueType)
+                if (excludeReferenceType)
                 {
                     foreach (var genericArgument in genericArguments)
                     {
@@ -227,20 +230,22 @@ namespace Utf8Json.Resolvers
                 return default;
             }
 
+#if UNITY_2018_4_OR_NEWER
+            private const bool ExcludeReferenceType = true;
+#else
+            private const bool ExcludeReferenceType = false;
+#endif
+
             public static FP GetFunctionPointers(Type targetType)
             {
-#if UNITY_2018_4_OR_NEWER
-                var formatterType = FindFormatterType(targetType, true);
-#else
-                var formatterType = FindFormatterType(targetType, false);
-#endif
+                var firstFormatter = FindFormatterType(targetType, ExcludeReferenceType);
                 // ReSharper disable once ConvertIfStatementToReturnStatement
-                if (formatterType == null)
+                if (firstFormatter != null)
                 {
-                    return default;
+                    return CreateFunctionPair(firstFormatter);
                 }
 
-                return CreateFunctionPair(formatterType);
+                return default;
             }
 
 #if UNITY_2018_4_OR_NEWER
