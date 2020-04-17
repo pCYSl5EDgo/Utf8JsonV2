@@ -32,6 +32,56 @@ namespace Utf8Json.Formatters
             SerializeStatic(ref writer, value, options);
         }
 
+        private static void SerializeStaticWithFormatter(ref JsonWriter writer, <#= typeText #> value, JsonSerializerOptions options)
+        {
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
+<#for (var i = 0; i < dimension; i++){#>
+            var startIndexOf<#= i #> = value.GetLowerBound(<#= i #>);
+            var lengthOf<#= i #> = value.GetLength(<#= i #>);
+<#}#>
+            var first = true;
+            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+            {
+<#for (var i = 1; i < dimension; i++){
+    var indent = new string('\t', i);#>
+<#= indent #>            for (var iteratorOf<#= i #> = 0; iteratorOf<#= i #> < lengthOf<#= i #>; iteratorOf<#= i #>++)
+<#= indent #>            {
+<# if (i == dimension - 1){#>
+<#= indent #>                if (first)
+<#= indent #>                {
+<#= indent #>                    first = false;
+<#= indent #>                }
+<#= indent #>                else
+<#= indent #>                {
+<#= indent #>                    var span = writer.Writer.GetSpan(1);
+<#= indent #>                    span[0] = (byte)',';
+<#= indent #>                    writer.Writer.Advance(1);
+<#= indent #>                }
+
+<#= indent #>                var element = value[
+<#= indent #>                    iteratorOf0 + startIndexOf0
+<#for (var j = 1; j < dimension; j++){#>
+<#= indent #>                    , iteratorOf<#= j #> + startIndexOf<#= j #>
+<#}#>
+<#= indent #>                ];
+<#= indent #>                formatter.Serialize(ref writer, element, options);
+<#}#>
+<#}#>
+<#for (var i = dimension; --i >= 1;){
+    var indent = new string('\t', i);#>
+            <#= indent #>}
+<#}#>
+            }
+
+            {
+                const int sizeHint = 2;
+                var span = writer.Writer.GetSpan(sizeHint);
+                span[0] = (byte)']';
+                span[1] = (byte)'}';
+                writer.Writer.Advance(sizeHint);
+            }
+        }
+
 #if CSHARP_8_OR_NEWER
         public static void SerializeStatic(ref JsonWriter writer, <#= typeText #>? value, JsonSerializerOptions options)
 #else
@@ -135,7 +185,7 @@ namespace Utf8Json.Formatters
             var serializer = options.Resolver.GetSerializeStatic<T>();
             if (serializer.ToPointer() == null)
             {
-                throw new NullReferenceException();
+                SerializeStaticWithFormatter(ref writer, value, options);
             }
 
             var first = true;
@@ -310,6 +360,7 @@ namespace Utf8Json.Formatters
 #else
             answer = Array.CreateInstance(typeof(T), lengths, starts) as <#= typeText #>;
 #endif
+            System.Diagnostics.Debug.Assert(answer != null);
 
             if (elements == null)
             {
