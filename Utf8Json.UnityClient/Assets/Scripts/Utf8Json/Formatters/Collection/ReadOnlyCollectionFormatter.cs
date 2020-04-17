@@ -76,9 +76,9 @@ namespace Utf8Json.Formatters
             }
 
         END:
-        var span2 = writer.Writer.GetSpan(1);
-        span2[0] = (byte)']';
-        writer.Writer.Advance(1);
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)']';
+            writer.Writer.Advance(1);
         }
 
         private static void SerializeWithFormatter(ref JsonWriter writer, JsonSerializerOptions options, IEnumerator<T> enumerator)
@@ -174,6 +174,24 @@ namespace Utf8Json.Formatters
             var answer = new T[count];
             Array.Copy(array, answer, count);
             return new ReadOnlyCollection<T>(answer);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as ReadOnlyCollection<T>, options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 }

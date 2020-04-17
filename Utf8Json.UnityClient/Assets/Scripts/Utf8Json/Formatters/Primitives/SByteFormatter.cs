@@ -7,6 +7,7 @@ namespace Utf8Json.Formatters
 {
     public sealed class SByteFormatter : IJsonFormatter<sbyte>
     {
+#pragma warning disable IDE0060
         public static void SerializeStatic(ref JsonWriter writer, sbyte value, JsonSerializerOptions options)
         {
             writer.Write(value);
@@ -58,10 +59,31 @@ namespace Utf8Json.Formatters
                 case 1:
                     span[offset] = (byte)(num1 + '0');
                     return;
+                // ReSharper disable once RedundantCaseLabel
                 case 0:
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            if (!(value is sbyte innerValue))
+            {
+                throw new NullReferenceException();
+            }
+
+            SerializeStatic(ref writer, innerValue, options);
+        }
+
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            var answer = DeserializeStatic(ref reader, options);
+            return answer;
         }
     }
 }

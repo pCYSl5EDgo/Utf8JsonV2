@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using Utf8Json.Internal;
 
 namespace Utf8Json.Formatters
 {
@@ -17,6 +18,7 @@ namespace Utf8Json.Formatters
             writer.Write(value);
         }
 
+#pragma warning disable IDE0060
         public static ulong DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
             return reader.ReadUInt64();
@@ -118,86 +120,106 @@ namespace Utf8Json.Formatters
             ulong div;
             switch (span.Length)
             {
-            case 20:
-                span[offset++] = (byte) ('0' + (div = (num5 * 8389UL) >> 23));
-                num5 -= div * 1000;
-                goto case 19;
-            case 19:
-                span[offset++] = (byte) ('0' + (div = (num5 * 5243UL) >> 19));
-                num5 -= div * 100;
-                goto case 18;
-            case 18:
-                span[offset++] = (byte) ('0' + (div = (num5 * 6554UL) >> 16));
-                num5 -= div * 10;
-                goto case 17;
-            case 17:
-                span[offset++] = (byte) ('0' + num5);
-                goto case 16;
-            case 16:
-                span[offset++] = (byte) ('0' + (div = (num4 * 8389UL) >> 23));
-                num4 -= div * 1000;
-                goto case 15;
-            case 15:
-                span[offset++] = (byte) ('0' + (div = (num4 * 5243UL) >> 19));
-                num4 -= div * 100;
-                goto case 14;
-            case 14:
-                span[offset++] = (byte) ('0' + (div = (num4 * 6554UL) >> 16));
-                num4 -= div * 10;
-                goto case 13;
-            case 13:
-                span[offset++] = (byte) ('0' + num4);
-                goto case 12;
-            case 12:
-                span[offset++] = (byte) ('0' + (div = (num3 * 8389UL) >> 23));
-                num3 -= div * 1000;
-                goto case 11;
-            case 11:
-                span[offset++] = (byte) ('0' + (div = (num3 * 5243UL) >> 19));
-                num3 -= div * 100;
-                goto case 10;
-            case 10:
-                span[offset++] = (byte) ('0' + (div = (num3 * 6554UL) >> 16));
-                num3 -= div * 10U;
-                goto case 9;
-            case 9:
-                span[offset++] = (byte) ('0' + num3);
-                goto case 8;
-            case 8:
-                span[offset++] = (byte) ('0' + (div = (num2 * 8389UL) >> 23));
-                num2 -= div * 1000U;
-                goto case 7;
-            case 7:
-                span[offset++] = (byte) ('0' + (div = (num2 * 5243UL) >> 19));
-                num2 -= div * 100U;
-                goto case 6;
-            case 6:
-                span[offset++] = (byte) ('0' + (div = (num2 * 6554UL) >> 16));
-                num2 -= div * 10U;
-                goto case 5;
-            case 5:
-                span[offset++] = (byte) ('0' + num2);
-                goto case 4;
-            case 4:
-                span[offset++] = (byte) ('0' + (div = (num1 * 8389UL) >> 23));
-                num1 -= div * 1000U;
-                goto case 3;
-            case 3:
-                span[offset++] = (byte) ('0' + (div = (num1 * 5243UL) >> 19));
-                num1 -= div * 100U;
-                goto case 2;
-            case 2:
-                span[offset++] = (byte) ('0' + (div = (num1 * 6554UL) >> 16));
-                num1 -= div * 10U;
-                goto case 1;
-            case 1:
-                span[offset] = (byte) ('0' + num1);
-                return;
-            // ReSharper disable once RedundantCaseLabel
-            case 0:
-            default:
-                throw new JsonSerializationException("Invalid number.");
+                case 20:
+                    span[offset++] = (byte)('0' + (div = (num5 * 8389UL) >> 23));
+                    num5 -= div * 1000;
+                    goto case 19;
+                case 19:
+                    span[offset++] = (byte)('0' + (div = (num5 * 5243UL) >> 19));
+                    num5 -= div * 100;
+                    goto case 18;
+                case 18:
+                    span[offset++] = (byte)('0' + (div = (num5 * 6554UL) >> 16));
+                    num5 -= div * 10;
+                    goto case 17;
+                case 17:
+                    span[offset++] = (byte)('0' + num5);
+                    goto case 16;
+                case 16:
+                    span[offset++] = (byte)('0' + (div = (num4 * 8389UL) >> 23));
+                    num4 -= div * 1000;
+                    goto case 15;
+                case 15:
+                    span[offset++] = (byte)('0' + (div = (num4 * 5243UL) >> 19));
+                    num4 -= div * 100;
+                    goto case 14;
+                case 14:
+                    span[offset++] = (byte)('0' + (div = (num4 * 6554UL) >> 16));
+                    num4 -= div * 10;
+                    goto case 13;
+                case 13:
+                    span[offset++] = (byte)('0' + num4);
+                    goto case 12;
+                case 12:
+                    span[offset++] = (byte)('0' + (div = (num3 * 8389UL) >> 23));
+                    num3 -= div * 1000;
+                    goto case 11;
+                case 11:
+                    span[offset++] = (byte)('0' + (div = (num3 * 5243UL) >> 19));
+                    num3 -= div * 100;
+                    goto case 10;
+                case 10:
+                    span[offset++] = (byte)('0' + (div = (num3 * 6554UL) >> 16));
+                    num3 -= div * 10U;
+                    goto case 9;
+                case 9:
+                    span[offset++] = (byte)('0' + num3);
+                    goto case 8;
+                case 8:
+                    span[offset++] = (byte)('0' + (div = (num2 * 8389UL) >> 23));
+                    num2 -= div * 1000U;
+                    goto case 7;
+                case 7:
+                    span[offset++] = (byte)('0' + (div = (num2 * 5243UL) >> 19));
+                    num2 -= div * 100U;
+                    goto case 6;
+                case 6:
+                    span[offset++] = (byte)('0' + (div = (num2 * 6554UL) >> 16));
+                    num2 -= div * 10U;
+                    goto case 5;
+                case 5:
+                    span[offset++] = (byte)('0' + num2);
+                    goto case 4;
+                case 4:
+                    span[offset++] = (byte)('0' + (div = (num1 * 8389UL) >> 23));
+                    num1 -= div * 1000U;
+                    goto case 3;
+                case 3:
+                    span[offset++] = (byte)('0' + (div = (num1 * 5243UL) >> 19));
+                    num1 -= div * 100U;
+                    goto case 2;
+                case 2:
+                    span[offset++] = (byte)('0' + (div = (num1 * 6554UL) >> 16));
+                    num1 -= div * 10U;
+                    goto case 1;
+                case 1:
+                    span[offset] = (byte)('0' + num1);
+                    return;
+                // ReSharper disable once RedundantCaseLabel
+                case 0:
+                default:
+                    throw new JsonSerializationException("Invalid number.");
             }
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            if (!(value is ulong innerValue))
+            {
+                throw new NullReferenceException();
+            }
+
+            SerializeStatic(ref writer, innerValue, options);
+        }
+
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            var answer = DeserializeStatic(ref reader, options);
+            return answer < 256UL ? ObjectHelper.UInt64Array[answer] : answer;
         }
     }
 }

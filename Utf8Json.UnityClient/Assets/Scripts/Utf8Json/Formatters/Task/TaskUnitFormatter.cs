@@ -67,5 +67,23 @@ namespace Utf8Json.Formatters
 
             return Task.CompletedTask;
         }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as Task, options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
+        }
     }
 }

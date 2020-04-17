@@ -23,7 +23,7 @@ namespace Utf8Json.Formatters
             // can not negate, use cache
             if (value == TimeSpan.MinValue)
             {
-                writer.Writer.Write((ReadOnlySpan<byte>) minValue);
+                writer.Writer.Write((ReadOnlySpan<byte>)minValue);
                 return;
             }
 
@@ -232,51 +232,25 @@ namespace Utf8Json.Formatters
             throw new InvalidOperationException("invalid datetime format.");
 #endif
         }
-    }
 
-    // ReSharper disable once InconsistentNaming
-    public sealed class NullableISO8601TimeSpanFormatter : IJsonFormatter<TimeSpan?>
-    {
-        public void Serialize(ref JsonWriter writer, TimeSpan? value, JsonSerializerOptions options)
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
         {
-            if (value.HasValue)
+            if (!(value is TimeSpan innerValue))
             {
-                ISO8601TimeSpanFormatter.SerializeStatic(ref writer, value.Value, options);
-                return;
+                throw new ArgumentNullException();
             }
 
-            var span = writer.Writer.GetSpan(4);
-            span[0] = (byte)'n';
-            span[1] = (byte)'u';
-            span[2] = (byte)'l';
-            span[3] = (byte)'l';
-            writer.Writer.Advance(4);
+            SerializeStatic(ref writer, innerValue, options);
         }
 
-        public static void SerializeStatic(ref JsonWriter writer, TimeSpan? value, JsonSerializerOptions options)
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                ISO8601TimeSpanFormatter.SerializeStatic(ref writer, value.Value, options);
-                return;
-            }
-
-            var span = writer.Writer.GetSpan(4);
-            span[0] = (byte)'n';
-            span[1] = (byte)'u';
-            span[2] = (byte)'l';
-            span[3] = (byte)'l';
-            writer.Writer.Advance(4);
-        }
-
-        public TimeSpan? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
-        {
-            return reader.ReadIsNull() ? default(TimeSpan?) : ISO8601TimeSpanFormatter.DeserializeStatic(ref reader, options);
-        }
-
-        public static TimeSpan? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
-        {
-            return reader.ReadIsNull() ? default(TimeSpan?) : ISO8601TimeSpanFormatter.DeserializeStatic(ref reader, options);
+            return DeserializeStatic(ref reader, options);
         }
     }
 }

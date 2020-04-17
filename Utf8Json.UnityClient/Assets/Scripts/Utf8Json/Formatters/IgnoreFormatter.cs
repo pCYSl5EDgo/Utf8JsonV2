@@ -46,5 +46,29 @@ namespace Utf8Json.Formatters
             return default;
 #endif
         }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            var span = writer.Writer.GetSpan(4);
+            span[0] = (byte)'n';
+            span[1] = (byte)'u';
+            span[2] = (byte)'l';
+            span[3] = (byte)'l';
+            writer.Writer.Advance(4);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            reader.ReadNextBlock();
+            return default;
+        }
     }
 }

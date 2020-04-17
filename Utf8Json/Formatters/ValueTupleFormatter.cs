@@ -2,17 +2,18 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using StaticFunctionPointerHelper;
+using System;
 
 namespace Utf8Json.Formatters
 {
-    public sealed unsafe class ValueTupleFormatter<T1, T2> : IJsonFormatter<(T1, T2)>
+    public sealed unsafe class ValueTupleFormatter<T1, T2> : IJsonFormatter<ValueTuple<T1, T2>>
     {
-        public void Serialize(ref JsonWriter writer, (T1, T2) value, JsonSerializerOptions options)
+        public void Serialize(ref JsonWriter writer, ValueTuple<T1, T2> value, JsonSerializerOptions options)
         {
             SerializeStatic(ref writer, value, options);
         }
 
-        public static void SerializeStatic(ref JsonWriter writer, (T1, T2) value, JsonSerializerOptions options)
+        public static void SerializeStatic(ref JsonWriter writer, ValueTuple<T1, T2> value, JsonSerializerOptions options)
         {
             var resolver = options.Resolver;
             {
@@ -74,15 +75,15 @@ namespace Utf8Json.Formatters
             writer.WriteEndObject();
         }
 
-        public (T1, T2) Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+        public ValueTuple<T1, T2> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
             return DeserializeStatic(ref reader, options);
         }
 
-        public static (T1, T2) DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+        public static ValueTuple<T1, T2> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
             reader.ReadIsBeginObjectWithVerify();
-            var answer = default((T1, T2));
+            var answer = default(ValueTuple<T1, T2>);
             var resolver = options.Resolver;
             var count = 0;
             while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
@@ -128,16 +129,35 @@ namespace Utf8Json.Formatters
 
             return answer;
         }
+        
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            if (!(value is ValueTuple<T1, T2> innerValue))
+            {
+                throw new ArgumentNullException();
+            }
+
+            SerializeStatic(ref writer, innerValue, options);
+        }
+
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            return DeserializeStatic(ref reader, options);
+        }
     }
 
-    public sealed unsafe class ValueTupleFormatter<T1, T2, T3> : IJsonFormatter<(T1, T2, T3)>
+    public sealed unsafe class ValueTupleFormatter<T1, T2, T3> : IJsonFormatter<ValueTuple<T1, T2, T3>>
     {
-        public void Serialize(ref JsonWriter writer, (T1, T2, T3) value, JsonSerializerOptions options)
+        public void Serialize(ref JsonWriter writer, ValueTuple<T1, T2, T3> value, JsonSerializerOptions options)
         {
             SerializeStatic(ref writer, value, options);
         }
 
-        public static void SerializeStatic(ref JsonWriter writer, (T1, T2, T3) value, JsonSerializerOptions options)
+        public static void SerializeStatic(ref JsonWriter writer, ValueTuple<T1, T2, T3> value, JsonSerializerOptions options)
         {
             var resolver = options.Resolver;
             {
@@ -227,15 +247,15 @@ namespace Utf8Json.Formatters
             writer.WriteEndObject();
         }
 
-        public (T1, T2, T3) Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+        public ValueTuple<T1, T2, T3> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
             return DeserializeStatic(ref reader, options);
         }
 
-        public static (T1, T2, T3) DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+        public static ValueTuple<T1, T2, T3> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
             reader.ReadIsBeginObjectWithVerify();
-            var answer = default((T1, T2, T3));
+            var answer = default(ValueTuple<T1, T2, T3>);
             var resolver = options.Resolver;
             var count = 0;
             while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
@@ -295,16 +315,35 @@ namespace Utf8Json.Formatters
 
             return answer;
         }
+        
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            if (!(value is ValueTuple<T1, T2, T3> innerValue))
+            {
+                throw new ArgumentNullException();
+            }
+
+            SerializeStatic(ref writer, innerValue, options);
+        }
+
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            return DeserializeStatic(ref reader, options);
+        }
     }
 
-    public sealed unsafe class ValueTupleFormatter<T1, T2, T3, T4> : IJsonFormatter<(T1, T2, T3, T4)>
+    public sealed unsafe class ValueTupleFormatter<T1, T2, T3, T4> : IJsonFormatter<ValueTuple<T1, T2, T3, T4>>
     {
-        public void Serialize(ref JsonWriter writer, (T1, T2, T3, T4) value, JsonSerializerOptions options)
+        public void Serialize(ref JsonWriter writer, ValueTuple<T1, T2, T3, T4> value, JsonSerializerOptions options)
         {
             SerializeStatic(ref writer, value, options);
         }
 
-        public static void SerializeStatic(ref JsonWriter writer, (T1, T2, T3, T4) value, JsonSerializerOptions options)
+        public static void SerializeStatic(ref JsonWriter writer, ValueTuple<T1, T2, T3, T4> value, JsonSerializerOptions options)
         {
             var resolver = options.Resolver;
             {
@@ -422,15 +461,15 @@ namespace Utf8Json.Formatters
             writer.WriteEndObject();
         }
 
-        public (T1, T2, T3, T4) Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+        public ValueTuple<T1, T2, T3, T4> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
             return DeserializeStatic(ref reader, options);
         }
 
-        public static (T1, T2, T3, T4) DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+        public static ValueTuple<T1, T2, T3, T4> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
             reader.ReadIsBeginObjectWithVerify();
-            var answer = default((T1, T2, T3, T4));
+            var answer = default(ValueTuple<T1, T2, T3, T4>);
             var resolver = options.Resolver;
             var count = 0;
             while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
@@ -504,16 +543,35 @@ namespace Utf8Json.Formatters
 
             return answer;
         }
+        
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            if (!(value is ValueTuple<T1, T2, T3, T4> innerValue))
+            {
+                throw new ArgumentNullException();
+            }
+
+            SerializeStatic(ref writer, innerValue, options);
+        }
+
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            return DeserializeStatic(ref reader, options);
+        }
     }
 
-    public sealed unsafe class ValueTupleFormatter<T1, T2, T3, T4, T5> : IJsonFormatter<(T1, T2, T3, T4, T5)>
+    public sealed unsafe class ValueTupleFormatter<T1, T2, T3, T4, T5> : IJsonFormatter<ValueTuple<T1, T2, T3, T4, T5>>
     {
-        public void Serialize(ref JsonWriter writer, (T1, T2, T3, T4, T5) value, JsonSerializerOptions options)
+        public void Serialize(ref JsonWriter writer, ValueTuple<T1, T2, T3, T4, T5> value, JsonSerializerOptions options)
         {
             SerializeStatic(ref writer, value, options);
         }
 
-        public static void SerializeStatic(ref JsonWriter writer, (T1, T2, T3, T4, T5) value, JsonSerializerOptions options)
+        public static void SerializeStatic(ref JsonWriter writer, ValueTuple<T1, T2, T3, T4, T5> value, JsonSerializerOptions options)
         {
             var resolver = options.Resolver;
             {
@@ -659,15 +717,15 @@ namespace Utf8Json.Formatters
             writer.WriteEndObject();
         }
 
-        public (T1, T2, T3, T4, T5) Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+        public ValueTuple<T1, T2, T3, T4, T5> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
             return DeserializeStatic(ref reader, options);
         }
 
-        public static (T1, T2, T3, T4, T5) DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+        public static ValueTuple<T1, T2, T3, T4, T5> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
             reader.ReadIsBeginObjectWithVerify();
-            var answer = default((T1, T2, T3, T4, T5));
+            var answer = default(ValueTuple<T1, T2, T3, T4, T5>);
             var resolver = options.Resolver;
             var count = 0;
             while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
@@ -755,16 +813,35 @@ namespace Utf8Json.Formatters
 
             return answer;
         }
+        
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            if (!(value is ValueTuple<T1, T2, T3, T4, T5> innerValue))
+            {
+                throw new ArgumentNullException();
+            }
+
+            SerializeStatic(ref writer, innerValue, options);
+        }
+
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            return DeserializeStatic(ref reader, options);
+        }
     }
 
-    public sealed unsafe class ValueTupleFormatter<T1, T2, T3, T4, T5, T6> : IJsonFormatter<(T1, T2, T3, T4, T5, T6)>
+    public sealed unsafe class ValueTupleFormatter<T1, T2, T3, T4, T5, T6> : IJsonFormatter<ValueTuple<T1, T2, T3, T4, T5, T6>>
     {
-        public void Serialize(ref JsonWriter writer, (T1, T2, T3, T4, T5, T6) value, JsonSerializerOptions options)
+        public void Serialize(ref JsonWriter writer, ValueTuple<T1, T2, T3, T4, T5, T6> value, JsonSerializerOptions options)
         {
             SerializeStatic(ref writer, value, options);
         }
 
-        public static void SerializeStatic(ref JsonWriter writer, (T1, T2, T3, T4, T5, T6) value, JsonSerializerOptions options)
+        public static void SerializeStatic(ref JsonWriter writer, ValueTuple<T1, T2, T3, T4, T5, T6> value, JsonSerializerOptions options)
         {
             var resolver = options.Resolver;
             {
@@ -938,15 +1015,15 @@ namespace Utf8Json.Formatters
             writer.WriteEndObject();
         }
 
-        public (T1, T2, T3, T4, T5, T6) Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+        public ValueTuple<T1, T2, T3, T4, T5, T6> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
             return DeserializeStatic(ref reader, options);
         }
 
-        public static (T1, T2, T3, T4, T5, T6) DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+        public static ValueTuple<T1, T2, T3, T4, T5, T6> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
             reader.ReadIsBeginObjectWithVerify();
-            var answer = default((T1, T2, T3, T4, T5, T6));
+            var answer = default(ValueTuple<T1, T2, T3, T4, T5, T6>);
             var resolver = options.Resolver;
             var count = 0;
             while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
@@ -1048,16 +1125,35 @@ namespace Utf8Json.Formatters
 
             return answer;
         }
+        
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            if (!(value is ValueTuple<T1, T2, T3, T4, T5, T6> innerValue))
+            {
+                throw new ArgumentNullException();
+            }
+
+            SerializeStatic(ref writer, innerValue, options);
+        }
+
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            return DeserializeStatic(ref reader, options);
+        }
     }
 
-    public sealed unsafe class ValueTupleFormatter<T1, T2, T3, T4, T5, T6, T7> : IJsonFormatter<(T1, T2, T3, T4, T5, T6, T7)>
+    public sealed unsafe class ValueTupleFormatter<T1, T2, T3, T4, T5, T6, T7> : IJsonFormatter<ValueTuple<T1, T2, T3, T4, T5, T6, T7>>
     {
-        public void Serialize(ref JsonWriter writer, (T1, T2, T3, T4, T5, T6, T7) value, JsonSerializerOptions options)
+        public void Serialize(ref JsonWriter writer, ValueTuple<T1, T2, T3, T4, T5, T6, T7> value, JsonSerializerOptions options)
         {
             SerializeStatic(ref writer, value, options);
         }
 
-        public static void SerializeStatic(ref JsonWriter writer, (T1, T2, T3, T4, T5, T6, T7) value, JsonSerializerOptions options)
+        public static void SerializeStatic(ref JsonWriter writer, ValueTuple<T1, T2, T3, T4, T5, T6, T7> value, JsonSerializerOptions options)
         {
             var resolver = options.Resolver;
             {
@@ -1259,15 +1355,15 @@ namespace Utf8Json.Formatters
             writer.WriteEndObject();
         }
 
-        public (T1, T2, T3, T4, T5, T6, T7) Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+        public ValueTuple<T1, T2, T3, T4, T5, T6, T7> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
             return DeserializeStatic(ref reader, options);
         }
 
-        public static (T1, T2, T3, T4, T5, T6, T7) DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+        public static ValueTuple<T1, T2, T3, T4, T5, T6, T7> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
             reader.ReadIsBeginObjectWithVerify();
-            var answer = default((T1, T2, T3, T4, T5, T6, T7));
+            var answer = default(ValueTuple<T1, T2, T3, T4, T5, T6, T7>);
             var resolver = options.Resolver;
             var count = 0;
             while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
@@ -1382,6 +1478,25 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+        
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            if (!(value is ValueTuple<T1, T2, T3, T4, T5, T6, T7> innerValue))
+            {
+                throw new ArgumentNullException();
+            }
+
+            SerializeStatic(ref writer, innerValue, options);
+        }
+
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 

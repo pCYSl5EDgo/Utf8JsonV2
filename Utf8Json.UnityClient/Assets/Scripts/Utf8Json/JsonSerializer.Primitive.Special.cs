@@ -9,11 +9,15 @@ namespace Utf8Json
 {
     public static partial class JsonSerializer
     {
-#if CSHARP_8_OR_NEWER
-        public static unsafe byte[] Serialize(string? value)
-#else
-        public static unsafe byte[] Serialize(string value)
+        public static
+#if !SPAN_BUILTIN
+            unsafe
 #endif
+            byte[] Serialize(string
+#if CSHARP_8_OR_NEWER
+                    ?
+#endif
+                    value)
         {
             if (value is null)
             {

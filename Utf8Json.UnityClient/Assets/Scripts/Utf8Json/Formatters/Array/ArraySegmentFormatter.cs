@@ -10,7 +10,9 @@ namespace Utf8Json.Formatters
     public sealed class ArraySegmentFormatter<T> : IJsonFormatter<ArraySegment<T>>
     {
         public void Serialize(ref JsonWriter writer, ArraySegment<T> value, JsonSerializerOptions options)
-            => SerializeStatic(ref writer, value, options);
+        {
+            SerializeStatic(ref writer, value, options);
+        }
 
         public static unsafe void SerializeStatic(ref JsonWriter writer, ArraySegment<T> value, JsonSerializerOptions options)
         {
@@ -63,13 +65,15 @@ namespace Utf8Json.Formatters
             }
 
         END:
-        var span3 = writer.Writer.GetSpan(1);
-        span3[0] = (byte)']';
-        writer.Writer.Advance(1);
+            var span3 = writer.Writer.GetSpan(1);
+            span3[0] = (byte)']';
+            writer.Writer.Advance(1);
         }
 
         public ArraySegment<T> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
-            => DeserializeStatic(ref reader, options);
+        {
+            return DeserializeStatic(ref reader, options);
+        }
 
         public static unsafe ArraySegment<T> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
@@ -126,52 +130,24 @@ namespace Utf8Json.Formatters
                 pool.Return(array);
             }
         }
-    }
 
-    public sealed class NullableArraySegmentFormatter<T> : IJsonFormatter<ArraySegment<T>?>
-    {
-        public static void SerializeStatic(ref JsonWriter writer, ArraySegment<T>? value, JsonSerializerOptions options)
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
         {
-            if (value.HasValue)
+            if (!(value is ArraySegment<T> innerValue))
             {
-                ArraySegmentFormatter<T>.SerializeStatic(ref writer, value.Value, options);
+                throw new NullReferenceException();
             }
-            else
-            {
-                var span = writer.Writer.GetSpan(4);
-                span[0] = (byte)'n';
-                span[1] = (byte)'u';
-                span[2] = (byte)'l';
-                span[3] = (byte)'l';
-                writer.Writer.Advance(4);
-            }
+
+            SerializeStatic(ref writer, innerValue, options);
         }
 
-        public void Serialize(ref JsonWriter writer, ArraySegment<T>? value, JsonSerializerOptions options)
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                ArraySegmentFormatter<T>.SerializeStatic(ref writer, value.Value, options);
-            }
-            else
-            {
-                var span = writer.Writer.GetSpan(4);
-                span[0] = (byte)'n';
-                span[1] = (byte)'u';
-                span[2] = (byte)'l';
-                span[3] = (byte)'l';
-                writer.Writer.Advance(4);
-            }
-        }
-
-        public static ArraySegment<T>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
-        {
-            return reader.ReadIsNull() ? default(ArraySegment<T>?) : ArraySegmentFormatter<T>.DeserializeStatic(ref reader, options);
-        }
-
-        public ArraySegment<T>? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
-        {
-            return reader.ReadIsNull() ? default(ArraySegment<T>?) : ArraySegmentFormatter<T>.DeserializeStatic(ref reader, options);
+            return DeserializeStatic(ref reader, options);
         }
     }
 }

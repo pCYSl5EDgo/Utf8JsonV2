@@ -56,5 +56,24 @@ namespace Utf8Json.Formatters
         {
             return reader.ReadIsNull() ? default : new StringBuilder(reader.ReadString());
         }
+
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as StringBuilder, options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
+        }
     }
 }

@@ -137,9 +137,7 @@ namespace Utf8Json.Formatters
             }
 
         END:
-        var span1 = writer.Writer.GetSpan(1);
-        span1[0] = (byte)'}';
-        writer.Writer.Advance(1);
+            writer.WriteEndObject();
         }
 
 #if CSHARP_8_OR_NEWER
@@ -195,6 +193,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+        
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as Dictionary<TKey, TValue>, options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -321,9 +337,7 @@ namespace Utf8Json.Formatters
             }
 
         END:
-        var span1 = writer.Writer.GetSpan(1);
-        span1[0] = (byte)'}';
-        writer.Writer.Advance(1);
+            writer.WriteEndObject();
         }
 
 #if CSHARP_8_OR_NEWER
@@ -379,6 +393,24 @@ namespace Utf8Json.Formatters
             }
 
             return new ReadOnlyDictionary<TKey, TValue>(answer);
+        }
+        
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as ReadOnlyDictionary<TKey, TValue>, options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -505,9 +537,7 @@ namespace Utf8Json.Formatters
             }
 
         END:
-        var span1 = writer.Writer.GetSpan(1);
-        span1[0] = (byte)'}';
-        writer.Writer.Advance(1);
+            writer.WriteEndObject();
         }
 
 #if CSHARP_8_OR_NEWER
@@ -563,6 +593,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+        
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as SortedDictionary<TKey, TValue>, options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -689,9 +737,7 @@ namespace Utf8Json.Formatters
             }
 
         END:
-        var span1 = writer.Writer.GetSpan(1);
-        span1[0] = (byte)'}';
-        writer.Writer.Advance(1);
+            writer.WriteEndObject();
         }
 
 #if CSHARP_8_OR_NEWER
@@ -747,6 +793,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+        
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as SortedList<TKey, TValue>, options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -873,9 +937,7 @@ namespace Utf8Json.Formatters
             }
 
         END:
-        var span1 = writer.Writer.GetSpan(1);
-        span1[0] = (byte)'}';
-        writer.Writer.Advance(1);
+            writer.WriteEndObject();
         }
 
 #if CSHARP_8_OR_NEWER
@@ -931,6 +993,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+        
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as IDictionary<TKey, TValue>, options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -1057,9 +1137,7 @@ namespace Utf8Json.Formatters
             }
 
         END:
-        var span1 = writer.Writer.GetSpan(1);
-        span1[0] = (byte)'}';
-        writer.Writer.Advance(1);
+            writer.WriteEndObject();
         }
 
 #if CSHARP_8_OR_NEWER
@@ -1115,6 +1193,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+        
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as ConcurrentDictionary<TKey, TValue>, options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -1298,6 +1394,24 @@ namespace Utf8Json.Formatters
 
             return ImmutableDictionary<TKey, TValue>.Empty.AddRange(answer);
         }
+        
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as ImmutableDictionary<TKey, TValue>, options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
+        }
     }
 #endif
 #if IMMUTABLE
@@ -1479,6 +1593,24 @@ namespace Utf8Json.Formatters
             }
 
             return ImmutableSortedDictionary<TKey, TValue>.Empty.AddRange(answer);
+        }
+        
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as ImmutableSortedDictionary<TKey, TValue>, options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 #endif

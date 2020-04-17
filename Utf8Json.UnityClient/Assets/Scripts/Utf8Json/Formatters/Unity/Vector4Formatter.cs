@@ -20,6 +20,7 @@ namespace Utf8Json.Formatters
             return DeserializeStatic(ref reader, options);
         }
 
+#pragma warning disable IDE0060
         public static void SerializeStatic(ref JsonWriter writer, Vector4 value, JsonSerializerOptions options)
         {
             {
@@ -120,6 +121,25 @@ namespace Utf8Json.Formatters
             }
 
             return new Vector4(x, y, z, w);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            if (!(value is Vector4 innerValue))
+            {
+                throw new ArgumentNullException();
+            }
+
+            SerializeStatic(ref writer, innerValue, options);
+        }
+
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 }

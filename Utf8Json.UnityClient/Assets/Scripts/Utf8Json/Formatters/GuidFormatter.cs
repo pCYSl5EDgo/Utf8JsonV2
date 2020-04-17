@@ -10,24 +10,16 @@ namespace Utf8Json.Formatters
     {
         public void Serialize(ref JsonWriter writer, Guid value, JsonSerializerOptions options)
         {
-            var span = writer.Writer.GetSpan(38);
-            span[0] = (byte)'\"';
-
-            new GuidBits(ref value).Write(span.Slice(1)); // len = 36
-
-            span[37] = (byte)'\"';
+            SerializeStatic(ref writer, value, options);
         }
 
         public Guid Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            reader.SkipWhiteSpace();
-            var segment = reader.ReadNotNullStringSegmentRaw();
-            return new GuidBits(segment).Value;
+            return DeserializeStatic(ref reader, options);
         }
 
 #pragma warning disable IDE0060
         public static void SerializeStatic(ref JsonWriter writer, Guid value, JsonSerializerOptions options)
-#pragma warning restore IDE0060
         {
             var span = writer.Writer.GetSpan(38);
             span[0] = (byte)'\"';
@@ -37,9 +29,7 @@ namespace Utf8Json.Formatters
             span[37] = (byte)'\"';
         }
 
-#pragma warning disable IDE0060
         public static Guid DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
-#pragma warning restore IDE0060
         {
             reader.SkipWhiteSpace();
             var segment = reader.ReadNotNullStringSegmentRaw();
@@ -48,79 +38,31 @@ namespace Utf8Json.Formatters
 
         public void SerializeToPropertyName(ref JsonWriter writer, Guid value, JsonSerializerOptions options)
         {
-            Serialize(ref writer, value, options);
+            SerializeStatic(ref writer, value, options);
         }
 
         public Guid DeserializeFromPropertyName(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return Deserialize(ref reader, options);
-        }
-    }
-
-    public sealed class NullableGuidFormatter : IJsonFormatter<Guid?>
-    {
-        public void Serialize(ref JsonWriter writer, Guid? value, JsonSerializerOptions options)
-        {
-            if (value.HasValue)
-            {
-                var span = writer.Writer.GetSpan(38);
-                span[0] = (byte)'\"';
-
-                var v = value.Value;
-                new GuidBits(ref v).Write(span.Slice(1)); // len = 36
-
-                span[37] = (byte)'\"';
-            }
-            else
-            {
-                var span = writer.Writer.GetSpan(4);
-                span[0] = (byte)'n';
-                span[1] = (byte)'u';
-                span[2] = (byte)'l';
-                span[3] = (byte)'l';
-                writer.Writer.Advance(4);
-            }
+            return DeserializeStatic(ref reader, options);
         }
 
-        public Guid? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
         {
-            if (reader.ReadIsNull()) return null;
-            var segment = reader.ReadNotNullStringSegmentRaw();
-            return new GuidBits(segment).Value;
+            if (!(value is Guid innerValue))
+            {
+                throw new ArgumentNullException();
+            }
+
+            SerializeStatic(ref writer, innerValue, options);
         }
 
-#pragma warning disable IDE0060
-        public static void SerializeStatic(ref JsonWriter writer, Guid? value, JsonSerializerOptions options)
-#pragma warning restore IDE0060
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                var span = writer.Writer.GetSpan(38);
-                span[0] = (byte)'\"';
-
-                var v = value.Value;
-                new GuidBits(ref v).Write(span.Slice(1)); // len = 36
-
-                span[37] = (byte)'\"';
-            }
-            else
-            {
-                var span = writer.Writer.GetSpan(4);
-                span[0] = (byte)'n';
-                span[1] = (byte)'u';
-                span[2] = (byte)'l';
-                span[3] = (byte)'l';
-                writer.Writer.Advance(4);
-            }
-        }
-
-#pragma warning disable IDE0060
-        public static Guid? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
-#pragma warning restore IDE0060
-        {
-            if (reader.ReadIsNull()) return default;
-            var segment = reader.ReadNotNullStringSegmentRaw();
-            return new GuidBits(segment).Value;
+            return DeserializeStatic(ref reader, options);
         }
     }
 }

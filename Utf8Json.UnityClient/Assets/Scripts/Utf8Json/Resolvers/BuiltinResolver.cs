@@ -36,6 +36,21 @@ namespace Utf8Json.Resolvers
             return FormatterCache<T>.SerializeSpanFunctionPointer;
         }
 
+        public IJsonFormatter GetFormatter(Type targetType)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IntPtr GetSerializeStaticTypeless(Type targetType)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IntPtr GetDeserializeStaticTypeless(Type targetType)
+        {
+            throw new NotImplementedException();
+        }
+
         private static class FormatterCache<T>
         {
             public static readonly IntPtr SerializeFunctionPointer;

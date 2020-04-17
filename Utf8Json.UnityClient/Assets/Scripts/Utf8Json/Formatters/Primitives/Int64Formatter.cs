@@ -2,11 +2,13 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using Utf8Json.Internal;
 
 namespace Utf8Json.Formatters
 {
     public sealed class Int64Formatter : IJsonFormatter<long>
     {
+#pragma warning disable IDE0060
         public static void SerializeStatic(ref JsonWriter writer, long value, JsonSerializerOptions options)
         {
             writer.Write(value);
@@ -257,6 +259,28 @@ namespace Utf8Json.Formatters
                 default:
                     throw new JsonSerializationException("Invalid number.");
             }
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            if (!(value is long innerValue))
+            {
+                throw new ArgumentNullException();
+            }
+
+            writer.Write(innerValue);
+        }
+
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            var answer = reader.ReadInt64();
+            if (answer == -1) return ObjectHelper.Int64Array[0];
+            if (answer >= 0 && answer < 256) return ObjectHelper.Int64Array[answer + 1];
+            return answer;
         }
     }
 }

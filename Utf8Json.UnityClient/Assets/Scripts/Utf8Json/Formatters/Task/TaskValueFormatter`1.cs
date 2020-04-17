@@ -7,23 +7,37 @@ using System.Threading.Tasks;
 namespace Utf8Json.Formatters
 {
     public sealed unsafe class TaskValueFormatter<T>
+#if CSHARP_8_OR_NEWER
+        : IJsonFormatter<Task<T>?>
+#else
         : IJsonFormatter<Task<T>>
+#endif
     {
+#if CSHARP_8_OR_NEWER
+        public void Serialize(ref JsonWriter writer, Task<T>? value, JsonSerializerOptions options)
+#else
         public void Serialize(ref JsonWriter writer, Task<T> value, JsonSerializerOptions options)
+#endif
         {
             SerializeStatic(ref writer, value, options);
         }
 
+#if CSHARP_8_OR_NEWER
+        public static void SerializeStatic(ref JsonWriter writer, Task<T>? value, JsonSerializerOptions options)
+#else
         public static void SerializeStatic(ref JsonWriter writer, Task<T> value, JsonSerializerOptions options)
+#endif
         {
-            if (value == null) {
+            if (value == null)
+            {
                 var span = writer.Writer.GetSpan(4);
                 span[0] = (byte)'n';
                 span[1] = (byte)'u';
                 span[2] = (byte)'l';
                 span[3] = (byte)'l';
                 writer.Writer.Advance(4);
-                return; }
+                return;
+            }
 
             // value.Result -> wait...!
             var serializer = options.Resolver.GetSerializeStatic<T>();
@@ -58,6 +72,24 @@ namespace Utf8Json.Formatters
                 ? options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options)
                 : reader.Deserialize<T>(options, deserializer);
             return Task.FromResult(v);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as Task<T>, options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 }

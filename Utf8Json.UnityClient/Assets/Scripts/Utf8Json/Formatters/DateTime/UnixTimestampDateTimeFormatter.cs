@@ -12,10 +12,10 @@ namespace Utf8Json.Formatters
 
         public void Serialize(ref JsonWriter writer, DateTime value, JsonSerializerOptions options)
         {
-            SerializeStatic(ref writer, value);
+            SerializeStatic(ref writer, value, options);
         }
 
-        public static void SerializeStatic(ref JsonWriter writer, DateTime value)
+        public static void SerializeStatic(ref JsonWriter writer, DateTime value, JsonSerializerOptions options)
         {
             var ticks = (long)(value.ToUniversalTime() - unixEpoch).TotalSeconds;
             var span = writer.Writer.GetSpan(1);
@@ -32,6 +32,7 @@ namespace Utf8Json.Formatters
             return DeserializeStatic(ref reader, options);
         }
 
+#pragma warning disable IDE0060
         public static DateTime DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
             reader.SkipWhiteSpace();
@@ -42,6 +43,26 @@ namespace Utf8Json.Formatters
             }
 
             throw new JsonParsingException("Invalid Unix timestamp.");
+        }
+
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            if (!(value is DateTime innerValue))
+            {
+                throw new ArgumentNullException();
+            }
+
+            SerializeStatic(ref writer, innerValue, options);
+        }
+
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 }

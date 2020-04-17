@@ -9,10 +9,6 @@ namespace Utf8Json.Formatters
 {
     public sealed class TimeSpanFormatter : IJsonFormatter<TimeSpan>
     {
-        public TimeSpanFormatter()
-        {
-        }
-
         public void Serialize(ref JsonWriter writer, TimeSpan value, JsonSerializerOptions options)
         {
             SerializeStatic(ref writer, value, options);
@@ -34,54 +30,24 @@ namespace Utf8Json.Formatters
             if (str == null) throw new JsonParsingException("TimeSpan should not be null.");
             return TimeSpan.Parse(str, CultureInfo.InvariantCulture);
         }
-    }
 
-    public sealed class NullableTimeSpanFormatter : IJsonFormatter<TimeSpan?>
-    {
-        public NullableTimeSpanFormatter()
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
         {
+            if (!(value is TimeSpan innerValue))
+            {
+                throw new ArgumentNullException();
+            }
+
+            SerializeStatic(ref writer, innerValue, options);
         }
 
-        public void Serialize(ref JsonWriter writer, TimeSpan? value, JsonSerializerOptions options)
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
         {
-            if (value == null) {
-                var span = writer.Writer.GetSpan(4);
-                span[0] = (byte)'n';
-                span[1] = (byte)'u';
-                span[2] = (byte)'l';
-                span[3] = (byte)'l';
-                writer.Writer.Advance(4);
-                return; }
-
-            TimeSpanFormatter.SerializeStatic(ref writer, value.Value, options);
-        }
-
-        public static void SerializeStatic(ref JsonWriter writer, TimeSpan? value, JsonSerializerOptions options)
-        {
-            if (value == null) {
-                var span = writer.Writer.GetSpan(4);
-                span[0] = (byte)'n';
-                span[1] = (byte)'u';
-                span[2] = (byte)'l';
-                span[3] = (byte)'l';
-                writer.Writer.Advance(4);
-                return; }
-
-            TimeSpanFormatter.SerializeStatic(ref writer, value.Value, options);
-        }
-
-        public TimeSpan? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
-        {
-            if (reader.ReadIsNull()) return null;
-
-            return TimeSpanFormatter.DeserializeStatic(ref reader, options);
-        }
-
-        public static TimeSpan? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
-        {
-            if (reader.ReadIsNull()) return null;
-
-            return TimeSpanFormatter.DeserializeStatic(ref reader, options);
+            return DeserializeStatic(ref reader, options);
         }
     }
 }

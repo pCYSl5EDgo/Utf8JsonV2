@@ -9,6 +9,13 @@ namespace Utf8Json
     [EditorBrowsable(EditorBrowsableState.Never)]
     public interface IJsonFormatter
     {
+#if CSHARP_8_OR_NEWER
+        void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options);
+        object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options);
+#else
+        void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options);
+        object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options);
+#endif
     }
 
     public interface IJsonFormatter<T> : IJsonFormatter

@@ -1,6 +1,7 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Numerics;
 
 namespace Utf8Json.Formatters
@@ -30,10 +31,10 @@ namespace Utf8Json.Formatters
 
         public Complex Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return DeserializeStatic(ref reader);
+            return DeserializeStatic(ref reader, options);
         }
 
-        public static Complex DeserializeStatic(ref JsonReader reader)
+        public static Complex DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
             reader.ReadIsBeginArrayWithVerify();
             var real = reader.ReadDouble();
@@ -43,62 +44,24 @@ namespace Utf8Json.Formatters
 
             return new Complex(real, imaginary);
         }
-    }
 
-    public sealed class NullableComplexFormatter : IJsonFormatter<Complex?>
-    {
-        public void Serialize(ref JsonWriter writer, Complex? value, JsonSerializerOptions options)
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
         {
-            SerializeStatic(ref writer, value, options);
-        }
-
-        public static void SerializeStatic(ref JsonWriter writer, Complex? value, JsonSerializerOptions options)
-        {
-            if (value.HasValue)
+            if (!(value is Complex innerValue))
             {
-                var inner = value.Value;
-                var span1 = writer.Writer.GetSpan(1);
-                span1[0] = (byte)'[';
-                writer.Writer.Advance(1);
-                writer.Write(inner.Real);
-                var span = writer.Writer.GetSpan(1);
-                span[0] = (byte)',';
-                writer.Writer.Advance(1);
-                writer.Write(inner.Imaginary);
-                var span2 = writer.Writer.GetSpan(1);
-                span2[0] = (byte)']';
-                writer.Writer.Advance(1);
-            }
-            else
-            {
-                var span = writer.Writer.GetSpan(4);
-                span[0] = (byte)'n';
-                span[1] = (byte)'u';
-                span[2] = (byte)'l';
-                span[3] = (byte)'l';
-                writer.Writer.Advance(4);
-            }
-        }
-
-        public Complex? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
-        {
-            return DeserializeStatic(ref reader);
-        }
-
-        public static Complex? DeserializeStatic(ref JsonReader reader)
-        {
-            if (reader.ReadIsNull())
-            {
-                return null;
+                throw new ArgumentNullException();
             }
 
-            reader.ReadIsBeginArrayWithVerify();
-            var real = reader.ReadDouble();
-            reader.ReadIsValueSeparatorWithVerify();
-            var imaginary = reader.ReadDouble();
-            reader.ReadIsEndArrayWithVerify();
+            SerializeStatic(ref writer, innerValue, options);
+        }
 
-            return new Complex(real, imaginary);
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 }

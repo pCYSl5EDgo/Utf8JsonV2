@@ -195,7 +195,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 2)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -208,7 +208,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 2)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -221,7 +221,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -299,6 +299,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -508,7 +526,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 3)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -521,7 +539,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 3)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -534,7 +552,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -618,6 +636,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -845,7 +881,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 4)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -858,7 +894,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 4)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -871,7 +907,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -961,6 +997,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -1206,7 +1260,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 5)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -1219,7 +1273,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 5)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -1232,7 +1286,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -1328,6 +1382,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -1591,7 +1663,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 6)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -1604,7 +1676,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 6)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -1617,7 +1689,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -1719,6 +1791,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -2000,7 +2090,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 7)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -2013,7 +2103,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 7)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -2026,7 +2116,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -2134,6 +2224,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -2433,7 +2541,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 8)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -2446,7 +2554,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 8)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -2459,7 +2567,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -2573,6 +2681,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -2890,7 +3016,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 9)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -2903,7 +3029,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 9)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -2916,7 +3042,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -3036,6 +3162,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -3371,7 +3515,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 10)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -3384,7 +3528,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 10)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -3397,7 +3541,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -3523,6 +3667,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -3876,7 +4038,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 11)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -3889,7 +4051,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 11)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -3902,7 +4064,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -4034,6 +4196,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -4405,7 +4585,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 12)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -4418,7 +4598,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 12)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -4431,7 +4611,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -4569,6 +4749,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,,,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -4958,7 +5156,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 13)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -4971,7 +5169,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 13)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -4984,7 +5182,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -5128,6 +5326,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,,,,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -5535,7 +5751,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 14)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -5548,7 +5764,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 14)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -5561,7 +5777,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -5711,6 +5927,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,,,,,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -6136,7 +6370,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 15)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -6149,7 +6383,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 15)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -6162,7 +6396,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -6318,6 +6552,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,,,,,,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -6761,7 +7013,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 16)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -6774,7 +7026,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 16)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -6787,7 +7039,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -6949,6 +7201,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,,,,,,,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -7410,7 +7680,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 17)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -7423,7 +7693,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 17)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -7436,7 +7706,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -7604,6 +7874,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,,,,,,,,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -8083,7 +8371,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 18)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -8096,7 +8384,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 18)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -8109,7 +8397,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -8283,6 +8571,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,,,,,,,,,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -8780,7 +9086,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 19)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -8793,7 +9099,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 19)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -8806,7 +9112,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -8986,6 +9292,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,,,,,,,,,,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -9501,7 +9825,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 20)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -9514,7 +9838,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 20)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -9527,7 +9851,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -9713,6 +10037,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,,,,,,,,,,,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -10246,7 +10588,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 21)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -10259,7 +10601,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 21)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -10272,7 +10614,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -10464,6 +10806,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,,,,,,,,,,,,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -11015,7 +11375,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 22)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -11028,7 +11388,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 22)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -11041,7 +11401,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -11239,6 +11599,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,,,,,,,,,,,,,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -11808,7 +12186,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 23)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -11821,7 +12199,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 23)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -11834,7 +12212,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -12038,6 +12416,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,,,,,,,,,,,,,,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -12625,7 +13021,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 24)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -12638,7 +13034,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 24)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -12651,7 +13047,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -12861,6 +13257,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,,,,,,,,,,,,,,,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -13466,7 +13880,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 25)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -13479,7 +13893,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 25)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -13492,7 +13906,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -13708,6 +14122,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,,,,,,,,,,,,,,,,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -14331,7 +14763,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 26)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -14344,7 +14776,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 26)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -14357,7 +14789,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -14579,6 +15011,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,,,,,,,,,,,,,,,,,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -15220,7 +15670,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 27)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -15233,7 +15683,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 27)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -15246,7 +15696,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -15474,6 +15924,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,,,,,,,,,,,,,,,,,,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -16133,7 +16601,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 28)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -16146,7 +16614,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 28)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -16159,7 +16627,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -16393,6 +16861,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,,,,,,,,,,,,,,,,,,,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -17070,7 +17556,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 29)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -17083,7 +17569,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 29)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -17096,7 +17582,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -17336,6 +17822,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,,,,,,,,,,,,,,,,,,,,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -18031,7 +18535,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 30)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -18044,7 +18548,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 30)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -18057,7 +18561,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -18303,6 +18807,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,,,,,,,,,,,,,,,,,,,,,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -19016,7 +19538,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 31)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -19029,7 +19551,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 31)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -19042,7 +19564,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -19294,6 +19816,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 
@@ -20025,7 +20565,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != 32)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -20038,7 +20578,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != 32)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -20051,7 +20591,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -20309,6 +20849,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as T[,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,], options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 

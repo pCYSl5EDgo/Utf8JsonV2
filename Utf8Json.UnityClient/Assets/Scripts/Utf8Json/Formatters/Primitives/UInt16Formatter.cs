@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using Utf8Json.Internal;
 
 namespace Utf8Json.Formatters
 {
@@ -17,6 +18,7 @@ namespace Utf8Json.Formatters
             writer.Write(value);
         }
 
+#pragma warning disable IDE0060
         public static ushort DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
             return reader.ReadUInt16();
@@ -79,6 +81,21 @@ namespace Utf8Json.Formatters
                 default:
                     throw new JsonSerializationException("Invalid number.");
             }
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            throw new NotImplementedException();
+        }
+
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            var answer = DeserializeStatic(ref reader, options);
+            return answer < 256 ? ObjectHelper.UInt16Array[answer] : answer;
         }
     }
 }

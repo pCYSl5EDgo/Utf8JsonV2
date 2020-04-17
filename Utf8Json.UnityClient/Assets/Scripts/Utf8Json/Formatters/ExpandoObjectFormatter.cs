@@ -8,15 +8,39 @@ using System.Dynamic;
 
 namespace Utf8Json.Formatters
 {
-    public sealed unsafe class ExpandoObjectFormatter : IJsonFormatter<ExpandoObject>
+    public sealed unsafe class ExpandoObjectFormatter
+#if CSHARP_8_OR_NEWER
+        : IJsonFormatter<ExpandoObject?>
+#else
+        : IJsonFormatter<ExpandoObject>
+#endif
     {
+#if CSHARP_8_OR_NEWER
+        public void Serialize(ref JsonWriter writer, ExpandoObject? value, JsonSerializerOptions options)
+#else
         public void Serialize(ref JsonWriter writer, ExpandoObject value, JsonSerializerOptions options)
+#endif
         {
             SerializeStatic(ref writer, value, options);
         }
 
+#if CSHARP_8_OR_NEWER
+        public static void SerializeStatic(ref JsonWriter writer, ExpandoObject? value, JsonSerializerOptions options)
+#else
         public static void SerializeStatic(ref JsonWriter writer, ExpandoObject value, JsonSerializerOptions options)
+#endif
         {
+            if (value == null)
+            {
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
+                return;
+            }
+
             var serializer = options.Resolver.GetSerializeStatic<IDictionary<string, object>>();
             if (serializer.ToPointer() == null)
             {
@@ -29,8 +53,17 @@ namespace Utf8Json.Formatters
             }
         }
 
+#if CSHARP_8_OR_NEWER
+        public static ExpandoObject? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+#else
         public static ExpandoObject DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+#endif
         {
+            if (reader.ReadIsNull())
+            {
+                return default;
+            }
+
             var result = new ExpandoObject();
 
             var count = 0;
@@ -58,7 +91,29 @@ namespace Utf8Json.Formatters
             return result;
         }
 
+#if CSHARP_8_OR_NEWER
+        public ExpandoObject? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+#else
         public ExpandoObject Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as ExpandoObject, options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
         {
             return DeserializeStatic(ref reader, options);
         }

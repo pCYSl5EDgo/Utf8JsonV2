@@ -88,9 +88,9 @@ namespace Utf8Json.Formatters
             }
 
         END:
-        var span1 = writer.Writer.GetSpan(1);
-        span1[0] = (byte)'}';
-        writer.Writer.Advance(1);
+            var span1 = writer.Writer.GetSpan(1);
+            span1[0] = (byte)'}';
+            writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -127,6 +127,24 @@ namespace Utf8Json.Formatters
             }
 
             return dict;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as IDictionary, options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 }

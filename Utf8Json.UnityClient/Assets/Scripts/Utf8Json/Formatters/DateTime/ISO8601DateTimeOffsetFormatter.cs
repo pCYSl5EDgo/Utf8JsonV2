@@ -453,30 +453,24 @@ namespace Utf8Json.Formatters
             }
 #endif
         }
-    }
 
-    // ReSharper disable once InconsistentNaming
-    public sealed class NullableISO8601DateTimeOffsetFormatter : IJsonFormatter<DateTimeOffset?>
-    {
-        public void Serialize(ref JsonWriter writer, DateTimeOffset? value, JsonSerializerOptions options)
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
         {
-            if (value.HasValue)
+            if (!(value is DateTimeOffset innerValue))
             {
-                ISO8601DateTimeOffsetFormatter.SerializeStatic(ref writer, value.Value, options);
-                return;
+                throw new ArgumentNullException();
             }
 
-            var span = writer.Writer.GetSpan(4);
-            span[0] = (byte)'n';
-            span[1] = (byte)'u';
-            span[2] = (byte)'l';
-            span[3] = (byte)'l';
-            writer.Writer.Advance(4);
+            SerializeStatic(ref writer, innerValue, options);
         }
 
-        public DateTimeOffset? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadIsNull() ? default : ISO8601DateTimeOffsetFormatter.DeserializeStatic(ref reader, options);
+            return DeserializeStatic(ref reader, options);
         }
     }
 }

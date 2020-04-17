@@ -452,61 +452,24 @@ namespace Utf8Json.Formatters
             throw new InvalidOperationException("invalid datetime format.");
 #endif
         }
-    }
 
-    // ReSharper disable once InconsistentNaming
-    public sealed class NullableISO8601DateTimeFormatter : IJsonFormatter<DateTime?>
-    {
-        public void Serialize(ref JsonWriter writer, DateTime? value, JsonSerializerOptions options)
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
         {
-            if (value.HasValue)
+            if (!(value is DateTime innerValue))
             {
-                ISO8601DateTimeFormatter.SerializeStatic(ref writer, value.Value, options);
-                return;
+                throw new ArgumentNullException();
             }
 
-            var span = writer.Writer.GetSpan(4);
-            span[0] = (byte)'n';
-            span[1] = (byte)'u';
-            span[2] = (byte)'l';
-            span[3] = (byte)'l';
-            writer.Writer.Advance(4);
+            SerializeStatic(ref writer, innerValue, options);
         }
 
-        public static void SerializeStatic(ref JsonWriter writer, DateTime? value, JsonSerializerOptions options)
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                ISO8601DateTimeFormatter.SerializeStatic(ref writer, value.Value, options);
-                return;
-            }
-
-            var span = writer.Writer.GetSpan(4);
-            span[0] = (byte)'n';
-            span[1] = (byte)'u';
-            span[2] = (byte)'l';
-            span[3] = (byte)'l';
-            writer.Writer.Advance(4);
-        }
-
-        public DateTime? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
-        {
-            if (reader.ReadIsNull())
-            {
-                return default;
-            }
-
-            return ISO8601DateTimeFormatter.DeserializeStatic(ref reader, options);
-        }
-
-        public static DateTime? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
-        {
-            if (reader.ReadIsNull())
-            {
-                return default;
-            }
-
-            return ISO8601DateTimeFormatter.DeserializeStatic(ref reader, options);
+            return DeserializeStatic(ref reader, options);
         }
     }
 }

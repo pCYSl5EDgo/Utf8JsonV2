@@ -7,6 +7,7 @@ namespace Utf8Json.Formatters
 {
     public sealed class Int16Formatter : IJsonFormatter<short>
     {
+#pragma warning disable IDE0060
         public static void SerializeStatic(ref JsonWriter writer, short value, JsonSerializerOptions options)
         {
             writer.Write(value);
@@ -35,6 +36,25 @@ namespace Utf8Json.Formatters
         public static void SerializeSpan(JsonSerializerOptions options, short value, Span<byte> span)
         {
             Int32Formatter.SerializeSpan(options, value, span);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            if (!(value is short innerValue))
+            {
+                throw new ArgumentNullException();
+            }
+
+            writer.Write(innerValue);
+        }
+
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            return reader.ReadInt16();
         }
     }
 }

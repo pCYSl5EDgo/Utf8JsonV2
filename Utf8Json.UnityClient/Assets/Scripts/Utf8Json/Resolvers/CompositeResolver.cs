@@ -222,6 +222,21 @@ namespace Utf8Json.Resolvers
 
                 return new IntPtr(null);
             }
+
+            public IJsonFormatter GetFormatter(Type targetType)
+            {
+                throw new NotImplementedException();
+            }
+
+            public IntPtr GetSerializeStaticTypeless(Type targetType)
+            {
+                throw new NotImplementedException();
+            }
+
+            public IntPtr GetDeserializeStaticTypeless(Type targetType)
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 }

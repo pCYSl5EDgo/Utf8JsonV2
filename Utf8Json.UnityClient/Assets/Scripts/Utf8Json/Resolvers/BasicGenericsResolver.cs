@@ -20,6 +20,11 @@ namespace Utf8Json.Resolvers
 #endif
         }
 
+        public IJsonFormatter GetFormatter(Type targetType)
+        {
+            throw new NotImplementedException();
+        }
+
         public IntPtr GetSerializeStatic<T>()
         {
             return FormatterCache<T>.SerializeFunctionPointer;
@@ -38,6 +43,16 @@ namespace Utf8Json.Resolvers
         public IntPtr GetSerializeSpan<T>()
         {
             return FormatterCache<T>.SerializeSpanFunctionPointer;
+        }
+
+        public IntPtr GetSerializeStaticTypeless(Type targetType)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IntPtr GetDeserializeStaticTypeless(Type targetType)
+        {
+            throw new NotImplementedException();
         }
 
         internal struct FormatterCache<T>

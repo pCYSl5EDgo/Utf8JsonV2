@@ -9,12 +9,16 @@ namespace Utf8Json
     {
 #if CSHARP_8_OR_NEWER
         IJsonFormatter<T>? GetFormatter<T>();
+        IJsonFormatter? GetFormatter(Type targetType);
 #else
         IJsonFormatter<T> GetFormatter<T>();
+        IJsonFormatter GetFormatter(Type targetType);
 #endif
         IntPtr GetSerializeStatic<T>();
         IntPtr GetDeserializeStatic<T>();
         IntPtr GetCalcByteLengthForSerialization<T>();
         IntPtr GetSerializeSpan<T>();
+        IntPtr GetSerializeStaticTypeless(Type targetType);
+        IntPtr GetDeserializeStaticTypeless(Type targetType);
     }
 }

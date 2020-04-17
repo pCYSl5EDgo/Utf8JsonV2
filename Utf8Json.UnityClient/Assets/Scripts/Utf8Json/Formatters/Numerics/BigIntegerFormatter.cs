@@ -1,6 +1,7 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Globalization;
 using System.Numerics;
 
@@ -34,62 +35,24 @@ namespace Utf8Json.Formatters
             var s = reader.ReadString();
             return BigInteger.Parse(s, CultureInfo.InvariantCulture);
         }
-    }
 
-    /// <summary>
-    /// JSON.NET writes Integer format, not compatible.
-    /// </summary>
-    public sealed class NullableBigIntegerFormatter : IJsonFormatter<BigInteger?>
-    {
-        public void Serialize(ref JsonWriter writer, BigInteger? value, JsonSerializerOptions options)
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
         {
-            if (value.HasValue)
+            if (!(value is BigInteger innerValue))
             {
-                writer.Write(value.Value.ToString(CultureInfo.InvariantCulture));
+                throw new ArgumentNullException();
             }
-            else
-            {
-                var span = writer.Writer.GetSpan(4);
-                span[0] = (byte)'n';
-                span[1] = (byte)'u';
-                span[2] = (byte)'l';
-                span[3] = (byte)'l';
-                writer.Writer.Advance(4);
-            }
+
+            SerializeStatic(ref writer, innerValue, options);
         }
 
-        /// <summary>
-        /// JSON.NET writes Integer format, not compatible.
-        /// </summary>
-        public static void SerializeStatic(ref JsonWriter writer, BigInteger? value, JsonSerializerOptions options)
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
         {
-            if (value.HasValue)
-            {
-                writer.Write(value.Value.ToString(CultureInfo.InvariantCulture));
-            }
-            else
-            {
-                var span = writer.Writer.GetSpan(4);
-                span[0] = (byte)'n';
-                span[1] = (byte)'u';
-                span[2] = (byte)'l';
-                span[3] = (byte)'l';
-                writer.Writer.Advance(4);
-            }
-        }
-
-        public BigInteger? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
-        {
-            var s = reader.ReadString();
-            if (s == null) return null;
-            return BigInteger.Parse(s, CultureInfo.InvariantCulture);
-        }
-
-        public static BigInteger? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
-        {
-            var s = reader.ReadString();
-            if (s == null) return null;
-            return BigInteger.Parse(s, CultureInfo.InvariantCulture);
+            return DeserializeStatic(ref reader, options);
         }
     }
 }

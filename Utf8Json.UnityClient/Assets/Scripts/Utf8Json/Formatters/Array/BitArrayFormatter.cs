@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 #endif
+#pragma warning disable IDE0060
 
 namespace Utf8Json.Formatters
 {
@@ -38,13 +39,11 @@ namespace Utf8Json.Formatters
             return DeserializeStatic(ref reader, options);
         }
 
-#pragma warning disable IDE0060
 #if CSHARP_8_OR_NEWER
         public static void SerializeStatic(ref JsonWriter writer, BitArray? value, JsonSerializerOptions options)
 #else
         public static void SerializeStatic(ref JsonWriter writer, BitArray value, JsonSerializerOptions options)
 #endif
-#pragma warning restore IDE0060
         {
             if (value == null)
             {
@@ -111,9 +110,9 @@ namespace Utf8Json.Formatters
             }
 
         END:
-        var span4 = writer.Writer.GetSpan(1);
-        span4[0] = (byte)']';
-        writer.Writer.Advance(1);
+            var span4 = writer.Writer.GetSpan(1);
+            span4[0] = (byte)']';
+            writer.Writer.Advance(1);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -207,6 +206,35 @@ namespace Utf8Json.Formatters
                 pool.Return(array);
             }
 #endif
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            if (value == null)
+            {
+                var span = writer.Writer.GetSpan(4);
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                writer.Writer.Advance(4);
+                return;
+            }
+
+            SerializeStatic(ref writer, value as BitArray, options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 }

@@ -51,7 +51,7 @@ namespace Utf8Json.Resolvers
                 switch (targetType.GetArrayRank())
                 {
                     case 1:
-                        arrayFormatterBase = typeof(AddArrayFormatter<>);
+                        arrayFormatterBase = typeof(ArrayFormatter<>);
                         break;
                     case 2:
                         arrayFormatterBase = typeof(Dimension2ArrayFormatter<>);
@@ -279,10 +279,10 @@ namespace Utf8Json.Resolvers
                         formatterType = typeof(InterfaceEnumerableFormatter<>).MakeGenericType(genericArguments);
                         break;
                     case "System.Collections.Generic.IList`1":
-                        formatterType = typeof(AddInterfaceListFormatter<>).MakeGenericType(genericArguments);
+                        formatterType = typeof(InterfaceListFormatter<>).MakeGenericType(genericArguments);
                         break;
                     case "System.Collections.Generic.ICollection`1":
-                        formatterType = typeof(AddInterfaceCollectionFormatter<>).MakeGenericType(genericArguments);
+                        formatterType = typeof(InterfaceCollectionFormatter<>).MakeGenericType(genericArguments);
                         break;
                     case "System.Collections.Generic.ILookup`2":
                         formatterType = typeof(InterfaceLookupFormatter<,>).MakeGenericType(genericArguments);
@@ -306,16 +306,16 @@ namespace Utf8Json.Resolvers
                         formatterType = typeof(NullableFormatter<>).MakeGenericType(genericArguments);
                         break;
                     case "System.Collections.Generic.Queue`1":
-                        formatterType = typeof(AddQueueFormatter<>).MakeGenericType(genericArguments);
+                        formatterType = typeof(QueueFormatter<>).MakeGenericType(genericArguments);
                         break;
                     case "System.Collections.Generic.Stack`1":
-                        formatterType = typeof(AddStackFormatter<>).MakeGenericType(genericArguments);
+                        formatterType = typeof(StackFormatter<>).MakeGenericType(genericArguments);
                         break;
                     case "System.Collections.Generic.HashSet`1":
-                        formatterType = typeof(AddHashSetFormatter<>).MakeGenericType(genericArguments);
+                        formatterType = typeof(HashSetFormatter<>).MakeGenericType(genericArguments);
                         break;
                     case "System.Collections.Generic.LinkedList`1":
-                        formatterType = typeof(AddLinkedListFormatter<>).MakeGenericType(genericArguments);
+                        formatterType = typeof(LinkedListFormatter<>).MakeGenericType(genericArguments);
                         break;
                     case "System.Collections.Generic.List`1":
                         formatterType = typeof(ListFormatter<>).MakeGenericType(genericArguments);

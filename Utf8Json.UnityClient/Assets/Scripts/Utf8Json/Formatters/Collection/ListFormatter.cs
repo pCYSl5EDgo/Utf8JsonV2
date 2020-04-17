@@ -10,9 +10,9 @@ namespace Utf8Json.Formatters
 {
     public sealed unsafe class ListFormatter<T>
 #if CSHARP_8_OR_NEWER
-        : IOverwriteJsonFormatter<List<T>?>
+        : IJsonFormatter<List<T>?>
 #else
-        : IOverwriteJsonFormatter<List<T>>
+        : IJsonFormatter<List<T>>
 #endif
     {
 #if CSHARP_8_OR_NEWER
@@ -76,229 +76,9 @@ namespace Utf8Json.Formatters
                 }
             }
         END:
-        var span2 = writer.Writer.GetSpan(1);
-        span2[0] = (byte)']';
-        writer.Writer.Advance(1);
-        }
-
-#if CSHARP_8_OR_NEWER
-        public List<T>? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
-#else
-        public List<T> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
-#endif
-        {
-            return DeserializeStatic(ref reader, options);
-        }
-
-#if CSHARP_8_OR_NEWER
-        public static List<T>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
-#else
-        public static List<T> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
-#endif
-        {
-            if (reader.ReadIsNull())
-            {
-                return default;
-            }
-
-            reader.ReadIsBeginArrayWithVerify();
-
-            var pool = ArrayPool<T>.Shared;
-            var array = pool.Rent(256);
-            try
-            {
-                var deserializer = options.Resolver.GetDeserializeStatic<T>();
-                if (deserializer.ToPointer() == null)
-                {
-                    return DeserializeWithFormatter(ref reader, options, pool, ref array);
-                }
-
-                var count = 0;
-                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
-                {
-                    if (array.Length < count)
-                    {
-                        var tmp = pool.Rent(count << 1);
-                        Array.Copy(array, 0, tmp, 0, array.Length);
-                        pool.Return(array);
-                        array = tmp;
-                    }
-
-                    array[count - 1] = reader.Deserialize<T>(options, deserializer);
-                }
-
-                var answer = new List<T>(count);
-                var span = array.AsSpan(0, count);
-                for (var index = 0; index < span.Length; index++)
-                {
-                    answer.Add(span[index]);
-                }
-
-                return answer;
-            }
-            finally
-            {
-                pool.Return(array);
-            }
-        }
-
-        private static List<T> DeserializeWithFormatter(ref JsonReader reader, JsonSerializerOptions options, ArrayPool<T> pool, ref T[] array)
-        {
-            var count = 0;
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
-            {
-                if (array.Length < count)
-                {
-                    var tmp = pool.Rent(count << 1);
-                    Array.Copy(array, 0, tmp, 0, array.Length);
-                    pool.Return(array);
-                    array = tmp;
-                }
-
-                array[count - 1] = formatter.Deserialize(ref reader, options);
-            }
-
-            var answer = new List<T>(count);
-            var span = array.AsSpan(0, count);
-            for (var index = 0; index < span.Length; index++)
-            {
-                answer.Add(span[index]);
-            }
-
-            return answer;
-        }
-
-#if CSHARP_8_OR_NEWER
-        public void DeserializeTo(ref List<T>? value, ref JsonReader reader, JsonSerializerOptions options)
-#else
-        public void DeserializeTo(ref List<T> value, ref JsonReader reader, JsonSerializerOptions options)
-#endif
-        {
-            if (reader.ReadIsNull())
-            {
-                // null, do nothing
-                return;
-            }
-
-
-            reader.ReadIsBeginArrayWithVerify();
-
-            var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer.ToPointer() == null)
-            {
-                DeserializeToWithFormatter(ref value, ref reader, options);
-                return;
-            }
-
-            var count = 0;
-            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
-            {
-                if (value == null)
-                {
-                    value = new List<T>();
-                }
-
-                value.Add(reader.Deserialize<T>(options, deserializer));
-            }
-        }
-
-#if CSHARP_8_OR_NEWER
-        private static void DeserializeToWithFormatter(ref List<T>? value, ref JsonReader reader, JsonSerializerOptions options)
-#else
-        private static void DeserializeToWithFormatter(ref List<T> value, ref JsonReader reader, JsonSerializerOptions options)
-#endif
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var count = 0;
-            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
-            {
-                if (value == null)
-                {
-                    value = new List<T>();
-                }
-
-                value.Add(formatter.Deserialize(ref reader, options));
-            }
-        }
-    }
-
-    public sealed unsafe class OverwriteListFormatter<T>
-#if CSHARP_8_OR_NEWER
-        : IOverwriteJsonFormatter<List<T>?>
-#else
-        : IOverwriteJsonFormatter<List<T>>
-#endif
-    {
-#if CSHARP_8_OR_NEWER
-        public void Serialize(ref JsonWriter writer, List<T>? value, JsonSerializerOptions options)
-#else
-        public void Serialize(ref JsonWriter writer, List<T> value, JsonSerializerOptions options)
-#endif
-        {
-            SerializeStatic(ref writer, value, options);
-        }
-
-#if CSHARP_8_OR_NEWER
-        public static void SerializeStatic(ref JsonWriter writer, List<T>? value, JsonSerializerOptions options)
-#else
-        public static void SerializeStatic(ref JsonWriter writer, List<T> value, JsonSerializerOptions options)
-#endif
-        {
-            if (value == null)
-            {
-                var span = writer.Writer.GetSpan(4);
-                span[0] = (byte)'n';
-                span[1] = (byte)'u';
-                span[2] = (byte)'l';
-                span[3] = (byte)'l';
-                writer.Writer.Advance(4);
-                return;
-            }
-
-            var span1 = writer.Writer.GetSpan(1);
-            span1[0] = (byte)'[';
+            var span2 = writer.Writer.GetSpan(1);
+            span2[0] = (byte)']';
             writer.Writer.Advance(1);
-            if (value.Count == 0)
-            {
-                goto END;
-            }
-
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeWithFormatter(ref writer, value, options);
-            }
-            else
-            {
-                writer.Serialize(value[0], options, serializer);
-
-                for (var i = 1; i < value.Count; i++)
-                {
-                    var span = writer.Writer.GetSpan(1);
-                    span[0] = (byte)',';
-                    writer.Writer.Advance(1);
-                    writer.Serialize(value[i], options, serializer);
-                }
-            }
-        END:
-        var span2 = writer.Writer.GetSpan(1);
-        span2[0] = (byte)']';
-        writer.Writer.Advance(1);
-        }
-
-        private static void SerializeWithFormatter(ref JsonWriter writer, List<T> value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            formatter.Serialize(ref writer, value[0], options);
-
-            for (var i = 1; i < value.Count; i++)
-            {
-                var span = writer.Writer.GetSpan(1);
-                span[0] = (byte)',';
-                writer.Writer.Advance(1);
-                formatter.Serialize(ref writer, value[i], options);
-            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -355,7 +135,6 @@ namespace Utf8Json.Formatters
                 }
 
                 return answer;
-
             }
             finally
             {
@@ -391,50 +170,21 @@ namespace Utf8Json.Formatters
         }
 
 #if CSHARP_8_OR_NEWER
-        public void DeserializeTo(ref List<T>? value, ref JsonReader reader, JsonSerializerOptions options)
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
-        public void DeserializeTo(ref List<T> value, ref JsonReader reader, JsonSerializerOptions options)
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
 #endif
         {
-            if (reader.ReadIsNull())
-            {
-                // null, do nothing
-                return;
-            }
-
-            reader.ReadIsBeginArrayWithVerify();
-
-            if (value == null)
-            {
-                value = new List<T>();
-            }
-            else
-            {
-                value.Clear();
-            }
-
-            var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer.ToPointer() == null)
-            {
-                DeserializeToWithFormatter(value, ref reader, options);
-                return;
-            }
-
-            var count = 0;
-            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
-            {
-                value.Add(reader.Deserialize<T>(options, deserializer));
-            }
+            SerializeStatic(ref writer, value as List<T>, options);
         }
 
-        private static void DeserializeToWithFormatter(List<T> value, ref JsonReader reader, JsonSerializerOptions options)
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
         {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var count = 0;
-            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
-            {
-                value.Add(formatter.Deserialize(ref reader, options));
-            }
+            return DeserializeStatic(ref reader, options);
         }
     }
 }

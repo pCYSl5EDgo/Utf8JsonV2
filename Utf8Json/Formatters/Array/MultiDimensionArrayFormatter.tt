@@ -218,7 +218,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        starts = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        starts = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (starts != null && starts.Length != <#= dimension #>)
                         {
                             throw new JsonParsingException("Lower bounds' length does not equal to two times of rank.");
@@ -231,7 +231,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
                             
-                        lengths = Int32ArrayFormatter.DeserializeStatic(ref reader, options);
+                        lengths = ArrayFormatter<int>.DeserializeStatic(ref reader, options);
                         if (lengths != null && lengths.Length != <#= dimension #>)
                         {
                             throw new JsonParsingException("Lengths' length does not equal to two times of rank.");
@@ -244,7 +244,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        elements = AddArrayFormatter<T>.DeserializeStatic(ref reader, options);
+                        elements = ArrayFormatter<T>.DeserializeStatic(ref reader, options);
                         continue;
                     default:
                         reader.ReadNextBlock();
@@ -338,6 +338,24 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as <#= typeText #>, options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 

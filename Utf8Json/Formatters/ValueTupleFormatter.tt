@@ -8,6 +8,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using StaticFunctionPointerHelper;
+using System;
 
 namespace Utf8Json.Formatters
 {
@@ -23,14 +24,14 @@ namespace Utf8Json.Formatters
         typeArguments = buffer.ToString();
     }
 #>
-    public sealed unsafe class ValueTupleFormatter<<#= typeArguments #>> : IJsonFormatter<(<#= typeArguments #>)>
+    public sealed unsafe class ValueTupleFormatter<<#= typeArguments #>> : IJsonFormatter<ValueTuple<<#= typeArguments #>>>
     {
-        public void Serialize(ref JsonWriter writer, (<#= typeArguments #>) value, JsonSerializerOptions options)
+        public void Serialize(ref JsonWriter writer, ValueTuple<<#= typeArguments #>> value, JsonSerializerOptions options)
         {
             SerializeStatic(ref writer, value, options);
         }
 
-        public static void SerializeStatic(ref JsonWriter writer, (<#= typeArguments #>) value, JsonSerializerOptions options)
+        public static void SerializeStatic(ref JsonWriter writer, ValueTuple<<#= typeArguments #>> value, JsonSerializerOptions options)
         {
             var resolver = options.Resolver;
             {
@@ -94,15 +95,15 @@ namespace Utf8Json.Formatters
             writer.WriteEndObject();
         }
 
-        public (<#= typeArguments #>) Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+        public ValueTuple<<#= typeArguments #>> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
             return DeserializeStatic(ref reader, options);
         }
 
-        public static (<#= typeArguments #>) DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+        public static ValueTuple<<#= typeArguments #>> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
             reader.ReadIsBeginObjectWithVerify();
-            var answer = default((<#= typeArguments #>));
+            var answer = default(ValueTuple<<#= typeArguments #>>);
             var resolver = options.Resolver;
             var count = 0;
             while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
@@ -135,6 +136,25 @@ namespace Utf8Json.Formatters
             }
 
             return answer;
+        }
+        
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            if (!(value is ValueTuple<<#= typeArguments #>> innerValue))
+            {
+                throw new ArgumentNullException();
+            }
+
+            SerializeStatic(ref writer, innerValue, options);
+        }
+
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            return DeserializeStatic(ref reader, options);
         }
     }
 

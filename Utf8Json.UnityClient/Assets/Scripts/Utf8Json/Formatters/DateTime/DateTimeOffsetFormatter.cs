@@ -32,41 +32,24 @@ namespace Utf8Json.Formatters
             if (str == null) throw new JsonParsingException("DateTimeOffset cannot be null.");
             return DateTimeOffset.Parse(str, CultureInfo.InvariantCulture);
         }
-    }
 
-    public sealed class NullableDateTimeOffsetFormatter : IJsonFormatter<DateTimeOffset?>
-    {
-        public void Serialize(ref JsonWriter writer, DateTimeOffset? value, JsonSerializerOptions options)
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
         {
-            SerializeStatic(ref writer, value, options);
-        }
-
-        public static void SerializeStatic(ref JsonWriter writer, DateTimeOffset? value, JsonSerializerOptions options)
-        {
-            if (value == null)
+            if (!(value is DateTimeOffset innerValue))
             {
-                var span = writer.Writer.GetSpan(4);
-                span[0] = (byte)'n';
-                span[1] = (byte)'u';
-                span[2] = (byte)'l';
-                span[3] = (byte)'l';
-                writer.Writer.Advance(4);
-                return;
+                throw new ArgumentNullException();
             }
 
-            DateTimeOffsetFormatter.SerializeStatic(ref writer, value.Value, options);
+            SerializeStatic(ref writer, innerValue, options);
         }
 
-        public DateTimeOffset? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
         {
             return DeserializeStatic(ref reader, options);
-        }
-
-        public static DateTimeOffset? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
-        {
-            if (reader.ReadIsNull()) return null;
-
-            return DateTimeOffsetFormatter.DeserializeStatic(ref reader, options);
         }
     }
 }
