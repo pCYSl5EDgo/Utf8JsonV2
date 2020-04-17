@@ -28,6 +28,10 @@ namespace Utf8Json
         /// set once, and before any use of <see cref="JsonSerializer"/> occurs.
         /// </remarks>
         public static JsonSerializerOptions DefaultOptions { get; set; }
+            = System.Type.GetType("Utf8Json.Resolvers.StandardResolver")
+                ?.GetField("Options", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+                ?.GetValue(default) as JsonSerializerOptions
+                ?? throw new NullReferenceException();
 
         #region Serialize
         /// <summary>

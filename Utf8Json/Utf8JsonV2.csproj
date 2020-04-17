@@ -27,10 +27,10 @@
 
   <ItemGroup>
     <Compile Remove="..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\Array\MultiDimensionArrayFormatter.cs;" />
-    <Compile Remove="..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\CollectionFormatter.cs" />
+    <Compile Remove="..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\Collection\CollectionFormatter.cs" />
     <Compile Remove="..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\Dictionary\DictionaryFormatter.cs" />
     <Compile Remove="..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\Dictionary\StringKeyDictionaryFormatter.cs" />
-    <Compile Remove="..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\PrimitiveFormatter.cs;" />
+    <Compile Remove="..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\Primitives\PrimitiveFormatter.cs;" />
     <Compile Remove="..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\ValueTupleFormatter.cs" />
     <Compile Remove="..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Resolvers\BuiltinResolverHelper.cs" />
   </ItemGroup>
@@ -52,7 +52,7 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>MultiDimensionArrayFormatter.cs</LastGenOutput>
     </None>
-    <None Update="Formatters\CollectionFormatter.tt">
+    <None Update="Formatters\Collection\CollectionFormatter.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>CollectionFormatter.cs</LastGenOutput>
     </None>
@@ -68,7 +68,7 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>ValueTupleFormatter.cs</LastGenOutput>
     </None>
-    <None Update="Formatters\PrimitiveFormatter.tt">
+    <None Update="Formatters\Primitives\PrimitiveFormatter.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>PrimitiveFormatter.cs</LastGenOutput>
     </None>
@@ -84,7 +84,7 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>MultiDimensionArrayFormatter.tt</DependentUpon>
     </Compile>
-    <Compile Update="Formatters\CollectionFormatter.cs">
+    <Compile Update="Formatters\Collection\CollectionFormatter.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>CollectionFormatter.tt</DependentUpon>
@@ -104,7 +104,7 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>ValueTupleFormatter.tt</DependentUpon>
     </Compile>
-    <Compile Update="Formatters\PrimitiveFormatter.cs">
+    <Compile Update="Formatters\Primitives\PrimitiveFormatter.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>PrimitiveFormatter.tt</DependentUpon>
@@ -121,7 +121,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="Exists('C:\') AND '$(TargetFramework)'=='netstandard2.0' AND '$(Configuration)'=='Release'">
-    <Exec Command="XCOPY &quot;$(ProjectDir)Formatters\PrimitiveFormatter.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\&quot; /D /Y&#xD;&#xA;XCOPY &quot;$(ProjectDir)Formatters\CollectionFormatter.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\&quot; /D /Y&#xD;&#xA;XCOPY &quot;$(ProjectDir)Formatters\ValueTupleFormatter.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\&quot; /D /Y&#xD;&#xA;XCOPY &quot;$(ProjectDir)Formatters\Array\MultiDimensionArrayFormatter.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\Array\&quot; /D /Y&#xD;&#xA;XCOPY &quot;$(ProjectDir)Formatters\Dictionary\DictionaryFormatter.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\Dictionary\&quot; /D /Y&#xD;&#xA;XCOPY &quot;$(ProjectDir)Formatters\Dictionary\StringKeyDictionaryFormatter.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\Dictionary\&quot; /D /Y&#xD;&#xA;XCOPY &quot;$(ProjectDir)Resolvers\BuiltinResolverHelper.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Resolvers\&quot; /D /Y" />
+    <Exec Command="XCOPY &quot;$(ProjectDir)Formatters\Primitives\PrimitiveFormatter.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\Primitives\&quot; /D /Y&#xD;&#xA;XCOPY &quot;$(ProjectDir)Formatters\Collection\CollectionFormatter.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\Collection\&quot; /D /Y&#xD;&#xA;XCOPY &quot;$(ProjectDir)Formatters\ValueTupleFormatter.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\&quot; /D /Y&#xD;&#xA;XCOPY &quot;$(ProjectDir)Formatters\Array\MultiDimensionArrayFormatter.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\Array\&quot; /D /Y&#xD;&#xA;XCOPY &quot;$(ProjectDir)Formatters\Dictionary\DictionaryFormatter.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\Dictionary\&quot; /D /Y&#xD;&#xA;XCOPY &quot;$(ProjectDir)Formatters\Dictionary\StringKeyDictionaryFormatter.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Formatters\Dictionary\&quot; /D /Y&#xD;&#xA;XCOPY &quot;$(ProjectDir)Resolvers\BuiltinResolverHelper.cs&quot; &quot;$(SolutionDir)Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Resolvers\&quot; /D /Y" />
   </Target>
 
 
