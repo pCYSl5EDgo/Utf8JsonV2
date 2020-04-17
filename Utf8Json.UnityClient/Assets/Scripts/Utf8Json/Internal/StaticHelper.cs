@@ -2,8 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-// ReSharper disable ConvertIfStatementToReturnStatement
-// ReSharper disable TypeParameterCanBeVariant
 
 namespace Utf8Json.Internal
 {
@@ -11,46 +9,38 @@ namespace Utf8Json.Internal
     {
         public static IntPtr GetSerializeStatic(Type formatterType)
         {
-            var method = formatterType.GetMethod("SerializeStatic");
-            if (method == null)
-            {
-                return IntPtr.Zero;
-            }
-
-            return method.MethodHandle.GetFunctionPointer();
+            return GetFunctionPointer(formatterType, "SerializeStatic");
         }
 
         public static IntPtr GetDeserializeStatic(Type formatterType)
         {
-            var method = formatterType.GetMethod("DeserializeStatic");
-            if (method == null)
-            {
-                return IntPtr.Zero;
-            }
+            return GetFunctionPointer(formatterType, "DeserializeStatic");
+        }
 
-            return method.MethodHandle.GetFunctionPointer();
+        public static IntPtr GetSerializeStaticTypeless(Type formatterType)
+        {
+            return GetFunctionPointer(formatterType, "SerializeStaticTypeless");
+        }
+
+        public static IntPtr GetDeserializeStaticTypeless(Type formatterType)
+        {
+            return GetFunctionPointer(formatterType, "DeserializeStaticTypeless");
         }
 
         public static IntPtr GetCalcByteLengthForSerialization(Type formatterType)
         {
-            var method = formatterType.GetMethod("CalcByteLengthForSerialization");
-            if (method == null)
-            {
-                return IntPtr.Zero;
-            }
-
-            return method.MethodHandle.GetFunctionPointer();
+            return GetFunctionPointer(formatterType, "CalcByteLengthForSerialization");
         }
 
         public static IntPtr GetSerializeSpan(Type formatterType)
         {
-            var method = formatterType.GetMethod("SerializeSpan");
-            if (method == null)
-            {
-                return IntPtr.Zero;
-            }
+            return GetFunctionPointer(formatterType, "SerializeSpan");
+        }
 
-            return method.MethodHandle.GetFunctionPointer();
+        private static IntPtr GetFunctionPointer(Type formatterType, string name)
+        {
+            var method = formatterType.GetMethod(name);
+            return method == null ? IntPtr.Zero : method.MethodHandle.GetFunctionPointer();
         }
     }
 }
