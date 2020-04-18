@@ -2,27 +2,31 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using Utf8Json.Internal;
 
 namespace Utf8Json.Resolvers
 {
     public sealed partial class BasicGenericsResolver : IFormatterResolver
     {
+        public IJsonFormatter<T>
 #if CSHARP_8_OR_NEWER
-        public IJsonFormatter<T>? GetFormatter<T>()
-#else
-        public IJsonFormatter<T> GetFormatter<T>()
+            ?
 #endif
+            GetFormatter<T>()
         {
-#if UNITY_2018_4_OR_NEWER
             return FormatterCache<T>.Formatter;
-#else
-            return default;
-#endif
         }
 
-        public IJsonFormatter GetFormatter(Type targetType)
+        private static readonly ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter> formatterTable = new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>();
+
+        public IJsonFormatter
+#if CSHARP_8_OR_NEWER
+            ?
+#endif
+            GetFormatter(Type targetType)
         {
-            throw new NotImplementedException();
+            formatterTable.TryGetValue(targetType, out var formatter);
+            return formatter;
         }
 
         public IntPtr GetSerializeStatic<T>()
@@ -51,14 +55,11 @@ namespace Utf8Json.Resolvers
             public static readonly IntPtr DeserializeFunctionPointer;
             public static readonly IntPtr CalcByteLengthForSerializationFunctionPointer;
             public static readonly IntPtr SerializeSpanFunctionPointer;
-
-#if UNITY_2018_4_OR_NEWER
+            public static readonly IJsonFormatter<T>
 #if CSHARP_8_OR_NEWER
-            public static readonly IJsonFormatter<T>? Formatter;
-#else
-            public static readonly IJsonFormatter<T> Formatter;
-#endif
-#endif
+                ?
+#endif            
+                Formatter;
 
             static FormatterCache()
             {
@@ -70,9 +71,8 @@ namespace Utf8Json.Resolvers
 
                 (SerializeFunctionPointer, DeserializeFunctionPointer, CalcByteLengthForSerializationFunctionPointer, SerializeSpanFunctionPointer)
                     = BasicGenericsResolverGetFormatterHelper.GetFunctionPointers(type);
-#if UNITY_2018_4_OR_NEWER
                 Formatter = BasicGenericsResolverGetFormatterHelper.CreateFormatter(type) as IJsonFormatter<T>;
-#endif
+                formatterTable.TryAdd(new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(type, Formatter));
             }
         }
     }

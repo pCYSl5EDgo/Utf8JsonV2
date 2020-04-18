@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Emit\*.cs" />
+    <Compile Include="..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Emit\**\*.cs" />
   </ItemGroup>
 
   <ItemGroup>

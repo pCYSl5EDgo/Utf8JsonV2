@@ -260,7 +260,7 @@ namespace Utf8Json.Resolvers
                             formatterType = typeof(StringKeyImmutableDictionaryFormatter<>).MakeGenericType(genericArguments[1]);
                         }
                         else
-                        {   
+                        {
                             formatterType = typeof(ImmutableDictionaryFormatter<,>).MakeGenericType(genericArguments);
                         }
                         break;
@@ -438,7 +438,6 @@ namespace Utf8Json.Resolvers
                 return default;
             }
 
-#if UNITY_2018_4_OR_NEWER
 #if CSHARP_8_OR_NEWER
             public static object? CreateFormatter(Type targetType)
 #else
@@ -454,7 +453,6 @@ namespace Utf8Json.Resolvers
 
                 return Activator.CreateInstance(formatterType);
             }
-#endif
         }
     }
 }
