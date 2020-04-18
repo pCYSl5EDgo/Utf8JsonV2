@@ -21,13 +21,66 @@ namespace Utf8Json.Internal
 
             CollectCallbacks(type, out var onSerializing, out var onSerialized, out var onDeserializing, out var onDeserialized);
 
+            CollectConstructorOrFactory(type, out var constructorData);
+
             result = new TypeAnalyzeResult(
                 fieldValueTypes, fieldReferenceTypes,
                 propertyValueTypes, propertyReferenceTypes,
                 fieldValueTypeShouldSerializes, fieldReferenceTypeShouldSerializes,
                 propertyValueTypeShouldSerializes, propertyReferenceTypeShouldSerializes,
                 onSerializing, onSerialized, onDeserializing, onDeserialized,
-                extensionDataProperty);
+                extensionDataProperty, constructorData);
+        }
+
+        private static void CollectConstructorOrFactory(Type type, out ConstructorDataInfo constructorDataInfo)
+        {
+            constructorDataInfo = new ConstructorDataInfo(type);
+            var constructors = type.GetConstructors();
+            foreach (var constructor in constructors)
+            {
+                var customAttributes = constructor.CustomAttributes;
+                foreach (var attribute in customAttributes)
+                {
+                    if (
+                        attribute.AttributeType.FullName != "Newtonsoft.Json.JsonConstructorAttribute"
+                        && attribute.AttributeType.FullName != "Utf8Json.SerializationConstructorAttribute"
+                    )
+                    {
+                        continue;
+                    }
+
+                    constructorDataInfo = new ConstructorDataInfo(type, constructor);
+                    break;
+                }
+            }
+
+            if (constructorDataInfo.Constructor != null)
+            {
+                return;
+            }
+
+            var methods = type.GetMethods();
+            foreach (var method in methods)
+            {
+                if (!method.IsStatic || method.ReturnType != type)
+                {
+                    continue;
+                }
+
+                var customAttributes = method.CustomAttributes;
+                foreach (var attribute in customAttributes)
+                {
+                    if (
+                        attribute.AttributeType.FullName != "Utf8Json.SerializationConstructorAttribute"
+                    )
+                    {
+                        continue;
+                    }
+
+                    constructorDataInfo = new ConstructorDataInfo(type, method);
+                    break;
+                }
+            }
         }
 
         private static void Add<T>(ref T[] array, T value)

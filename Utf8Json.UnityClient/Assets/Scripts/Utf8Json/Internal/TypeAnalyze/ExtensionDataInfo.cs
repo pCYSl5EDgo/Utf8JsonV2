@@ -25,12 +25,15 @@ namespace Utf8Json.Internal
         }
 
 #if CSHARP_8_OR_NEWER
-        public object? GetValue(object @this)
-#else
-        public object GetValue(object @this)
-#endif
+        public Dictionary<string, object?>? GetValue(object @this)
         {
-            return Info?.GetValue(@this);
+            return Info?.GetValue(@this) as Dictionary<string, object?>;
         }
+#else
+        public Dictionary<string, object> GetValue(object @this)
+        {
+            return Info?.GetValue(@this) as Dictionary<string, object>;
+        }
+#endif
     }
 }

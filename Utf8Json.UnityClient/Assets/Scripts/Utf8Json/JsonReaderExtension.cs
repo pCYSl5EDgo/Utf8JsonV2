@@ -103,7 +103,7 @@ namespace Utf8Json
                             unwrittenSpan[0] = '\t';
                             goto INCREMENT;
 
-        #region OTHER
+                        #region OTHER
                         case 0x23:
                         case 0x24:
                         case 0x25:
@@ -180,7 +180,7 @@ namespace Utf8Json
                         case 0x71:
                         case 0x73:
                         default:
-        #endregion
+                            #endregion
                             throw new JsonParsingException("Invalid string.");
                     }
 
@@ -314,7 +314,7 @@ namespace Utf8Json
                             case (byte)'t':
                                 *dstPtr++ = '\t';
                                 goto INCREMENT;
-                            #region OTHER
+        #region OTHER
                             case 0x23:
                             case 0x24:
                             case 0x25:
@@ -391,7 +391,7 @@ namespace Utf8Json
                             case 0x71:
                             case 0x73:
                             default:
-                                #endregion
+        #endregion
                                 goto ERROR;
                         }
 

@@ -18,6 +18,7 @@ namespace Utf8Json
             this.IgnoreReadOnlyProperties = false;
             this.MaxDepth = 64;
             this.WriteIndented = false;
+            this.IgnoreCase = false;
         }
 
         /// <summary>
@@ -32,6 +33,7 @@ namespace Utf8Json
             this.IgnoreReadOnlyProperties = copyFrom.IgnoreReadOnlyProperties;
             this.MaxDepth = copyFrom.MaxDepth;
             this.WriteIndented = copyFrom.WriteIndented;
+            this.IgnoreCase = copyFrom.IgnoreCase;
         }
 
         /// <summary>
@@ -69,6 +71,8 @@ namespace Utf8Json
                 throw new JsonSerializationException("Deserialization attempted to create the type " + type.FullName + " which is not allowed.");
             }
         }
+
+        public bool IgnoreCase { get; private set; }
 
         /// <summary>
         /// Gets a copy of these options with the <see cref="Resolver"/> property set to a new value.

@@ -12,10 +12,14 @@ namespace Utf8Json.Formatters
         where T : struct
     {
         private static readonly TypeAnalyzeResult data;
+        private static readonly DeserializationParameterDictionary parameterDictionary;
+        private static readonly DeserializationDictionary deserializationDictionary;
 
         static ValueTypeReflectionFormatter()
         {
             TypeAnalyzer.Analyze(typeof(T), out data);
+            parameterDictionary = new DeserializationParameterDictionary(data.ConstructorData.Parameters);
+            deserializationDictionary = TypeAnalyzeResultToDeserializationDictionaryConverter.Convert(data);
         }
 
         public void Serialize(ref JsonWriter writer, T value, JsonSerializerOptions options)
@@ -26,7 +30,7 @@ namespace Utf8Json.Formatters
 
         public T Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return DeserializeStatic(ref reader, options);
+            return (T)DeserializeInternal(ref reader, options);
         }
 
         public static void SerializeStatic(ref JsonWriter writer, T value, JsonSerializerOptions options)
@@ -109,13 +113,8 @@ namespace Utf8Json.Formatters
                     : SerializePropertyReferenceTypeShouldSerializesWriteNull(ref writer, options, resolver, boxedValue, isFirst);
             }
 
-            if (data.ExtensionData.Info != null && data.ExtensionData.GetValue(boxedValue) is
-#if CSHARP_8_OR_NEWER
-                Dictionary<string, object?> 
-#else
-                Dictionary<string, object>
-#endif
-                dictionary)
+            var dictionary = data.ExtensionData.GetValue(boxedValue);
+            if (dictionary != null)
             {
                 if (options.IgnoreNullValues)
                 {
@@ -846,7 +845,7 @@ namespace Utf8Json.Formatters
 
         public static T DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
-            throw new System.NotImplementedException();
+            return (T)DeserializeInternal(ref reader, options);
         }
 
 
@@ -866,7 +865,208 @@ namespace Utf8Json.Formatters
 
         public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return DeserializeStatic(ref reader, options);
+            return DeserializeInternal(ref reader, options);
+        }
+
+        private static object DeserializeInternal(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            reader.ReadIsBeginObjectWithVerify();
+            var empty = Array.Empty<object>();
+            object answer;
+            if (data.ConstructorData.Parameters.Length == 0)
+            {
+                answer = data.ConstructorData.Create(empty);
+                foreach (var callback in data.OnDeserializing)
+                {
+                    callback.Invoke(answer, empty);
+                }
+
+                var dictionary = data.ExtensionData.GetValue(answer);
+                if (dictionary == null)
+                {
+                    DeserializeTypelessWithBoxedValue(ref reader, options, answer);
+                }
+                else
+                {
+                    DeserializeTypelessWithBoxedValueWithExtensionData(ref reader, options, answer, dictionary);
+                }
+            }
+            else
+            {
+#if CSHARP_8_OR_NEWER
+                var parameters = new object?[data.ConstructorData.Parameters.Length];
+                DeserializeTypelessWithConstructor(ref reader, options, parameters);
+                answer = data.ConstructorData.Create(parameters!);
+#else
+                var parameters = new object[data.ConstructorData.Parameters.Length];
+                DeserializeTypelessWithConstructor(ref reader, options, parameters);
+                answer = data.ConstructorData.Create(parameters);
+#endif
+            }
+
+            foreach (var callback in data.OnDeserialized)
+            {
+                callback.Invoke(answer, empty);
+            }
+
+            return answer;
+        }
+
+        private static void DeserializeTypelessWithBoxedValueWithExtensionData(ref JsonReader reader, JsonSerializerOptions options, object boxedValue,
+#if CSHARP_8_OR_NEWER
+            Dictionary<string, object?> dictionary
+#else
+            Dictionary<string, object> dictionary
+#endif
+        )
+        {
+            var count = 0;
+            var ignoreCase = options.IgnoreCase;
+            var ignoreNull = options.IgnoreNullValues;
+            var formatter = default(IJsonFormatter);
+            var targetType = default(Type);
+            var resolver = options.Resolver;
+            var objectFormatter = resolver.GetFormatterWithVerify<object>();
+            while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
+            {
+                var propertyName = reader.ReadPropertyNameSegmentRaw();
+                DeserializationDictionary.Setter setter;
+                if (ignoreCase)
+                {
+                    if (!deserializationDictionary.TryFindParameterIgnoreCase(propertyName, out setter))
+                    {
+                        var name = PropertyNameHelper.FromSpanToString(propertyName);
+                        var item = objectFormatter.Deserialize(ref reader, options);
+                        dictionary[name] = item;
+                        continue;
+                    }
+                }
+                else
+                {
+                    if (!deserializationDictionary.TryFindParameter(propertyName, out setter))
+                    {
+                        var name = PropertyNameHelper.FromSpanToString(propertyName);
+                        var item = objectFormatter.Deserialize(ref reader, options);
+                        dictionary[name] = item;
+                        continue;
+                    }
+                }
+
+                if (!ReferenceEquals(targetType, setter.TargetType))
+                {
+                    targetType = setter.TargetType;
+                    formatter = resolver.GetFormatterWithVerify(targetType);
+                }
+
+                Debug.Assert(formatter != null, nameof(formatter) + " != null");
+                var value = formatter.DeserializeTypeless(ref reader, options);
+                if (ignoreNull && value == null)
+                {
+                    continue;
+                }
+
+                setter.SetValue(boxedValue, value);
+            }
+        }
+
+        private static void DeserializeTypelessWithBoxedValue(ref JsonReader reader, JsonSerializerOptions options, object boxedValue)
+        {
+            var count = 0;
+            var ignoreCase = options.IgnoreCase;
+            var ignoreNull = options.IgnoreNullValues;
+            var formatter = default(IJsonFormatter);
+            var targetType = default(Type);
+            var resolver = options.Resolver;
+            while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
+            {
+                var propertyName = reader.ReadPropertyNameSegmentRaw();
+                DeserializationDictionary.Setter setter;
+                if (ignoreCase)
+                {
+                    if (!deserializationDictionary.TryFindParameterIgnoreCase(propertyName, out setter))
+                    {
+                        reader.ReadNextBlock();
+                        continue;
+                    }
+                }
+                else
+                {
+                    if (!deserializationDictionary.TryFindParameter(propertyName, out setter))
+                    {
+                        reader.ReadNextBlock();
+                        continue;
+                    }
+                }
+
+                if (!ReferenceEquals(targetType, setter.TargetType))
+                {
+                    targetType = setter.TargetType;
+                    formatter = resolver.GetFormatterWithVerify(targetType);
+                }
+
+                Debug.Assert(formatter != null, nameof(formatter) + " != null");
+                var value = formatter.DeserializeTypeless(ref reader, options);
+                if (ignoreNull && value == null)
+                {
+                    continue;
+                }
+
+                setter.SetValue(boxedValue, value);
+            }
+        }
+
+        private static void DeserializeTypelessWithConstructor(ref JsonReader reader, JsonSerializerOptions options,
+#if CSHARP_8_OR_NEWER
+            Span<object?>
+#else
+            Span<object>
+#endif
+                parameters)
+        {
+            parameters.Clear();
+            var count = 0;
+            var ignoreCase = options.IgnoreCase;
+            var formatter = default(IJsonFormatter);
+            var targetType = default(Type);
+            var resolver = options.Resolver;
+            while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
+            {
+                var propertyName = reader.ReadPropertyNameSegmentRaw();
+                if (ignoreCase)
+                {
+                    if (!parameterDictionary.TryFindParameterIgnoreCase(propertyName, out var parameterType, out var index))
+                    {
+                        reader.ReadNextBlock();
+                        continue;
+                    }
+
+                    if (!ReferenceEquals(targetType, parameterType))
+                    {
+                        targetType = parameterType;
+                        formatter = resolver.GetFormatter(targetType);
+                    }
+
+                    Debug.Assert(formatter != null, nameof(formatter) + " != null");
+                    parameters[index] = formatter.DeserializeTypeless(ref reader, options);
+                }
+                else
+                {
+                    if (!parameterDictionary.TryFindParameter(propertyName, out var parameterType, out var index))
+                    {
+                        reader.ReadNextBlock();
+                        continue;
+                    }
+
+                    if (!ReferenceEquals(targetType, parameterType))
+                    {
+                        targetType = parameterType;
+                        formatter = resolver.GetFormatter(targetType);
+                    }
+
+                    Debug.Assert(formatter != null, nameof(formatter) + " != null");
+                    parameters[index] = formatter.DeserializeTypeless(ref reader, options);
+                }
+            }
         }
     }
 }

@@ -20,8 +20,9 @@ namespace Utf8Json.Internal
         public readonly MethodInfo[] OnDeserializing;
         public readonly MethodInfo[] OnDeserialized;
         public readonly ExtensionDataInfo ExtensionData;
+        public readonly ConstructorDataInfo ConstructorData;
 
-        public TypeAnalyzeResult(FieldSerializationInfo[] fieldValueTypeArray, FieldSerializationInfo[] fieldReferenceTypeArray, PropertySerializationInfo[] propertyValueTypeArray, PropertySerializationInfo[] propertyReferenceTypeArray, ShouldSerializeFieldSerializationInfo[] fieldValueTypeShouldSerializeArray, ShouldSerializeFieldSerializationInfo[] fieldReferenceTypeShouldSerializeArray, ShouldSerializePropertySerializationInfo[] propertyValueTypeShouldSerializeArray, ShouldSerializePropertySerializationInfo[] propertyReferenceTypeShouldSerializeArray, MethodInfo[] onSerializing, MethodInfo[] onSerialized, MethodInfo[] onDeserializing, MethodInfo[] onDeserialized, ExtensionDataInfo extensionData)
+        public TypeAnalyzeResult(FieldSerializationInfo[] fieldValueTypeArray, FieldSerializationInfo[] fieldReferenceTypeArray, PropertySerializationInfo[] propertyValueTypeArray, PropertySerializationInfo[] propertyReferenceTypeArray, ShouldSerializeFieldSerializationInfo[] fieldValueTypeShouldSerializeArray, ShouldSerializeFieldSerializationInfo[] fieldReferenceTypeShouldSerializeArray, ShouldSerializePropertySerializationInfo[] propertyValueTypeShouldSerializeArray, ShouldSerializePropertySerializationInfo[] propertyReferenceTypeShouldSerializeArray, MethodInfo[] onSerializing, MethodInfo[] onSerialized, MethodInfo[] onDeserializing, MethodInfo[] onDeserialized, ExtensionDataInfo extensionData, ConstructorDataInfo constructorData)
         {
             FieldValueTypeArray = fieldValueTypeArray;
             FieldReferenceTypeArray = fieldReferenceTypeArray;
@@ -36,6 +37,7 @@ namespace Utf8Json.Internal
             OnDeserializing = onDeserializing;
             OnDeserialized = onDeserialized;
             ExtensionData = extensionData;
+            ConstructorData = constructorData;
         }
     }
 }
