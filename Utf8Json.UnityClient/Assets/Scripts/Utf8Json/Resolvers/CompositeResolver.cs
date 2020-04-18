@@ -63,7 +63,7 @@ namespace Utf8Json.Resolvers
 
         public static IFormatterResolver Create(params IJsonFormatter[] formatters) => Create(formatters, ReadOnlySpan<ThreadSafeTypeKeyFormatterHashTable.Entry>.Empty, ReadOnlySpan<IFormatterResolver>.Empty);
 
-        private class CachingResolver : IFormatterResolver
+        private sealed class CachingResolver : IFormatterResolver
         {
             private readonly ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter> formattersCache = new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>();
             private readonly ThreadSafeTypeKeyFormatterHashTable functionsCache;
@@ -223,19 +223,47 @@ namespace Utf8Json.Resolvers
                 return new IntPtr(null);
             }
 
-            public IJsonFormatter GetFormatter(Type targetType)
+            public
+#if CSHARP_8_OR_NEWER
+                IJsonFormatter?
+#else
+                IJsonFormatter
+#endif
+                GetFormatter(Type targetType)
             {
-                throw new NotImplementedException();
-            }
+                if (formattersCache.TryGetValue(targetType, out var formatter))
+                {
+                    goto RETURN;
+                }
 
-            public IntPtr GetSerializeStaticTypeless(Type targetType)
-            {
-                throw new NotImplementedException();
-            }
+                var interfaceFormatter = typeof(IJsonFormatter<>).MakeGenericType(targetType);
 
-            public IntPtr GetDeserializeStaticTypeless(Type targetType)
-            {
-                throw new NotImplementedException();
+                foreach (var subFormatter in subFormatters)
+                {
+                    if (!interfaceFormatter.IsInstanceOfType(subFormatter))
+                    {
+                        continue;
+                    }
+
+                    formatter = subFormatter;
+                    goto CACHE;
+                }
+
+                foreach (var resolver in subResolvers)
+                {
+                    formatter = resolver.GetFormatter(targetType);
+                    if (formatter != null)
+                    {
+                        goto CACHE;
+                    }
+                }
+
+            // when not found, cache null.
+            CACHE:
+                formattersCache.TryAdd(new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(targetType, formatter));
+
+            RETURN:
+                return formatter;
             }
         }
     }

@@ -9,19 +9,10 @@ namespace Utf8Json.Internal.Resolvers
     {
         public static readonly IFormatterResolver[] DefaultResolvers =
         {
-            new BuiltinResolver(), // Try Builtin
-            new BasicGenericsResolver(), 
-            //AttributeFormatterResolver.Instance, // Try use [MessagePackFormatter]
-
-#if !ENABLE_IL2CPP
-#if !NET_STANDARD_2_0
-            //DynamicEnumResolver.Instance, // Try Enum
-#endif
-            //DynamicGenericResolver.Instance, // Try Array, Tuple, Collection, Enum(Generic Fallback)
-#if !NET_STANDARD_2_0
-            //DynamicUnionResolver.Instance, // Try Union(Interface)
-#endif
-#endif
+            new BuiltinResolver(),
+            new BasicGenericsResolver(),
         };
+
+        public static readonly ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter> FormatterTable = new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>();
     }
 }

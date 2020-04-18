@@ -66,6 +66,57 @@ namespace Utf8Json.Resolvers
             {
                 return formatterHashTable[t];
             }
+
+            private static readonly ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter> formatters =  new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>(new[]
+            {
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(  byte), new ByteFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(  char), new CharFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof( short), new Int16Formatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(   int), new Int32Formatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(  long), new Int64Formatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof( sbyte), new SByteFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(ushort), new UInt16Formatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(  uint), new UInt32Formatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof( ulong), new UInt64Formatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof( float), new SingleFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(double), new DoubleFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(  bool), new BooleanFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Numerics.BigInteger), new BigIntegerFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Numerics.Complex), new ComplexFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Threading.Tasks.Task), new TaskUnitFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(      System.DateTime), new ISO8601DateTimeFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.DateTimeOffset), new ISO8601DateTimeOffsetFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(      System.TimeSpan), new ISO8601TimeSpanFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(string), new NullableStringFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Guid), new GuidFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(decimal), new DecimalFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Text.StringBuilder), new StringBuilderFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Collections.BitArray), new BitArrayFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Type), new TypeFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Uri), new UriFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Version), new VersionFormatter()),
+
+#if UNITY_2018_4_OR_NEWER
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(      UnityEngine.Rect), new RectFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(     UnityEngine.Color), new ColorFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(    UnityEngine.Bounds), new BoundsFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(   UnityEngine.Vector2), new Vector2Formatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(   UnityEngine.Vector3), new Vector3Formatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(   UnityEngine.Vector4), new Vector4Formatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(   UnityEngine.RectInt), new RectIntFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(   UnityEngine.Color32), new Color32Formatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof( UnityEngine.Matrix4x4), new Matrix4x4Formatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(UnityEngine.Vector2Int), new Vector2IntFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(UnityEngine.Vector3Int), new Vector3IntFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(UnityEngine.Quaternion), new QuaternionFormatter()),
+#endif
+
+#if !ENABLE_IL2CPP
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Dynamic.ExpandoObject), new ExpandoObjectFormatter()),
+#endif
+            }, 0.5d);
+            
+            internal static ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter> GetFormatterCache() => formatters;
         }
     }
 }

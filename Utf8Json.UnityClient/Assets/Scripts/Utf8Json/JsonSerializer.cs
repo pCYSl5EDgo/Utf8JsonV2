@@ -28,7 +28,7 @@ namespace Utf8Json
         /// set once, and before any use of <see cref="JsonSerializer"/> occurs.
         /// </remarks>
         public static JsonSerializerOptions DefaultOptions { get; set; }
-            = System.Type.GetType("Utf8Json.Resolvers.StandardResolver")
+            = Type.GetType("Utf8Json.Resolvers.StandardResolver")
                 ?.GetField("Options", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
                 ?.GetValue(default) as JsonSerializerOptions
                 ?? throw new NullReferenceException();
@@ -89,6 +89,44 @@ namespace Utf8Json
                 throw new JsonSerializationException($"Failed to serialize {typeof(T).FullName} value.", ex);
             }
             fastWriter.Flush();
+        }
+
+        public static void Serialize(ref JsonWriter writer, object value, JsonSerializerOptions options)
+        {
+            var targetType = value.GetType();
+            try
+            {
+                options.Resolver.GetFormatterWithVerify(targetType).SerializeTypeless(ref writer, value, options);
+            }
+            catch (Exception ex)
+            {
+                throw new JsonSerializationException($"Failed to serialize {targetType.FullName} value.", ex);
+            }
+        }
+
+        public static byte[] Serialize(object value, JsonSerializerOptions options)
+        {
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
+            try
+            {
+                var writer = new JsonWriter(SequencePool.Shared, array);
+                var targetType = value.GetType();
+                try
+                {
+                    var formatter = options.Resolver.GetFormatterWithVerify(targetType);
+                    formatter.SerializeTypeless(ref writer, value, options);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException($"Failed to serialize {targetType.FullName} value.", ex);
+                }
+
+                return writer.FlushAndGetArray();
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(array);
+            }
         }
 
         /// <summary>
@@ -424,7 +462,7 @@ namespace Utf8Json
                     var formatter = options.Resolver.GetFormatterWithVerify<T>();
                     return formatter.Deserialize(ref reader, options);
                 }
-                
+
                 return reader.Deserialize<T>(options, deserializer);
             }
             catch (Exception ex)
@@ -452,7 +490,7 @@ namespace Utf8Json
                     var formatter = options.Resolver.GetFormatterWithVerify<T>();
                     return formatter.Deserialize(ref reader, options);
                 }
-                
+
                 return reader.Deserialize<T>(options, deserializer);
             }
             catch (Exception ex)

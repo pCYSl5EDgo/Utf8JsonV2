@@ -93,6 +93,27 @@ namespace Utf8Json.Resolvers
             {
                 return formatterHashTable[t];
             }
+
+            private static readonly ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter> formatters =  new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>(new[]
+            {
+<#foreach(var t in tuples){#>
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(<#= t.Item1 #>), new <#= t.Item2 #>()),
+<#}#>
+
+#if UNITY_2018_4_OR_NEWER
+<#foreach(var t in unityTuples){#>
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(<#= t.Item1 #>), new <#= t.Item2 #>()),
+<#}#>
+#endif
+
+#if !ENABLE_IL2CPP
+<#foreach(var t in notEnableIL2CPPTuples){#>
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(<#= t.Item1 #>), new <#= t.Item2 #>()),
+<#}#>
+#endif
+            }, 0.5d);
+            
+            internal static ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter> GetFormatterCache() => formatters;
         }
     }
 }

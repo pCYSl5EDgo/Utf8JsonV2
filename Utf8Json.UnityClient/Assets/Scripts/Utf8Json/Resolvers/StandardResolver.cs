@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using Utf8Json.Internal;
 using Utf8Json.Internal.Resolvers;
 
 namespace Utf8Json.Resolvers
@@ -36,11 +37,11 @@ namespace Utf8Json.Resolvers
 #endif
         }
 
+        public IJsonFormatter<T>
 #if CSHARP_8_OR_NEWER
-        public IJsonFormatter<T>? GetFormatter<T>()
-#else
-        public IJsonFormatter<T> GetFormatter<T>()
+            ?
 #endif
+            GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
@@ -65,28 +66,23 @@ namespace Utf8Json.Resolvers
             return FormatterCache<T>.SerializeSpanFunctionPointer;
         }
 
-        public IJsonFormatter GetFormatter(Type targetType)
+        public IJsonFormatter
+#if CSHARP_8_OR_NEWER
+            ?
+#endif
+            GetFormatter(Type targetType)
         {
-            throw new NotImplementedException();
-        }
-
-        public IntPtr GetSerializeStaticTypeless(Type targetType)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IntPtr GetDeserializeStaticTypeless(Type targetType)
-        {
-            throw new NotImplementedException();
+            StandardResolverHelper.FormatterTable.TryGetValue(targetType, out var formatter);
+            return formatter;
         }
 
         private static class FormatterCache<T>
         {
+            public static readonly IJsonFormatter<T>
 #if CSHARP_8_OR_NEWER
-            public static readonly IJsonFormatter<T>? Formatter;
-#else
-            public static readonly IJsonFormatter<T> Formatter;
+                ?
 #endif
+                Formatter;
 
             public static readonly IntPtr SerializeFunctionPointer;
             public static readonly IntPtr DeserializeFunctionPointer;
@@ -95,18 +91,6 @@ namespace Utf8Json.Resolvers
 
             static FormatterCache()
             {
-                if (typeof(T) == typeof(object))
-                {
-                    // final fallback
-#if ENABLE_IL2CPP
-                    Formatter = PrimitiveObjectResolver.Instance.GetFormatter<T>();
-#else
-                    throw new NotImplementedException();
-                    //Formatter =
-                    //DynamicObjectTypeFallbackFormatter.Instance;
-#endif
-                }
-
                 foreach (var formatterResolver in resolvers)
                 {
                     if (SerializeFunctionPointer == IntPtr.Zero)
@@ -129,9 +113,11 @@ namespace Utf8Json.Resolvers
                         SerializeSpanFunctionPointer = formatterResolver.GetSerializeSpan<T>();
                     }
 
+                    // ReSharper disable once InvertIf
                     if (Formatter is null)
                     {
                         Formatter = formatterResolver.GetFormatter<T>();
+                        StandardResolverHelper.FormatterTable.TryAdd(new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(T), Formatter));
                     }
                 }
             }

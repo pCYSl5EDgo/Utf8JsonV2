@@ -45,16 +45,6 @@ namespace Utf8Json.Resolvers
             return FormatterCache<T>.SerializeSpanFunctionPointer;
         }
 
-        public IntPtr GetSerializeStaticTypeless(Type targetType)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IntPtr GetDeserializeStaticTypeless(Type targetType)
-        {
-            throw new NotImplementedException();
-        }
-
         internal struct FormatterCache<T>
         {
             public static readonly IntPtr SerializeFunctionPointer;

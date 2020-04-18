@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using Utf8Json.Internal;
 
 namespace Utf8Json.Resolvers
 {
@@ -13,7 +14,7 @@ namespace Utf8Json.Resolvers
         public IJsonFormatter<T> GetFormatter<T>()
 #endif
         {
-            return default;
+            return FormatterCache<T>.Formatter;
         }
 
         public IntPtr GetSerializeStatic<T>()
@@ -36,23 +37,25 @@ namespace Utf8Json.Resolvers
             return FormatterCache<T>.SerializeSpanFunctionPointer;
         }
 
-        public IJsonFormatter GetFormatter(Type targetType)
+        public IJsonFormatter
+#if CSHARP_8_OR_NEWER
+            ?
+#endif
+            GetFormatter(Type targetType)
         {
-            throw new NotImplementedException();
+            formattersCache.TryGetValue(targetType, out var answer);
+            return answer;
         }
 
-        public IntPtr GetSerializeStaticTypeless(Type targetType)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IntPtr GetDeserializeStaticTypeless(Type targetType)
-        {
-            throw new NotImplementedException();
-        }
+        private readonly ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter> formattersCache = BuiltinResolverGetFormatterHelper.GetFormatterCache();
 
         private static class FormatterCache<T>
         {
+            public static readonly IJsonFormatter<T>
+#if CSHARP_8_OR_NEWER
+                ?
+#endif
+                Formatter;
             public static readonly IntPtr SerializeFunctionPointer;
             public static readonly IntPtr DeserializeFunctionPointer;
             public static readonly IntPtr CalcByteLengthForSerializationFunctionPointer;
@@ -62,6 +65,8 @@ namespace Utf8Json.Resolvers
             {
                 (SerializeFunctionPointer, DeserializeFunctionPointer, CalcByteLengthForSerializationFunctionPointer, SerializeSpanFunctionPointer)
                     = BuiltinResolverGetFormatterHelper.GetFunctionPointers(typeof(T));
+                BuiltinResolverGetFormatterHelper.GetFormatterCache().TryGetValue(typeof(T), out var formatter);
+                Formatter = formatter as IJsonFormatter<T>;
             }
         }
     }

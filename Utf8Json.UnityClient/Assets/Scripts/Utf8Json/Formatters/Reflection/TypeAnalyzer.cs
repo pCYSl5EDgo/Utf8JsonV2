@@ -9,12 +9,18 @@ using System.Runtime.InteropServices;
 
 namespace Utf8Json.Formatters
 {
-    internal enum SerializeType : byte
+    public enum SerializeType : byte
     {
         Ignore,
         SeeShouldSerializeMethod,
         SerializeAlways,
         ExtensionData,
+    }
+
+    public enum ExtensionDataKind : byte
+    {
+        Object,
+        JsonElement,
     }
 
     public static class TypeAnalyzer
@@ -29,14 +35,14 @@ namespace Utf8Json.Formatters
             out (PropertyInfo, MethodInfo, byte[])[] propertyValueTypeShouldSerializes,
             out (PropertyInfo, MethodInfo, byte[])[] propertyReferenceTypeShouldSerializes,
 #if CSHARP_8_OR_NEWER
-            out (PropertyInfo?, byte[]?)
+            out (PropertyInfo?, byte[], ExtensionDataKind)
 #else
-            out (PropertyInfo, byte[])
+            out (PropertyInfo, byte[], ExtensionDataKind)
 #endif
                 extensionDataProperty
         )
         {
-            extensionDataProperty = default;
+            extensionDataProperty = (default, Array.Empty<byte>(), ExtensionDataKind.Object);
             var fieldInfoArray = ArrayPool<FieldInfo>.Shared.Rent(256);
             var propertyInfoArray = ArrayPool<PropertyInfo>.Shared.Rent(256);
             try
@@ -176,16 +182,16 @@ namespace Utf8Json.Formatters
             (PropertyInfo, MethodInfo, byte[])[] propertyValueTypeShouldSerializes,
             (PropertyInfo, MethodInfo, byte[])[] propertyReferenceTypeShouldSerializes,
 #if CSHARP_8_OR_NEWER
-            (PropertyInfo?, byte[]?) extensionDataProperty
+            (PropertyInfo?, byte[], ExtensionDataKind) extensionDataProperty
 #else
-            (PropertyInfo, byte[]) extensionDataProperty
+            (PropertyInfo, byte[], ExtensionDataKind) extensionDataProperty
 #endif
             )
             CollectProperties(Type type,
 #if CSHARP_8_OR_NEWER
-                (PropertyInfo?, byte[]?) extensionDataProperty,
+                (PropertyInfo?, byte[], ExtensionDataKind) extensionDataProperty,
 #else
-                (PropertyInfo, byte[]) extensionDataProperty, 
+                (PropertyInfo, byte[], ExtensionDataKind) extensionDataProperty,
 #endif
                 Span<SerializeType> propertySerializeTypes, Span<bool> propertyIsValues, Span<PropertyInfo> properties, Span<string> propertyEncodedNames)
         {
@@ -350,6 +356,11 @@ namespace Utf8Json.Formatters
             isValue = info.FieldType.IsValueType;
             serializeType = SerializeType.SerializeAlways;
             encodedName = info.Name;
+            if (info.IsStatic)
+            {
+                serializeType = SerializeType.Ignore;
+                return;
+            }
 
             var attributes = info.GetCustomAttributes();
             var hasSerializeFieldAttribute = false;

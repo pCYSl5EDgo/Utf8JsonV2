@@ -13,6 +13,35 @@ namespace Utf8Json
     public static class FormatterResolverExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static IJsonFormatter GetFormatterWithVerify(this IFormatterResolver resolver, Type targetType)
+        {
+#if CSHARP_8_OR_NEWER
+            IJsonFormatter? formatter;
+#else
+            IJsonFormatter formatter;
+#endif
+            try
+            {
+                formatter = resolver.GetFormatter(targetType);
+            }
+            catch (TypeInitializationException ex)
+            {
+                // The fact that we're using static constructors to initialize this is an internal detail.
+                // Rethrow the inner exception if there is one.
+                // Do it carefully so as to not stomp on the original callstack.
+                ExceptionDispatchInfo.Capture(ex.InnerException ?? ex).Throw();
+                throw new InvalidOperationException();
+            }
+
+            if (formatter == null)
+            {
+                throw new FormatterNotRegisteredException(targetType.FullName + " is not registered in resolver: " + resolver.GetType());
+            }
+
+            return formatter;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static IJsonFormatter<T> GetFormatterWithVerify<T>(this IFormatterResolver resolver)
         {
 #if CSHARP_8_OR_NEWER
