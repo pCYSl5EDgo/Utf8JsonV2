@@ -3,8 +3,8 @@
 
 namespace Utf8Json
 {
-    public interface IDeserializationCallback
+    public interface IAfterSerializationCallback
     {
-        void OnAfterDeserialize();
+        void OnSerialized();
     }
 }

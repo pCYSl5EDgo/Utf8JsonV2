@@ -3,46 +3,151 @@
 
 using System;
 using System.Buffers;
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 // ReSharper disable RedundantCaseLabel
+// ReSharper disable UseIndexFromEndExpression
 
-namespace Utf8Json.Formatters
+namespace Utf8Json.Internal
 {
-    public enum SerializeType : byte
-    {
-        Ignore,
-        SeeShouldSerializeMethod,
-        SerializeAlways,
-        ExtensionData,
-    }
-
-    public enum ExtensionDataKind : byte
-    {
-        Object,
-        JsonElement,
-    }
-
     public static class TypeAnalyzer
     {
         public static void Analyze(Type type,
-            out (FieldInfo, byte[])[] fieldValueTypes,
-            out (FieldInfo, byte[])[] fieldReferenceTypes,
-            out (FieldInfo, MethodInfo, byte[])[] fieldValueTypeShouldSerializes,
-            out (FieldInfo, MethodInfo, byte[])[] fieldReferenceTypeShouldSerializes,
-            out (PropertyInfo, byte[])[] propertyValueTypes,
-            out (PropertyInfo, byte[])[] propertyReferenceTypes,
-            out (PropertyInfo, MethodInfo, byte[])[] propertyValueTypeShouldSerializes,
-            out (PropertyInfo, MethodInfo, byte[])[] propertyReferenceTypeShouldSerializes,
-#if CSHARP_8_OR_NEWER
-            out (PropertyInfo?, byte[], ExtensionDataKind)
-#else
-            out (PropertyInfo, byte[], ExtensionDataKind)
-#endif
-                extensionDataProperty
+            out TypeAnalyzeResult result
         )
         {
-            extensionDataProperty = (default, Array.Empty<byte>(), ExtensionDataKind.Object);
+            CollectFieldAndProperty(type, out var fieldValueTypes, out var fieldReferenceTypes, out var fieldValueTypeShouldSerializes, out var fieldReferenceTypeShouldSerializes, out var propertyValueTypes, out var propertyReferenceTypes, out var propertyValueTypeShouldSerializes, out var propertyReferenceTypeShouldSerializes, out var extensionDataProperty);
+
+            CollectCallbacks(type, out var onSerializing, out var onSerialized, out var onDeserializing, out var onDeserialized);
+
+            result = new TypeAnalyzeResult(
+                fieldValueTypes, fieldReferenceTypes,
+                propertyValueTypes, propertyReferenceTypes,
+                fieldValueTypeShouldSerializes, fieldReferenceTypeShouldSerializes,
+                propertyValueTypeShouldSerializes, propertyReferenceTypeShouldSerializes,
+                onSerializing, onSerialized, onDeserializing, onDeserialized,
+                extensionDataProperty);
+        }
+
+        private static void Add<T>(ref T[] array, T value)
+        {
+            Array.Resize(ref array, array.Length + 1);
+            array[array.Length - 1] = value;
+        }
+
+        private static void AddIfNotContained<T>(ref T[] array, T value)
+        {
+            foreach (var equatable in array)
+            {
+                if (ReferenceEquals(equatable, value))
+                {
+                    return;
+                }
+            }
+
+            Add(ref array, value);
+        }
+
+        private static void CollectCallbacks(Type type,
+            out MethodInfo[] onSerializing,
+            out MethodInfo[] onSerialized,
+            out MethodInfo[] onDeserializing,
+            out MethodInfo[] onDeserialized
+            )
+        {
+            onDeserializing = Array.Empty<MethodInfo>();
+            onDeserialized = Array.Empty<MethodInfo>();
+            onSerializing = Array.Empty<MethodInfo>();
+            onSerialized = Array.Empty<MethodInfo>();
+            if (typeof(IAfterDeserializationCallback).IsAssignableFrom(type))
+            {
+                var method = type.GetMethod(nameof(IAfterDeserializationCallback.OnDeserialized), Array.Empty<Type>());
+                if (method != null)
+                {
+                    Add(ref onDeserialized, method);
+                }
+            }
+
+            if (typeof(IAfterSerializationCallback).IsAssignableFrom(type))
+            {
+                var method = type.GetMethod(nameof(IAfterSerializationCallback.OnSerialized), Array.Empty<Type>());
+                if (method != null)
+                {
+                    Add(ref onSerialized, method);
+                }
+            }
+
+            if (typeof(IBeforeDeserializationCallback).IsAssignableFrom(type))
+            {
+                var method = type.GetMethod(nameof(IBeforeDeserializationCallback.OnDeserializing), Array.Empty<Type>());
+                if (method != null)
+                {
+                    Add(ref onDeserializing, method);
+                }
+            }
+
+            if (typeof(IBeforeSerializationCallback).IsAssignableFrom(type))
+            {
+                var method = type.GetMethod(nameof(IBeforeSerializationCallback.OnSerializing), Array.Empty<Type>());
+                if (method != null)
+                {
+                    Add(ref onSerializing, method);
+                }
+            }
+
+            var methods = type.GetMethods();
+            foreach (var methodInfo in methods)
+            {
+                if (methodInfo.IsStatic)
+                {
+                    continue;
+                }
+
+                var attributes = Attribute.GetCustomAttributes(methodInfo);
+                if (attributes.Length == 0)
+                {
+                    continue;
+                }
+
+                foreach (var attribute in attributes)
+                {
+                    switch (attribute.GetType().FullName)
+                    {
+                        case "System.Runtime.Serialization.OnSerializingAttribute":
+                            AddIfNotContained(ref onSerializing, methodInfo);
+                            break;
+                        case "System.Runtime.Serialization.OnSerializedAttribute":
+                            AddIfNotContained(ref onSerialized, methodInfo);
+                            break;
+                        case "System.Runtime.Serialization.OnDeserializingAttribute":
+                            AddIfNotContained(ref onDeserializing, methodInfo);
+                            break;
+                        case "System.Runtime.Serialization.OnDeserializedAttribute":
+                            AddIfNotContained(ref onDeserialized, methodInfo);
+                            break;
+                    }
+                }
+            }
+        }
+
+        private static void CollectFieldAndProperty(Type type,
+            out FieldSerializationInfo[] fieldValueTypes,
+            out FieldSerializationInfo[] fieldReferenceTypes,
+            out ShouldSerializeFieldSerializationInfo[] fieldValueTypeShouldSerializes,
+            out ShouldSerializeFieldSerializationInfo[] fieldReferenceTypeShouldSerializes,
+            out PropertySerializationInfo[] propertyValueTypes,
+            out PropertySerializationInfo[] propertyReferenceTypes,
+            out ShouldSerializePropertySerializationInfo[] propertyValueTypeShouldSerializes,
+            out ShouldSerializePropertySerializationInfo[] propertyReferenceTypeShouldSerializes,
+            out ExtensionDataInfo extensionDataProperty
+        )
+        {
+#if CSHARP_8_OR_NEWER
+            extensionDataProperty = new ExtensionDataInfo(null!);
+#else
+            extensionDataProperty = new ExtensionDataInfo(null);
+#endif
             var fieldInfoArray = ArrayPool<FieldInfo>.Shared.Rent(256);
             var propertyInfoArray = ArrayPool<PropertyInfo>.Shared.Rent(256);
             try
@@ -67,7 +172,7 @@ namespace Utf8Json.Formatters
                     var fieldIsValues = MemoryMarshal.Cast<byte, bool>(byteArray.AsSpan(memberLength, fields.Length));
                     var propertyIsValues = MemoryMarshal.Cast<byte, bool>(byteArray.AsSpan(memberLength + fields.Length, properties.Length));
 
-                    (propertyValueTypes, propertyReferenceTypes, propertyValueTypeShouldSerializes, propertyReferenceTypeShouldSerializes, extensionDataProperty) = CollectProperties(type, extensionDataProperty, propertySerializeTypes, propertyIsValues, properties, propertyEncodedNames);
+                    (propertyValueTypes, propertyReferenceTypes, propertyValueTypeShouldSerializes, propertyReferenceTypeShouldSerializes) = CollectProperties(type, ref extensionDataProperty, propertySerializeTypes, propertyIsValues, properties, propertyEncodedNames);
 
                     (fieldValueTypes, fieldReferenceTypes, fieldValueTypeShouldSerializes, fieldReferenceTypeShouldSerializes) = CollectFields(type, fieldSerializeTypes, fields, fieldIsValues, fieldEncodedNames);
                 }
@@ -84,7 +189,12 @@ namespace Utf8Json.Formatters
             }
         }
 
-        private static ((FieldInfo, byte[])[] fieldValueTypes, (FieldInfo, byte[])[] fieldReferenceTypes, (FieldInfo, MethodInfo, byte[])[] fieldValueTypeShouldSerializes, (FieldInfo, MethodInfo, byte[])[] fieldReferenceTypeShouldSerializes) CollectFields(Type type, Span<SerializeType> fieldSerializeTypes, Span<FieldInfo> fields, Span<bool> fieldIsValues, Span<string> fieldEncodedNames)
+        private static (
+            FieldSerializationInfo[] fieldValueTypes,
+            FieldSerializationInfo[] fieldReferenceTypes,
+            ShouldSerializeFieldSerializationInfo[] fieldValueTypeShouldSerializes,
+            ShouldSerializeFieldSerializationInfo[] fieldReferenceTypeShouldSerializes)
+            CollectFields(Type type, Span<SerializeType> fieldSerializeTypes, Span<FieldInfo> fields, Span<bool> fieldIsValues, Span<string> fieldEncodedNames)
         {
             var fieldValueTypeShouldSerializeCount = 0;
             var fieldReferenceTypeShouldSerializeCount = 0;
@@ -125,10 +235,10 @@ namespace Utf8Json.Formatters
                         throw new ArgumentOutOfRangeException();
                 }
             }
-            var fieldValueTypes = new (FieldInfo, byte[])[fieldValueTypeCount];
-            var fieldReferenceTypes = new (FieldInfo, byte[])[fieldReferenceTypeCount];
-            var fieldValueTypeShouldSerializes = new (FieldInfo, MethodInfo, byte[])[fieldValueTypeShouldSerializeCount];
-            var fieldReferenceTypeShouldSerializes = new (FieldInfo, MethodInfo, byte[])[fieldReferenceTypeShouldSerializeCount];
+            var fieldValueTypes = new FieldSerializationInfo[fieldValueTypeCount];
+            var fieldReferenceTypes = new FieldSerializationInfo[fieldReferenceTypeCount];
+            var fieldValueTypeShouldSerializes = new ShouldSerializeFieldSerializationInfo[fieldValueTypeShouldSerializeCount];
+            var fieldReferenceTypeShouldSerializes = new ShouldSerializeFieldSerializationInfo[fieldReferenceTypeShouldSerializeCount];
             for (var index = 0; index < fieldSerializeTypes.Length; index++)
             {
                 var serializeType = fieldSerializeTypes[index];
@@ -139,60 +249,43 @@ namespace Utf8Json.Formatters
 
                 var isValue = fieldIsValues[index];
                 var encodedName = fieldEncodedNames[index];
-                var encodedBytes = ToBytes(encodedName);
                 var info = fields[index];
                 if (serializeType == SerializeType.SeeShouldSerializeMethod)
                 {
                     var shouldSerialize = type.GetMethod("ShouldSerialize" + info.Name, Array.Empty<Type>());
+                    Debug.Assert(shouldSerialize != null);
                     if (isValue)
                     {
-#if CSHARP_8_OR_NEWER
-                        fieldValueTypeShouldSerializes[--fieldValueTypeShouldSerializeCount] = (info, shouldSerialize, encodedBytes)!;
-#else
-                        fieldValueTypeShouldSerializes[--fieldValueTypeShouldSerializeCount] = (info, shouldSerialize, encodedBytes);
-#endif
+                        fieldValueTypeShouldSerializes[--fieldValueTypeShouldSerializeCount] = new ShouldSerializeFieldSerializationInfo(info, shouldSerialize, encodedName);
                     }
                     else
                     {
-#if CSHARP_8_OR_NEWER
-                        fieldReferenceTypeShouldSerializes[--fieldReferenceTypeShouldSerializeCount] = (info, shouldSerialize, encodedBytes)!;
-#else
-                        fieldReferenceTypeShouldSerializes[--fieldReferenceTypeShouldSerializeCount] = (info, shouldSerialize, encodedBytes);
-#endif
+                        fieldReferenceTypeShouldSerializes[--fieldReferenceTypeShouldSerializeCount] = new ShouldSerializeFieldSerializationInfo(info, shouldSerialize, encodedName);
                     }
                 }
                 else
                 {
                     if (isValue)
                     {
-                        fieldValueTypes[--fieldValueTypeCount] = (info, encodedBytes);
+                        fieldValueTypes[--fieldValueTypeCount] = new FieldSerializationInfo(info, encodedName);
                     }
                     else
                     {
-                        fieldReferenceTypes[--fieldReferenceTypeCount] = (info, encodedBytes);
+                        fieldReferenceTypes[--fieldReferenceTypeCount] = new FieldSerializationInfo(info, encodedName);
                     }
                 }
             }
+
             return (fieldValueTypes, fieldReferenceTypes, fieldValueTypeShouldSerializes, fieldReferenceTypeShouldSerializes);
         }
 
         private static
-            ((PropertyInfo, byte[])[] propertyValueTypes,
-            (PropertyInfo, byte[])[] propertyReferenceTypes,
-            (PropertyInfo, MethodInfo, byte[])[] propertyValueTypeShouldSerializes,
-            (PropertyInfo, MethodInfo, byte[])[] propertyReferenceTypeShouldSerializes,
-#if CSHARP_8_OR_NEWER
-            (PropertyInfo?, byte[], ExtensionDataKind) extensionDataProperty
-#else
-            (PropertyInfo, byte[], ExtensionDataKind) extensionDataProperty
-#endif
-            )
+            (PropertySerializationInfo[] propertyValueTypes,
+            PropertySerializationInfo[] propertyReferenceTypes,
+            ShouldSerializePropertySerializationInfo[] propertyValueTypeShouldSerializes,
+            ShouldSerializePropertySerializationInfo[] propertyReferenceTypeShouldSerializes)
             CollectProperties(Type type,
-#if CSHARP_8_OR_NEWER
-                (PropertyInfo?, byte[], ExtensionDataKind) extensionDataProperty,
-#else
-                (PropertyInfo, byte[], ExtensionDataKind) extensionDataProperty,
-#endif
+                ref ExtensionDataInfo extensionDataProperty,
                 Span<SerializeType> propertySerializeTypes, Span<bool> propertyIsValues, Span<PropertyInfo> properties, Span<string> propertyEncodedNames)
         {
             var propertyValueTypeShouldSerializeCount = 0;
@@ -231,22 +324,21 @@ namespace Utf8Json.Formatters
                         }
                         break;
                     case SerializeType.ExtensionData:
-                        if (extensionDataProperty.Item1 != null)
+                        if (extensionDataProperty.Info != null)
                         {
                             throw new JsonSerializationException();
                         }
 
-                        extensionDataProperty.Item1 = info;
-                        extensionDataProperty.Item2 = ToBytes(encodedName);
+                        extensionDataProperty = new ExtensionDataInfo(info);
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
             }
-            var propertyValueTypeShouldSerializes = new (PropertyInfo, MethodInfo, byte[])[propertyValueTypeShouldSerializeCount];
-            var propertyReferenceTypeShouldSerializes = new (PropertyInfo, MethodInfo, byte[])[propertyReferenceTypeShouldSerializeCount];
-            var propertyValueTypes = new (PropertyInfo, byte[])[propertyValueTypeCount];
-            var propertyReferenceTypes = new (PropertyInfo, byte[])[propertyReferenceTypeCount];
+            var propertyValueTypeShouldSerializes = new ShouldSerializePropertySerializationInfo[propertyValueTypeShouldSerializeCount];
+            var propertyReferenceTypeShouldSerializes = new ShouldSerializePropertySerializationInfo[propertyReferenceTypeShouldSerializeCount];
+            var propertyValueTypes = new PropertySerializationInfo[propertyValueTypeCount];
+            var propertyReferenceTypes = new PropertySerializationInfo[propertyReferenceTypeCount];
             for (var index = 0; index < propertySerializeTypes.Length; index++)
             {
                 var serializeType = propertySerializeTypes[index];
@@ -257,41 +349,33 @@ namespace Utf8Json.Formatters
 
                 var isValue = propertyIsValues[index];
                 var encodedName = propertyEncodedNames[index];
-                var encodedBytes = ToBytes(encodedName);
                 var info = properties[index];
                 if (serializeType == SerializeType.SeeShouldSerializeMethod)
                 {
                     var shouldSerialize = type.GetMethod("ShouldSerialize" + info.Name, Array.Empty<Type>());
+                    Debug.Assert(shouldSerialize != null);
                     if (isValue)
                     {
-#if CSHARP_8_OR_NEWER
-                        propertyValueTypeShouldSerializes[--propertyValueTypeShouldSerializeCount] = (info, shouldSerialize, encodedBytes)!;
-#else
-                        propertyValueTypeShouldSerializes[--propertyValueTypeShouldSerializeCount] = (info, shouldSerialize, encodedBytes);
-#endif
+                        propertyValueTypeShouldSerializes[--propertyValueTypeShouldSerializeCount] = new ShouldSerializePropertySerializationInfo(info, shouldSerialize, encodedName);
                     }
                     else
                     {
-#if CSHARP_8_OR_NEWER
-                        propertyReferenceTypeShouldSerializes[--propertyReferenceTypeShouldSerializeCount] = (info, shouldSerialize, encodedBytes)!;
-#else
-                        propertyReferenceTypeShouldSerializes[--propertyReferenceTypeShouldSerializeCount] = (info, shouldSerialize, encodedBytes);
-#endif
+                        propertyReferenceTypeShouldSerializes[--propertyReferenceTypeShouldSerializeCount] = new ShouldSerializePropertySerializationInfo(info, shouldSerialize, encodedName);
                     }
                 }
                 else
                 {
                     if (isValue)
                     {
-                        propertyValueTypes[--propertyValueTypeCount] = (info, encodedBytes);
+                        propertyValueTypes[--propertyValueTypeCount] = new PropertySerializationInfo(info, encodedName);
                     }
                     else
                     {
-                        propertyReferenceTypes[--propertyReferenceTypeCount] = (info, encodedBytes);
+                        propertyReferenceTypes[--propertyReferenceTypeCount] = new PropertySerializationInfo(info, encodedName);
                     }
                 }
             }
-            return (propertyValueTypes, propertyReferenceTypes, propertyValueTypeShouldSerializes, propertyReferenceTypeShouldSerializes, extensionDataProperty);
+            return (propertyValueTypes, propertyReferenceTypes, propertyValueTypeShouldSerializes, propertyReferenceTypeShouldSerializes);
         }
 
         private static (int psCount, PropertyInfo[] propertyInfoArray) FillProperty(Type type, PropertyInfo[] propertyInfoArray)
@@ -346,17 +430,15 @@ namespace Utf8Json.Formatters
             return (fsCount, fieldInfoArray);
         }
 
-        private static byte[] ToBytes(string value)
-        {
-            return JsonSerializer.Serialize(value);
-        }
-
         private static void CollectEachField(FieldInfo info, out SerializeType serializeType, out string encodedName, out bool isValue, Type type)
         {
             isValue = info.FieldType.IsValueType;
             serializeType = SerializeType.SerializeAlways;
             encodedName = info.Name;
-            if (info.IsStatic)
+            if (
+                info.IsStatic
+                || typeof(Delegate).IsAssignableFrom(info.FieldType)
+            )
             {
                 serializeType = SerializeType.Ignore;
                 return;
@@ -371,13 +453,14 @@ namespace Utf8Json.Formatters
                 var name = attributeType.FullName;
                 switch (name)
                 {
-                    case "System.Runtime.Serialization.IgnoreDataMember":
+                    case "System.NonSerializedAttribute":
+                    case "System.Runtime.Serialization.IgnoreDataMemberAttribute":
                         serializeType = SerializeType.Ignore;
                         return;
-                    case "System.Runtime.Serialization.DataMember":
+                    case "System.Runtime.Serialization.DataMemberAttribute":
                         encodedName = attributeType.GetProperty("Name")?.GetValue(attribute) as string ?? throw new NullReferenceException();
                         break;
-                    case "UnityEngine.SerializeField":
+                    case "UnityEngine.SerializeFieldAttribute":
                         hasSerializeFieldAttribute = true;
                         break;
                 }
