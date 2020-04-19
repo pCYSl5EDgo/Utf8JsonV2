@@ -2,7 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Generic;
+
+#if !ENABLE_IL2CPP
 using StaticFunctionPointerHelper;
+#endif
 
 namespace Utf8Json.Formatters
 {
@@ -43,28 +46,25 @@ namespace Utf8Json.Formatters
                 {
                     goto END;
                 }
-
+#if !ENABLE_IL2CPP
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                    formatter.Serialize(ref writer, enumerator.Current, options);
-
-                    while (enumerator.MoveNext())
-                    {
-                        writer.WriteValueSeparator();
-                        formatter.Serialize(ref writer, enumerator.Current, options);
-                    }
-                }
-                else
+                if (serializer.ToPointer() != null)
                 {
                     writer.Serialize(enumerator.Current, options, serializer);
-
                     while (enumerator.MoveNext())
                     {
                         writer.WriteValueSeparator();
                         writer.Serialize(enumerator.Current, options, serializer);
                     }
+                    goto END;
+                }
+#endif
+                var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                formatter.Serialize(ref writer, enumerator.Current, options);
+                while (enumerator.MoveNext())
+                {
+                    writer.WriteValueSeparator();
+                    formatter.Serialize(ref writer, enumerator.Current, options);
                 }
             }
             finally
@@ -99,25 +99,27 @@ namespace Utf8Json.Formatters
             reader.ReadIsBeginArrayWithVerify();
             var buffer = new TCollection();
             var count = 0;
+#if !ENABLE_IL2CPP
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer.ToPointer() == null)
-            {
-                var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
-                {
-                    var item = formatter.Deserialize(ref reader, options);
-                    buffer.Add(item);
-                }
-            }
-            else
+            if (deserializer.ToPointer() != null)
             {
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
                 {
                     var item = reader.Deserialize<T>(options, deserializer);
                     buffer.Add(item);
                 }
+                goto END;
             }
-
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
+            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+            {
+                var item = formatter.Deserialize(ref reader, options);
+                buffer.Add(item);
+            }
+#if !ENABLE_IL2CPP
+        END:
+#endif
             return buffer;
         }
 
@@ -177,28 +179,25 @@ namespace Utf8Json.Formatters
                 {
                     goto END;
                 }
-
+#if !ENABLE_IL2CPP
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                    formatter.Serialize(ref writer, enumerator.Current, options);
-
-                    while (enumerator.MoveNext())
-                    {
-                        writer.WriteValueSeparator();
-                        formatter.Serialize(ref writer, enumerator.Current, options);
-                    }
-                }
-                else
+                if (serializer.ToPointer() != null)
                 {
                     writer.Serialize(enumerator.Current, options, serializer);
-
                     while (enumerator.MoveNext())
                     {
                         writer.WriteValueSeparator();
                         writer.Serialize(enumerator.Current, options, serializer);
                     }
+                    goto END;
+                }
+#endif
+                var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                formatter.Serialize(ref writer, enumerator.Current, options);
+                while (enumerator.MoveNext())
+                {
+                    writer.WriteValueSeparator();
+                    formatter.Serialize(ref writer, enumerator.Current, options);
                 }
             }
             finally
@@ -233,25 +232,27 @@ namespace Utf8Json.Formatters
             reader.ReadIsBeginArrayWithVerify();
             var buffer = new LinkedList<T>();
             var count = 0;
+#if !ENABLE_IL2CPP
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer.ToPointer() == null)
-            {
-                var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
-                {
-                    var item = formatter.Deserialize(ref reader, options);
-                    buffer.AddLast(item);
-                }
-            }
-            else
+            if (deserializer.ToPointer() != null)
             {
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
                 {
                     var item = reader.Deserialize<T>(options, deserializer);
                     buffer.AddLast(item);
                 }
+                goto END;
             }
-
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
+            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+            {
+                var item = formatter.Deserialize(ref reader, options);
+                buffer.AddLast(item);
+            }
+#if !ENABLE_IL2CPP
+        END:
+#endif
             return buffer;
         }
 
@@ -311,28 +312,25 @@ namespace Utf8Json.Formatters
                 {
                     goto END;
                 }
-
+#if !ENABLE_IL2CPP
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                    formatter.Serialize(ref writer, enumerator.Current, options);
-
-                    while (enumerator.MoveNext())
-                    {
-                        writer.WriteValueSeparator();
-                        formatter.Serialize(ref writer, enumerator.Current, options);
-                    }
-                }
-                else
+                if (serializer.ToPointer() != null)
                 {
                     writer.Serialize(enumerator.Current, options, serializer);
-
                     while (enumerator.MoveNext())
                     {
                         writer.WriteValueSeparator();
                         writer.Serialize(enumerator.Current, options, serializer);
                     }
+                    goto END;
+                }
+#endif
+                var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                formatter.Serialize(ref writer, enumerator.Current, options);
+                while (enumerator.MoveNext())
+                {
+                    writer.WriteValueSeparator();
+                    formatter.Serialize(ref writer, enumerator.Current, options);
                 }
             }
             finally
@@ -367,25 +365,27 @@ namespace Utf8Json.Formatters
             reader.ReadIsBeginArrayWithVerify();
             var buffer = new Queue<T>();
             var count = 0;
+#if !ENABLE_IL2CPP
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer.ToPointer() == null)
-            {
-                var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
-                {
-                    var item = formatter.Deserialize(ref reader, options);
-                    buffer.Enqueue(item);
-                }
-            }
-            else
+            if (deserializer.ToPointer() != null)
             {
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
                 {
                     var item = reader.Deserialize<T>(options, deserializer);
                     buffer.Enqueue(item);
                 }
+                goto END;
             }
-
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
+            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+            {
+                var item = formatter.Deserialize(ref reader, options);
+                buffer.Enqueue(item);
+            }
+#if !ENABLE_IL2CPP
+        END:
+#endif
             return buffer;
         }
 
@@ -445,28 +445,25 @@ namespace Utf8Json.Formatters
                 {
                     goto END;
                 }
-
+#if !ENABLE_IL2CPP
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                    formatter.Serialize(ref writer, enumerator.Current, options);
-
-                    while (enumerator.MoveNext())
-                    {
-                        writer.WriteValueSeparator();
-                        formatter.Serialize(ref writer, enumerator.Current, options);
-                    }
-                }
-                else
+                if (serializer.ToPointer() != null)
                 {
                     writer.Serialize(enumerator.Current, options, serializer);
-
                     while (enumerator.MoveNext())
                     {
                         writer.WriteValueSeparator();
                         writer.Serialize(enumerator.Current, options, serializer);
                     }
+                    goto END;
+                }
+#endif
+                var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                formatter.Serialize(ref writer, enumerator.Current, options);
+                while (enumerator.MoveNext())
+                {
+                    writer.WriteValueSeparator();
+                    formatter.Serialize(ref writer, enumerator.Current, options);
                 }
             }
             finally
@@ -501,25 +498,27 @@ namespace Utf8Json.Formatters
             reader.ReadIsBeginArrayWithVerify();
             var buffer = new Stack<T>();
             var count = 0;
+#if !ENABLE_IL2CPP
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer.ToPointer() == null)
-            {
-                var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
-                {
-                    var item = formatter.Deserialize(ref reader, options);
-                    buffer.Push(item);
-                }
-            }
-            else
+            if (deserializer.ToPointer() != null)
             {
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
                 {
                     var item = reader.Deserialize<T>(options, deserializer);
                     buffer.Push(item);
                 }
+                goto END;
             }
-
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
+            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+            {
+                var item = formatter.Deserialize(ref reader, options);
+                buffer.Push(item);
+            }
+#if !ENABLE_IL2CPP
+        END:
+#endif
             return buffer;
         }
 
@@ -579,28 +578,25 @@ namespace Utf8Json.Formatters
                 {
                     goto END;
                 }
-
+#if !ENABLE_IL2CPP
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                    formatter.Serialize(ref writer, enumerator.Current, options);
-
-                    while (enumerator.MoveNext())
-                    {
-                        writer.WriteValueSeparator();
-                        formatter.Serialize(ref writer, enumerator.Current, options);
-                    }
-                }
-                else
+                if (serializer.ToPointer() != null)
                 {
                     writer.Serialize(enumerator.Current, options, serializer);
-
                     while (enumerator.MoveNext())
                     {
                         writer.WriteValueSeparator();
                         writer.Serialize(enumerator.Current, options, serializer);
                     }
+                    goto END;
+                }
+#endif
+                var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                formatter.Serialize(ref writer, enumerator.Current, options);
+                while (enumerator.MoveNext())
+                {
+                    writer.WriteValueSeparator();
+                    formatter.Serialize(ref writer, enumerator.Current, options);
                 }
             }
             finally
@@ -635,25 +631,27 @@ namespace Utf8Json.Formatters
             reader.ReadIsBeginArrayWithVerify();
             var buffer = new HashSet<T>();
             var count = 0;
+#if !ENABLE_IL2CPP
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer.ToPointer() == null)
-            {
-                var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
-                {
-                    var item = formatter.Deserialize(ref reader, options);
-                    buffer.Add(item);
-                }
-            }
-            else
+            if (deserializer.ToPointer() != null)
             {
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
                 {
                     var item = reader.Deserialize<T>(options, deserializer);
                     buffer.Add(item);
                 }
+                goto END;
             }
-
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
+            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+            {
+                var item = formatter.Deserialize(ref reader, options);
+                buffer.Add(item);
+            }
+#if !ENABLE_IL2CPP
+        END:
+#endif
             return buffer;
         }
 
@@ -713,28 +711,25 @@ namespace Utf8Json.Formatters
                 {
                     goto END;
                 }
-
+#if !ENABLE_IL2CPP
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                    formatter.Serialize(ref writer, enumerator.Current, options);
-
-                    while (enumerator.MoveNext())
-                    {
-                        writer.WriteValueSeparator();
-                        formatter.Serialize(ref writer, enumerator.Current, options);
-                    }
-                }
-                else
+                if (serializer.ToPointer() != null)
                 {
                     writer.Serialize(enumerator.Current, options, serializer);
-
                     while (enumerator.MoveNext())
                     {
                         writer.WriteValueSeparator();
                         writer.Serialize(enumerator.Current, options, serializer);
                     }
+                    goto END;
+                }
+#endif
+                var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                formatter.Serialize(ref writer, enumerator.Current, options);
+                while (enumerator.MoveNext())
+                {
+                    writer.WriteValueSeparator();
+                    formatter.Serialize(ref writer, enumerator.Current, options);
                 }
             }
             finally
@@ -769,25 +764,27 @@ namespace Utf8Json.Formatters
             reader.ReadIsBeginArrayWithVerify();
             var buffer = new List<T>();
             var count = 0;
+#if !ENABLE_IL2CPP
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer.ToPointer() == null)
-            {
-                var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
-                {
-                    var item = formatter.Deserialize(ref reader, options);
-                    buffer.Add(item);
-                }
-            }
-            else
+            if (deserializer.ToPointer() != null)
             {
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
                 {
                     var item = reader.Deserialize<T>(options, deserializer);
                     buffer.Add(item);
                 }
+                goto END;
             }
-
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
+            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+            {
+                var item = formatter.Deserialize(ref reader, options);
+                buffer.Add(item);
+            }
+#if !ENABLE_IL2CPP
+        END:
+#endif
             return buffer;
         }
 
@@ -847,28 +844,25 @@ namespace Utf8Json.Formatters
                 {
                     goto END;
                 }
-
+#if !ENABLE_IL2CPP
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                    formatter.Serialize(ref writer, enumerator.Current, options);
-
-                    while (enumerator.MoveNext())
-                    {
-                        writer.WriteValueSeparator();
-                        formatter.Serialize(ref writer, enumerator.Current, options);
-                    }
-                }
-                else
+                if (serializer.ToPointer() != null)
                 {
                     writer.Serialize(enumerator.Current, options, serializer);
-
                     while (enumerator.MoveNext())
                     {
                         writer.WriteValueSeparator();
                         writer.Serialize(enumerator.Current, options, serializer);
                     }
+                    goto END;
+                }
+#endif
+                var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                formatter.Serialize(ref writer, enumerator.Current, options);
+                while (enumerator.MoveNext())
+                {
+                    writer.WriteValueSeparator();
+                    formatter.Serialize(ref writer, enumerator.Current, options);
                 }
             }
             finally
@@ -903,25 +897,27 @@ namespace Utf8Json.Formatters
             reader.ReadIsBeginArrayWithVerify();
             var buffer = new List<T>();
             var count = 0;
+#if !ENABLE_IL2CPP
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer.ToPointer() == null)
-            {
-                var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
-                {
-                    var item = formatter.Deserialize(ref reader, options);
-                    buffer.Add(item);
-                }
-            }
-            else
+            if (deserializer.ToPointer() != null)
             {
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
                 {
                     var item = reader.Deserialize<T>(options, deserializer);
                     buffer.Add(item);
                 }
+                goto END;
             }
-
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
+            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+            {
+                var item = formatter.Deserialize(ref reader, options);
+                buffer.Add(item);
+            }
+#if !ENABLE_IL2CPP
+        END:
+#endif
             return buffer;
         }
 

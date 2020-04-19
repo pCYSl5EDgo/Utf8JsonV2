@@ -7,7 +7,6 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using StaticFunctionPointerHelper;
 using System;
 
 namespace Utf8Json.Formatters
@@ -24,7 +23,7 @@ namespace Utf8Json.Formatters
         typeArguments = buffer.ToString();
     }
 #>
-    public sealed unsafe class ValueTupleFormatter<<#= typeArguments #>> : IJsonFormatter<ValueTuple<<#= typeArguments #>>>
+    public sealed class ValueTupleFormatter<<#= typeArguments #>> : IJsonFormatter<ValueTuple<<#= typeArguments #>>>
     {
         public void Serialize(ref JsonWriter writer, ValueTuple<<#= typeArguments #>> value, JsonSerializerOptions options)
         {
@@ -33,7 +32,6 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, ValueTuple<<#= typeArguments #>> value, JsonSerializerOptions options)
         {
-            var resolver = options.Resolver;
             {
                 const int sizeHint = 9;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -49,18 +47,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T1>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T1>();
-                    formatter.Serialize(ref writer, value.Item1, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item1, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item1);
 <#for (var i = 2; i <= dimension; i++){#>
 
             {
@@ -78,18 +65,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T<#= i #>>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T<#= i #>>();
-                    formatter.Serialize(ref writer, value.Item<#= i #>, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item<#= i #>, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item<#= i #>);
 <#}#>
 
             writer.WriteEndObject();
@@ -104,7 +80,6 @@ namespace Utf8Json.Formatters
         {
             reader.ReadIsBeginObjectWithVerify();
             var answer = default(ValueTuple<<#= typeArguments #>>);
-            var resolver = options.Resolver;
             var count = 0;
             while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
             {
@@ -115,18 +90,7 @@ namespace Utf8Json.Formatters
                     {
 <#for (var i = 1; i <= dimension; i++){#>
                         case (byte)'<#= i #>':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T<#= i #>>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T<#= i#>>();
-                                    answer.Item<#= i #> = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item<#= i #> = reader.Deserialize<T<#= i #>>(options, deserializer);
-                                }
-                            }
+                            answer.Item<#= i #> = options.DeserializeWithVerify<T<#= i #>>(ref reader);
                             continue;
 <#}#>
                     }

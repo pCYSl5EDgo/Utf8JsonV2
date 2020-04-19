@@ -1,9 +1,12 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using StaticFunctionPointerHelper;
 using System;
 using Utf8Json.Internal;
+
+#if !ENABLE_IL2CPP
+using StaticFunctionPointerHelper;
+#endif
 
 namespace Utf8Json.Formatters
 {
@@ -21,46 +24,6 @@ namespace Utf8Json.Formatters
 #endif
         {
             SerializeStatic(ref writer, value, options);
-        }
-
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-	                if (first)
-	                {
-	                    first = false;
-	                }
-	                else
-	                {
-	                    var span = writer.Writer.GetSpan(1);
-	                    span[0] = (byte)',';
-	                    writer.Writer.Advance(1);
-	                }
-
-	                var element = value[
-	                    iteratorOf0 + startIndexOf0
-	                    , iteratorOf1 + startIndexOf1
-	                ];
-	                formatter.Serialize(ref writer, element, options);
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -159,13 +122,37 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+	                   if (first)
+	                   {
+	                       first = false;
+	                   }
+	                   else
+	                   {
+	                       var span = writer.Writer.GetSpan(1);
+	                       span[0] = (byte)',';
+	                       writer.Writer.Advance(1);
+	                   }
+
+	                   var element = value[
+	                       iteratorOf0 + startIndexOf0
+	                       , iteratorOf1 + startIndexOf1
+	                   ];
+	                   writer.Serialize(element, options, serializer);
+	               }
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -185,10 +172,12 @@ namespace Utf8Json.Formatters
 	                    iteratorOf0 + startIndexOf0
 	                    , iteratorOf1 + startIndexOf1
 	                ];
-	                writer.Serialize(element, options, serializer);
+	                formatter.Serialize(ref writer, element, options);
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -377,52 +366,6 @@ namespace Utf8Json.Formatters
             SerializeStatic(ref writer, value, options);
         }
 
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-		                if (first)
-		                {
-		                    first = false;
-		                }
-		                else
-		                {
-		                    var span = writer.Writer.GetSpan(1);
-		                    span[0] = (byte)',';
-		                    writer.Writer.Advance(1);
-		                }
-
-		                var element = value[
-		                    iteratorOf0 + startIndexOf0
-		                    , iteratorOf1 + startIndexOf1
-		                    , iteratorOf2 + startIndexOf2
-		                ];
-		                formatter.Serialize(ref writer, element, options);
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
-        }
-
 #if CSHARP_8_OR_NEWER
         public static void SerializeStatic(ref JsonWriter writer, T[,,]? value, JsonSerializerOptions options)
 #else
@@ -533,13 +476,41 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+		                   if (first)
+		                   {
+		                       first = false;
+		                   }
+		                   else
+		                   {
+		                       var span = writer.Writer.GetSpan(1);
+		                       span[0] = (byte)',';
+		                       writer.Writer.Advance(1);
+		                   }
+
+		                   var element = value[
+		                       iteratorOf0 + startIndexOf0
+		                       , iteratorOf1 + startIndexOf1
+		                       , iteratorOf2 + startIndexOf2
+		                   ];
+		                   writer.Serialize(element, options, serializer);
+		               }
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -562,11 +533,13 @@ namespace Utf8Json.Formatters
 		                    , iteratorOf1 + startIndexOf1
 		                    , iteratorOf2 + startIndexOf2
 		                ];
-		                writer.Serialize(element, options, serializer);
+		                formatter.Serialize(ref writer, element, options);
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -761,58 +734,6 @@ namespace Utf8Json.Formatters
             SerializeStatic(ref writer, value, options);
         }
 
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-			                if (first)
-			                {
-			                    first = false;
-			                }
-			                else
-			                {
-			                    var span = writer.Writer.GetSpan(1);
-			                    span[0] = (byte)',';
-			                    writer.Writer.Advance(1);
-			                }
-
-			                var element = value[
-			                    iteratorOf0 + startIndexOf0
-			                    , iteratorOf1 + startIndexOf1
-			                    , iteratorOf2 + startIndexOf2
-			                    , iteratorOf3 + startIndexOf3
-			                ];
-			                formatter.Serialize(ref writer, element, options);
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
-        }
-
 #if CSHARP_8_OR_NEWER
         public static void SerializeStatic(ref JsonWriter writer, T[,,,]? value, JsonSerializerOptions options)
 #else
@@ -937,13 +858,45 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+			                   if (first)
+			                   {
+			                       first = false;
+			                   }
+			                   else
+			                   {
+			                       var span = writer.Writer.GetSpan(1);
+			                       span[0] = (byte)',';
+			                       writer.Writer.Advance(1);
+			                   }
+
+			                   var element = value[
+			                       iteratorOf0 + startIndexOf0
+			                       , iteratorOf1 + startIndexOf1
+			                       , iteratorOf2 + startIndexOf2
+			                       , iteratorOf3 + startIndexOf3
+			                   ];
+			                   writer.Serialize(element, options, serializer);
+			               }
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -969,12 +922,14 @@ namespace Utf8Json.Formatters
 			                    , iteratorOf2 + startIndexOf2
 			                    , iteratorOf3 + startIndexOf3
 			                ];
-			                writer.Serialize(element, options, serializer);
+			                formatter.Serialize(ref writer, element, options);
             			}
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -1175,64 +1130,6 @@ namespace Utf8Json.Formatters
             SerializeStatic(ref writer, value, options);
         }
 
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-				                if (first)
-				                {
-				                    first = false;
-				                }
-				                else
-				                {
-				                    var span = writer.Writer.GetSpan(1);
-				                    span[0] = (byte)',';
-				                    writer.Writer.Advance(1);
-				                }
-
-				                var element = value[
-				                    iteratorOf0 + startIndexOf0
-				                    , iteratorOf1 + startIndexOf1
-				                    , iteratorOf2 + startIndexOf2
-				                    , iteratorOf3 + startIndexOf3
-				                    , iteratorOf4 + startIndexOf4
-				                ];
-				                formatter.Serialize(ref writer, element, options);
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
-        }
-
 #if CSHARP_8_OR_NEWER
         public static void SerializeStatic(ref JsonWriter writer, T[,,,,]? value, JsonSerializerOptions options)
 #else
@@ -1371,13 +1268,49 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+				                   if (first)
+				                   {
+				                       first = false;
+				                   }
+				                   else
+				                   {
+				                       var span = writer.Writer.GetSpan(1);
+				                       span[0] = (byte)',';
+				                       writer.Writer.Advance(1);
+				                   }
+
+				                   var element = value[
+				                       iteratorOf0 + startIndexOf0
+				                       , iteratorOf1 + startIndexOf1
+				                       , iteratorOf2 + startIndexOf2
+				                       , iteratorOf3 + startIndexOf3
+				                       , iteratorOf4 + startIndexOf4
+				                   ];
+				                   writer.Serialize(element, options, serializer);
+				               }
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -1406,13 +1339,15 @@ namespace Utf8Json.Formatters
 				                    , iteratorOf3 + startIndexOf3
 				                    , iteratorOf4 + startIndexOf4
 				                ];
-				                writer.Serialize(element, options, serializer);
+				                formatter.Serialize(ref writer, element, options);
             				}
             			}
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -1619,70 +1554,6 @@ namespace Utf8Json.Formatters
             SerializeStatic(ref writer, value, options);
         }
 
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-					                if (first)
-					                {
-					                    first = false;
-					                }
-					                else
-					                {
-					                    var span = writer.Writer.GetSpan(1);
-					                    span[0] = (byte)',';
-					                    writer.Writer.Advance(1);
-					                }
-
-					                var element = value[
-					                    iteratorOf0 + startIndexOf0
-					                    , iteratorOf1 + startIndexOf1
-					                    , iteratorOf2 + startIndexOf2
-					                    , iteratorOf3 + startIndexOf3
-					                    , iteratorOf4 + startIndexOf4
-					                    , iteratorOf5 + startIndexOf5
-					                ];
-					                formatter.Serialize(ref writer, element, options);
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
-        }
-
 #if CSHARP_8_OR_NEWER
         public static void SerializeStatic(ref JsonWriter writer, T[,,,,,]? value, JsonSerializerOptions options)
 #else
@@ -1835,13 +1706,53 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+					                   if (first)
+					                   {
+					                       first = false;
+					                   }
+					                   else
+					                   {
+					                       var span = writer.Writer.GetSpan(1);
+					                       span[0] = (byte)',';
+					                       writer.Writer.Advance(1);
+					                   }
+
+					                   var element = value[
+					                       iteratorOf0 + startIndexOf0
+					                       , iteratorOf1 + startIndexOf1
+					                       , iteratorOf2 + startIndexOf2
+					                       , iteratorOf3 + startIndexOf3
+					                       , iteratorOf4 + startIndexOf4
+					                       , iteratorOf5 + startIndexOf5
+					                   ];
+					                   writer.Serialize(element, options, serializer);
+					               }
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -1873,14 +1784,16 @@ namespace Utf8Json.Formatters
 					                    , iteratorOf4 + startIndexOf4
 					                    , iteratorOf5 + startIndexOf5
 					                ];
-					                writer.Serialize(element, options, serializer);
+					                formatter.Serialize(ref writer, element, options);
             					}
             				}
             			}
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -2093,76 +2006,6 @@ namespace Utf8Json.Formatters
             SerializeStatic(ref writer, value, options);
         }
 
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var startIndexOf6 = value.GetLowerBound(6);
-            var lengthOf6 = value.GetLength(6);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-						            for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
-						            {
-						                if (first)
-						                {
-						                    first = false;
-						                }
-						                else
-						                {
-						                    var span = writer.Writer.GetSpan(1);
-						                    span[0] = (byte)',';
-						                    writer.Writer.Advance(1);
-						                }
-
-						                var element = value[
-						                    iteratorOf0 + startIndexOf0
-						                    , iteratorOf1 + startIndexOf1
-						                    , iteratorOf2 + startIndexOf2
-						                    , iteratorOf3 + startIndexOf3
-						                    , iteratorOf4 + startIndexOf4
-						                    , iteratorOf5 + startIndexOf5
-						                    , iteratorOf6 + startIndexOf6
-						                ];
-						                formatter.Serialize(ref writer, element, options);
-            						}
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
-        }
-
 #if CSHARP_8_OR_NEWER
         public static void SerializeStatic(ref JsonWriter writer, T[,,,,,,]? value, JsonSerializerOptions options)
 #else
@@ -2329,13 +2172,57 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+						               for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
+						               {
+						                   if (first)
+						                   {
+						                       first = false;
+						                   }
+						                   else
+						                   {
+						                       var span = writer.Writer.GetSpan(1);
+						                       span[0] = (byte)',';
+						                       writer.Writer.Advance(1);
+						                   }
+
+						                   var element = value[
+						                       iteratorOf0 + startIndexOf0
+						                       , iteratorOf1 + startIndexOf1
+						                       , iteratorOf2 + startIndexOf2
+						                       , iteratorOf3 + startIndexOf3
+						                       , iteratorOf4 + startIndexOf4
+						                       , iteratorOf5 + startIndexOf5
+						                       , iteratorOf6 + startIndexOf6
+						                   ];
+						                   writer.Serialize(element, options, serializer);
+						               }
+            						}
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -2370,7 +2257,7 @@ namespace Utf8Json.Formatters
 						                    , iteratorOf5 + startIndexOf5
 						                    , iteratorOf6 + startIndexOf6
 						                ];
-						                writer.Serialize(element, options, serializer);
+						                formatter.Serialize(ref writer, element, options);
             						}
             					}
             				}
@@ -2378,7 +2265,9 @@ namespace Utf8Json.Formatters
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -2597,82 +2486,6 @@ namespace Utf8Json.Formatters
             SerializeStatic(ref writer, value, options);
         }
 
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var startIndexOf6 = value.GetLowerBound(6);
-            var lengthOf6 = value.GetLength(6);
-            var startIndexOf7 = value.GetLowerBound(7);
-            var lengthOf7 = value.GetLength(7);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-						            for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
-						            {
-							            for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
-							            {
-							                if (first)
-							                {
-							                    first = false;
-							                }
-							                else
-							                {
-							                    var span = writer.Writer.GetSpan(1);
-							                    span[0] = (byte)',';
-							                    writer.Writer.Advance(1);
-							                }
-
-							                var element = value[
-							                    iteratorOf0 + startIndexOf0
-							                    , iteratorOf1 + startIndexOf1
-							                    , iteratorOf2 + startIndexOf2
-							                    , iteratorOf3 + startIndexOf3
-							                    , iteratorOf4 + startIndexOf4
-							                    , iteratorOf5 + startIndexOf5
-							                    , iteratorOf6 + startIndexOf6
-							                    , iteratorOf7 + startIndexOf7
-							                ];
-							                formatter.Serialize(ref writer, element, options);
-            							}
-            						}
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
-        }
-
 #if CSHARP_8_OR_NEWER
         public static void SerializeStatic(ref JsonWriter writer, T[,,,,,,,]? value, JsonSerializerOptions options)
 #else
@@ -2853,13 +2666,61 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+						               for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
+						               {
+							               for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
+							               {
+							                   if (first)
+							                   {
+							                       first = false;
+							                   }
+							                   else
+							                   {
+							                       var span = writer.Writer.GetSpan(1);
+							                       span[0] = (byte)',';
+							                       writer.Writer.Advance(1);
+							                   }
+
+							                   var element = value[
+							                       iteratorOf0 + startIndexOf0
+							                       , iteratorOf1 + startIndexOf1
+							                       , iteratorOf2 + startIndexOf2
+							                       , iteratorOf3 + startIndexOf3
+							                       , iteratorOf4 + startIndexOf4
+							                       , iteratorOf5 + startIndexOf5
+							                       , iteratorOf6 + startIndexOf6
+							                       , iteratorOf7 + startIndexOf7
+							                   ];
+							                   writer.Serialize(element, options, serializer);
+							               }
+            							}
+            						}
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -2897,7 +2758,7 @@ namespace Utf8Json.Formatters
 							                    , iteratorOf6 + startIndexOf6
 							                    , iteratorOf7 + startIndexOf7
 							                ];
-							                writer.Serialize(element, options, serializer);
+							                formatter.Serialize(ref writer, element, options);
             							}
             						}
             					}
@@ -2906,7 +2767,9 @@ namespace Utf8Json.Formatters
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -3131,88 +2994,6 @@ namespace Utf8Json.Formatters
             SerializeStatic(ref writer, value, options);
         }
 
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var startIndexOf6 = value.GetLowerBound(6);
-            var lengthOf6 = value.GetLength(6);
-            var startIndexOf7 = value.GetLowerBound(7);
-            var lengthOf7 = value.GetLength(7);
-            var startIndexOf8 = value.GetLowerBound(8);
-            var lengthOf8 = value.GetLength(8);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-						            for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
-						            {
-							            for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
-							            {
-								            for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
-								            {
-								                if (first)
-								                {
-								                    first = false;
-								                }
-								                else
-								                {
-								                    var span = writer.Writer.GetSpan(1);
-								                    span[0] = (byte)',';
-								                    writer.Writer.Advance(1);
-								                }
-
-								                var element = value[
-								                    iteratorOf0 + startIndexOf0
-								                    , iteratorOf1 + startIndexOf1
-								                    , iteratorOf2 + startIndexOf2
-								                    , iteratorOf3 + startIndexOf3
-								                    , iteratorOf4 + startIndexOf4
-								                    , iteratorOf5 + startIndexOf5
-								                    , iteratorOf6 + startIndexOf6
-								                    , iteratorOf7 + startIndexOf7
-								                    , iteratorOf8 + startIndexOf8
-								                ];
-								                formatter.Serialize(ref writer, element, options);
-            								}
-            							}
-            						}
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
-        }
-
 #if CSHARP_8_OR_NEWER
         public static void SerializeStatic(ref JsonWriter writer, T[,,,,,,,,]? value, JsonSerializerOptions options)
 #else
@@ -3407,13 +3188,65 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+						               for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
+						               {
+							               for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
+							               {
+								               for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
+								               {
+								                   if (first)
+								                   {
+								                       first = false;
+								                   }
+								                   else
+								                   {
+								                       var span = writer.Writer.GetSpan(1);
+								                       span[0] = (byte)',';
+								                       writer.Writer.Advance(1);
+								                   }
+
+								                   var element = value[
+								                       iteratorOf0 + startIndexOf0
+								                       , iteratorOf1 + startIndexOf1
+								                       , iteratorOf2 + startIndexOf2
+								                       , iteratorOf3 + startIndexOf3
+								                       , iteratorOf4 + startIndexOf4
+								                       , iteratorOf5 + startIndexOf5
+								                       , iteratorOf6 + startIndexOf6
+								                       , iteratorOf7 + startIndexOf7
+								                       , iteratorOf8 + startIndexOf8
+								                   ];
+								                   writer.Serialize(element, options, serializer);
+								               }
+            								}
+            							}
+            						}
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -3454,7 +3287,7 @@ namespace Utf8Json.Formatters
 								                    , iteratorOf7 + startIndexOf7
 								                    , iteratorOf8 + startIndexOf8
 								                ];
-								                writer.Serialize(element, options, serializer);
+								                formatter.Serialize(ref writer, element, options);
             								}
             							}
             						}
@@ -3464,7 +3297,9 @@ namespace Utf8Json.Formatters
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -3695,94 +3530,6 @@ namespace Utf8Json.Formatters
             SerializeStatic(ref writer, value, options);
         }
 
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var startIndexOf6 = value.GetLowerBound(6);
-            var lengthOf6 = value.GetLength(6);
-            var startIndexOf7 = value.GetLowerBound(7);
-            var lengthOf7 = value.GetLength(7);
-            var startIndexOf8 = value.GetLowerBound(8);
-            var lengthOf8 = value.GetLength(8);
-            var startIndexOf9 = value.GetLowerBound(9);
-            var lengthOf9 = value.GetLength(9);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-						            for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
-						            {
-							            for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
-							            {
-								            for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
-								            {
-									            for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
-									            {
-									                if (first)
-									                {
-									                    first = false;
-									                }
-									                else
-									                {
-									                    var span = writer.Writer.GetSpan(1);
-									                    span[0] = (byte)',';
-									                    writer.Writer.Advance(1);
-									                }
-
-									                var element = value[
-									                    iteratorOf0 + startIndexOf0
-									                    , iteratorOf1 + startIndexOf1
-									                    , iteratorOf2 + startIndexOf2
-									                    , iteratorOf3 + startIndexOf3
-									                    , iteratorOf4 + startIndexOf4
-									                    , iteratorOf5 + startIndexOf5
-									                    , iteratorOf6 + startIndexOf6
-									                    , iteratorOf7 + startIndexOf7
-									                    , iteratorOf8 + startIndexOf8
-									                    , iteratorOf9 + startIndexOf9
-									                ];
-									                formatter.Serialize(ref writer, element, options);
-            									}
-            								}
-            							}
-            						}
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
-        }
-
 #if CSHARP_8_OR_NEWER
         public static void SerializeStatic(ref JsonWriter writer, T[,,,,,,,,,]? value, JsonSerializerOptions options)
 #else
@@ -3991,13 +3738,69 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+						               for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
+						               {
+							               for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
+							               {
+								               for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
+								               {
+									               for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
+									               {
+									                   if (first)
+									                   {
+									                       first = false;
+									                   }
+									                   else
+									                   {
+									                       var span = writer.Writer.GetSpan(1);
+									                       span[0] = (byte)',';
+									                       writer.Writer.Advance(1);
+									                   }
+
+									                   var element = value[
+									                       iteratorOf0 + startIndexOf0
+									                       , iteratorOf1 + startIndexOf1
+									                       , iteratorOf2 + startIndexOf2
+									                       , iteratorOf3 + startIndexOf3
+									                       , iteratorOf4 + startIndexOf4
+									                       , iteratorOf5 + startIndexOf5
+									                       , iteratorOf6 + startIndexOf6
+									                       , iteratorOf7 + startIndexOf7
+									                       , iteratorOf8 + startIndexOf8
+									                       , iteratorOf9 + startIndexOf9
+									                   ];
+									                   writer.Serialize(element, options, serializer);
+									               }
+            									}
+            								}
+            							}
+            						}
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -4041,7 +3844,7 @@ namespace Utf8Json.Formatters
 									                    , iteratorOf8 + startIndexOf8
 									                    , iteratorOf9 + startIndexOf9
 									                ];
-									                writer.Serialize(element, options, serializer);
+									                formatter.Serialize(ref writer, element, options);
             									}
             								}
             							}
@@ -4052,7 +3855,9 @@ namespace Utf8Json.Formatters
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -4289,100 +4094,6 @@ namespace Utf8Json.Formatters
             SerializeStatic(ref writer, value, options);
         }
 
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var startIndexOf6 = value.GetLowerBound(6);
-            var lengthOf6 = value.GetLength(6);
-            var startIndexOf7 = value.GetLowerBound(7);
-            var lengthOf7 = value.GetLength(7);
-            var startIndexOf8 = value.GetLowerBound(8);
-            var lengthOf8 = value.GetLength(8);
-            var startIndexOf9 = value.GetLowerBound(9);
-            var lengthOf9 = value.GetLength(9);
-            var startIndexOf10 = value.GetLowerBound(10);
-            var lengthOf10 = value.GetLength(10);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-						            for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
-						            {
-							            for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
-							            {
-								            for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
-								            {
-									            for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
-									            {
-										            for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
-										            {
-										                if (first)
-										                {
-										                    first = false;
-										                }
-										                else
-										                {
-										                    var span = writer.Writer.GetSpan(1);
-										                    span[0] = (byte)',';
-										                    writer.Writer.Advance(1);
-										                }
-
-										                var element = value[
-										                    iteratorOf0 + startIndexOf0
-										                    , iteratorOf1 + startIndexOf1
-										                    , iteratorOf2 + startIndexOf2
-										                    , iteratorOf3 + startIndexOf3
-										                    , iteratorOf4 + startIndexOf4
-										                    , iteratorOf5 + startIndexOf5
-										                    , iteratorOf6 + startIndexOf6
-										                    , iteratorOf7 + startIndexOf7
-										                    , iteratorOf8 + startIndexOf8
-										                    , iteratorOf9 + startIndexOf9
-										                    , iteratorOf10 + startIndexOf10
-										                ];
-										                formatter.Serialize(ref writer, element, options);
-            										}
-            									}
-            								}
-            							}
-            						}
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
-        }
-
 #if CSHARP_8_OR_NEWER
         public static void SerializeStatic(ref JsonWriter writer, T[,,,,,,,,,,]? value, JsonSerializerOptions options)
 #else
@@ -4605,13 +4316,73 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+						               for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
+						               {
+							               for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
+							               {
+								               for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
+								               {
+									               for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
+									               {
+										               for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
+										               {
+										                   if (first)
+										                   {
+										                       first = false;
+										                   }
+										                   else
+										                   {
+										                       var span = writer.Writer.GetSpan(1);
+										                       span[0] = (byte)',';
+										                       writer.Writer.Advance(1);
+										                   }
+
+										                   var element = value[
+										                       iteratorOf0 + startIndexOf0
+										                       , iteratorOf1 + startIndexOf1
+										                       , iteratorOf2 + startIndexOf2
+										                       , iteratorOf3 + startIndexOf3
+										                       , iteratorOf4 + startIndexOf4
+										                       , iteratorOf5 + startIndexOf5
+										                       , iteratorOf6 + startIndexOf6
+										                       , iteratorOf7 + startIndexOf7
+										                       , iteratorOf8 + startIndexOf8
+										                       , iteratorOf9 + startIndexOf9
+										                       , iteratorOf10 + startIndexOf10
+										                   ];
+										                   writer.Serialize(element, options, serializer);
+										               }
+            										}
+            									}
+            								}
+            							}
+            						}
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -4658,7 +4429,7 @@ namespace Utf8Json.Formatters
 										                    , iteratorOf9 + startIndexOf9
 										                    , iteratorOf10 + startIndexOf10
 										                ];
-										                writer.Serialize(element, options, serializer);
+										                formatter.Serialize(ref writer, element, options);
             										}
             									}
             								}
@@ -4670,7 +4441,9 @@ namespace Utf8Json.Formatters
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -4913,106 +4686,6 @@ namespace Utf8Json.Formatters
             SerializeStatic(ref writer, value, options);
         }
 
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,,,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var startIndexOf6 = value.GetLowerBound(6);
-            var lengthOf6 = value.GetLength(6);
-            var startIndexOf7 = value.GetLowerBound(7);
-            var lengthOf7 = value.GetLength(7);
-            var startIndexOf8 = value.GetLowerBound(8);
-            var lengthOf8 = value.GetLength(8);
-            var startIndexOf9 = value.GetLowerBound(9);
-            var lengthOf9 = value.GetLength(9);
-            var startIndexOf10 = value.GetLowerBound(10);
-            var lengthOf10 = value.GetLength(10);
-            var startIndexOf11 = value.GetLowerBound(11);
-            var lengthOf11 = value.GetLength(11);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-						            for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
-						            {
-							            for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
-							            {
-								            for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
-								            {
-									            for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
-									            {
-										            for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
-										            {
-											            for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
-											            {
-											                if (first)
-											                {
-											                    first = false;
-											                }
-											                else
-											                {
-											                    var span = writer.Writer.GetSpan(1);
-											                    span[0] = (byte)',';
-											                    writer.Writer.Advance(1);
-											                }
-
-											                var element = value[
-											                    iteratorOf0 + startIndexOf0
-											                    , iteratorOf1 + startIndexOf1
-											                    , iteratorOf2 + startIndexOf2
-											                    , iteratorOf3 + startIndexOf3
-											                    , iteratorOf4 + startIndexOf4
-											                    , iteratorOf5 + startIndexOf5
-											                    , iteratorOf6 + startIndexOf6
-											                    , iteratorOf7 + startIndexOf7
-											                    , iteratorOf8 + startIndexOf8
-											                    , iteratorOf9 + startIndexOf9
-											                    , iteratorOf10 + startIndexOf10
-											                    , iteratorOf11 + startIndexOf11
-											                ];
-											                formatter.Serialize(ref writer, element, options);
-            											}
-            										}
-            									}
-            								}
-            							}
-            						}
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
-        }
-
 #if CSHARP_8_OR_NEWER
         public static void SerializeStatic(ref JsonWriter writer, T[,,,,,,,,,,,]? value, JsonSerializerOptions options)
 #else
@@ -5249,13 +4922,77 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+						               for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
+						               {
+							               for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
+							               {
+								               for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
+								               {
+									               for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
+									               {
+										               for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
+										               {
+											               for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
+											               {
+											                   if (first)
+											                   {
+											                       first = false;
+											                   }
+											                   else
+											                   {
+											                       var span = writer.Writer.GetSpan(1);
+											                       span[0] = (byte)',';
+											                       writer.Writer.Advance(1);
+											                   }
+
+											                   var element = value[
+											                       iteratorOf0 + startIndexOf0
+											                       , iteratorOf1 + startIndexOf1
+											                       , iteratorOf2 + startIndexOf2
+											                       , iteratorOf3 + startIndexOf3
+											                       , iteratorOf4 + startIndexOf4
+											                       , iteratorOf5 + startIndexOf5
+											                       , iteratorOf6 + startIndexOf6
+											                       , iteratorOf7 + startIndexOf7
+											                       , iteratorOf8 + startIndexOf8
+											                       , iteratorOf9 + startIndexOf9
+											                       , iteratorOf10 + startIndexOf10
+											                       , iteratorOf11 + startIndexOf11
+											                   ];
+											                   writer.Serialize(element, options, serializer);
+											               }
+            											}
+            										}
+            									}
+            								}
+            							}
+            						}
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -5305,7 +5042,7 @@ namespace Utf8Json.Formatters
 											                    , iteratorOf10 + startIndexOf10
 											                    , iteratorOf11 + startIndexOf11
 											                ];
-											                writer.Serialize(element, options, serializer);
+											                formatter.Serialize(ref writer, element, options);
             											}
             										}
             									}
@@ -5318,7 +5055,9 @@ namespace Utf8Json.Formatters
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -5565,112 +5304,6 @@ namespace Utf8Json.Formatters
 #endif
         {
             SerializeStatic(ref writer, value, options);
-        }
-
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,,,,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var startIndexOf6 = value.GetLowerBound(6);
-            var lengthOf6 = value.GetLength(6);
-            var startIndexOf7 = value.GetLowerBound(7);
-            var lengthOf7 = value.GetLength(7);
-            var startIndexOf8 = value.GetLowerBound(8);
-            var lengthOf8 = value.GetLength(8);
-            var startIndexOf9 = value.GetLowerBound(9);
-            var lengthOf9 = value.GetLength(9);
-            var startIndexOf10 = value.GetLowerBound(10);
-            var lengthOf10 = value.GetLength(10);
-            var startIndexOf11 = value.GetLowerBound(11);
-            var lengthOf11 = value.GetLength(11);
-            var startIndexOf12 = value.GetLowerBound(12);
-            var lengthOf12 = value.GetLength(12);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-						            for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
-						            {
-							            for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
-							            {
-								            for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
-								            {
-									            for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
-									            {
-										            for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
-										            {
-											            for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
-											            {
-												            for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
-												            {
-												                if (first)
-												                {
-												                    first = false;
-												                }
-												                else
-												                {
-												                    var span = writer.Writer.GetSpan(1);
-												                    span[0] = (byte)',';
-												                    writer.Writer.Advance(1);
-												                }
-
-												                var element = value[
-												                    iteratorOf0 + startIndexOf0
-												                    , iteratorOf1 + startIndexOf1
-												                    , iteratorOf2 + startIndexOf2
-												                    , iteratorOf3 + startIndexOf3
-												                    , iteratorOf4 + startIndexOf4
-												                    , iteratorOf5 + startIndexOf5
-												                    , iteratorOf6 + startIndexOf6
-												                    , iteratorOf7 + startIndexOf7
-												                    , iteratorOf8 + startIndexOf8
-												                    , iteratorOf9 + startIndexOf9
-												                    , iteratorOf10 + startIndexOf10
-												                    , iteratorOf11 + startIndexOf11
-												                    , iteratorOf12 + startIndexOf12
-												                ];
-												                formatter.Serialize(ref writer, element, options);
-            												}
-            											}
-            										}
-            									}
-            								}
-            							}
-            						}
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -5923,13 +5556,81 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+						               for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
+						               {
+							               for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
+							               {
+								               for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
+								               {
+									               for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
+									               {
+										               for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
+										               {
+											               for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
+											               {
+												               for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
+												               {
+												                   if (first)
+												                   {
+												                       first = false;
+												                   }
+												                   else
+												                   {
+												                       var span = writer.Writer.GetSpan(1);
+												                       span[0] = (byte)',';
+												                       writer.Writer.Advance(1);
+												                   }
+
+												                   var element = value[
+												                       iteratorOf0 + startIndexOf0
+												                       , iteratorOf1 + startIndexOf1
+												                       , iteratorOf2 + startIndexOf2
+												                       , iteratorOf3 + startIndexOf3
+												                       , iteratorOf4 + startIndexOf4
+												                       , iteratorOf5 + startIndexOf5
+												                       , iteratorOf6 + startIndexOf6
+												                       , iteratorOf7 + startIndexOf7
+												                       , iteratorOf8 + startIndexOf8
+												                       , iteratorOf9 + startIndexOf9
+												                       , iteratorOf10 + startIndexOf10
+												                       , iteratorOf11 + startIndexOf11
+												                       , iteratorOf12 + startIndexOf12
+												                   ];
+												                   writer.Serialize(element, options, serializer);
+												               }
+            												}
+            											}
+            										}
+            									}
+            								}
+            							}
+            						}
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -5982,7 +5683,7 @@ namespace Utf8Json.Formatters
 												                    , iteratorOf11 + startIndexOf11
 												                    , iteratorOf12 + startIndexOf12
 												                ];
-												                writer.Serialize(element, options, serializer);
+												                formatter.Serialize(ref writer, element, options);
             												}
             											}
             										}
@@ -5996,7 +5697,9 @@ namespace Utf8Json.Formatters
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -6249,118 +5952,6 @@ namespace Utf8Json.Formatters
 #endif
         {
             SerializeStatic(ref writer, value, options);
-        }
-
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,,,,,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var startIndexOf6 = value.GetLowerBound(6);
-            var lengthOf6 = value.GetLength(6);
-            var startIndexOf7 = value.GetLowerBound(7);
-            var lengthOf7 = value.GetLength(7);
-            var startIndexOf8 = value.GetLowerBound(8);
-            var lengthOf8 = value.GetLength(8);
-            var startIndexOf9 = value.GetLowerBound(9);
-            var lengthOf9 = value.GetLength(9);
-            var startIndexOf10 = value.GetLowerBound(10);
-            var lengthOf10 = value.GetLength(10);
-            var startIndexOf11 = value.GetLowerBound(11);
-            var lengthOf11 = value.GetLength(11);
-            var startIndexOf12 = value.GetLowerBound(12);
-            var lengthOf12 = value.GetLength(12);
-            var startIndexOf13 = value.GetLowerBound(13);
-            var lengthOf13 = value.GetLength(13);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-						            for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
-						            {
-							            for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
-							            {
-								            for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
-								            {
-									            for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
-									            {
-										            for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
-										            {
-											            for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
-											            {
-												            for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
-												            {
-													            for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
-													            {
-													                if (first)
-													                {
-													                    first = false;
-													                }
-													                else
-													                {
-													                    var span = writer.Writer.GetSpan(1);
-													                    span[0] = (byte)',';
-													                    writer.Writer.Advance(1);
-													                }
-
-													                var element = value[
-													                    iteratorOf0 + startIndexOf0
-													                    , iteratorOf1 + startIndexOf1
-													                    , iteratorOf2 + startIndexOf2
-													                    , iteratorOf3 + startIndexOf3
-													                    , iteratorOf4 + startIndexOf4
-													                    , iteratorOf5 + startIndexOf5
-													                    , iteratorOf6 + startIndexOf6
-													                    , iteratorOf7 + startIndexOf7
-													                    , iteratorOf8 + startIndexOf8
-													                    , iteratorOf9 + startIndexOf9
-													                    , iteratorOf10 + startIndexOf10
-													                    , iteratorOf11 + startIndexOf11
-													                    , iteratorOf12 + startIndexOf12
-													                    , iteratorOf13 + startIndexOf13
-													                ];
-													                formatter.Serialize(ref writer, element, options);
-            													}
-            												}
-            											}
-            										}
-            									}
-            								}
-            							}
-            						}
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -6627,13 +6218,85 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+						               for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
+						               {
+							               for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
+							               {
+								               for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
+								               {
+									               for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
+									               {
+										               for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
+										               {
+											               for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
+											               {
+												               for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
+												               {
+													               for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
+													               {
+													                   if (first)
+													                   {
+													                       first = false;
+													                   }
+													                   else
+													                   {
+													                       var span = writer.Writer.GetSpan(1);
+													                       span[0] = (byte)',';
+													                       writer.Writer.Advance(1);
+													                   }
+
+													                   var element = value[
+													                       iteratorOf0 + startIndexOf0
+													                       , iteratorOf1 + startIndexOf1
+													                       , iteratorOf2 + startIndexOf2
+													                       , iteratorOf3 + startIndexOf3
+													                       , iteratorOf4 + startIndexOf4
+													                       , iteratorOf5 + startIndexOf5
+													                       , iteratorOf6 + startIndexOf6
+													                       , iteratorOf7 + startIndexOf7
+													                       , iteratorOf8 + startIndexOf8
+													                       , iteratorOf9 + startIndexOf9
+													                       , iteratorOf10 + startIndexOf10
+													                       , iteratorOf11 + startIndexOf11
+													                       , iteratorOf12 + startIndexOf12
+													                       , iteratorOf13 + startIndexOf13
+													                   ];
+													                   writer.Serialize(element, options, serializer);
+													               }
+            													}
+            												}
+            											}
+            										}
+            									}
+            								}
+            							}
+            						}
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -6689,7 +6352,7 @@ namespace Utf8Json.Formatters
 													                    , iteratorOf12 + startIndexOf12
 													                    , iteratorOf13 + startIndexOf13
 													                ];
-													                writer.Serialize(element, options, serializer);
+													                formatter.Serialize(ref writer, element, options);
             													}
             												}
             											}
@@ -6704,7 +6367,9 @@ namespace Utf8Json.Formatters
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -6963,124 +6628,6 @@ namespace Utf8Json.Formatters
 #endif
         {
             SerializeStatic(ref writer, value, options);
-        }
-
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,,,,,,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var startIndexOf6 = value.GetLowerBound(6);
-            var lengthOf6 = value.GetLength(6);
-            var startIndexOf7 = value.GetLowerBound(7);
-            var lengthOf7 = value.GetLength(7);
-            var startIndexOf8 = value.GetLowerBound(8);
-            var lengthOf8 = value.GetLength(8);
-            var startIndexOf9 = value.GetLowerBound(9);
-            var lengthOf9 = value.GetLength(9);
-            var startIndexOf10 = value.GetLowerBound(10);
-            var lengthOf10 = value.GetLength(10);
-            var startIndexOf11 = value.GetLowerBound(11);
-            var lengthOf11 = value.GetLength(11);
-            var startIndexOf12 = value.GetLowerBound(12);
-            var lengthOf12 = value.GetLength(12);
-            var startIndexOf13 = value.GetLowerBound(13);
-            var lengthOf13 = value.GetLength(13);
-            var startIndexOf14 = value.GetLowerBound(14);
-            var lengthOf14 = value.GetLength(14);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-						            for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
-						            {
-							            for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
-							            {
-								            for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
-								            {
-									            for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
-									            {
-										            for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
-										            {
-											            for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
-											            {
-												            for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
-												            {
-													            for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
-													            {
-														            for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
-														            {
-														                if (first)
-														                {
-														                    first = false;
-														                }
-														                else
-														                {
-														                    var span = writer.Writer.GetSpan(1);
-														                    span[0] = (byte)',';
-														                    writer.Writer.Advance(1);
-														                }
-
-														                var element = value[
-														                    iteratorOf0 + startIndexOf0
-														                    , iteratorOf1 + startIndexOf1
-														                    , iteratorOf2 + startIndexOf2
-														                    , iteratorOf3 + startIndexOf3
-														                    , iteratorOf4 + startIndexOf4
-														                    , iteratorOf5 + startIndexOf5
-														                    , iteratorOf6 + startIndexOf6
-														                    , iteratorOf7 + startIndexOf7
-														                    , iteratorOf8 + startIndexOf8
-														                    , iteratorOf9 + startIndexOf9
-														                    , iteratorOf10 + startIndexOf10
-														                    , iteratorOf11 + startIndexOf11
-														                    , iteratorOf12 + startIndexOf12
-														                    , iteratorOf13 + startIndexOf13
-														                    , iteratorOf14 + startIndexOf14
-														                ];
-														                formatter.Serialize(ref writer, element, options);
-            														}
-            													}
-            												}
-            											}
-            										}
-            									}
-            								}
-            							}
-            						}
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -7361,13 +6908,89 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+						               for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
+						               {
+							               for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
+							               {
+								               for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
+								               {
+									               for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
+									               {
+										               for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
+										               {
+											               for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
+											               {
+												               for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
+												               {
+													               for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
+													               {
+														               for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
+														               {
+														                   if (first)
+														                   {
+														                       first = false;
+														                   }
+														                   else
+														                   {
+														                       var span = writer.Writer.GetSpan(1);
+														                       span[0] = (byte)',';
+														                       writer.Writer.Advance(1);
+														                   }
+
+														                   var element = value[
+														                       iteratorOf0 + startIndexOf0
+														                       , iteratorOf1 + startIndexOf1
+														                       , iteratorOf2 + startIndexOf2
+														                       , iteratorOf3 + startIndexOf3
+														                       , iteratorOf4 + startIndexOf4
+														                       , iteratorOf5 + startIndexOf5
+														                       , iteratorOf6 + startIndexOf6
+														                       , iteratorOf7 + startIndexOf7
+														                       , iteratorOf8 + startIndexOf8
+														                       , iteratorOf9 + startIndexOf9
+														                       , iteratorOf10 + startIndexOf10
+														                       , iteratorOf11 + startIndexOf11
+														                       , iteratorOf12 + startIndexOf12
+														                       , iteratorOf13 + startIndexOf13
+														                       , iteratorOf14 + startIndexOf14
+														                   ];
+														                   writer.Serialize(element, options, serializer);
+														               }
+            														}
+            													}
+            												}
+            											}
+            										}
+            									}
+            								}
+            							}
+            						}
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -7426,7 +7049,7 @@ namespace Utf8Json.Formatters
 														                    , iteratorOf13 + startIndexOf13
 														                    , iteratorOf14 + startIndexOf14
 														                ];
-														                writer.Serialize(element, options, serializer);
+														                formatter.Serialize(ref writer, element, options);
             														}
             													}
             												}
@@ -7442,7 +7065,9 @@ namespace Utf8Json.Formatters
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -7707,130 +7332,6 @@ namespace Utf8Json.Formatters
 #endif
         {
             SerializeStatic(ref writer, value, options);
-        }
-
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,,,,,,,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var startIndexOf6 = value.GetLowerBound(6);
-            var lengthOf6 = value.GetLength(6);
-            var startIndexOf7 = value.GetLowerBound(7);
-            var lengthOf7 = value.GetLength(7);
-            var startIndexOf8 = value.GetLowerBound(8);
-            var lengthOf8 = value.GetLength(8);
-            var startIndexOf9 = value.GetLowerBound(9);
-            var lengthOf9 = value.GetLength(9);
-            var startIndexOf10 = value.GetLowerBound(10);
-            var lengthOf10 = value.GetLength(10);
-            var startIndexOf11 = value.GetLowerBound(11);
-            var lengthOf11 = value.GetLength(11);
-            var startIndexOf12 = value.GetLowerBound(12);
-            var lengthOf12 = value.GetLength(12);
-            var startIndexOf13 = value.GetLowerBound(13);
-            var lengthOf13 = value.GetLength(13);
-            var startIndexOf14 = value.GetLowerBound(14);
-            var lengthOf14 = value.GetLength(14);
-            var startIndexOf15 = value.GetLowerBound(15);
-            var lengthOf15 = value.GetLength(15);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-						            for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
-						            {
-							            for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
-							            {
-								            for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
-								            {
-									            for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
-									            {
-										            for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
-										            {
-											            for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
-											            {
-												            for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
-												            {
-													            for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
-													            {
-														            for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
-														            {
-															            for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
-															            {
-															                if (first)
-															                {
-															                    first = false;
-															                }
-															                else
-															                {
-															                    var span = writer.Writer.GetSpan(1);
-															                    span[0] = (byte)',';
-															                    writer.Writer.Advance(1);
-															                }
-
-															                var element = value[
-															                    iteratorOf0 + startIndexOf0
-															                    , iteratorOf1 + startIndexOf1
-															                    , iteratorOf2 + startIndexOf2
-															                    , iteratorOf3 + startIndexOf3
-															                    , iteratorOf4 + startIndexOf4
-															                    , iteratorOf5 + startIndexOf5
-															                    , iteratorOf6 + startIndexOf6
-															                    , iteratorOf7 + startIndexOf7
-															                    , iteratorOf8 + startIndexOf8
-															                    , iteratorOf9 + startIndexOf9
-															                    , iteratorOf10 + startIndexOf10
-															                    , iteratorOf11 + startIndexOf11
-															                    , iteratorOf12 + startIndexOf12
-															                    , iteratorOf13 + startIndexOf13
-															                    , iteratorOf14 + startIndexOf14
-															                    , iteratorOf15 + startIndexOf15
-															                ];
-															                formatter.Serialize(ref writer, element, options);
-            															}
-            														}
-            													}
-            												}
-            											}
-            										}
-            									}
-            								}
-            							}
-            						}
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -8125,13 +7626,93 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+						               for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
+						               {
+							               for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
+							               {
+								               for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
+								               {
+									               for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
+									               {
+										               for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
+										               {
+											               for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
+											               {
+												               for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
+												               {
+													               for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
+													               {
+														               for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
+														               {
+															               for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
+															               {
+															                   if (first)
+															                   {
+															                       first = false;
+															                   }
+															                   else
+															                   {
+															                       var span = writer.Writer.GetSpan(1);
+															                       span[0] = (byte)',';
+															                       writer.Writer.Advance(1);
+															                   }
+
+															                   var element = value[
+															                       iteratorOf0 + startIndexOf0
+															                       , iteratorOf1 + startIndexOf1
+															                       , iteratorOf2 + startIndexOf2
+															                       , iteratorOf3 + startIndexOf3
+															                       , iteratorOf4 + startIndexOf4
+															                       , iteratorOf5 + startIndexOf5
+															                       , iteratorOf6 + startIndexOf6
+															                       , iteratorOf7 + startIndexOf7
+															                       , iteratorOf8 + startIndexOf8
+															                       , iteratorOf9 + startIndexOf9
+															                       , iteratorOf10 + startIndexOf10
+															                       , iteratorOf11 + startIndexOf11
+															                       , iteratorOf12 + startIndexOf12
+															                       , iteratorOf13 + startIndexOf13
+															                       , iteratorOf14 + startIndexOf14
+															                       , iteratorOf15 + startIndexOf15
+															                   ];
+															                   writer.Serialize(element, options, serializer);
+															               }
+            															}
+            														}
+            													}
+            												}
+            											}
+            										}
+            									}
+            								}
+            							}
+            						}
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -8193,7 +7774,7 @@ namespace Utf8Json.Formatters
 															                    , iteratorOf14 + startIndexOf14
 															                    , iteratorOf15 + startIndexOf15
 															                ];
-															                writer.Serialize(element, options, serializer);
+															                formatter.Serialize(ref writer, element, options);
             															}
             														}
             													}
@@ -8210,7 +7791,9 @@ namespace Utf8Json.Formatters
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -8481,136 +8064,6 @@ namespace Utf8Json.Formatters
 #endif
         {
             SerializeStatic(ref writer, value, options);
-        }
-
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,,,,,,,,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var startIndexOf6 = value.GetLowerBound(6);
-            var lengthOf6 = value.GetLength(6);
-            var startIndexOf7 = value.GetLowerBound(7);
-            var lengthOf7 = value.GetLength(7);
-            var startIndexOf8 = value.GetLowerBound(8);
-            var lengthOf8 = value.GetLength(8);
-            var startIndexOf9 = value.GetLowerBound(9);
-            var lengthOf9 = value.GetLength(9);
-            var startIndexOf10 = value.GetLowerBound(10);
-            var lengthOf10 = value.GetLength(10);
-            var startIndexOf11 = value.GetLowerBound(11);
-            var lengthOf11 = value.GetLength(11);
-            var startIndexOf12 = value.GetLowerBound(12);
-            var lengthOf12 = value.GetLength(12);
-            var startIndexOf13 = value.GetLowerBound(13);
-            var lengthOf13 = value.GetLength(13);
-            var startIndexOf14 = value.GetLowerBound(14);
-            var lengthOf14 = value.GetLength(14);
-            var startIndexOf15 = value.GetLowerBound(15);
-            var lengthOf15 = value.GetLength(15);
-            var startIndexOf16 = value.GetLowerBound(16);
-            var lengthOf16 = value.GetLength(16);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-						            for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
-						            {
-							            for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
-							            {
-								            for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
-								            {
-									            for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
-									            {
-										            for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
-										            {
-											            for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
-											            {
-												            for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
-												            {
-													            for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
-													            {
-														            for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
-														            {
-															            for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
-															            {
-																            for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
-																            {
-																                if (first)
-																                {
-																                    first = false;
-																                }
-																                else
-																                {
-																                    var span = writer.Writer.GetSpan(1);
-																                    span[0] = (byte)',';
-																                    writer.Writer.Advance(1);
-																                }
-
-																                var element = value[
-																                    iteratorOf0 + startIndexOf0
-																                    , iteratorOf1 + startIndexOf1
-																                    , iteratorOf2 + startIndexOf2
-																                    , iteratorOf3 + startIndexOf3
-																                    , iteratorOf4 + startIndexOf4
-																                    , iteratorOf5 + startIndexOf5
-																                    , iteratorOf6 + startIndexOf6
-																                    , iteratorOf7 + startIndexOf7
-																                    , iteratorOf8 + startIndexOf8
-																                    , iteratorOf9 + startIndexOf9
-																                    , iteratorOf10 + startIndexOf10
-																                    , iteratorOf11 + startIndexOf11
-																                    , iteratorOf12 + startIndexOf12
-																                    , iteratorOf13 + startIndexOf13
-																                    , iteratorOf14 + startIndexOf14
-																                    , iteratorOf15 + startIndexOf15
-																                    , iteratorOf16 + startIndexOf16
-																                ];
-																                formatter.Serialize(ref writer, element, options);
-            																}
-            															}
-            														}
-            													}
-            												}
-            											}
-            										}
-            									}
-            								}
-            							}
-            						}
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -8919,13 +8372,97 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+						               for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
+						               {
+							               for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
+							               {
+								               for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
+								               {
+									               for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
+									               {
+										               for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
+										               {
+											               for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
+											               {
+												               for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
+												               {
+													               for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
+													               {
+														               for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
+														               {
+															               for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
+															               {
+																               for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
+																               {
+																                   if (first)
+																                   {
+																                       first = false;
+																                   }
+																                   else
+																                   {
+																                       var span = writer.Writer.GetSpan(1);
+																                       span[0] = (byte)',';
+																                       writer.Writer.Advance(1);
+																                   }
+
+																                   var element = value[
+																                       iteratorOf0 + startIndexOf0
+																                       , iteratorOf1 + startIndexOf1
+																                       , iteratorOf2 + startIndexOf2
+																                       , iteratorOf3 + startIndexOf3
+																                       , iteratorOf4 + startIndexOf4
+																                       , iteratorOf5 + startIndexOf5
+																                       , iteratorOf6 + startIndexOf6
+																                       , iteratorOf7 + startIndexOf7
+																                       , iteratorOf8 + startIndexOf8
+																                       , iteratorOf9 + startIndexOf9
+																                       , iteratorOf10 + startIndexOf10
+																                       , iteratorOf11 + startIndexOf11
+																                       , iteratorOf12 + startIndexOf12
+																                       , iteratorOf13 + startIndexOf13
+																                       , iteratorOf14 + startIndexOf14
+																                       , iteratorOf15 + startIndexOf15
+																                       , iteratorOf16 + startIndexOf16
+																                   ];
+																                   writer.Serialize(element, options, serializer);
+																               }
+            																}
+            															}
+            														}
+            													}
+            												}
+            											}
+            										}
+            									}
+            								}
+            							}
+            						}
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -8990,7 +8527,7 @@ namespace Utf8Json.Formatters
 																                    , iteratorOf15 + startIndexOf15
 																                    , iteratorOf16 + startIndexOf16
 																                ];
-																                writer.Serialize(element, options, serializer);
+																                formatter.Serialize(ref writer, element, options);
             																}
             															}
             														}
@@ -9008,7 +8545,9 @@ namespace Utf8Json.Formatters
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -9285,142 +8824,6 @@ namespace Utf8Json.Formatters
 #endif
         {
             SerializeStatic(ref writer, value, options);
-        }
-
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,,,,,,,,,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var startIndexOf6 = value.GetLowerBound(6);
-            var lengthOf6 = value.GetLength(6);
-            var startIndexOf7 = value.GetLowerBound(7);
-            var lengthOf7 = value.GetLength(7);
-            var startIndexOf8 = value.GetLowerBound(8);
-            var lengthOf8 = value.GetLength(8);
-            var startIndexOf9 = value.GetLowerBound(9);
-            var lengthOf9 = value.GetLength(9);
-            var startIndexOf10 = value.GetLowerBound(10);
-            var lengthOf10 = value.GetLength(10);
-            var startIndexOf11 = value.GetLowerBound(11);
-            var lengthOf11 = value.GetLength(11);
-            var startIndexOf12 = value.GetLowerBound(12);
-            var lengthOf12 = value.GetLength(12);
-            var startIndexOf13 = value.GetLowerBound(13);
-            var lengthOf13 = value.GetLength(13);
-            var startIndexOf14 = value.GetLowerBound(14);
-            var lengthOf14 = value.GetLength(14);
-            var startIndexOf15 = value.GetLowerBound(15);
-            var lengthOf15 = value.GetLength(15);
-            var startIndexOf16 = value.GetLowerBound(16);
-            var lengthOf16 = value.GetLength(16);
-            var startIndexOf17 = value.GetLowerBound(17);
-            var lengthOf17 = value.GetLength(17);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-						            for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
-						            {
-							            for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
-							            {
-								            for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
-								            {
-									            for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
-									            {
-										            for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
-										            {
-											            for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
-											            {
-												            for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
-												            {
-													            for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
-													            {
-														            for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
-														            {
-															            for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
-															            {
-																            for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
-																            {
-																	            for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
-																	            {
-																	                if (first)
-																	                {
-																	                    first = false;
-																	                }
-																	                else
-																	                {
-																	                    var span = writer.Writer.GetSpan(1);
-																	                    span[0] = (byte)',';
-																	                    writer.Writer.Advance(1);
-																	                }
-
-																	                var element = value[
-																	                    iteratorOf0 + startIndexOf0
-																	                    , iteratorOf1 + startIndexOf1
-																	                    , iteratorOf2 + startIndexOf2
-																	                    , iteratorOf3 + startIndexOf3
-																	                    , iteratorOf4 + startIndexOf4
-																	                    , iteratorOf5 + startIndexOf5
-																	                    , iteratorOf6 + startIndexOf6
-																	                    , iteratorOf7 + startIndexOf7
-																	                    , iteratorOf8 + startIndexOf8
-																	                    , iteratorOf9 + startIndexOf9
-																	                    , iteratorOf10 + startIndexOf10
-																	                    , iteratorOf11 + startIndexOf11
-																	                    , iteratorOf12 + startIndexOf12
-																	                    , iteratorOf13 + startIndexOf13
-																	                    , iteratorOf14 + startIndexOf14
-																	                    , iteratorOf15 + startIndexOf15
-																	                    , iteratorOf16 + startIndexOf16
-																	                    , iteratorOf17 + startIndexOf17
-																	                ];
-																	                formatter.Serialize(ref writer, element, options);
-            																	}
-            																}
-            															}
-            														}
-            													}
-            												}
-            											}
-            										}
-            									}
-            								}
-            							}
-            						}
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -9743,13 +9146,101 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+						               for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
+						               {
+							               for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
+							               {
+								               for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
+								               {
+									               for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
+									               {
+										               for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
+										               {
+											               for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
+											               {
+												               for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
+												               {
+													               for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
+													               {
+														               for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
+														               {
+															               for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
+															               {
+																               for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
+																               {
+																	               for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
+																	               {
+																	                   if (first)
+																	                   {
+																	                       first = false;
+																	                   }
+																	                   else
+																	                   {
+																	                       var span = writer.Writer.GetSpan(1);
+																	                       span[0] = (byte)',';
+																	                       writer.Writer.Advance(1);
+																	                   }
+
+																	                   var element = value[
+																	                       iteratorOf0 + startIndexOf0
+																	                       , iteratorOf1 + startIndexOf1
+																	                       , iteratorOf2 + startIndexOf2
+																	                       , iteratorOf3 + startIndexOf3
+																	                       , iteratorOf4 + startIndexOf4
+																	                       , iteratorOf5 + startIndexOf5
+																	                       , iteratorOf6 + startIndexOf6
+																	                       , iteratorOf7 + startIndexOf7
+																	                       , iteratorOf8 + startIndexOf8
+																	                       , iteratorOf9 + startIndexOf9
+																	                       , iteratorOf10 + startIndexOf10
+																	                       , iteratorOf11 + startIndexOf11
+																	                       , iteratorOf12 + startIndexOf12
+																	                       , iteratorOf13 + startIndexOf13
+																	                       , iteratorOf14 + startIndexOf14
+																	                       , iteratorOf15 + startIndexOf15
+																	                       , iteratorOf16 + startIndexOf16
+																	                       , iteratorOf17 + startIndexOf17
+																	                   ];
+																	                   writer.Serialize(element, options, serializer);
+																	               }
+            																	}
+            																}
+            															}
+            														}
+            													}
+            												}
+            											}
+            										}
+            									}
+            								}
+            							}
+            						}
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -9817,7 +9308,7 @@ namespace Utf8Json.Formatters
 																	                    , iteratorOf16 + startIndexOf16
 																	                    , iteratorOf17 + startIndexOf17
 																	                ];
-																	                writer.Serialize(element, options, serializer);
+																	                formatter.Serialize(ref writer, element, options);
             																	}
             																}
             															}
@@ -9836,7 +9327,9 @@ namespace Utf8Json.Formatters
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -10119,148 +9612,6 @@ namespace Utf8Json.Formatters
 #endif
         {
             SerializeStatic(ref writer, value, options);
-        }
-
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,,,,,,,,,,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var startIndexOf6 = value.GetLowerBound(6);
-            var lengthOf6 = value.GetLength(6);
-            var startIndexOf7 = value.GetLowerBound(7);
-            var lengthOf7 = value.GetLength(7);
-            var startIndexOf8 = value.GetLowerBound(8);
-            var lengthOf8 = value.GetLength(8);
-            var startIndexOf9 = value.GetLowerBound(9);
-            var lengthOf9 = value.GetLength(9);
-            var startIndexOf10 = value.GetLowerBound(10);
-            var lengthOf10 = value.GetLength(10);
-            var startIndexOf11 = value.GetLowerBound(11);
-            var lengthOf11 = value.GetLength(11);
-            var startIndexOf12 = value.GetLowerBound(12);
-            var lengthOf12 = value.GetLength(12);
-            var startIndexOf13 = value.GetLowerBound(13);
-            var lengthOf13 = value.GetLength(13);
-            var startIndexOf14 = value.GetLowerBound(14);
-            var lengthOf14 = value.GetLength(14);
-            var startIndexOf15 = value.GetLowerBound(15);
-            var lengthOf15 = value.GetLength(15);
-            var startIndexOf16 = value.GetLowerBound(16);
-            var lengthOf16 = value.GetLength(16);
-            var startIndexOf17 = value.GetLowerBound(17);
-            var lengthOf17 = value.GetLength(17);
-            var startIndexOf18 = value.GetLowerBound(18);
-            var lengthOf18 = value.GetLength(18);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-						            for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
-						            {
-							            for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
-							            {
-								            for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
-								            {
-									            for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
-									            {
-										            for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
-										            {
-											            for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
-											            {
-												            for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
-												            {
-													            for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
-													            {
-														            for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
-														            {
-															            for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
-															            {
-																            for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
-																            {
-																	            for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
-																	            {
-																		            for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
-																		            {
-																		                if (first)
-																		                {
-																		                    first = false;
-																		                }
-																		                else
-																		                {
-																		                    var span = writer.Writer.GetSpan(1);
-																		                    span[0] = (byte)',';
-																		                    writer.Writer.Advance(1);
-																		                }
-
-																		                var element = value[
-																		                    iteratorOf0 + startIndexOf0
-																		                    , iteratorOf1 + startIndexOf1
-																		                    , iteratorOf2 + startIndexOf2
-																		                    , iteratorOf3 + startIndexOf3
-																		                    , iteratorOf4 + startIndexOf4
-																		                    , iteratorOf5 + startIndexOf5
-																		                    , iteratorOf6 + startIndexOf6
-																		                    , iteratorOf7 + startIndexOf7
-																		                    , iteratorOf8 + startIndexOf8
-																		                    , iteratorOf9 + startIndexOf9
-																		                    , iteratorOf10 + startIndexOf10
-																		                    , iteratorOf11 + startIndexOf11
-																		                    , iteratorOf12 + startIndexOf12
-																		                    , iteratorOf13 + startIndexOf13
-																		                    , iteratorOf14 + startIndexOf14
-																		                    , iteratorOf15 + startIndexOf15
-																		                    , iteratorOf16 + startIndexOf16
-																		                    , iteratorOf17 + startIndexOf17
-																		                    , iteratorOf18 + startIndexOf18
-																		                ];
-																		                formatter.Serialize(ref writer, element, options);
-            																		}
-            																	}
-            																}
-            															}
-            														}
-            													}
-            												}
-            											}
-            										}
-            									}
-            								}
-            							}
-            						}
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -10597,13 +9948,105 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+						               for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
+						               {
+							               for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
+							               {
+								               for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
+								               {
+									               for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
+									               {
+										               for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
+										               {
+											               for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
+											               {
+												               for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
+												               {
+													               for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
+													               {
+														               for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
+														               {
+															               for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
+															               {
+																               for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
+																               {
+																	               for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
+																	               {
+																		               for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
+																		               {
+																		                   if (first)
+																		                   {
+																		                       first = false;
+																		                   }
+																		                   else
+																		                   {
+																		                       var span = writer.Writer.GetSpan(1);
+																		                       span[0] = (byte)',';
+																		                       writer.Writer.Advance(1);
+																		                   }
+
+																		                   var element = value[
+																		                       iteratorOf0 + startIndexOf0
+																		                       , iteratorOf1 + startIndexOf1
+																		                       , iteratorOf2 + startIndexOf2
+																		                       , iteratorOf3 + startIndexOf3
+																		                       , iteratorOf4 + startIndexOf4
+																		                       , iteratorOf5 + startIndexOf5
+																		                       , iteratorOf6 + startIndexOf6
+																		                       , iteratorOf7 + startIndexOf7
+																		                       , iteratorOf8 + startIndexOf8
+																		                       , iteratorOf9 + startIndexOf9
+																		                       , iteratorOf10 + startIndexOf10
+																		                       , iteratorOf11 + startIndexOf11
+																		                       , iteratorOf12 + startIndexOf12
+																		                       , iteratorOf13 + startIndexOf13
+																		                       , iteratorOf14 + startIndexOf14
+																		                       , iteratorOf15 + startIndexOf15
+																		                       , iteratorOf16 + startIndexOf16
+																		                       , iteratorOf17 + startIndexOf17
+																		                       , iteratorOf18 + startIndexOf18
+																		                   ];
+																		                   writer.Serialize(element, options, serializer);
+																		               }
+            																		}
+            																	}
+            																}
+            															}
+            														}
+            													}
+            												}
+            											}
+            										}
+            									}
+            								}
+            							}
+            						}
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -10674,7 +10117,7 @@ namespace Utf8Json.Formatters
 																		                    , iteratorOf17 + startIndexOf17
 																		                    , iteratorOf18 + startIndexOf18
 																		                ];
-																		                writer.Serialize(element, options, serializer);
+																		                formatter.Serialize(ref writer, element, options);
             																		}
             																	}
             																}
@@ -10694,7 +10137,9 @@ namespace Utf8Json.Formatters
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -10983,154 +10428,6 @@ namespace Utf8Json.Formatters
 #endif
         {
             SerializeStatic(ref writer, value, options);
-        }
-
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,,,,,,,,,,,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var startIndexOf6 = value.GetLowerBound(6);
-            var lengthOf6 = value.GetLength(6);
-            var startIndexOf7 = value.GetLowerBound(7);
-            var lengthOf7 = value.GetLength(7);
-            var startIndexOf8 = value.GetLowerBound(8);
-            var lengthOf8 = value.GetLength(8);
-            var startIndexOf9 = value.GetLowerBound(9);
-            var lengthOf9 = value.GetLength(9);
-            var startIndexOf10 = value.GetLowerBound(10);
-            var lengthOf10 = value.GetLength(10);
-            var startIndexOf11 = value.GetLowerBound(11);
-            var lengthOf11 = value.GetLength(11);
-            var startIndexOf12 = value.GetLowerBound(12);
-            var lengthOf12 = value.GetLength(12);
-            var startIndexOf13 = value.GetLowerBound(13);
-            var lengthOf13 = value.GetLength(13);
-            var startIndexOf14 = value.GetLowerBound(14);
-            var lengthOf14 = value.GetLength(14);
-            var startIndexOf15 = value.GetLowerBound(15);
-            var lengthOf15 = value.GetLength(15);
-            var startIndexOf16 = value.GetLowerBound(16);
-            var lengthOf16 = value.GetLength(16);
-            var startIndexOf17 = value.GetLowerBound(17);
-            var lengthOf17 = value.GetLength(17);
-            var startIndexOf18 = value.GetLowerBound(18);
-            var lengthOf18 = value.GetLength(18);
-            var startIndexOf19 = value.GetLowerBound(19);
-            var lengthOf19 = value.GetLength(19);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-						            for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
-						            {
-							            for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
-							            {
-								            for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
-								            {
-									            for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
-									            {
-										            for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
-										            {
-											            for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
-											            {
-												            for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
-												            {
-													            for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
-													            {
-														            for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
-														            {
-															            for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
-															            {
-																            for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
-																            {
-																	            for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
-																	            {
-																		            for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
-																		            {
-																			            for (var iteratorOf19 = 0; iteratorOf19 < lengthOf19; iteratorOf19++)
-																			            {
-																			                if (first)
-																			                {
-																			                    first = false;
-																			                }
-																			                else
-																			                {
-																			                    var span = writer.Writer.GetSpan(1);
-																			                    span[0] = (byte)',';
-																			                    writer.Writer.Advance(1);
-																			                }
-
-																			                var element = value[
-																			                    iteratorOf0 + startIndexOf0
-																			                    , iteratorOf1 + startIndexOf1
-																			                    , iteratorOf2 + startIndexOf2
-																			                    , iteratorOf3 + startIndexOf3
-																			                    , iteratorOf4 + startIndexOf4
-																			                    , iteratorOf5 + startIndexOf5
-																			                    , iteratorOf6 + startIndexOf6
-																			                    , iteratorOf7 + startIndexOf7
-																			                    , iteratorOf8 + startIndexOf8
-																			                    , iteratorOf9 + startIndexOf9
-																			                    , iteratorOf10 + startIndexOf10
-																			                    , iteratorOf11 + startIndexOf11
-																			                    , iteratorOf12 + startIndexOf12
-																			                    , iteratorOf13 + startIndexOf13
-																			                    , iteratorOf14 + startIndexOf14
-																			                    , iteratorOf15 + startIndexOf15
-																			                    , iteratorOf16 + startIndexOf16
-																			                    , iteratorOf17 + startIndexOf17
-																			                    , iteratorOf18 + startIndexOf18
-																			                    , iteratorOf19 + startIndexOf19
-																			                ];
-																			                formatter.Serialize(ref writer, element, options);
-            																			}
-            																		}
-            																	}
-            																}
-            															}
-            														}
-            													}
-            												}
-            											}
-            										}
-            									}
-            								}
-            							}
-            						}
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -11481,13 +10778,109 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+						               for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
+						               {
+							               for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
+							               {
+								               for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
+								               {
+									               for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
+									               {
+										               for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
+										               {
+											               for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
+											               {
+												               for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
+												               {
+													               for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
+													               {
+														               for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
+														               {
+															               for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
+															               {
+																               for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
+																               {
+																	               for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
+																	               {
+																		               for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
+																		               {
+																			               for (var iteratorOf19 = 0; iteratorOf19 < lengthOf19; iteratorOf19++)
+																			               {
+																			                   if (first)
+																			                   {
+																			                       first = false;
+																			                   }
+																			                   else
+																			                   {
+																			                       var span = writer.Writer.GetSpan(1);
+																			                       span[0] = (byte)',';
+																			                       writer.Writer.Advance(1);
+																			                   }
+
+																			                   var element = value[
+																			                       iteratorOf0 + startIndexOf0
+																			                       , iteratorOf1 + startIndexOf1
+																			                       , iteratorOf2 + startIndexOf2
+																			                       , iteratorOf3 + startIndexOf3
+																			                       , iteratorOf4 + startIndexOf4
+																			                       , iteratorOf5 + startIndexOf5
+																			                       , iteratorOf6 + startIndexOf6
+																			                       , iteratorOf7 + startIndexOf7
+																			                       , iteratorOf8 + startIndexOf8
+																			                       , iteratorOf9 + startIndexOf9
+																			                       , iteratorOf10 + startIndexOf10
+																			                       , iteratorOf11 + startIndexOf11
+																			                       , iteratorOf12 + startIndexOf12
+																			                       , iteratorOf13 + startIndexOf13
+																			                       , iteratorOf14 + startIndexOf14
+																			                       , iteratorOf15 + startIndexOf15
+																			                       , iteratorOf16 + startIndexOf16
+																			                       , iteratorOf17 + startIndexOf17
+																			                       , iteratorOf18 + startIndexOf18
+																			                       , iteratorOf19 + startIndexOf19
+																			                   ];
+																			                   writer.Serialize(element, options, serializer);
+																			               }
+            																			}
+            																		}
+            																	}
+            																}
+            															}
+            														}
+            													}
+            												}
+            											}
+            										}
+            									}
+            								}
+            							}
+            						}
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -11561,7 +10954,7 @@ namespace Utf8Json.Formatters
 																			                    , iteratorOf18 + startIndexOf18
 																			                    , iteratorOf19 + startIndexOf19
 																			                ];
-																			                writer.Serialize(element, options, serializer);
+																			                formatter.Serialize(ref writer, element, options);
             																			}
             																		}
             																	}
@@ -11582,7 +10975,9 @@ namespace Utf8Json.Formatters
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -11877,160 +11272,6 @@ namespace Utf8Json.Formatters
 #endif
         {
             SerializeStatic(ref writer, value, options);
-        }
-
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,,,,,,,,,,,,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var startIndexOf6 = value.GetLowerBound(6);
-            var lengthOf6 = value.GetLength(6);
-            var startIndexOf7 = value.GetLowerBound(7);
-            var lengthOf7 = value.GetLength(7);
-            var startIndexOf8 = value.GetLowerBound(8);
-            var lengthOf8 = value.GetLength(8);
-            var startIndexOf9 = value.GetLowerBound(9);
-            var lengthOf9 = value.GetLength(9);
-            var startIndexOf10 = value.GetLowerBound(10);
-            var lengthOf10 = value.GetLength(10);
-            var startIndexOf11 = value.GetLowerBound(11);
-            var lengthOf11 = value.GetLength(11);
-            var startIndexOf12 = value.GetLowerBound(12);
-            var lengthOf12 = value.GetLength(12);
-            var startIndexOf13 = value.GetLowerBound(13);
-            var lengthOf13 = value.GetLength(13);
-            var startIndexOf14 = value.GetLowerBound(14);
-            var lengthOf14 = value.GetLength(14);
-            var startIndexOf15 = value.GetLowerBound(15);
-            var lengthOf15 = value.GetLength(15);
-            var startIndexOf16 = value.GetLowerBound(16);
-            var lengthOf16 = value.GetLength(16);
-            var startIndexOf17 = value.GetLowerBound(17);
-            var lengthOf17 = value.GetLength(17);
-            var startIndexOf18 = value.GetLowerBound(18);
-            var lengthOf18 = value.GetLength(18);
-            var startIndexOf19 = value.GetLowerBound(19);
-            var lengthOf19 = value.GetLength(19);
-            var startIndexOf20 = value.GetLowerBound(20);
-            var lengthOf20 = value.GetLength(20);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-						            for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
-						            {
-							            for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
-							            {
-								            for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
-								            {
-									            for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
-									            {
-										            for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
-										            {
-											            for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
-											            {
-												            for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
-												            {
-													            for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
-													            {
-														            for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
-														            {
-															            for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
-															            {
-																            for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
-																            {
-																	            for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
-																	            {
-																		            for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
-																		            {
-																			            for (var iteratorOf19 = 0; iteratorOf19 < lengthOf19; iteratorOf19++)
-																			            {
-																				            for (var iteratorOf20 = 0; iteratorOf20 < lengthOf20; iteratorOf20++)
-																				            {
-																				                if (first)
-																				                {
-																				                    first = false;
-																				                }
-																				                else
-																				                {
-																				                    var span = writer.Writer.GetSpan(1);
-																				                    span[0] = (byte)',';
-																				                    writer.Writer.Advance(1);
-																				                }
-
-																				                var element = value[
-																				                    iteratorOf0 + startIndexOf0
-																				                    , iteratorOf1 + startIndexOf1
-																				                    , iteratorOf2 + startIndexOf2
-																				                    , iteratorOf3 + startIndexOf3
-																				                    , iteratorOf4 + startIndexOf4
-																				                    , iteratorOf5 + startIndexOf5
-																				                    , iteratorOf6 + startIndexOf6
-																				                    , iteratorOf7 + startIndexOf7
-																				                    , iteratorOf8 + startIndexOf8
-																				                    , iteratorOf9 + startIndexOf9
-																				                    , iteratorOf10 + startIndexOf10
-																				                    , iteratorOf11 + startIndexOf11
-																				                    , iteratorOf12 + startIndexOf12
-																				                    , iteratorOf13 + startIndexOf13
-																				                    , iteratorOf14 + startIndexOf14
-																				                    , iteratorOf15 + startIndexOf15
-																				                    , iteratorOf16 + startIndexOf16
-																				                    , iteratorOf17 + startIndexOf17
-																				                    , iteratorOf18 + startIndexOf18
-																				                    , iteratorOf19 + startIndexOf19
-																				                    , iteratorOf20 + startIndexOf20
-																				                ];
-																				                formatter.Serialize(ref writer, element, options);
-            																				}
-            																			}
-            																		}
-            																	}
-            																}
-            															}
-            														}
-            													}
-            												}
-            											}
-            										}
-            									}
-            								}
-            							}
-            						}
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -12395,13 +11636,113 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+						               for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
+						               {
+							               for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
+							               {
+								               for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
+								               {
+									               for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
+									               {
+										               for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
+										               {
+											               for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
+											               {
+												               for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
+												               {
+													               for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
+													               {
+														               for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
+														               {
+															               for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
+															               {
+																               for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
+																               {
+																	               for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
+																	               {
+																		               for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
+																		               {
+																			               for (var iteratorOf19 = 0; iteratorOf19 < lengthOf19; iteratorOf19++)
+																			               {
+																				               for (var iteratorOf20 = 0; iteratorOf20 < lengthOf20; iteratorOf20++)
+																				               {
+																				                   if (first)
+																				                   {
+																				                       first = false;
+																				                   }
+																				                   else
+																				                   {
+																				                       var span = writer.Writer.GetSpan(1);
+																				                       span[0] = (byte)',';
+																				                       writer.Writer.Advance(1);
+																				                   }
+
+																				                   var element = value[
+																				                       iteratorOf0 + startIndexOf0
+																				                       , iteratorOf1 + startIndexOf1
+																				                       , iteratorOf2 + startIndexOf2
+																				                       , iteratorOf3 + startIndexOf3
+																				                       , iteratorOf4 + startIndexOf4
+																				                       , iteratorOf5 + startIndexOf5
+																				                       , iteratorOf6 + startIndexOf6
+																				                       , iteratorOf7 + startIndexOf7
+																				                       , iteratorOf8 + startIndexOf8
+																				                       , iteratorOf9 + startIndexOf9
+																				                       , iteratorOf10 + startIndexOf10
+																				                       , iteratorOf11 + startIndexOf11
+																				                       , iteratorOf12 + startIndexOf12
+																				                       , iteratorOf13 + startIndexOf13
+																				                       , iteratorOf14 + startIndexOf14
+																				                       , iteratorOf15 + startIndexOf15
+																				                       , iteratorOf16 + startIndexOf16
+																				                       , iteratorOf17 + startIndexOf17
+																				                       , iteratorOf18 + startIndexOf18
+																				                       , iteratorOf19 + startIndexOf19
+																				                       , iteratorOf20 + startIndexOf20
+																				                   ];
+																				                   writer.Serialize(element, options, serializer);
+																				               }
+            																				}
+            																			}
+            																		}
+            																	}
+            																}
+            															}
+            														}
+            													}
+            												}
+            											}
+            										}
+            									}
+            								}
+            							}
+            						}
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -12478,7 +11819,7 @@ namespace Utf8Json.Formatters
 																				                    , iteratorOf19 + startIndexOf19
 																				                    , iteratorOf20 + startIndexOf20
 																				                ];
-																				                writer.Serialize(element, options, serializer);
+																				                formatter.Serialize(ref writer, element, options);
             																				}
             																			}
             																		}
@@ -12500,7 +11841,9 @@ namespace Utf8Json.Formatters
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -12801,166 +12144,6 @@ namespace Utf8Json.Formatters
 #endif
         {
             SerializeStatic(ref writer, value, options);
-        }
-
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,,,,,,,,,,,,,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var startIndexOf6 = value.GetLowerBound(6);
-            var lengthOf6 = value.GetLength(6);
-            var startIndexOf7 = value.GetLowerBound(7);
-            var lengthOf7 = value.GetLength(7);
-            var startIndexOf8 = value.GetLowerBound(8);
-            var lengthOf8 = value.GetLength(8);
-            var startIndexOf9 = value.GetLowerBound(9);
-            var lengthOf9 = value.GetLength(9);
-            var startIndexOf10 = value.GetLowerBound(10);
-            var lengthOf10 = value.GetLength(10);
-            var startIndexOf11 = value.GetLowerBound(11);
-            var lengthOf11 = value.GetLength(11);
-            var startIndexOf12 = value.GetLowerBound(12);
-            var lengthOf12 = value.GetLength(12);
-            var startIndexOf13 = value.GetLowerBound(13);
-            var lengthOf13 = value.GetLength(13);
-            var startIndexOf14 = value.GetLowerBound(14);
-            var lengthOf14 = value.GetLength(14);
-            var startIndexOf15 = value.GetLowerBound(15);
-            var lengthOf15 = value.GetLength(15);
-            var startIndexOf16 = value.GetLowerBound(16);
-            var lengthOf16 = value.GetLength(16);
-            var startIndexOf17 = value.GetLowerBound(17);
-            var lengthOf17 = value.GetLength(17);
-            var startIndexOf18 = value.GetLowerBound(18);
-            var lengthOf18 = value.GetLength(18);
-            var startIndexOf19 = value.GetLowerBound(19);
-            var lengthOf19 = value.GetLength(19);
-            var startIndexOf20 = value.GetLowerBound(20);
-            var lengthOf20 = value.GetLength(20);
-            var startIndexOf21 = value.GetLowerBound(21);
-            var lengthOf21 = value.GetLength(21);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-						            for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
-						            {
-							            for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
-							            {
-								            for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
-								            {
-									            for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
-									            {
-										            for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
-										            {
-											            for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
-											            {
-												            for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
-												            {
-													            for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
-													            {
-														            for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
-														            {
-															            for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
-															            {
-																            for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
-																            {
-																	            for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
-																	            {
-																		            for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
-																		            {
-																			            for (var iteratorOf19 = 0; iteratorOf19 < lengthOf19; iteratorOf19++)
-																			            {
-																				            for (var iteratorOf20 = 0; iteratorOf20 < lengthOf20; iteratorOf20++)
-																				            {
-																					            for (var iteratorOf21 = 0; iteratorOf21 < lengthOf21; iteratorOf21++)
-																					            {
-																					                if (first)
-																					                {
-																					                    first = false;
-																					                }
-																					                else
-																					                {
-																					                    var span = writer.Writer.GetSpan(1);
-																					                    span[0] = (byte)',';
-																					                    writer.Writer.Advance(1);
-																					                }
-
-																					                var element = value[
-																					                    iteratorOf0 + startIndexOf0
-																					                    , iteratorOf1 + startIndexOf1
-																					                    , iteratorOf2 + startIndexOf2
-																					                    , iteratorOf3 + startIndexOf3
-																					                    , iteratorOf4 + startIndexOf4
-																					                    , iteratorOf5 + startIndexOf5
-																					                    , iteratorOf6 + startIndexOf6
-																					                    , iteratorOf7 + startIndexOf7
-																					                    , iteratorOf8 + startIndexOf8
-																					                    , iteratorOf9 + startIndexOf9
-																					                    , iteratorOf10 + startIndexOf10
-																					                    , iteratorOf11 + startIndexOf11
-																					                    , iteratorOf12 + startIndexOf12
-																					                    , iteratorOf13 + startIndexOf13
-																					                    , iteratorOf14 + startIndexOf14
-																					                    , iteratorOf15 + startIndexOf15
-																					                    , iteratorOf16 + startIndexOf16
-																					                    , iteratorOf17 + startIndexOf17
-																					                    , iteratorOf18 + startIndexOf18
-																					                    , iteratorOf19 + startIndexOf19
-																					                    , iteratorOf20 + startIndexOf20
-																					                    , iteratorOf21 + startIndexOf21
-																					                ];
-																					                formatter.Serialize(ref writer, element, options);
-            																					}
-            																				}
-            																			}
-            																		}
-            																	}
-            																}
-            															}
-            														}
-            													}
-            												}
-            											}
-            										}
-            									}
-            								}
-            							}
-            						}
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -13339,13 +12522,117 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+						               for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
+						               {
+							               for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
+							               {
+								               for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
+								               {
+									               for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
+									               {
+										               for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
+										               {
+											               for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
+											               {
+												               for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
+												               {
+													               for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
+													               {
+														               for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
+														               {
+															               for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
+															               {
+																               for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
+																               {
+																	               for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
+																	               {
+																		               for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
+																		               {
+																			               for (var iteratorOf19 = 0; iteratorOf19 < lengthOf19; iteratorOf19++)
+																			               {
+																				               for (var iteratorOf20 = 0; iteratorOf20 < lengthOf20; iteratorOf20++)
+																				               {
+																					               for (var iteratorOf21 = 0; iteratorOf21 < lengthOf21; iteratorOf21++)
+																					               {
+																					                   if (first)
+																					                   {
+																					                       first = false;
+																					                   }
+																					                   else
+																					                   {
+																					                       var span = writer.Writer.GetSpan(1);
+																					                       span[0] = (byte)',';
+																					                       writer.Writer.Advance(1);
+																					                   }
+
+																					                   var element = value[
+																					                       iteratorOf0 + startIndexOf0
+																					                       , iteratorOf1 + startIndexOf1
+																					                       , iteratorOf2 + startIndexOf2
+																					                       , iteratorOf3 + startIndexOf3
+																					                       , iteratorOf4 + startIndexOf4
+																					                       , iteratorOf5 + startIndexOf5
+																					                       , iteratorOf6 + startIndexOf6
+																					                       , iteratorOf7 + startIndexOf7
+																					                       , iteratorOf8 + startIndexOf8
+																					                       , iteratorOf9 + startIndexOf9
+																					                       , iteratorOf10 + startIndexOf10
+																					                       , iteratorOf11 + startIndexOf11
+																					                       , iteratorOf12 + startIndexOf12
+																					                       , iteratorOf13 + startIndexOf13
+																					                       , iteratorOf14 + startIndexOf14
+																					                       , iteratorOf15 + startIndexOf15
+																					                       , iteratorOf16 + startIndexOf16
+																					                       , iteratorOf17 + startIndexOf17
+																					                       , iteratorOf18 + startIndexOf18
+																					                       , iteratorOf19 + startIndexOf19
+																					                       , iteratorOf20 + startIndexOf20
+																					                       , iteratorOf21 + startIndexOf21
+																					                   ];
+																					                   writer.Serialize(element, options, serializer);
+																					               }
+            																					}
+            																				}
+            																			}
+            																		}
+            																	}
+            																}
+            															}
+            														}
+            													}
+            												}
+            											}
+            										}
+            									}
+            								}
+            							}
+            						}
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -13425,7 +12712,7 @@ namespace Utf8Json.Formatters
 																					                    , iteratorOf20 + startIndexOf20
 																					                    , iteratorOf21 + startIndexOf21
 																					                ];
-																					                writer.Serialize(element, options, serializer);
+																					                formatter.Serialize(ref writer, element, options);
             																					}
             																				}
             																			}
@@ -13448,7 +12735,9 @@ namespace Utf8Json.Formatters
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -13755,172 +13044,6 @@ namespace Utf8Json.Formatters
 #endif
         {
             SerializeStatic(ref writer, value, options);
-        }
-
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,,,,,,,,,,,,,,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var startIndexOf6 = value.GetLowerBound(6);
-            var lengthOf6 = value.GetLength(6);
-            var startIndexOf7 = value.GetLowerBound(7);
-            var lengthOf7 = value.GetLength(7);
-            var startIndexOf8 = value.GetLowerBound(8);
-            var lengthOf8 = value.GetLength(8);
-            var startIndexOf9 = value.GetLowerBound(9);
-            var lengthOf9 = value.GetLength(9);
-            var startIndexOf10 = value.GetLowerBound(10);
-            var lengthOf10 = value.GetLength(10);
-            var startIndexOf11 = value.GetLowerBound(11);
-            var lengthOf11 = value.GetLength(11);
-            var startIndexOf12 = value.GetLowerBound(12);
-            var lengthOf12 = value.GetLength(12);
-            var startIndexOf13 = value.GetLowerBound(13);
-            var lengthOf13 = value.GetLength(13);
-            var startIndexOf14 = value.GetLowerBound(14);
-            var lengthOf14 = value.GetLength(14);
-            var startIndexOf15 = value.GetLowerBound(15);
-            var lengthOf15 = value.GetLength(15);
-            var startIndexOf16 = value.GetLowerBound(16);
-            var lengthOf16 = value.GetLength(16);
-            var startIndexOf17 = value.GetLowerBound(17);
-            var lengthOf17 = value.GetLength(17);
-            var startIndexOf18 = value.GetLowerBound(18);
-            var lengthOf18 = value.GetLength(18);
-            var startIndexOf19 = value.GetLowerBound(19);
-            var lengthOf19 = value.GetLength(19);
-            var startIndexOf20 = value.GetLowerBound(20);
-            var lengthOf20 = value.GetLength(20);
-            var startIndexOf21 = value.GetLowerBound(21);
-            var lengthOf21 = value.GetLength(21);
-            var startIndexOf22 = value.GetLowerBound(22);
-            var lengthOf22 = value.GetLength(22);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-						            for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
-						            {
-							            for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
-							            {
-								            for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
-								            {
-									            for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
-									            {
-										            for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
-										            {
-											            for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
-											            {
-												            for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
-												            {
-													            for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
-													            {
-														            for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
-														            {
-															            for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
-															            {
-																            for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
-																            {
-																	            for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
-																	            {
-																		            for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
-																		            {
-																			            for (var iteratorOf19 = 0; iteratorOf19 < lengthOf19; iteratorOf19++)
-																			            {
-																				            for (var iteratorOf20 = 0; iteratorOf20 < lengthOf20; iteratorOf20++)
-																				            {
-																					            for (var iteratorOf21 = 0; iteratorOf21 < lengthOf21; iteratorOf21++)
-																					            {
-																						            for (var iteratorOf22 = 0; iteratorOf22 < lengthOf22; iteratorOf22++)
-																						            {
-																						                if (first)
-																						                {
-																						                    first = false;
-																						                }
-																						                else
-																						                {
-																						                    var span = writer.Writer.GetSpan(1);
-																						                    span[0] = (byte)',';
-																						                    writer.Writer.Advance(1);
-																						                }
-
-																						                var element = value[
-																						                    iteratorOf0 + startIndexOf0
-																						                    , iteratorOf1 + startIndexOf1
-																						                    , iteratorOf2 + startIndexOf2
-																						                    , iteratorOf3 + startIndexOf3
-																						                    , iteratorOf4 + startIndexOf4
-																						                    , iteratorOf5 + startIndexOf5
-																						                    , iteratorOf6 + startIndexOf6
-																						                    , iteratorOf7 + startIndexOf7
-																						                    , iteratorOf8 + startIndexOf8
-																						                    , iteratorOf9 + startIndexOf9
-																						                    , iteratorOf10 + startIndexOf10
-																						                    , iteratorOf11 + startIndexOf11
-																						                    , iteratorOf12 + startIndexOf12
-																						                    , iteratorOf13 + startIndexOf13
-																						                    , iteratorOf14 + startIndexOf14
-																						                    , iteratorOf15 + startIndexOf15
-																						                    , iteratorOf16 + startIndexOf16
-																						                    , iteratorOf17 + startIndexOf17
-																						                    , iteratorOf18 + startIndexOf18
-																						                    , iteratorOf19 + startIndexOf19
-																						                    , iteratorOf20 + startIndexOf20
-																						                    , iteratorOf21 + startIndexOf21
-																						                    , iteratorOf22 + startIndexOf22
-																						                ];
-																						                formatter.Serialize(ref writer, element, options);
-            																						}
-            																					}
-            																				}
-            																			}
-            																		}
-            																	}
-            																}
-            															}
-            														}
-            													}
-            												}
-            											}
-            										}
-            									}
-            								}
-            							}
-            						}
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -14313,13 +13436,121 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+						               for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
+						               {
+							               for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
+							               {
+								               for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
+								               {
+									               for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
+									               {
+										               for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
+										               {
+											               for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
+											               {
+												               for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
+												               {
+													               for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
+													               {
+														               for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
+														               {
+															               for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
+															               {
+																               for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
+																               {
+																	               for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
+																	               {
+																		               for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
+																		               {
+																			               for (var iteratorOf19 = 0; iteratorOf19 < lengthOf19; iteratorOf19++)
+																			               {
+																				               for (var iteratorOf20 = 0; iteratorOf20 < lengthOf20; iteratorOf20++)
+																				               {
+																					               for (var iteratorOf21 = 0; iteratorOf21 < lengthOf21; iteratorOf21++)
+																					               {
+																						               for (var iteratorOf22 = 0; iteratorOf22 < lengthOf22; iteratorOf22++)
+																						               {
+																						                   if (first)
+																						                   {
+																						                       first = false;
+																						                   }
+																						                   else
+																						                   {
+																						                       var span = writer.Writer.GetSpan(1);
+																						                       span[0] = (byte)',';
+																						                       writer.Writer.Advance(1);
+																						                   }
+
+																						                   var element = value[
+																						                       iteratorOf0 + startIndexOf0
+																						                       , iteratorOf1 + startIndexOf1
+																						                       , iteratorOf2 + startIndexOf2
+																						                       , iteratorOf3 + startIndexOf3
+																						                       , iteratorOf4 + startIndexOf4
+																						                       , iteratorOf5 + startIndexOf5
+																						                       , iteratorOf6 + startIndexOf6
+																						                       , iteratorOf7 + startIndexOf7
+																						                       , iteratorOf8 + startIndexOf8
+																						                       , iteratorOf9 + startIndexOf9
+																						                       , iteratorOf10 + startIndexOf10
+																						                       , iteratorOf11 + startIndexOf11
+																						                       , iteratorOf12 + startIndexOf12
+																						                       , iteratorOf13 + startIndexOf13
+																						                       , iteratorOf14 + startIndexOf14
+																						                       , iteratorOf15 + startIndexOf15
+																						                       , iteratorOf16 + startIndexOf16
+																						                       , iteratorOf17 + startIndexOf17
+																						                       , iteratorOf18 + startIndexOf18
+																						                       , iteratorOf19 + startIndexOf19
+																						                       , iteratorOf20 + startIndexOf20
+																						                       , iteratorOf21 + startIndexOf21
+																						                       , iteratorOf22 + startIndexOf22
+																						                   ];
+																						                   writer.Serialize(element, options, serializer);
+																						               }
+            																						}
+            																					}
+            																				}
+            																			}
+            																		}
+            																	}
+            																}
+            															}
+            														}
+            													}
+            												}
+            											}
+            										}
+            									}
+            								}
+            							}
+            						}
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -14402,7 +13633,7 @@ namespace Utf8Json.Formatters
 																						                    , iteratorOf21 + startIndexOf21
 																						                    , iteratorOf22 + startIndexOf22
 																						                ];
-																						                writer.Serialize(element, options, serializer);
+																						                formatter.Serialize(ref writer, element, options);
             																						}
             																					}
             																				}
@@ -14426,7 +13657,9 @@ namespace Utf8Json.Formatters
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -14739,178 +13972,6 @@ namespace Utf8Json.Formatters
 #endif
         {
             SerializeStatic(ref writer, value, options);
-        }
-
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,,,,,,,,,,,,,,,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var startIndexOf6 = value.GetLowerBound(6);
-            var lengthOf6 = value.GetLength(6);
-            var startIndexOf7 = value.GetLowerBound(7);
-            var lengthOf7 = value.GetLength(7);
-            var startIndexOf8 = value.GetLowerBound(8);
-            var lengthOf8 = value.GetLength(8);
-            var startIndexOf9 = value.GetLowerBound(9);
-            var lengthOf9 = value.GetLength(9);
-            var startIndexOf10 = value.GetLowerBound(10);
-            var lengthOf10 = value.GetLength(10);
-            var startIndexOf11 = value.GetLowerBound(11);
-            var lengthOf11 = value.GetLength(11);
-            var startIndexOf12 = value.GetLowerBound(12);
-            var lengthOf12 = value.GetLength(12);
-            var startIndexOf13 = value.GetLowerBound(13);
-            var lengthOf13 = value.GetLength(13);
-            var startIndexOf14 = value.GetLowerBound(14);
-            var lengthOf14 = value.GetLength(14);
-            var startIndexOf15 = value.GetLowerBound(15);
-            var lengthOf15 = value.GetLength(15);
-            var startIndexOf16 = value.GetLowerBound(16);
-            var lengthOf16 = value.GetLength(16);
-            var startIndexOf17 = value.GetLowerBound(17);
-            var lengthOf17 = value.GetLength(17);
-            var startIndexOf18 = value.GetLowerBound(18);
-            var lengthOf18 = value.GetLength(18);
-            var startIndexOf19 = value.GetLowerBound(19);
-            var lengthOf19 = value.GetLength(19);
-            var startIndexOf20 = value.GetLowerBound(20);
-            var lengthOf20 = value.GetLength(20);
-            var startIndexOf21 = value.GetLowerBound(21);
-            var lengthOf21 = value.GetLength(21);
-            var startIndexOf22 = value.GetLowerBound(22);
-            var lengthOf22 = value.GetLength(22);
-            var startIndexOf23 = value.GetLowerBound(23);
-            var lengthOf23 = value.GetLength(23);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-						            for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
-						            {
-							            for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
-							            {
-								            for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
-								            {
-									            for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
-									            {
-										            for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
-										            {
-											            for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
-											            {
-												            for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
-												            {
-													            for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
-													            {
-														            for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
-														            {
-															            for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
-															            {
-																            for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
-																            {
-																	            for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
-																	            {
-																		            for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
-																		            {
-																			            for (var iteratorOf19 = 0; iteratorOf19 < lengthOf19; iteratorOf19++)
-																			            {
-																				            for (var iteratorOf20 = 0; iteratorOf20 < lengthOf20; iteratorOf20++)
-																				            {
-																					            for (var iteratorOf21 = 0; iteratorOf21 < lengthOf21; iteratorOf21++)
-																					            {
-																						            for (var iteratorOf22 = 0; iteratorOf22 < lengthOf22; iteratorOf22++)
-																						            {
-																							            for (var iteratorOf23 = 0; iteratorOf23 < lengthOf23; iteratorOf23++)
-																							            {
-																							                if (first)
-																							                {
-																							                    first = false;
-																							                }
-																							                else
-																							                {
-																							                    var span = writer.Writer.GetSpan(1);
-																							                    span[0] = (byte)',';
-																							                    writer.Writer.Advance(1);
-																							                }
-
-																							                var element = value[
-																							                    iteratorOf0 + startIndexOf0
-																							                    , iteratorOf1 + startIndexOf1
-																							                    , iteratorOf2 + startIndexOf2
-																							                    , iteratorOf3 + startIndexOf3
-																							                    , iteratorOf4 + startIndexOf4
-																							                    , iteratorOf5 + startIndexOf5
-																							                    , iteratorOf6 + startIndexOf6
-																							                    , iteratorOf7 + startIndexOf7
-																							                    , iteratorOf8 + startIndexOf8
-																							                    , iteratorOf9 + startIndexOf9
-																							                    , iteratorOf10 + startIndexOf10
-																							                    , iteratorOf11 + startIndexOf11
-																							                    , iteratorOf12 + startIndexOf12
-																							                    , iteratorOf13 + startIndexOf13
-																							                    , iteratorOf14 + startIndexOf14
-																							                    , iteratorOf15 + startIndexOf15
-																							                    , iteratorOf16 + startIndexOf16
-																							                    , iteratorOf17 + startIndexOf17
-																							                    , iteratorOf18 + startIndexOf18
-																							                    , iteratorOf19 + startIndexOf19
-																							                    , iteratorOf20 + startIndexOf20
-																							                    , iteratorOf21 + startIndexOf21
-																							                    , iteratorOf22 + startIndexOf22
-																							                    , iteratorOf23 + startIndexOf23
-																							                ];
-																							                formatter.Serialize(ref writer, element, options);
-            																							}
-            																						}
-            																					}
-            																				}
-            																			}
-            																		}
-            																	}
-            																}
-            															}
-            														}
-            													}
-            												}
-            											}
-            										}
-            									}
-            								}
-            							}
-            						}
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -15317,13 +14378,125 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+						               for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
+						               {
+							               for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
+							               {
+								               for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
+								               {
+									               for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
+									               {
+										               for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
+										               {
+											               for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
+											               {
+												               for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
+												               {
+													               for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
+													               {
+														               for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
+														               {
+															               for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
+															               {
+																               for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
+																               {
+																	               for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
+																	               {
+																		               for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
+																		               {
+																			               for (var iteratorOf19 = 0; iteratorOf19 < lengthOf19; iteratorOf19++)
+																			               {
+																				               for (var iteratorOf20 = 0; iteratorOf20 < lengthOf20; iteratorOf20++)
+																				               {
+																					               for (var iteratorOf21 = 0; iteratorOf21 < lengthOf21; iteratorOf21++)
+																					               {
+																						               for (var iteratorOf22 = 0; iteratorOf22 < lengthOf22; iteratorOf22++)
+																						               {
+																							               for (var iteratorOf23 = 0; iteratorOf23 < lengthOf23; iteratorOf23++)
+																							               {
+																							                   if (first)
+																							                   {
+																							                       first = false;
+																							                   }
+																							                   else
+																							                   {
+																							                       var span = writer.Writer.GetSpan(1);
+																							                       span[0] = (byte)',';
+																							                       writer.Writer.Advance(1);
+																							                   }
+
+																							                   var element = value[
+																							                       iteratorOf0 + startIndexOf0
+																							                       , iteratorOf1 + startIndexOf1
+																							                       , iteratorOf2 + startIndexOf2
+																							                       , iteratorOf3 + startIndexOf3
+																							                       , iteratorOf4 + startIndexOf4
+																							                       , iteratorOf5 + startIndexOf5
+																							                       , iteratorOf6 + startIndexOf6
+																							                       , iteratorOf7 + startIndexOf7
+																							                       , iteratorOf8 + startIndexOf8
+																							                       , iteratorOf9 + startIndexOf9
+																							                       , iteratorOf10 + startIndexOf10
+																							                       , iteratorOf11 + startIndexOf11
+																							                       , iteratorOf12 + startIndexOf12
+																							                       , iteratorOf13 + startIndexOf13
+																							                       , iteratorOf14 + startIndexOf14
+																							                       , iteratorOf15 + startIndexOf15
+																							                       , iteratorOf16 + startIndexOf16
+																							                       , iteratorOf17 + startIndexOf17
+																							                       , iteratorOf18 + startIndexOf18
+																							                       , iteratorOf19 + startIndexOf19
+																							                       , iteratorOf20 + startIndexOf20
+																							                       , iteratorOf21 + startIndexOf21
+																							                       , iteratorOf22 + startIndexOf22
+																							                       , iteratorOf23 + startIndexOf23
+																							                   ];
+																							                   writer.Serialize(element, options, serializer);
+																							               }
+            																							}
+            																						}
+            																					}
+            																				}
+            																			}
+            																		}
+            																	}
+            																}
+            															}
+            														}
+            													}
+            												}
+            											}
+            										}
+            									}
+            								}
+            							}
+            						}
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -15409,7 +14582,7 @@ namespace Utf8Json.Formatters
 																							                    , iteratorOf22 + startIndexOf22
 																							                    , iteratorOf23 + startIndexOf23
 																							                ];
-																							                writer.Serialize(element, options, serializer);
+																							                formatter.Serialize(ref writer, element, options);
             																							}
             																						}
             																					}
@@ -15434,7 +14607,9 @@ namespace Utf8Json.Formatters
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -15753,184 +14928,6 @@ namespace Utf8Json.Formatters
 #endif
         {
             SerializeStatic(ref writer, value, options);
-        }
-
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,,,,,,,,,,,,,,,,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var startIndexOf6 = value.GetLowerBound(6);
-            var lengthOf6 = value.GetLength(6);
-            var startIndexOf7 = value.GetLowerBound(7);
-            var lengthOf7 = value.GetLength(7);
-            var startIndexOf8 = value.GetLowerBound(8);
-            var lengthOf8 = value.GetLength(8);
-            var startIndexOf9 = value.GetLowerBound(9);
-            var lengthOf9 = value.GetLength(9);
-            var startIndexOf10 = value.GetLowerBound(10);
-            var lengthOf10 = value.GetLength(10);
-            var startIndexOf11 = value.GetLowerBound(11);
-            var lengthOf11 = value.GetLength(11);
-            var startIndexOf12 = value.GetLowerBound(12);
-            var lengthOf12 = value.GetLength(12);
-            var startIndexOf13 = value.GetLowerBound(13);
-            var lengthOf13 = value.GetLength(13);
-            var startIndexOf14 = value.GetLowerBound(14);
-            var lengthOf14 = value.GetLength(14);
-            var startIndexOf15 = value.GetLowerBound(15);
-            var lengthOf15 = value.GetLength(15);
-            var startIndexOf16 = value.GetLowerBound(16);
-            var lengthOf16 = value.GetLength(16);
-            var startIndexOf17 = value.GetLowerBound(17);
-            var lengthOf17 = value.GetLength(17);
-            var startIndexOf18 = value.GetLowerBound(18);
-            var lengthOf18 = value.GetLength(18);
-            var startIndexOf19 = value.GetLowerBound(19);
-            var lengthOf19 = value.GetLength(19);
-            var startIndexOf20 = value.GetLowerBound(20);
-            var lengthOf20 = value.GetLength(20);
-            var startIndexOf21 = value.GetLowerBound(21);
-            var lengthOf21 = value.GetLength(21);
-            var startIndexOf22 = value.GetLowerBound(22);
-            var lengthOf22 = value.GetLength(22);
-            var startIndexOf23 = value.GetLowerBound(23);
-            var lengthOf23 = value.GetLength(23);
-            var startIndexOf24 = value.GetLowerBound(24);
-            var lengthOf24 = value.GetLength(24);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-						            for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
-						            {
-							            for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
-							            {
-								            for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
-								            {
-									            for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
-									            {
-										            for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
-										            {
-											            for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
-											            {
-												            for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
-												            {
-													            for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
-													            {
-														            for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
-														            {
-															            for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
-															            {
-																            for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
-																            {
-																	            for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
-																	            {
-																		            for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
-																		            {
-																			            for (var iteratorOf19 = 0; iteratorOf19 < lengthOf19; iteratorOf19++)
-																			            {
-																				            for (var iteratorOf20 = 0; iteratorOf20 < lengthOf20; iteratorOf20++)
-																				            {
-																					            for (var iteratorOf21 = 0; iteratorOf21 < lengthOf21; iteratorOf21++)
-																					            {
-																						            for (var iteratorOf22 = 0; iteratorOf22 < lengthOf22; iteratorOf22++)
-																						            {
-																							            for (var iteratorOf23 = 0; iteratorOf23 < lengthOf23; iteratorOf23++)
-																							            {
-																								            for (var iteratorOf24 = 0; iteratorOf24 < lengthOf24; iteratorOf24++)
-																								            {
-																								                if (first)
-																								                {
-																								                    first = false;
-																								                }
-																								                else
-																								                {
-																								                    var span = writer.Writer.GetSpan(1);
-																								                    span[0] = (byte)',';
-																								                    writer.Writer.Advance(1);
-																								                }
-
-																								                var element = value[
-																								                    iteratorOf0 + startIndexOf0
-																								                    , iteratorOf1 + startIndexOf1
-																								                    , iteratorOf2 + startIndexOf2
-																								                    , iteratorOf3 + startIndexOf3
-																								                    , iteratorOf4 + startIndexOf4
-																								                    , iteratorOf5 + startIndexOf5
-																								                    , iteratorOf6 + startIndexOf6
-																								                    , iteratorOf7 + startIndexOf7
-																								                    , iteratorOf8 + startIndexOf8
-																								                    , iteratorOf9 + startIndexOf9
-																								                    , iteratorOf10 + startIndexOf10
-																								                    , iteratorOf11 + startIndexOf11
-																								                    , iteratorOf12 + startIndexOf12
-																								                    , iteratorOf13 + startIndexOf13
-																								                    , iteratorOf14 + startIndexOf14
-																								                    , iteratorOf15 + startIndexOf15
-																								                    , iteratorOf16 + startIndexOf16
-																								                    , iteratorOf17 + startIndexOf17
-																								                    , iteratorOf18 + startIndexOf18
-																								                    , iteratorOf19 + startIndexOf19
-																								                    , iteratorOf20 + startIndexOf20
-																								                    , iteratorOf21 + startIndexOf21
-																								                    , iteratorOf22 + startIndexOf22
-																								                    , iteratorOf23 + startIndexOf23
-																								                    , iteratorOf24 + startIndexOf24
-																								                ];
-																								                formatter.Serialize(ref writer, element, options);
-            																								}
-            																							}
-            																						}
-            																					}
-            																				}
-            																			}
-            																		}
-            																	}
-            																}
-            															}
-            														}
-            													}
-            												}
-            											}
-            										}
-            									}
-            								}
-            							}
-            						}
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -16351,13 +15348,129 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+						               for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
+						               {
+							               for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
+							               {
+								               for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
+								               {
+									               for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
+									               {
+										               for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
+										               {
+											               for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
+											               {
+												               for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
+												               {
+													               for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
+													               {
+														               for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
+														               {
+															               for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
+															               {
+																               for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
+																               {
+																	               for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
+																	               {
+																		               for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
+																		               {
+																			               for (var iteratorOf19 = 0; iteratorOf19 < lengthOf19; iteratorOf19++)
+																			               {
+																				               for (var iteratorOf20 = 0; iteratorOf20 < lengthOf20; iteratorOf20++)
+																				               {
+																					               for (var iteratorOf21 = 0; iteratorOf21 < lengthOf21; iteratorOf21++)
+																					               {
+																						               for (var iteratorOf22 = 0; iteratorOf22 < lengthOf22; iteratorOf22++)
+																						               {
+																							               for (var iteratorOf23 = 0; iteratorOf23 < lengthOf23; iteratorOf23++)
+																							               {
+																								               for (var iteratorOf24 = 0; iteratorOf24 < lengthOf24; iteratorOf24++)
+																								               {
+																								                   if (first)
+																								                   {
+																								                       first = false;
+																								                   }
+																								                   else
+																								                   {
+																								                       var span = writer.Writer.GetSpan(1);
+																								                       span[0] = (byte)',';
+																								                       writer.Writer.Advance(1);
+																								                   }
+
+																								                   var element = value[
+																								                       iteratorOf0 + startIndexOf0
+																								                       , iteratorOf1 + startIndexOf1
+																								                       , iteratorOf2 + startIndexOf2
+																								                       , iteratorOf3 + startIndexOf3
+																								                       , iteratorOf4 + startIndexOf4
+																								                       , iteratorOf5 + startIndexOf5
+																								                       , iteratorOf6 + startIndexOf6
+																								                       , iteratorOf7 + startIndexOf7
+																								                       , iteratorOf8 + startIndexOf8
+																								                       , iteratorOf9 + startIndexOf9
+																								                       , iteratorOf10 + startIndexOf10
+																								                       , iteratorOf11 + startIndexOf11
+																								                       , iteratorOf12 + startIndexOf12
+																								                       , iteratorOf13 + startIndexOf13
+																								                       , iteratorOf14 + startIndexOf14
+																								                       , iteratorOf15 + startIndexOf15
+																								                       , iteratorOf16 + startIndexOf16
+																								                       , iteratorOf17 + startIndexOf17
+																								                       , iteratorOf18 + startIndexOf18
+																								                       , iteratorOf19 + startIndexOf19
+																								                       , iteratorOf20 + startIndexOf20
+																								                       , iteratorOf21 + startIndexOf21
+																								                       , iteratorOf22 + startIndexOf22
+																								                       , iteratorOf23 + startIndexOf23
+																								                       , iteratorOf24 + startIndexOf24
+																								                   ];
+																								                   writer.Serialize(element, options, serializer);
+																								               }
+            																								}
+            																							}
+            																						}
+            																					}
+            																				}
+            																			}
+            																		}
+            																	}
+            																}
+            															}
+            														}
+            													}
+            												}
+            											}
+            										}
+            									}
+            								}
+            							}
+            						}
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -16446,7 +15559,7 @@ namespace Utf8Json.Formatters
 																								                    , iteratorOf23 + startIndexOf23
 																								                    , iteratorOf24 + startIndexOf24
 																								                ];
-																								                writer.Serialize(element, options, serializer);
+																								                formatter.Serialize(ref writer, element, options);
             																								}
             																							}
             																						}
@@ -16472,7 +15585,9 @@ namespace Utf8Json.Formatters
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -16797,190 +15912,6 @@ namespace Utf8Json.Formatters
 #endif
         {
             SerializeStatic(ref writer, value, options);
-        }
-
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,,,,,,,,,,,,,,,,,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var startIndexOf6 = value.GetLowerBound(6);
-            var lengthOf6 = value.GetLength(6);
-            var startIndexOf7 = value.GetLowerBound(7);
-            var lengthOf7 = value.GetLength(7);
-            var startIndexOf8 = value.GetLowerBound(8);
-            var lengthOf8 = value.GetLength(8);
-            var startIndexOf9 = value.GetLowerBound(9);
-            var lengthOf9 = value.GetLength(9);
-            var startIndexOf10 = value.GetLowerBound(10);
-            var lengthOf10 = value.GetLength(10);
-            var startIndexOf11 = value.GetLowerBound(11);
-            var lengthOf11 = value.GetLength(11);
-            var startIndexOf12 = value.GetLowerBound(12);
-            var lengthOf12 = value.GetLength(12);
-            var startIndexOf13 = value.GetLowerBound(13);
-            var lengthOf13 = value.GetLength(13);
-            var startIndexOf14 = value.GetLowerBound(14);
-            var lengthOf14 = value.GetLength(14);
-            var startIndexOf15 = value.GetLowerBound(15);
-            var lengthOf15 = value.GetLength(15);
-            var startIndexOf16 = value.GetLowerBound(16);
-            var lengthOf16 = value.GetLength(16);
-            var startIndexOf17 = value.GetLowerBound(17);
-            var lengthOf17 = value.GetLength(17);
-            var startIndexOf18 = value.GetLowerBound(18);
-            var lengthOf18 = value.GetLength(18);
-            var startIndexOf19 = value.GetLowerBound(19);
-            var lengthOf19 = value.GetLength(19);
-            var startIndexOf20 = value.GetLowerBound(20);
-            var lengthOf20 = value.GetLength(20);
-            var startIndexOf21 = value.GetLowerBound(21);
-            var lengthOf21 = value.GetLength(21);
-            var startIndexOf22 = value.GetLowerBound(22);
-            var lengthOf22 = value.GetLength(22);
-            var startIndexOf23 = value.GetLowerBound(23);
-            var lengthOf23 = value.GetLength(23);
-            var startIndexOf24 = value.GetLowerBound(24);
-            var lengthOf24 = value.GetLength(24);
-            var startIndexOf25 = value.GetLowerBound(25);
-            var lengthOf25 = value.GetLength(25);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-						            for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
-						            {
-							            for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
-							            {
-								            for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
-								            {
-									            for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
-									            {
-										            for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
-										            {
-											            for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
-											            {
-												            for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
-												            {
-													            for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
-													            {
-														            for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
-														            {
-															            for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
-															            {
-																            for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
-																            {
-																	            for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
-																	            {
-																		            for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
-																		            {
-																			            for (var iteratorOf19 = 0; iteratorOf19 < lengthOf19; iteratorOf19++)
-																			            {
-																				            for (var iteratorOf20 = 0; iteratorOf20 < lengthOf20; iteratorOf20++)
-																				            {
-																					            for (var iteratorOf21 = 0; iteratorOf21 < lengthOf21; iteratorOf21++)
-																					            {
-																						            for (var iteratorOf22 = 0; iteratorOf22 < lengthOf22; iteratorOf22++)
-																						            {
-																							            for (var iteratorOf23 = 0; iteratorOf23 < lengthOf23; iteratorOf23++)
-																							            {
-																								            for (var iteratorOf24 = 0; iteratorOf24 < lengthOf24; iteratorOf24++)
-																								            {
-																									            for (var iteratorOf25 = 0; iteratorOf25 < lengthOf25; iteratorOf25++)
-																									            {
-																									                if (first)
-																									                {
-																									                    first = false;
-																									                }
-																									                else
-																									                {
-																									                    var span = writer.Writer.GetSpan(1);
-																									                    span[0] = (byte)',';
-																									                    writer.Writer.Advance(1);
-																									                }
-
-																									                var element = value[
-																									                    iteratorOf0 + startIndexOf0
-																									                    , iteratorOf1 + startIndexOf1
-																									                    , iteratorOf2 + startIndexOf2
-																									                    , iteratorOf3 + startIndexOf3
-																									                    , iteratorOf4 + startIndexOf4
-																									                    , iteratorOf5 + startIndexOf5
-																									                    , iteratorOf6 + startIndexOf6
-																									                    , iteratorOf7 + startIndexOf7
-																									                    , iteratorOf8 + startIndexOf8
-																									                    , iteratorOf9 + startIndexOf9
-																									                    , iteratorOf10 + startIndexOf10
-																									                    , iteratorOf11 + startIndexOf11
-																									                    , iteratorOf12 + startIndexOf12
-																									                    , iteratorOf13 + startIndexOf13
-																									                    , iteratorOf14 + startIndexOf14
-																									                    , iteratorOf15 + startIndexOf15
-																									                    , iteratorOf16 + startIndexOf16
-																									                    , iteratorOf17 + startIndexOf17
-																									                    , iteratorOf18 + startIndexOf18
-																									                    , iteratorOf19 + startIndexOf19
-																									                    , iteratorOf20 + startIndexOf20
-																									                    , iteratorOf21 + startIndexOf21
-																									                    , iteratorOf22 + startIndexOf22
-																									                    , iteratorOf23 + startIndexOf23
-																									                    , iteratorOf24 + startIndexOf24
-																									                    , iteratorOf25 + startIndexOf25
-																									                ];
-																									                formatter.Serialize(ref writer, element, options);
-            																									}
-            																								}
-            																							}
-            																						}
-            																					}
-            																				}
-            																			}
-            																		}
-            																	}
-            																}
-            															}
-            														}
-            													}
-            												}
-            											}
-            										}
-            									}
-            								}
-            							}
-            						}
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -17415,13 +16346,133 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+						               for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
+						               {
+							               for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
+							               {
+								               for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
+								               {
+									               for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
+									               {
+										               for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
+										               {
+											               for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
+											               {
+												               for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
+												               {
+													               for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
+													               {
+														               for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
+														               {
+															               for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
+															               {
+																               for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
+																               {
+																	               for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
+																	               {
+																		               for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
+																		               {
+																			               for (var iteratorOf19 = 0; iteratorOf19 < lengthOf19; iteratorOf19++)
+																			               {
+																				               for (var iteratorOf20 = 0; iteratorOf20 < lengthOf20; iteratorOf20++)
+																				               {
+																					               for (var iteratorOf21 = 0; iteratorOf21 < lengthOf21; iteratorOf21++)
+																					               {
+																						               for (var iteratorOf22 = 0; iteratorOf22 < lengthOf22; iteratorOf22++)
+																						               {
+																							               for (var iteratorOf23 = 0; iteratorOf23 < lengthOf23; iteratorOf23++)
+																							               {
+																								               for (var iteratorOf24 = 0; iteratorOf24 < lengthOf24; iteratorOf24++)
+																								               {
+																									               for (var iteratorOf25 = 0; iteratorOf25 < lengthOf25; iteratorOf25++)
+																									               {
+																									                   if (first)
+																									                   {
+																									                       first = false;
+																									                   }
+																									                   else
+																									                   {
+																									                       var span = writer.Writer.GetSpan(1);
+																									                       span[0] = (byte)',';
+																									                       writer.Writer.Advance(1);
+																									                   }
+
+																									                   var element = value[
+																									                       iteratorOf0 + startIndexOf0
+																									                       , iteratorOf1 + startIndexOf1
+																									                       , iteratorOf2 + startIndexOf2
+																									                       , iteratorOf3 + startIndexOf3
+																									                       , iteratorOf4 + startIndexOf4
+																									                       , iteratorOf5 + startIndexOf5
+																									                       , iteratorOf6 + startIndexOf6
+																									                       , iteratorOf7 + startIndexOf7
+																									                       , iteratorOf8 + startIndexOf8
+																									                       , iteratorOf9 + startIndexOf9
+																									                       , iteratorOf10 + startIndexOf10
+																									                       , iteratorOf11 + startIndexOf11
+																									                       , iteratorOf12 + startIndexOf12
+																									                       , iteratorOf13 + startIndexOf13
+																									                       , iteratorOf14 + startIndexOf14
+																									                       , iteratorOf15 + startIndexOf15
+																									                       , iteratorOf16 + startIndexOf16
+																									                       , iteratorOf17 + startIndexOf17
+																									                       , iteratorOf18 + startIndexOf18
+																									                       , iteratorOf19 + startIndexOf19
+																									                       , iteratorOf20 + startIndexOf20
+																									                       , iteratorOf21 + startIndexOf21
+																									                       , iteratorOf22 + startIndexOf22
+																									                       , iteratorOf23 + startIndexOf23
+																									                       , iteratorOf24 + startIndexOf24
+																									                       , iteratorOf25 + startIndexOf25
+																									                   ];
+																									                   writer.Serialize(element, options, serializer);
+																									               }
+            																									}
+            																								}
+            																							}
+            																						}
+            																					}
+            																				}
+            																			}
+            																		}
+            																	}
+            																}
+            															}
+            														}
+            													}
+            												}
+            											}
+            										}
+            									}
+            								}
+            							}
+            						}
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -17513,7 +16564,7 @@ namespace Utf8Json.Formatters
 																									                    , iteratorOf24 + startIndexOf24
 																									                    , iteratorOf25 + startIndexOf25
 																									                ];
-																									                writer.Serialize(element, options, serializer);
+																									                formatter.Serialize(ref writer, element, options);
             																									}
             																								}
             																							}
@@ -17540,7 +16591,9 @@ namespace Utf8Json.Formatters
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -17871,196 +16924,6 @@ namespace Utf8Json.Formatters
 #endif
         {
             SerializeStatic(ref writer, value, options);
-        }
-
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,,,,,,,,,,,,,,,,,,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var startIndexOf6 = value.GetLowerBound(6);
-            var lengthOf6 = value.GetLength(6);
-            var startIndexOf7 = value.GetLowerBound(7);
-            var lengthOf7 = value.GetLength(7);
-            var startIndexOf8 = value.GetLowerBound(8);
-            var lengthOf8 = value.GetLength(8);
-            var startIndexOf9 = value.GetLowerBound(9);
-            var lengthOf9 = value.GetLength(9);
-            var startIndexOf10 = value.GetLowerBound(10);
-            var lengthOf10 = value.GetLength(10);
-            var startIndexOf11 = value.GetLowerBound(11);
-            var lengthOf11 = value.GetLength(11);
-            var startIndexOf12 = value.GetLowerBound(12);
-            var lengthOf12 = value.GetLength(12);
-            var startIndexOf13 = value.GetLowerBound(13);
-            var lengthOf13 = value.GetLength(13);
-            var startIndexOf14 = value.GetLowerBound(14);
-            var lengthOf14 = value.GetLength(14);
-            var startIndexOf15 = value.GetLowerBound(15);
-            var lengthOf15 = value.GetLength(15);
-            var startIndexOf16 = value.GetLowerBound(16);
-            var lengthOf16 = value.GetLength(16);
-            var startIndexOf17 = value.GetLowerBound(17);
-            var lengthOf17 = value.GetLength(17);
-            var startIndexOf18 = value.GetLowerBound(18);
-            var lengthOf18 = value.GetLength(18);
-            var startIndexOf19 = value.GetLowerBound(19);
-            var lengthOf19 = value.GetLength(19);
-            var startIndexOf20 = value.GetLowerBound(20);
-            var lengthOf20 = value.GetLength(20);
-            var startIndexOf21 = value.GetLowerBound(21);
-            var lengthOf21 = value.GetLength(21);
-            var startIndexOf22 = value.GetLowerBound(22);
-            var lengthOf22 = value.GetLength(22);
-            var startIndexOf23 = value.GetLowerBound(23);
-            var lengthOf23 = value.GetLength(23);
-            var startIndexOf24 = value.GetLowerBound(24);
-            var lengthOf24 = value.GetLength(24);
-            var startIndexOf25 = value.GetLowerBound(25);
-            var lengthOf25 = value.GetLength(25);
-            var startIndexOf26 = value.GetLowerBound(26);
-            var lengthOf26 = value.GetLength(26);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-						            for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
-						            {
-							            for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
-							            {
-								            for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
-								            {
-									            for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
-									            {
-										            for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
-										            {
-											            for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
-											            {
-												            for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
-												            {
-													            for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
-													            {
-														            for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
-														            {
-															            for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
-															            {
-																            for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
-																            {
-																	            for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
-																	            {
-																		            for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
-																		            {
-																			            for (var iteratorOf19 = 0; iteratorOf19 < lengthOf19; iteratorOf19++)
-																			            {
-																				            for (var iteratorOf20 = 0; iteratorOf20 < lengthOf20; iteratorOf20++)
-																				            {
-																					            for (var iteratorOf21 = 0; iteratorOf21 < lengthOf21; iteratorOf21++)
-																					            {
-																						            for (var iteratorOf22 = 0; iteratorOf22 < lengthOf22; iteratorOf22++)
-																						            {
-																							            for (var iteratorOf23 = 0; iteratorOf23 < lengthOf23; iteratorOf23++)
-																							            {
-																								            for (var iteratorOf24 = 0; iteratorOf24 < lengthOf24; iteratorOf24++)
-																								            {
-																									            for (var iteratorOf25 = 0; iteratorOf25 < lengthOf25; iteratorOf25++)
-																									            {
-																										            for (var iteratorOf26 = 0; iteratorOf26 < lengthOf26; iteratorOf26++)
-																										            {
-																										                if (first)
-																										                {
-																										                    first = false;
-																										                }
-																										                else
-																										                {
-																										                    var span = writer.Writer.GetSpan(1);
-																										                    span[0] = (byte)',';
-																										                    writer.Writer.Advance(1);
-																										                }
-
-																										                var element = value[
-																										                    iteratorOf0 + startIndexOf0
-																										                    , iteratorOf1 + startIndexOf1
-																										                    , iteratorOf2 + startIndexOf2
-																										                    , iteratorOf3 + startIndexOf3
-																										                    , iteratorOf4 + startIndexOf4
-																										                    , iteratorOf5 + startIndexOf5
-																										                    , iteratorOf6 + startIndexOf6
-																										                    , iteratorOf7 + startIndexOf7
-																										                    , iteratorOf8 + startIndexOf8
-																										                    , iteratorOf9 + startIndexOf9
-																										                    , iteratorOf10 + startIndexOf10
-																										                    , iteratorOf11 + startIndexOf11
-																										                    , iteratorOf12 + startIndexOf12
-																										                    , iteratorOf13 + startIndexOf13
-																										                    , iteratorOf14 + startIndexOf14
-																										                    , iteratorOf15 + startIndexOf15
-																										                    , iteratorOf16 + startIndexOf16
-																										                    , iteratorOf17 + startIndexOf17
-																										                    , iteratorOf18 + startIndexOf18
-																										                    , iteratorOf19 + startIndexOf19
-																										                    , iteratorOf20 + startIndexOf20
-																										                    , iteratorOf21 + startIndexOf21
-																										                    , iteratorOf22 + startIndexOf22
-																										                    , iteratorOf23 + startIndexOf23
-																										                    , iteratorOf24 + startIndexOf24
-																										                    , iteratorOf25 + startIndexOf25
-																										                    , iteratorOf26 + startIndexOf26
-																										                ];
-																										                formatter.Serialize(ref writer, element, options);
-            																										}
-            																									}
-            																								}
-            																							}
-            																						}
-            																					}
-            																				}
-            																			}
-            																		}
-            																	}
-            																}
-            															}
-            														}
-            													}
-            												}
-            											}
-            										}
-            									}
-            								}
-            							}
-            						}
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -18509,13 +17372,137 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+						               for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
+						               {
+							               for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
+							               {
+								               for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
+								               {
+									               for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
+									               {
+										               for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
+										               {
+											               for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
+											               {
+												               for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
+												               {
+													               for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
+													               {
+														               for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
+														               {
+															               for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
+															               {
+																               for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
+																               {
+																	               for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
+																	               {
+																		               for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
+																		               {
+																			               for (var iteratorOf19 = 0; iteratorOf19 < lengthOf19; iteratorOf19++)
+																			               {
+																				               for (var iteratorOf20 = 0; iteratorOf20 < lengthOf20; iteratorOf20++)
+																				               {
+																					               for (var iteratorOf21 = 0; iteratorOf21 < lengthOf21; iteratorOf21++)
+																					               {
+																						               for (var iteratorOf22 = 0; iteratorOf22 < lengthOf22; iteratorOf22++)
+																						               {
+																							               for (var iteratorOf23 = 0; iteratorOf23 < lengthOf23; iteratorOf23++)
+																							               {
+																								               for (var iteratorOf24 = 0; iteratorOf24 < lengthOf24; iteratorOf24++)
+																								               {
+																									               for (var iteratorOf25 = 0; iteratorOf25 < lengthOf25; iteratorOf25++)
+																									               {
+																										               for (var iteratorOf26 = 0; iteratorOf26 < lengthOf26; iteratorOf26++)
+																										               {
+																										                   if (first)
+																										                   {
+																										                       first = false;
+																										                   }
+																										                   else
+																										                   {
+																										                       var span = writer.Writer.GetSpan(1);
+																										                       span[0] = (byte)',';
+																										                       writer.Writer.Advance(1);
+																										                   }
+
+																										                   var element = value[
+																										                       iteratorOf0 + startIndexOf0
+																										                       , iteratorOf1 + startIndexOf1
+																										                       , iteratorOf2 + startIndexOf2
+																										                       , iteratorOf3 + startIndexOf3
+																										                       , iteratorOf4 + startIndexOf4
+																										                       , iteratorOf5 + startIndexOf5
+																										                       , iteratorOf6 + startIndexOf6
+																										                       , iteratorOf7 + startIndexOf7
+																										                       , iteratorOf8 + startIndexOf8
+																										                       , iteratorOf9 + startIndexOf9
+																										                       , iteratorOf10 + startIndexOf10
+																										                       , iteratorOf11 + startIndexOf11
+																										                       , iteratorOf12 + startIndexOf12
+																										                       , iteratorOf13 + startIndexOf13
+																										                       , iteratorOf14 + startIndexOf14
+																										                       , iteratorOf15 + startIndexOf15
+																										                       , iteratorOf16 + startIndexOf16
+																										                       , iteratorOf17 + startIndexOf17
+																										                       , iteratorOf18 + startIndexOf18
+																										                       , iteratorOf19 + startIndexOf19
+																										                       , iteratorOf20 + startIndexOf20
+																										                       , iteratorOf21 + startIndexOf21
+																										                       , iteratorOf22 + startIndexOf22
+																										                       , iteratorOf23 + startIndexOf23
+																										                       , iteratorOf24 + startIndexOf24
+																										                       , iteratorOf25 + startIndexOf25
+																										                       , iteratorOf26 + startIndexOf26
+																										                   ];
+																										                   writer.Serialize(element, options, serializer);
+																										               }
+            																										}
+            																									}
+            																								}
+            																							}
+            																						}
+            																					}
+            																				}
+            																			}
+            																		}
+            																	}
+            																}
+            															}
+            														}
+            													}
+            												}
+            											}
+            										}
+            									}
+            								}
+            							}
+            						}
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -18610,7 +17597,7 @@ namespace Utf8Json.Formatters
 																										                    , iteratorOf25 + startIndexOf25
 																										                    , iteratorOf26 + startIndexOf26
 																										                ];
-																										                writer.Serialize(element, options, serializer);
+																										                formatter.Serialize(ref writer, element, options);
             																										}
             																									}
             																								}
@@ -18638,7 +17625,9 @@ namespace Utf8Json.Formatters
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -18975,202 +17964,6 @@ namespace Utf8Json.Formatters
 #endif
         {
             SerializeStatic(ref writer, value, options);
-        }
-
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,,,,,,,,,,,,,,,,,,,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var startIndexOf6 = value.GetLowerBound(6);
-            var lengthOf6 = value.GetLength(6);
-            var startIndexOf7 = value.GetLowerBound(7);
-            var lengthOf7 = value.GetLength(7);
-            var startIndexOf8 = value.GetLowerBound(8);
-            var lengthOf8 = value.GetLength(8);
-            var startIndexOf9 = value.GetLowerBound(9);
-            var lengthOf9 = value.GetLength(9);
-            var startIndexOf10 = value.GetLowerBound(10);
-            var lengthOf10 = value.GetLength(10);
-            var startIndexOf11 = value.GetLowerBound(11);
-            var lengthOf11 = value.GetLength(11);
-            var startIndexOf12 = value.GetLowerBound(12);
-            var lengthOf12 = value.GetLength(12);
-            var startIndexOf13 = value.GetLowerBound(13);
-            var lengthOf13 = value.GetLength(13);
-            var startIndexOf14 = value.GetLowerBound(14);
-            var lengthOf14 = value.GetLength(14);
-            var startIndexOf15 = value.GetLowerBound(15);
-            var lengthOf15 = value.GetLength(15);
-            var startIndexOf16 = value.GetLowerBound(16);
-            var lengthOf16 = value.GetLength(16);
-            var startIndexOf17 = value.GetLowerBound(17);
-            var lengthOf17 = value.GetLength(17);
-            var startIndexOf18 = value.GetLowerBound(18);
-            var lengthOf18 = value.GetLength(18);
-            var startIndexOf19 = value.GetLowerBound(19);
-            var lengthOf19 = value.GetLength(19);
-            var startIndexOf20 = value.GetLowerBound(20);
-            var lengthOf20 = value.GetLength(20);
-            var startIndexOf21 = value.GetLowerBound(21);
-            var lengthOf21 = value.GetLength(21);
-            var startIndexOf22 = value.GetLowerBound(22);
-            var lengthOf22 = value.GetLength(22);
-            var startIndexOf23 = value.GetLowerBound(23);
-            var lengthOf23 = value.GetLength(23);
-            var startIndexOf24 = value.GetLowerBound(24);
-            var lengthOf24 = value.GetLength(24);
-            var startIndexOf25 = value.GetLowerBound(25);
-            var lengthOf25 = value.GetLength(25);
-            var startIndexOf26 = value.GetLowerBound(26);
-            var lengthOf26 = value.GetLength(26);
-            var startIndexOf27 = value.GetLowerBound(27);
-            var lengthOf27 = value.GetLength(27);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-						            for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
-						            {
-							            for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
-							            {
-								            for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
-								            {
-									            for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
-									            {
-										            for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
-										            {
-											            for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
-											            {
-												            for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
-												            {
-													            for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
-													            {
-														            for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
-														            {
-															            for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
-															            {
-																            for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
-																            {
-																	            for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
-																	            {
-																		            for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
-																		            {
-																			            for (var iteratorOf19 = 0; iteratorOf19 < lengthOf19; iteratorOf19++)
-																			            {
-																				            for (var iteratorOf20 = 0; iteratorOf20 < lengthOf20; iteratorOf20++)
-																				            {
-																					            for (var iteratorOf21 = 0; iteratorOf21 < lengthOf21; iteratorOf21++)
-																					            {
-																						            for (var iteratorOf22 = 0; iteratorOf22 < lengthOf22; iteratorOf22++)
-																						            {
-																							            for (var iteratorOf23 = 0; iteratorOf23 < lengthOf23; iteratorOf23++)
-																							            {
-																								            for (var iteratorOf24 = 0; iteratorOf24 < lengthOf24; iteratorOf24++)
-																								            {
-																									            for (var iteratorOf25 = 0; iteratorOf25 < lengthOf25; iteratorOf25++)
-																									            {
-																										            for (var iteratorOf26 = 0; iteratorOf26 < lengthOf26; iteratorOf26++)
-																										            {
-																											            for (var iteratorOf27 = 0; iteratorOf27 < lengthOf27; iteratorOf27++)
-																											            {
-																											                if (first)
-																											                {
-																											                    first = false;
-																											                }
-																											                else
-																											                {
-																											                    var span = writer.Writer.GetSpan(1);
-																											                    span[0] = (byte)',';
-																											                    writer.Writer.Advance(1);
-																											                }
-
-																											                var element = value[
-																											                    iteratorOf0 + startIndexOf0
-																											                    , iteratorOf1 + startIndexOf1
-																											                    , iteratorOf2 + startIndexOf2
-																											                    , iteratorOf3 + startIndexOf3
-																											                    , iteratorOf4 + startIndexOf4
-																											                    , iteratorOf5 + startIndexOf5
-																											                    , iteratorOf6 + startIndexOf6
-																											                    , iteratorOf7 + startIndexOf7
-																											                    , iteratorOf8 + startIndexOf8
-																											                    , iteratorOf9 + startIndexOf9
-																											                    , iteratorOf10 + startIndexOf10
-																											                    , iteratorOf11 + startIndexOf11
-																											                    , iteratorOf12 + startIndexOf12
-																											                    , iteratorOf13 + startIndexOf13
-																											                    , iteratorOf14 + startIndexOf14
-																											                    , iteratorOf15 + startIndexOf15
-																											                    , iteratorOf16 + startIndexOf16
-																											                    , iteratorOf17 + startIndexOf17
-																											                    , iteratorOf18 + startIndexOf18
-																											                    , iteratorOf19 + startIndexOf19
-																											                    , iteratorOf20 + startIndexOf20
-																											                    , iteratorOf21 + startIndexOf21
-																											                    , iteratorOf22 + startIndexOf22
-																											                    , iteratorOf23 + startIndexOf23
-																											                    , iteratorOf24 + startIndexOf24
-																											                    , iteratorOf25 + startIndexOf25
-																											                    , iteratorOf26 + startIndexOf26
-																											                    , iteratorOf27 + startIndexOf27
-																											                ];
-																											                formatter.Serialize(ref writer, element, options);
-            																											}
-            																										}
-            																									}
-            																								}
-            																							}
-            																						}
-            																					}
-            																				}
-            																			}
-            																		}
-            																	}
-            																}
-            															}
-            														}
-            													}
-            												}
-            											}
-            										}
-            									}
-            								}
-            							}
-            						}
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -19633,13 +18426,141 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+						               for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
+						               {
+							               for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
+							               {
+								               for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
+								               {
+									               for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
+									               {
+										               for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
+										               {
+											               for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
+											               {
+												               for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
+												               {
+													               for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
+													               {
+														               for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
+														               {
+															               for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
+															               {
+																               for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
+																               {
+																	               for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
+																	               {
+																		               for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
+																		               {
+																			               for (var iteratorOf19 = 0; iteratorOf19 < lengthOf19; iteratorOf19++)
+																			               {
+																				               for (var iteratorOf20 = 0; iteratorOf20 < lengthOf20; iteratorOf20++)
+																				               {
+																					               for (var iteratorOf21 = 0; iteratorOf21 < lengthOf21; iteratorOf21++)
+																					               {
+																						               for (var iteratorOf22 = 0; iteratorOf22 < lengthOf22; iteratorOf22++)
+																						               {
+																							               for (var iteratorOf23 = 0; iteratorOf23 < lengthOf23; iteratorOf23++)
+																							               {
+																								               for (var iteratorOf24 = 0; iteratorOf24 < lengthOf24; iteratorOf24++)
+																								               {
+																									               for (var iteratorOf25 = 0; iteratorOf25 < lengthOf25; iteratorOf25++)
+																									               {
+																										               for (var iteratorOf26 = 0; iteratorOf26 < lengthOf26; iteratorOf26++)
+																										               {
+																											               for (var iteratorOf27 = 0; iteratorOf27 < lengthOf27; iteratorOf27++)
+																											               {
+																											                   if (first)
+																											                   {
+																											                       first = false;
+																											                   }
+																											                   else
+																											                   {
+																											                       var span = writer.Writer.GetSpan(1);
+																											                       span[0] = (byte)',';
+																											                       writer.Writer.Advance(1);
+																											                   }
+
+																											                   var element = value[
+																											                       iteratorOf0 + startIndexOf0
+																											                       , iteratorOf1 + startIndexOf1
+																											                       , iteratorOf2 + startIndexOf2
+																											                       , iteratorOf3 + startIndexOf3
+																											                       , iteratorOf4 + startIndexOf4
+																											                       , iteratorOf5 + startIndexOf5
+																											                       , iteratorOf6 + startIndexOf6
+																											                       , iteratorOf7 + startIndexOf7
+																											                       , iteratorOf8 + startIndexOf8
+																											                       , iteratorOf9 + startIndexOf9
+																											                       , iteratorOf10 + startIndexOf10
+																											                       , iteratorOf11 + startIndexOf11
+																											                       , iteratorOf12 + startIndexOf12
+																											                       , iteratorOf13 + startIndexOf13
+																											                       , iteratorOf14 + startIndexOf14
+																											                       , iteratorOf15 + startIndexOf15
+																											                       , iteratorOf16 + startIndexOf16
+																											                       , iteratorOf17 + startIndexOf17
+																											                       , iteratorOf18 + startIndexOf18
+																											                       , iteratorOf19 + startIndexOf19
+																											                       , iteratorOf20 + startIndexOf20
+																											                       , iteratorOf21 + startIndexOf21
+																											                       , iteratorOf22 + startIndexOf22
+																											                       , iteratorOf23 + startIndexOf23
+																											                       , iteratorOf24 + startIndexOf24
+																											                       , iteratorOf25 + startIndexOf25
+																											                       , iteratorOf26 + startIndexOf26
+																											                       , iteratorOf27 + startIndexOf27
+																											                   ];
+																											                   writer.Serialize(element, options, serializer);
+																											               }
+            																											}
+            																										}
+            																									}
+            																								}
+            																							}
+            																						}
+            																					}
+            																				}
+            																			}
+            																		}
+            																	}
+            																}
+            															}
+            														}
+            													}
+            												}
+            											}
+            										}
+            									}
+            								}
+            							}
+            						}
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -19737,7 +18658,7 @@ namespace Utf8Json.Formatters
 																											                    , iteratorOf26 + startIndexOf26
 																											                    , iteratorOf27 + startIndexOf27
 																											                ];
-																											                writer.Serialize(element, options, serializer);
+																											                formatter.Serialize(ref writer, element, options);
             																											}
             																										}
             																									}
@@ -19766,7 +18687,9 @@ namespace Utf8Json.Formatters
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -20109,208 +19032,6 @@ namespace Utf8Json.Formatters
 #endif
         {
             SerializeStatic(ref writer, value, options);
-        }
-
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,,,,,,,,,,,,,,,,,,,,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var startIndexOf6 = value.GetLowerBound(6);
-            var lengthOf6 = value.GetLength(6);
-            var startIndexOf7 = value.GetLowerBound(7);
-            var lengthOf7 = value.GetLength(7);
-            var startIndexOf8 = value.GetLowerBound(8);
-            var lengthOf8 = value.GetLength(8);
-            var startIndexOf9 = value.GetLowerBound(9);
-            var lengthOf9 = value.GetLength(9);
-            var startIndexOf10 = value.GetLowerBound(10);
-            var lengthOf10 = value.GetLength(10);
-            var startIndexOf11 = value.GetLowerBound(11);
-            var lengthOf11 = value.GetLength(11);
-            var startIndexOf12 = value.GetLowerBound(12);
-            var lengthOf12 = value.GetLength(12);
-            var startIndexOf13 = value.GetLowerBound(13);
-            var lengthOf13 = value.GetLength(13);
-            var startIndexOf14 = value.GetLowerBound(14);
-            var lengthOf14 = value.GetLength(14);
-            var startIndexOf15 = value.GetLowerBound(15);
-            var lengthOf15 = value.GetLength(15);
-            var startIndexOf16 = value.GetLowerBound(16);
-            var lengthOf16 = value.GetLength(16);
-            var startIndexOf17 = value.GetLowerBound(17);
-            var lengthOf17 = value.GetLength(17);
-            var startIndexOf18 = value.GetLowerBound(18);
-            var lengthOf18 = value.GetLength(18);
-            var startIndexOf19 = value.GetLowerBound(19);
-            var lengthOf19 = value.GetLength(19);
-            var startIndexOf20 = value.GetLowerBound(20);
-            var lengthOf20 = value.GetLength(20);
-            var startIndexOf21 = value.GetLowerBound(21);
-            var lengthOf21 = value.GetLength(21);
-            var startIndexOf22 = value.GetLowerBound(22);
-            var lengthOf22 = value.GetLength(22);
-            var startIndexOf23 = value.GetLowerBound(23);
-            var lengthOf23 = value.GetLength(23);
-            var startIndexOf24 = value.GetLowerBound(24);
-            var lengthOf24 = value.GetLength(24);
-            var startIndexOf25 = value.GetLowerBound(25);
-            var lengthOf25 = value.GetLength(25);
-            var startIndexOf26 = value.GetLowerBound(26);
-            var lengthOf26 = value.GetLength(26);
-            var startIndexOf27 = value.GetLowerBound(27);
-            var lengthOf27 = value.GetLength(27);
-            var startIndexOf28 = value.GetLowerBound(28);
-            var lengthOf28 = value.GetLength(28);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-						            for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
-						            {
-							            for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
-							            {
-								            for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
-								            {
-									            for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
-									            {
-										            for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
-										            {
-											            for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
-											            {
-												            for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
-												            {
-													            for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
-													            {
-														            for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
-														            {
-															            for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
-															            {
-																            for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
-																            {
-																	            for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
-																	            {
-																		            for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
-																		            {
-																			            for (var iteratorOf19 = 0; iteratorOf19 < lengthOf19; iteratorOf19++)
-																			            {
-																				            for (var iteratorOf20 = 0; iteratorOf20 < lengthOf20; iteratorOf20++)
-																				            {
-																					            for (var iteratorOf21 = 0; iteratorOf21 < lengthOf21; iteratorOf21++)
-																					            {
-																						            for (var iteratorOf22 = 0; iteratorOf22 < lengthOf22; iteratorOf22++)
-																						            {
-																							            for (var iteratorOf23 = 0; iteratorOf23 < lengthOf23; iteratorOf23++)
-																							            {
-																								            for (var iteratorOf24 = 0; iteratorOf24 < lengthOf24; iteratorOf24++)
-																								            {
-																									            for (var iteratorOf25 = 0; iteratorOf25 < lengthOf25; iteratorOf25++)
-																									            {
-																										            for (var iteratorOf26 = 0; iteratorOf26 < lengthOf26; iteratorOf26++)
-																										            {
-																											            for (var iteratorOf27 = 0; iteratorOf27 < lengthOf27; iteratorOf27++)
-																											            {
-																												            for (var iteratorOf28 = 0; iteratorOf28 < lengthOf28; iteratorOf28++)
-																												            {
-																												                if (first)
-																												                {
-																												                    first = false;
-																												                }
-																												                else
-																												                {
-																												                    var span = writer.Writer.GetSpan(1);
-																												                    span[0] = (byte)',';
-																												                    writer.Writer.Advance(1);
-																												                }
-
-																												                var element = value[
-																												                    iteratorOf0 + startIndexOf0
-																												                    , iteratorOf1 + startIndexOf1
-																												                    , iteratorOf2 + startIndexOf2
-																												                    , iteratorOf3 + startIndexOf3
-																												                    , iteratorOf4 + startIndexOf4
-																												                    , iteratorOf5 + startIndexOf5
-																												                    , iteratorOf6 + startIndexOf6
-																												                    , iteratorOf7 + startIndexOf7
-																												                    , iteratorOf8 + startIndexOf8
-																												                    , iteratorOf9 + startIndexOf9
-																												                    , iteratorOf10 + startIndexOf10
-																												                    , iteratorOf11 + startIndexOf11
-																												                    , iteratorOf12 + startIndexOf12
-																												                    , iteratorOf13 + startIndexOf13
-																												                    , iteratorOf14 + startIndexOf14
-																												                    , iteratorOf15 + startIndexOf15
-																												                    , iteratorOf16 + startIndexOf16
-																												                    , iteratorOf17 + startIndexOf17
-																												                    , iteratorOf18 + startIndexOf18
-																												                    , iteratorOf19 + startIndexOf19
-																												                    , iteratorOf20 + startIndexOf20
-																												                    , iteratorOf21 + startIndexOf21
-																												                    , iteratorOf22 + startIndexOf22
-																												                    , iteratorOf23 + startIndexOf23
-																												                    , iteratorOf24 + startIndexOf24
-																												                    , iteratorOf25 + startIndexOf25
-																												                    , iteratorOf26 + startIndexOf26
-																												                    , iteratorOf27 + startIndexOf27
-																												                    , iteratorOf28 + startIndexOf28
-																												                ];
-																												                formatter.Serialize(ref writer, element, options);
-            																												}
-            																											}
-            																										}
-            																									}
-            																								}
-            																							}
-            																						}
-            																					}
-            																				}
-            																			}
-            																		}
-            																	}
-            																}
-            															}
-            														}
-            													}
-            												}
-            											}
-            										}
-            									}
-            								}
-            							}
-            						}
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -20787,13 +19508,145 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+						               for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
+						               {
+							               for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
+							               {
+								               for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
+								               {
+									               for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
+									               {
+										               for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
+										               {
+											               for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
+											               {
+												               for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
+												               {
+													               for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
+													               {
+														               for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
+														               {
+															               for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
+															               {
+																               for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
+																               {
+																	               for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
+																	               {
+																		               for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
+																		               {
+																			               for (var iteratorOf19 = 0; iteratorOf19 < lengthOf19; iteratorOf19++)
+																			               {
+																				               for (var iteratorOf20 = 0; iteratorOf20 < lengthOf20; iteratorOf20++)
+																				               {
+																					               for (var iteratorOf21 = 0; iteratorOf21 < lengthOf21; iteratorOf21++)
+																					               {
+																						               for (var iteratorOf22 = 0; iteratorOf22 < lengthOf22; iteratorOf22++)
+																						               {
+																							               for (var iteratorOf23 = 0; iteratorOf23 < lengthOf23; iteratorOf23++)
+																							               {
+																								               for (var iteratorOf24 = 0; iteratorOf24 < lengthOf24; iteratorOf24++)
+																								               {
+																									               for (var iteratorOf25 = 0; iteratorOf25 < lengthOf25; iteratorOf25++)
+																									               {
+																										               for (var iteratorOf26 = 0; iteratorOf26 < lengthOf26; iteratorOf26++)
+																										               {
+																											               for (var iteratorOf27 = 0; iteratorOf27 < lengthOf27; iteratorOf27++)
+																											               {
+																												               for (var iteratorOf28 = 0; iteratorOf28 < lengthOf28; iteratorOf28++)
+																												               {
+																												                   if (first)
+																												                   {
+																												                       first = false;
+																												                   }
+																												                   else
+																												                   {
+																												                       var span = writer.Writer.GetSpan(1);
+																												                       span[0] = (byte)',';
+																												                       writer.Writer.Advance(1);
+																												                   }
+
+																												                   var element = value[
+																												                       iteratorOf0 + startIndexOf0
+																												                       , iteratorOf1 + startIndexOf1
+																												                       , iteratorOf2 + startIndexOf2
+																												                       , iteratorOf3 + startIndexOf3
+																												                       , iteratorOf4 + startIndexOf4
+																												                       , iteratorOf5 + startIndexOf5
+																												                       , iteratorOf6 + startIndexOf6
+																												                       , iteratorOf7 + startIndexOf7
+																												                       , iteratorOf8 + startIndexOf8
+																												                       , iteratorOf9 + startIndexOf9
+																												                       , iteratorOf10 + startIndexOf10
+																												                       , iteratorOf11 + startIndexOf11
+																												                       , iteratorOf12 + startIndexOf12
+																												                       , iteratorOf13 + startIndexOf13
+																												                       , iteratorOf14 + startIndexOf14
+																												                       , iteratorOf15 + startIndexOf15
+																												                       , iteratorOf16 + startIndexOf16
+																												                       , iteratorOf17 + startIndexOf17
+																												                       , iteratorOf18 + startIndexOf18
+																												                       , iteratorOf19 + startIndexOf19
+																												                       , iteratorOf20 + startIndexOf20
+																												                       , iteratorOf21 + startIndexOf21
+																												                       , iteratorOf22 + startIndexOf22
+																												                       , iteratorOf23 + startIndexOf23
+																												                       , iteratorOf24 + startIndexOf24
+																												                       , iteratorOf25 + startIndexOf25
+																												                       , iteratorOf26 + startIndexOf26
+																												                       , iteratorOf27 + startIndexOf27
+																												                       , iteratorOf28 + startIndexOf28
+																												                   ];
+																												                   writer.Serialize(element, options, serializer);
+																												               }
+            																												}
+            																											}
+            																										}
+            																									}
+            																								}
+            																							}
+            																						}
+            																					}
+            																				}
+            																			}
+            																		}
+            																	}
+            																}
+            															}
+            														}
+            													}
+            												}
+            											}
+            										}
+            									}
+            								}
+            							}
+            						}
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -20894,7 +19747,7 @@ namespace Utf8Json.Formatters
 																												                    , iteratorOf27 + startIndexOf27
 																												                    , iteratorOf28 + startIndexOf28
 																												                ];
-																												                writer.Serialize(element, options, serializer);
+																												                formatter.Serialize(ref writer, element, options);
             																												}
             																											}
             																										}
@@ -20924,7 +19777,9 @@ namespace Utf8Json.Formatters
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -21273,214 +20128,6 @@ namespace Utf8Json.Formatters
 #endif
         {
             SerializeStatic(ref writer, value, options);
-        }
-
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,,,,,,,,,,,,,,,,,,,,,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var startIndexOf6 = value.GetLowerBound(6);
-            var lengthOf6 = value.GetLength(6);
-            var startIndexOf7 = value.GetLowerBound(7);
-            var lengthOf7 = value.GetLength(7);
-            var startIndexOf8 = value.GetLowerBound(8);
-            var lengthOf8 = value.GetLength(8);
-            var startIndexOf9 = value.GetLowerBound(9);
-            var lengthOf9 = value.GetLength(9);
-            var startIndexOf10 = value.GetLowerBound(10);
-            var lengthOf10 = value.GetLength(10);
-            var startIndexOf11 = value.GetLowerBound(11);
-            var lengthOf11 = value.GetLength(11);
-            var startIndexOf12 = value.GetLowerBound(12);
-            var lengthOf12 = value.GetLength(12);
-            var startIndexOf13 = value.GetLowerBound(13);
-            var lengthOf13 = value.GetLength(13);
-            var startIndexOf14 = value.GetLowerBound(14);
-            var lengthOf14 = value.GetLength(14);
-            var startIndexOf15 = value.GetLowerBound(15);
-            var lengthOf15 = value.GetLength(15);
-            var startIndexOf16 = value.GetLowerBound(16);
-            var lengthOf16 = value.GetLength(16);
-            var startIndexOf17 = value.GetLowerBound(17);
-            var lengthOf17 = value.GetLength(17);
-            var startIndexOf18 = value.GetLowerBound(18);
-            var lengthOf18 = value.GetLength(18);
-            var startIndexOf19 = value.GetLowerBound(19);
-            var lengthOf19 = value.GetLength(19);
-            var startIndexOf20 = value.GetLowerBound(20);
-            var lengthOf20 = value.GetLength(20);
-            var startIndexOf21 = value.GetLowerBound(21);
-            var lengthOf21 = value.GetLength(21);
-            var startIndexOf22 = value.GetLowerBound(22);
-            var lengthOf22 = value.GetLength(22);
-            var startIndexOf23 = value.GetLowerBound(23);
-            var lengthOf23 = value.GetLength(23);
-            var startIndexOf24 = value.GetLowerBound(24);
-            var lengthOf24 = value.GetLength(24);
-            var startIndexOf25 = value.GetLowerBound(25);
-            var lengthOf25 = value.GetLength(25);
-            var startIndexOf26 = value.GetLowerBound(26);
-            var lengthOf26 = value.GetLength(26);
-            var startIndexOf27 = value.GetLowerBound(27);
-            var lengthOf27 = value.GetLength(27);
-            var startIndexOf28 = value.GetLowerBound(28);
-            var lengthOf28 = value.GetLength(28);
-            var startIndexOf29 = value.GetLowerBound(29);
-            var lengthOf29 = value.GetLength(29);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-						            for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
-						            {
-							            for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
-							            {
-								            for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
-								            {
-									            for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
-									            {
-										            for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
-										            {
-											            for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
-											            {
-												            for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
-												            {
-													            for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
-													            {
-														            for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
-														            {
-															            for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
-															            {
-																            for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
-																            {
-																	            for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
-																	            {
-																		            for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
-																		            {
-																			            for (var iteratorOf19 = 0; iteratorOf19 < lengthOf19; iteratorOf19++)
-																			            {
-																				            for (var iteratorOf20 = 0; iteratorOf20 < lengthOf20; iteratorOf20++)
-																				            {
-																					            for (var iteratorOf21 = 0; iteratorOf21 < lengthOf21; iteratorOf21++)
-																					            {
-																						            for (var iteratorOf22 = 0; iteratorOf22 < lengthOf22; iteratorOf22++)
-																						            {
-																							            for (var iteratorOf23 = 0; iteratorOf23 < lengthOf23; iteratorOf23++)
-																							            {
-																								            for (var iteratorOf24 = 0; iteratorOf24 < lengthOf24; iteratorOf24++)
-																								            {
-																									            for (var iteratorOf25 = 0; iteratorOf25 < lengthOf25; iteratorOf25++)
-																									            {
-																										            for (var iteratorOf26 = 0; iteratorOf26 < lengthOf26; iteratorOf26++)
-																										            {
-																											            for (var iteratorOf27 = 0; iteratorOf27 < lengthOf27; iteratorOf27++)
-																											            {
-																												            for (var iteratorOf28 = 0; iteratorOf28 < lengthOf28; iteratorOf28++)
-																												            {
-																													            for (var iteratorOf29 = 0; iteratorOf29 < lengthOf29; iteratorOf29++)
-																													            {
-																													                if (first)
-																													                {
-																													                    first = false;
-																													                }
-																													                else
-																													                {
-																													                    var span = writer.Writer.GetSpan(1);
-																													                    span[0] = (byte)',';
-																													                    writer.Writer.Advance(1);
-																													                }
-
-																													                var element = value[
-																													                    iteratorOf0 + startIndexOf0
-																													                    , iteratorOf1 + startIndexOf1
-																													                    , iteratorOf2 + startIndexOf2
-																													                    , iteratorOf3 + startIndexOf3
-																													                    , iteratorOf4 + startIndexOf4
-																													                    , iteratorOf5 + startIndexOf5
-																													                    , iteratorOf6 + startIndexOf6
-																													                    , iteratorOf7 + startIndexOf7
-																													                    , iteratorOf8 + startIndexOf8
-																													                    , iteratorOf9 + startIndexOf9
-																													                    , iteratorOf10 + startIndexOf10
-																													                    , iteratorOf11 + startIndexOf11
-																													                    , iteratorOf12 + startIndexOf12
-																													                    , iteratorOf13 + startIndexOf13
-																													                    , iteratorOf14 + startIndexOf14
-																													                    , iteratorOf15 + startIndexOf15
-																													                    , iteratorOf16 + startIndexOf16
-																													                    , iteratorOf17 + startIndexOf17
-																													                    , iteratorOf18 + startIndexOf18
-																													                    , iteratorOf19 + startIndexOf19
-																													                    , iteratorOf20 + startIndexOf20
-																													                    , iteratorOf21 + startIndexOf21
-																													                    , iteratorOf22 + startIndexOf22
-																													                    , iteratorOf23 + startIndexOf23
-																													                    , iteratorOf24 + startIndexOf24
-																													                    , iteratorOf25 + startIndexOf25
-																													                    , iteratorOf26 + startIndexOf26
-																													                    , iteratorOf27 + startIndexOf27
-																													                    , iteratorOf28 + startIndexOf28
-																													                    , iteratorOf29 + startIndexOf29
-																													                ];
-																													                formatter.Serialize(ref writer, element, options);
-            																													}
-            																												}
-            																											}
-            																										}
-            																									}
-            																								}
-            																							}
-            																						}
-            																					}
-            																				}
-            																			}
-            																		}
-            																	}
-            																}
-            															}
-            														}
-            													}
-            												}
-            											}
-            										}
-            									}
-            								}
-            							}
-            						}
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -21971,13 +20618,149 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+						               for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
+						               {
+							               for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
+							               {
+								               for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
+								               {
+									               for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
+									               {
+										               for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
+										               {
+											               for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
+											               {
+												               for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
+												               {
+													               for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
+													               {
+														               for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
+														               {
+															               for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
+															               {
+																               for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
+																               {
+																	               for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
+																	               {
+																		               for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
+																		               {
+																			               for (var iteratorOf19 = 0; iteratorOf19 < lengthOf19; iteratorOf19++)
+																			               {
+																				               for (var iteratorOf20 = 0; iteratorOf20 < lengthOf20; iteratorOf20++)
+																				               {
+																					               for (var iteratorOf21 = 0; iteratorOf21 < lengthOf21; iteratorOf21++)
+																					               {
+																						               for (var iteratorOf22 = 0; iteratorOf22 < lengthOf22; iteratorOf22++)
+																						               {
+																							               for (var iteratorOf23 = 0; iteratorOf23 < lengthOf23; iteratorOf23++)
+																							               {
+																								               for (var iteratorOf24 = 0; iteratorOf24 < lengthOf24; iteratorOf24++)
+																								               {
+																									               for (var iteratorOf25 = 0; iteratorOf25 < lengthOf25; iteratorOf25++)
+																									               {
+																										               for (var iteratorOf26 = 0; iteratorOf26 < lengthOf26; iteratorOf26++)
+																										               {
+																											               for (var iteratorOf27 = 0; iteratorOf27 < lengthOf27; iteratorOf27++)
+																											               {
+																												               for (var iteratorOf28 = 0; iteratorOf28 < lengthOf28; iteratorOf28++)
+																												               {
+																													               for (var iteratorOf29 = 0; iteratorOf29 < lengthOf29; iteratorOf29++)
+																													               {
+																													                   if (first)
+																													                   {
+																													                       first = false;
+																													                   }
+																													                   else
+																													                   {
+																													                       var span = writer.Writer.GetSpan(1);
+																													                       span[0] = (byte)',';
+																													                       writer.Writer.Advance(1);
+																													                   }
+
+																													                   var element = value[
+																													                       iteratorOf0 + startIndexOf0
+																													                       , iteratorOf1 + startIndexOf1
+																													                       , iteratorOf2 + startIndexOf2
+																													                       , iteratorOf3 + startIndexOf3
+																													                       , iteratorOf4 + startIndexOf4
+																													                       , iteratorOf5 + startIndexOf5
+																													                       , iteratorOf6 + startIndexOf6
+																													                       , iteratorOf7 + startIndexOf7
+																													                       , iteratorOf8 + startIndexOf8
+																													                       , iteratorOf9 + startIndexOf9
+																													                       , iteratorOf10 + startIndexOf10
+																													                       , iteratorOf11 + startIndexOf11
+																													                       , iteratorOf12 + startIndexOf12
+																													                       , iteratorOf13 + startIndexOf13
+																													                       , iteratorOf14 + startIndexOf14
+																													                       , iteratorOf15 + startIndexOf15
+																													                       , iteratorOf16 + startIndexOf16
+																													                       , iteratorOf17 + startIndexOf17
+																													                       , iteratorOf18 + startIndexOf18
+																													                       , iteratorOf19 + startIndexOf19
+																													                       , iteratorOf20 + startIndexOf20
+																													                       , iteratorOf21 + startIndexOf21
+																													                       , iteratorOf22 + startIndexOf22
+																													                       , iteratorOf23 + startIndexOf23
+																													                       , iteratorOf24 + startIndexOf24
+																													                       , iteratorOf25 + startIndexOf25
+																													                       , iteratorOf26 + startIndexOf26
+																													                       , iteratorOf27 + startIndexOf27
+																													                       , iteratorOf28 + startIndexOf28
+																													                       , iteratorOf29 + startIndexOf29
+																													                   ];
+																													                   writer.Serialize(element, options, serializer);
+																													               }
+            																													}
+            																												}
+            																											}
+            																										}
+            																									}
+            																								}
+            																							}
+            																						}
+            																					}
+            																				}
+            																			}
+            																		}
+            																	}
+            																}
+            															}
+            														}
+            													}
+            												}
+            											}
+            										}
+            									}
+            								}
+            							}
+            						}
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -22081,7 +20864,7 @@ namespace Utf8Json.Formatters
 																													                    , iteratorOf28 + startIndexOf28
 																													                    , iteratorOf29 + startIndexOf29
 																													                ];
-																													                writer.Serialize(element, options, serializer);
+																													                formatter.Serialize(ref writer, element, options);
             																													}
             																												}
             																											}
@@ -22112,7 +20895,9 @@ namespace Utf8Json.Formatters
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -22467,220 +21252,6 @@ namespace Utf8Json.Formatters
 #endif
         {
             SerializeStatic(ref writer, value, options);
-        }
-
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var startIndexOf6 = value.GetLowerBound(6);
-            var lengthOf6 = value.GetLength(6);
-            var startIndexOf7 = value.GetLowerBound(7);
-            var lengthOf7 = value.GetLength(7);
-            var startIndexOf8 = value.GetLowerBound(8);
-            var lengthOf8 = value.GetLength(8);
-            var startIndexOf9 = value.GetLowerBound(9);
-            var lengthOf9 = value.GetLength(9);
-            var startIndexOf10 = value.GetLowerBound(10);
-            var lengthOf10 = value.GetLength(10);
-            var startIndexOf11 = value.GetLowerBound(11);
-            var lengthOf11 = value.GetLength(11);
-            var startIndexOf12 = value.GetLowerBound(12);
-            var lengthOf12 = value.GetLength(12);
-            var startIndexOf13 = value.GetLowerBound(13);
-            var lengthOf13 = value.GetLength(13);
-            var startIndexOf14 = value.GetLowerBound(14);
-            var lengthOf14 = value.GetLength(14);
-            var startIndexOf15 = value.GetLowerBound(15);
-            var lengthOf15 = value.GetLength(15);
-            var startIndexOf16 = value.GetLowerBound(16);
-            var lengthOf16 = value.GetLength(16);
-            var startIndexOf17 = value.GetLowerBound(17);
-            var lengthOf17 = value.GetLength(17);
-            var startIndexOf18 = value.GetLowerBound(18);
-            var lengthOf18 = value.GetLength(18);
-            var startIndexOf19 = value.GetLowerBound(19);
-            var lengthOf19 = value.GetLength(19);
-            var startIndexOf20 = value.GetLowerBound(20);
-            var lengthOf20 = value.GetLength(20);
-            var startIndexOf21 = value.GetLowerBound(21);
-            var lengthOf21 = value.GetLength(21);
-            var startIndexOf22 = value.GetLowerBound(22);
-            var lengthOf22 = value.GetLength(22);
-            var startIndexOf23 = value.GetLowerBound(23);
-            var lengthOf23 = value.GetLength(23);
-            var startIndexOf24 = value.GetLowerBound(24);
-            var lengthOf24 = value.GetLength(24);
-            var startIndexOf25 = value.GetLowerBound(25);
-            var lengthOf25 = value.GetLength(25);
-            var startIndexOf26 = value.GetLowerBound(26);
-            var lengthOf26 = value.GetLength(26);
-            var startIndexOf27 = value.GetLowerBound(27);
-            var lengthOf27 = value.GetLength(27);
-            var startIndexOf28 = value.GetLowerBound(28);
-            var lengthOf28 = value.GetLength(28);
-            var startIndexOf29 = value.GetLowerBound(29);
-            var lengthOf29 = value.GetLength(29);
-            var startIndexOf30 = value.GetLowerBound(30);
-            var lengthOf30 = value.GetLength(30);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-						            for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
-						            {
-							            for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
-							            {
-								            for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
-								            {
-									            for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
-									            {
-										            for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
-										            {
-											            for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
-											            {
-												            for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
-												            {
-													            for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
-													            {
-														            for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
-														            {
-															            for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
-															            {
-																            for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
-																            {
-																	            for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
-																	            {
-																		            for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
-																		            {
-																			            for (var iteratorOf19 = 0; iteratorOf19 < lengthOf19; iteratorOf19++)
-																			            {
-																				            for (var iteratorOf20 = 0; iteratorOf20 < lengthOf20; iteratorOf20++)
-																				            {
-																					            for (var iteratorOf21 = 0; iteratorOf21 < lengthOf21; iteratorOf21++)
-																					            {
-																						            for (var iteratorOf22 = 0; iteratorOf22 < lengthOf22; iteratorOf22++)
-																						            {
-																							            for (var iteratorOf23 = 0; iteratorOf23 < lengthOf23; iteratorOf23++)
-																							            {
-																								            for (var iteratorOf24 = 0; iteratorOf24 < lengthOf24; iteratorOf24++)
-																								            {
-																									            for (var iteratorOf25 = 0; iteratorOf25 < lengthOf25; iteratorOf25++)
-																									            {
-																										            for (var iteratorOf26 = 0; iteratorOf26 < lengthOf26; iteratorOf26++)
-																										            {
-																											            for (var iteratorOf27 = 0; iteratorOf27 < lengthOf27; iteratorOf27++)
-																											            {
-																												            for (var iteratorOf28 = 0; iteratorOf28 < lengthOf28; iteratorOf28++)
-																												            {
-																													            for (var iteratorOf29 = 0; iteratorOf29 < lengthOf29; iteratorOf29++)
-																													            {
-																														            for (var iteratorOf30 = 0; iteratorOf30 < lengthOf30; iteratorOf30++)
-																														            {
-																														                if (first)
-																														                {
-																														                    first = false;
-																														                }
-																														                else
-																														                {
-																														                    var span = writer.Writer.GetSpan(1);
-																														                    span[0] = (byte)',';
-																														                    writer.Writer.Advance(1);
-																														                }
-
-																														                var element = value[
-																														                    iteratorOf0 + startIndexOf0
-																														                    , iteratorOf1 + startIndexOf1
-																														                    , iteratorOf2 + startIndexOf2
-																														                    , iteratorOf3 + startIndexOf3
-																														                    , iteratorOf4 + startIndexOf4
-																														                    , iteratorOf5 + startIndexOf5
-																														                    , iteratorOf6 + startIndexOf6
-																														                    , iteratorOf7 + startIndexOf7
-																														                    , iteratorOf8 + startIndexOf8
-																														                    , iteratorOf9 + startIndexOf9
-																														                    , iteratorOf10 + startIndexOf10
-																														                    , iteratorOf11 + startIndexOf11
-																														                    , iteratorOf12 + startIndexOf12
-																														                    , iteratorOf13 + startIndexOf13
-																														                    , iteratorOf14 + startIndexOf14
-																														                    , iteratorOf15 + startIndexOf15
-																														                    , iteratorOf16 + startIndexOf16
-																														                    , iteratorOf17 + startIndexOf17
-																														                    , iteratorOf18 + startIndexOf18
-																														                    , iteratorOf19 + startIndexOf19
-																														                    , iteratorOf20 + startIndexOf20
-																														                    , iteratorOf21 + startIndexOf21
-																														                    , iteratorOf22 + startIndexOf22
-																														                    , iteratorOf23 + startIndexOf23
-																														                    , iteratorOf24 + startIndexOf24
-																														                    , iteratorOf25 + startIndexOf25
-																														                    , iteratorOf26 + startIndexOf26
-																														                    , iteratorOf27 + startIndexOf27
-																														                    , iteratorOf28 + startIndexOf28
-																														                    , iteratorOf29 + startIndexOf29
-																														                    , iteratorOf30 + startIndexOf30
-																														                ];
-																														                formatter.Serialize(ref writer, element, options);
-            																														}
-            																													}
-            																												}
-            																											}
-            																										}
-            																									}
-            																								}
-            																							}
-            																						}
-            																					}
-            																				}
-            																			}
-            																		}
-            																	}
-            																}
-            															}
-            														}
-            													}
-            												}
-            											}
-            										}
-            									}
-            								}
-            							}
-            						}
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -23185,13 +21756,153 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+						               for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
+						               {
+							               for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
+							               {
+								               for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
+								               {
+									               for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
+									               {
+										               for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
+										               {
+											               for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
+											               {
+												               for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
+												               {
+													               for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
+													               {
+														               for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
+														               {
+															               for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
+															               {
+																               for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
+																               {
+																	               for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
+																	               {
+																		               for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
+																		               {
+																			               for (var iteratorOf19 = 0; iteratorOf19 < lengthOf19; iteratorOf19++)
+																			               {
+																				               for (var iteratorOf20 = 0; iteratorOf20 < lengthOf20; iteratorOf20++)
+																				               {
+																					               for (var iteratorOf21 = 0; iteratorOf21 < lengthOf21; iteratorOf21++)
+																					               {
+																						               for (var iteratorOf22 = 0; iteratorOf22 < lengthOf22; iteratorOf22++)
+																						               {
+																							               for (var iteratorOf23 = 0; iteratorOf23 < lengthOf23; iteratorOf23++)
+																							               {
+																								               for (var iteratorOf24 = 0; iteratorOf24 < lengthOf24; iteratorOf24++)
+																								               {
+																									               for (var iteratorOf25 = 0; iteratorOf25 < lengthOf25; iteratorOf25++)
+																									               {
+																										               for (var iteratorOf26 = 0; iteratorOf26 < lengthOf26; iteratorOf26++)
+																										               {
+																											               for (var iteratorOf27 = 0; iteratorOf27 < lengthOf27; iteratorOf27++)
+																											               {
+																												               for (var iteratorOf28 = 0; iteratorOf28 < lengthOf28; iteratorOf28++)
+																												               {
+																													               for (var iteratorOf29 = 0; iteratorOf29 < lengthOf29; iteratorOf29++)
+																													               {
+																														               for (var iteratorOf30 = 0; iteratorOf30 < lengthOf30; iteratorOf30++)
+																														               {
+																														                   if (first)
+																														                   {
+																														                       first = false;
+																														                   }
+																														                   else
+																														                   {
+																														                       var span = writer.Writer.GetSpan(1);
+																														                       span[0] = (byte)',';
+																														                       writer.Writer.Advance(1);
+																														                   }
+
+																														                   var element = value[
+																														                       iteratorOf0 + startIndexOf0
+																														                       , iteratorOf1 + startIndexOf1
+																														                       , iteratorOf2 + startIndexOf2
+																														                       , iteratorOf3 + startIndexOf3
+																														                       , iteratorOf4 + startIndexOf4
+																														                       , iteratorOf5 + startIndexOf5
+																														                       , iteratorOf6 + startIndexOf6
+																														                       , iteratorOf7 + startIndexOf7
+																														                       , iteratorOf8 + startIndexOf8
+																														                       , iteratorOf9 + startIndexOf9
+																														                       , iteratorOf10 + startIndexOf10
+																														                       , iteratorOf11 + startIndexOf11
+																														                       , iteratorOf12 + startIndexOf12
+																														                       , iteratorOf13 + startIndexOf13
+																														                       , iteratorOf14 + startIndexOf14
+																														                       , iteratorOf15 + startIndexOf15
+																														                       , iteratorOf16 + startIndexOf16
+																														                       , iteratorOf17 + startIndexOf17
+																														                       , iteratorOf18 + startIndexOf18
+																														                       , iteratorOf19 + startIndexOf19
+																														                       , iteratorOf20 + startIndexOf20
+																														                       , iteratorOf21 + startIndexOf21
+																														                       , iteratorOf22 + startIndexOf22
+																														                       , iteratorOf23 + startIndexOf23
+																														                       , iteratorOf24 + startIndexOf24
+																														                       , iteratorOf25 + startIndexOf25
+																														                       , iteratorOf26 + startIndexOf26
+																														                       , iteratorOf27 + startIndexOf27
+																														                       , iteratorOf28 + startIndexOf28
+																														                       , iteratorOf29 + startIndexOf29
+																														                       , iteratorOf30 + startIndexOf30
+																														                   ];
+																														                   writer.Serialize(element, options, serializer);
+																														               }
+            																														}
+            																													}
+            																												}
+            																											}
+            																										}
+            																									}
+            																								}
+            																							}
+            																						}
+            																					}
+            																				}
+            																			}
+            																		}
+            																	}
+            																}
+            															}
+            														}
+            													}
+            												}
+            											}
+            										}
+            									}
+            								}
+            							}
+            						}
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -23298,7 +22009,7 @@ namespace Utf8Json.Formatters
 																														                    , iteratorOf29 + startIndexOf29
 																														                    , iteratorOf30 + startIndexOf30
 																														                ];
-																														                writer.Serialize(element, options, serializer);
+																														                formatter.Serialize(ref writer, element, options);
             																														}
             																													}
             																												}
@@ -23330,7 +22041,9 @@ namespace Utf8Json.Formatters
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -23691,226 +22404,6 @@ namespace Utf8Json.Formatters
 #endif
         {
             SerializeStatic(ref writer, value, options);
-        }
-
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, T[,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,] value, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var startIndexOf0 = value.GetLowerBound(0);
-            var lengthOf0 = value.GetLength(0);
-            var startIndexOf1 = value.GetLowerBound(1);
-            var lengthOf1 = value.GetLength(1);
-            var startIndexOf2 = value.GetLowerBound(2);
-            var lengthOf2 = value.GetLength(2);
-            var startIndexOf3 = value.GetLowerBound(3);
-            var lengthOf3 = value.GetLength(3);
-            var startIndexOf4 = value.GetLowerBound(4);
-            var lengthOf4 = value.GetLength(4);
-            var startIndexOf5 = value.GetLowerBound(5);
-            var lengthOf5 = value.GetLength(5);
-            var startIndexOf6 = value.GetLowerBound(6);
-            var lengthOf6 = value.GetLength(6);
-            var startIndexOf7 = value.GetLowerBound(7);
-            var lengthOf7 = value.GetLength(7);
-            var startIndexOf8 = value.GetLowerBound(8);
-            var lengthOf8 = value.GetLength(8);
-            var startIndexOf9 = value.GetLowerBound(9);
-            var lengthOf9 = value.GetLength(9);
-            var startIndexOf10 = value.GetLowerBound(10);
-            var lengthOf10 = value.GetLength(10);
-            var startIndexOf11 = value.GetLowerBound(11);
-            var lengthOf11 = value.GetLength(11);
-            var startIndexOf12 = value.GetLowerBound(12);
-            var lengthOf12 = value.GetLength(12);
-            var startIndexOf13 = value.GetLowerBound(13);
-            var lengthOf13 = value.GetLength(13);
-            var startIndexOf14 = value.GetLowerBound(14);
-            var lengthOf14 = value.GetLength(14);
-            var startIndexOf15 = value.GetLowerBound(15);
-            var lengthOf15 = value.GetLength(15);
-            var startIndexOf16 = value.GetLowerBound(16);
-            var lengthOf16 = value.GetLength(16);
-            var startIndexOf17 = value.GetLowerBound(17);
-            var lengthOf17 = value.GetLength(17);
-            var startIndexOf18 = value.GetLowerBound(18);
-            var lengthOf18 = value.GetLength(18);
-            var startIndexOf19 = value.GetLowerBound(19);
-            var lengthOf19 = value.GetLength(19);
-            var startIndexOf20 = value.GetLowerBound(20);
-            var lengthOf20 = value.GetLength(20);
-            var startIndexOf21 = value.GetLowerBound(21);
-            var lengthOf21 = value.GetLength(21);
-            var startIndexOf22 = value.GetLowerBound(22);
-            var lengthOf22 = value.GetLength(22);
-            var startIndexOf23 = value.GetLowerBound(23);
-            var lengthOf23 = value.GetLength(23);
-            var startIndexOf24 = value.GetLowerBound(24);
-            var lengthOf24 = value.GetLength(24);
-            var startIndexOf25 = value.GetLowerBound(25);
-            var lengthOf25 = value.GetLength(25);
-            var startIndexOf26 = value.GetLowerBound(26);
-            var lengthOf26 = value.GetLength(26);
-            var startIndexOf27 = value.GetLowerBound(27);
-            var lengthOf27 = value.GetLength(27);
-            var startIndexOf28 = value.GetLowerBound(28);
-            var lengthOf28 = value.GetLength(28);
-            var startIndexOf29 = value.GetLowerBound(29);
-            var lengthOf29 = value.GetLength(29);
-            var startIndexOf30 = value.GetLowerBound(30);
-            var lengthOf30 = value.GetLength(30);
-            var startIndexOf31 = value.GetLowerBound(31);
-            var lengthOf31 = value.GetLength(31);
-            var first = true;
-            for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
-            {
-	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
-	            {
-		            for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
-		            {
-			            for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
-			            {
-				            for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
-				            {
-					            for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
-					            {
-						            for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
-						            {
-							            for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
-							            {
-								            for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
-								            {
-									            for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
-									            {
-										            for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
-										            {
-											            for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
-											            {
-												            for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
-												            {
-													            for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
-													            {
-														            for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
-														            {
-															            for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
-															            {
-																            for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
-																            {
-																	            for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
-																	            {
-																		            for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
-																		            {
-																			            for (var iteratorOf19 = 0; iteratorOf19 < lengthOf19; iteratorOf19++)
-																			            {
-																				            for (var iteratorOf20 = 0; iteratorOf20 < lengthOf20; iteratorOf20++)
-																				            {
-																					            for (var iteratorOf21 = 0; iteratorOf21 < lengthOf21; iteratorOf21++)
-																					            {
-																						            for (var iteratorOf22 = 0; iteratorOf22 < lengthOf22; iteratorOf22++)
-																						            {
-																							            for (var iteratorOf23 = 0; iteratorOf23 < lengthOf23; iteratorOf23++)
-																							            {
-																								            for (var iteratorOf24 = 0; iteratorOf24 < lengthOf24; iteratorOf24++)
-																								            {
-																									            for (var iteratorOf25 = 0; iteratorOf25 < lengthOf25; iteratorOf25++)
-																									            {
-																										            for (var iteratorOf26 = 0; iteratorOf26 < lengthOf26; iteratorOf26++)
-																										            {
-																											            for (var iteratorOf27 = 0; iteratorOf27 < lengthOf27; iteratorOf27++)
-																											            {
-																												            for (var iteratorOf28 = 0; iteratorOf28 < lengthOf28; iteratorOf28++)
-																												            {
-																													            for (var iteratorOf29 = 0; iteratorOf29 < lengthOf29; iteratorOf29++)
-																													            {
-																														            for (var iteratorOf30 = 0; iteratorOf30 < lengthOf30; iteratorOf30++)
-																														            {
-																															            for (var iteratorOf31 = 0; iteratorOf31 < lengthOf31; iteratorOf31++)
-																															            {
-																															                if (first)
-																															                {
-																															                    first = false;
-																															                }
-																															                else
-																															                {
-																															                    var span = writer.Writer.GetSpan(1);
-																															                    span[0] = (byte)',';
-																															                    writer.Writer.Advance(1);
-																															                }
-
-																															                var element = value[
-																															                    iteratorOf0 + startIndexOf0
-																															                    , iteratorOf1 + startIndexOf1
-																															                    , iteratorOf2 + startIndexOf2
-																															                    , iteratorOf3 + startIndexOf3
-																															                    , iteratorOf4 + startIndexOf4
-																															                    , iteratorOf5 + startIndexOf5
-																															                    , iteratorOf6 + startIndexOf6
-																															                    , iteratorOf7 + startIndexOf7
-																															                    , iteratorOf8 + startIndexOf8
-																															                    , iteratorOf9 + startIndexOf9
-																															                    , iteratorOf10 + startIndexOf10
-																															                    , iteratorOf11 + startIndexOf11
-																															                    , iteratorOf12 + startIndexOf12
-																															                    , iteratorOf13 + startIndexOf13
-																															                    , iteratorOf14 + startIndexOf14
-																															                    , iteratorOf15 + startIndexOf15
-																															                    , iteratorOf16 + startIndexOf16
-																															                    , iteratorOf17 + startIndexOf17
-																															                    , iteratorOf18 + startIndexOf18
-																															                    , iteratorOf19 + startIndexOf19
-																															                    , iteratorOf20 + startIndexOf20
-																															                    , iteratorOf21 + startIndexOf21
-																															                    , iteratorOf22 + startIndexOf22
-																															                    , iteratorOf23 + startIndexOf23
-																															                    , iteratorOf24 + startIndexOf24
-																															                    , iteratorOf25 + startIndexOf25
-																															                    , iteratorOf26 + startIndexOf26
-																															                    , iteratorOf27 + startIndexOf27
-																															                    , iteratorOf28 + startIndexOf28
-																															                    , iteratorOf29 + startIndexOf29
-																															                    , iteratorOf30 + startIndexOf30
-																															                    , iteratorOf31 + startIndexOf31
-																															                ];
-																															                formatter.Serialize(ref writer, element, options);
-            																															}
-            																														}
-            																													}
-            																												}
-            																											}
-            																										}
-            																									}
-            																								}
-            																							}
-            																						}
-            																					}
-            																				}
-            																			}
-            																		}
-            																	}
-            																}
-            															}
-            														}
-            													}
-            												}
-            											}
-            										}
-            									}
-            								}
-            							}
-            						}
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-
-            {
-                const int sizeHint = 2;
-                var span = writer.Writer.GetSpan(sizeHint);
-                span[0] = (byte)']';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(sizeHint);
-            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -24429,13 +22922,157 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-
             var first = true;
+#if !ENABLE_IL2CPP
+            var serializer = options.Resolver.GetSerializeStatic<T>();
+            if (serializer.ToPointer() != null)
+            {
+                for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
+                {
+	               for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
+	               {
+		               for (var iteratorOf2 = 0; iteratorOf2 < lengthOf2; iteratorOf2++)
+		               {
+			               for (var iteratorOf3 = 0; iteratorOf3 < lengthOf3; iteratorOf3++)
+			               {
+				               for (var iteratorOf4 = 0; iteratorOf4 < lengthOf4; iteratorOf4++)
+				               {
+					               for (var iteratorOf5 = 0; iteratorOf5 < lengthOf5; iteratorOf5++)
+					               {
+						               for (var iteratorOf6 = 0; iteratorOf6 < lengthOf6; iteratorOf6++)
+						               {
+							               for (var iteratorOf7 = 0; iteratorOf7 < lengthOf7; iteratorOf7++)
+							               {
+								               for (var iteratorOf8 = 0; iteratorOf8 < lengthOf8; iteratorOf8++)
+								               {
+									               for (var iteratorOf9 = 0; iteratorOf9 < lengthOf9; iteratorOf9++)
+									               {
+										               for (var iteratorOf10 = 0; iteratorOf10 < lengthOf10; iteratorOf10++)
+										               {
+											               for (var iteratorOf11 = 0; iteratorOf11 < lengthOf11; iteratorOf11++)
+											               {
+												               for (var iteratorOf12 = 0; iteratorOf12 < lengthOf12; iteratorOf12++)
+												               {
+													               for (var iteratorOf13 = 0; iteratorOf13 < lengthOf13; iteratorOf13++)
+													               {
+														               for (var iteratorOf14 = 0; iteratorOf14 < lengthOf14; iteratorOf14++)
+														               {
+															               for (var iteratorOf15 = 0; iteratorOf15 < lengthOf15; iteratorOf15++)
+															               {
+																               for (var iteratorOf16 = 0; iteratorOf16 < lengthOf16; iteratorOf16++)
+																               {
+																	               for (var iteratorOf17 = 0; iteratorOf17 < lengthOf17; iteratorOf17++)
+																	               {
+																		               for (var iteratorOf18 = 0; iteratorOf18 < lengthOf18; iteratorOf18++)
+																		               {
+																			               for (var iteratorOf19 = 0; iteratorOf19 < lengthOf19; iteratorOf19++)
+																			               {
+																				               for (var iteratorOf20 = 0; iteratorOf20 < lengthOf20; iteratorOf20++)
+																				               {
+																					               for (var iteratorOf21 = 0; iteratorOf21 < lengthOf21; iteratorOf21++)
+																					               {
+																						               for (var iteratorOf22 = 0; iteratorOf22 < lengthOf22; iteratorOf22++)
+																						               {
+																							               for (var iteratorOf23 = 0; iteratorOf23 < lengthOf23; iteratorOf23++)
+																							               {
+																								               for (var iteratorOf24 = 0; iteratorOf24 < lengthOf24; iteratorOf24++)
+																								               {
+																									               for (var iteratorOf25 = 0; iteratorOf25 < lengthOf25; iteratorOf25++)
+																									               {
+																										               for (var iteratorOf26 = 0; iteratorOf26 < lengthOf26; iteratorOf26++)
+																										               {
+																											               for (var iteratorOf27 = 0; iteratorOf27 < lengthOf27; iteratorOf27++)
+																											               {
+																												               for (var iteratorOf28 = 0; iteratorOf28 < lengthOf28; iteratorOf28++)
+																												               {
+																													               for (var iteratorOf29 = 0; iteratorOf29 < lengthOf29; iteratorOf29++)
+																													               {
+																														               for (var iteratorOf30 = 0; iteratorOf30 < lengthOf30; iteratorOf30++)
+																														               {
+																															               for (var iteratorOf31 = 0; iteratorOf31 < lengthOf31; iteratorOf31++)
+																															               {
+																															                   if (first)
+																															                   {
+																															                       first = false;
+																															                   }
+																															                   else
+																															                   {
+																															                       var span = writer.Writer.GetSpan(1);
+																															                       span[0] = (byte)',';
+																															                       writer.Writer.Advance(1);
+																															                   }
+
+																															                   var element = value[
+																															                       iteratorOf0 + startIndexOf0
+																															                       , iteratorOf1 + startIndexOf1
+																															                       , iteratorOf2 + startIndexOf2
+																															                       , iteratorOf3 + startIndexOf3
+																															                       , iteratorOf4 + startIndexOf4
+																															                       , iteratorOf5 + startIndexOf5
+																															                       , iteratorOf6 + startIndexOf6
+																															                       , iteratorOf7 + startIndexOf7
+																															                       , iteratorOf8 + startIndexOf8
+																															                       , iteratorOf9 + startIndexOf9
+																															                       , iteratorOf10 + startIndexOf10
+																															                       , iteratorOf11 + startIndexOf11
+																															                       , iteratorOf12 + startIndexOf12
+																															                       , iteratorOf13 + startIndexOf13
+																															                       , iteratorOf14 + startIndexOf14
+																															                       , iteratorOf15 + startIndexOf15
+																															                       , iteratorOf16 + startIndexOf16
+																															                       , iteratorOf17 + startIndexOf17
+																															                       , iteratorOf18 + startIndexOf18
+																															                       , iteratorOf19 + startIndexOf19
+																															                       , iteratorOf20 + startIndexOf20
+																															                       , iteratorOf21 + startIndexOf21
+																															                       , iteratorOf22 + startIndexOf22
+																															                       , iteratorOf23 + startIndexOf23
+																															                       , iteratorOf24 + startIndexOf24
+																															                       , iteratorOf25 + startIndexOf25
+																															                       , iteratorOf26 + startIndexOf26
+																															                       , iteratorOf27 + startIndexOf27
+																															                       , iteratorOf28 + startIndexOf28
+																															                       , iteratorOf29 + startIndexOf29
+																															                       , iteratorOf30 + startIndexOf30
+																															                       , iteratorOf31 + startIndexOf31
+																															                   ];
+																															                   writer.Serialize(element, options, serializer);
+																															               }
+            																															}
+            																														}
+            																													}
+            																												}
+            																											}
+            																										}
+            																									}
+            																								}
+            																							}
+            																						}
+            																					}
+            																				}
+            																			}
+            																		}
+            																	}
+            																}
+            															}
+            														}
+            													}
+            												}
+            											}
+            										}
+            									}
+            								}
+            							}
+            						}
+            					}
+            				}
+            			}
+            		}
+            	}
+                goto END;
+            }
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
             for (var iteratorOf0 = 0; iteratorOf0 < lengthOf0; iteratorOf0++)
             {
 	            for (var iteratorOf1 = 0; iteratorOf1 < lengthOf1; iteratorOf1++)
@@ -24545,7 +23182,7 @@ namespace Utf8Json.Formatters
 																															                    , iteratorOf30 + startIndexOf30
 																															                    , iteratorOf31 + startIndexOf31
 																															                ];
-																															                writer.Serialize(element, options, serializer);
+																															                formatter.Serialize(ref writer, element, options);
             																															}
             																														}
             																													}
@@ -24578,7 +23215,9 @@ namespace Utf8Json.Formatters
             		}
             	}
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             {
                 const int sizeHint = 2;
                 var span = writer.Writer.GetSpan(sizeHint);

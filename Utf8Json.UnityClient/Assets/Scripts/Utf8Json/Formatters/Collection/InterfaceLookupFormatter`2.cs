@@ -1,13 +1,16 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using StaticFunctionPointerHelper;
 using System.Collections.Generic;
 using System.Linq;
 
+#if !ENABLE_IL2CPP
+using StaticFunctionPointerHelper;
+#endif
+
 namespace Utf8Json.Formatters
 {
-    public sealed unsafe class InterfaceLookupFormatter<TKey, TElement>
+    public sealed class InterfaceLookupFormatter<TKey, TElement>
 #if CSHARP_8_OR_NEWER
         : IJsonFormatter<ILookup<TKey, TElement>?>
         where TKey : notnull
@@ -41,15 +44,7 @@ namespace Utf8Json.Formatters
                 return;
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<IEnumerable<IGrouping<TKey, TElement>>>();
-            if (serializer.ToPointer() == null)
-            {
-                options.Resolver.GetFormatterWithVerify<IEnumerable<IGrouping<TKey, TElement>>>().Serialize(ref writer, value.AsEnumerable(), options);
-            }
-            else
-            {
-                writer.Serialize<IEnumerable<IGrouping<TKey, TElement>>>(value, options, serializer);
-            }
+            options.SerializeWithVerify<IEnumerable<IGrouping<TKey, TElement>>>(ref writer, value);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -72,32 +67,36 @@ namespace Utf8Json.Formatters
                 return null;
             }
 
-            var count = 0;
-
             var intermediateCollection = new Dictionary<TKey, IGrouping<TKey, TElement>>();
 
             reader.ReadIsBeginArrayWithVerify();
-
+            var count = 0;
+#if !ENABLE_IL2CPP
             var deserializer = options.Resolver.GetDeserializeStatic<IGrouping<TKey, TElement>>();
-            if (deserializer.ToPointer() == null)
+            unsafe
             {
-                var formatter = options.Resolver.GetFormatterWithVerify<IGrouping<TKey, TElement>>();
-                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+                if (deserializer.ToPointer() != null)
                 {
-                    var g = formatter.Deserialize(ref reader, options);
-                    intermediateCollection.Add(g.Key, g);
+                    while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+                    {
+                        var g = reader.Deserialize<IGrouping<TKey, TElement>>(options, deserializer);
+                        intermediateCollection.Add(g.Key, g);
+                    }
+                    goto END;
                 }
             }
-            else
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<IGrouping<TKey, TElement>>();
+            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
             {
-                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
-                {
-                    var g = reader.Deserialize<IGrouping<TKey, TElement>>(options, deserializer);
-                    intermediateCollection.Add(g.Key, g);
-                }
+                var g = formatter.Deserialize(ref reader, options);
+                intermediateCollection.Add(g.Key, g);
             }
-
-            return new Internal.Lookup<TKey, TElement>(intermediateCollection);
+#if !ENABLE_IL2CPP
+        END:
+#endif
+            var answer = new Internal.Lookup<TKey, TElement>(intermediateCollection);
+            return answer;
         }
 
 

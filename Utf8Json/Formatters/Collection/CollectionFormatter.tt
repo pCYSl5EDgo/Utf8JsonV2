@@ -20,7 +20,10 @@ var tuples = new[]{
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Generic;
+
+#if !ENABLE_IL2CPP
 using StaticFunctionPointerHelper;
+#endif
 
 namespace Utf8Json.Formatters
 {
@@ -66,28 +69,25 @@ foreach(var tuple in tuples)
                 {
                     goto END;
                 }
-
+#if !ENABLE_IL2CPP
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                    formatter.Serialize(ref writer, enumerator.Current, options);
-
-                    while (enumerator.MoveNext())
-                    {
-                        writer.WriteValueSeparator();
-                        formatter.Serialize(ref writer, enumerator.Current, options);
-                    }
-                }
-                else
+                if (serializer.ToPointer() != null)
                 {
                     writer.Serialize(enumerator.Current, options, serializer);
-
                     while (enumerator.MoveNext())
                     {
                         writer.WriteValueSeparator();
                         writer.Serialize(enumerator.Current, options, serializer);
                     }
+                    goto END;
+                }
+#endif
+                var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                formatter.Serialize(ref writer, enumerator.Current, options);
+                while (enumerator.MoveNext())
+                {
+                    writer.WriteValueSeparator();
+                    formatter.Serialize(ref writer, enumerator.Current, options);
                 }
             }
             finally
@@ -122,25 +122,27 @@ foreach(var tuple in tuples)
             reader.ReadIsBeginArrayWithVerify();
             var buffer = <#= tuple.Item5 ?? ("new " + tuple.Item3 + "()")#>;
             var count = 0;
+#if !ENABLE_IL2CPP
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer.ToPointer() == null)
-            {
-                var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
-                {
-                    var item = formatter.Deserialize(ref reader, options);
-                    buffer.<#= tuple.Item2 #>(item);
-                }
-            }
-            else
+            if (deserializer.ToPointer() != null)
             {
                 while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
                 {
                     var item = reader.Deserialize<T>(options, deserializer);
                     buffer.<#= tuple.Item2 #>(item);
                 }
+                goto END;
             }
-
+#endif
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
+            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+            {
+                var item = formatter.Deserialize(ref reader, options);
+                buffer.<#= tuple.Item2 #>(item);
+            }
+#if !ENABLE_IL2CPP
+        END:
+#endif
             return <#= tuple.Item6 ?? "buffer" #>;
         }
 

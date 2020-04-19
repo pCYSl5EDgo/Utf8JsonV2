@@ -4,13 +4,16 @@
 #if UNITY_2018_4_OR_NEWER
 
 using System;
-using StaticFunctionPointerHelper;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
+#if !ENABLE_IL2CPP
+using StaticFunctionPointerHelper;
+#endif
+
 namespace Utf8Json.Formatters
 {
-    public sealed unsafe class NativeArrayFormatter<T>
+    public sealed class NativeArrayFormatter<T>
         : IJsonFormatter<NativeArray<T>>
         where T : unmanaged
     {
@@ -36,28 +39,23 @@ namespace Utf8Json.Formatters
             }
 
             writer.WriteBeginArray();
-
+#if !ENABLE_IL2CPP
             var serializer = options.Resolver.GetSerializeStatic<T>();
-            if (serializer.ToPointer() == null)
+            unsafe
             {
-                SerializeStaticWithFormatter(ref writer, value, options);
-            }
-            else
-            {
-                writer.Serialize(value[0], options, serializer);
-
-                for (var index = 1; index < value.Length; index++)
+                if (serializer.ToPointer() != null)
                 {
-                    writer.WriteValueSeparator();
-                    writer.Serialize(value[index], options, serializer);
+                    writer.Serialize(value[0], options, serializer);
+
+                    for (var index = 1; index < value.Length; index++)
+                    {
+                        writer.WriteValueSeparator();
+                        writer.Serialize(value[index], options, serializer);
+                    }
+                    goto END;
                 }
             }
-
-            writer.WriteEndArray();
-        }
-
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, NativeArray<T> value, JsonSerializerOptions options)
-        {
+#endif
             var formatter = options.Resolver.GetFormatterWithVerify<T>();
 
             formatter.Serialize(ref writer, value[0], options);
@@ -67,9 +65,13 @@ namespace Utf8Json.Formatters
                 writer.WriteValueSeparator();
                 formatter.Serialize(ref writer, value[index], options);
             }
+#if !ENABLE_IL2CPP
+        END:
+#endif
+            writer.WriteEndArray();
         }
 
-        public static NativeArray<T> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+        public static unsafe NativeArray<T> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
             if (reader.ReadIsNull())
             {
@@ -77,43 +79,32 @@ namespace Utf8Json.Formatters
             }
 
             reader.ReadIsBeginArrayWithVerify();
+            var capacity = 32;
+            var count = 0;
+            var ptr = (T*)UnsafeUtility.Malloc(sizeof(T) << 5, 4, Allocator.Temp);
+#if !ENABLE_IL2CPP
             var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer.ToPointer() == null)
+            if (deserializer.ToPointer() != null)
             {
-                return DeserializeStaticWithFormatter(ref reader, options);
-            }
-
-            var ptr = (T*)UnsafeUtility.Malloc(sizeof(T) << 5, 4, Allocator.Temp);
-            var capacity = 32;
-            var count = 0;
-            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
-            {
-                if (capacity < count)
+                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
                 {
-                    var oldSize = sizeof(T) * capacity;
-                    capacity = count * 2;
-                    var size = sizeof(T) * capacity;
-                    var tmp = (T*)UnsafeUtility.Malloc(size, 4, size < 1024 ? Allocator.Temp : Allocator.Persistent);
-                    UnsafeUtility.MemCpy(tmp, ptr, oldSize);
-                    UnsafeUtility.Free(ptr, oldSize < 1024 ? Allocator.Temp : Allocator.Persistent);
-                    ptr = tmp;
+                    if (capacity < count)
+                    {
+                        var oldSize = sizeof(T) * capacity;
+                        capacity = count * 2;
+                        var size = sizeof(T) * capacity;
+                        var tmp = (T*)UnsafeUtility.Malloc(size, 4, size < 1024 ? Allocator.Temp : Allocator.Persistent);
+                        UnsafeUtility.MemCpy(tmp, ptr, oldSize);
+                        UnsafeUtility.Free(ptr, oldSize < 1024 ? Allocator.Temp : Allocator.Persistent);
+                        ptr = tmp;
+                    }
+
+                    ptr[count - 1] = reader.Deserialize<T>(options, deserializer);
                 }
-
-                ptr[count - 1] = reader.Deserialize<T>(options, deserializer);
+                goto END;
             }
-
-            var answer = new NativeArray<T>(count, Allocator.Persistent);
-            UnsafeUtility.MemCpy(NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(answer), ptr, sizeof(T) * count);
-            UnsafeUtility.Free(ptr, sizeof(T) * capacity < 1024 ? Allocator.Temp : Allocator.Persistent);
-            return answer;
-        }
-
-        private static NativeArray<T> DeserializeStaticWithFormatter(ref JsonReader reader, JsonSerializerOptions options)
-        {
+#endif
             var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            var ptr = (T*)UnsafeUtility.Malloc(sizeof(T) << 5, 4, Allocator.Temp);
-            var capacity = 32;
-            var count = 0;
             while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
             {
                 if (capacity < count)
@@ -129,7 +120,9 @@ namespace Utf8Json.Formatters
 
                 ptr[count - 1] = formatter.Deserialize(ref reader, options);
             }
-
+#if !ENABLE_IL2CPP
+        END:
+#endif
             var answer = new NativeArray<T>(count, Allocator.Persistent);
             UnsafeUtility.MemCpy(NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(answer), ptr, sizeof(T) * count);
             UnsafeUtility.Free(ptr, sizeof(T) * capacity < 1024 ? Allocator.Temp : Allocator.Persistent);

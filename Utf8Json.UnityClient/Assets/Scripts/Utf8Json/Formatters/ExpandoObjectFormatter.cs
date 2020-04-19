@@ -68,23 +68,23 @@ namespace Utf8Json.Formatters
 
             var count = 0;
             var deserializer = options.Resolver.GetDeserializeStatic<object>();
-            if (deserializer.ToPointer() == null)
+            if (deserializer.ToPointer() != null)
+            {
+                while (reader.ReadIsInObject(ref count))
+                {
+                    var propName = reader.ReadPropertyName();
+                    var value = reader.Deserialize<object>(options, deserializer);
+                    ((IDictionary<string, object>) result).Add(propName, value);
+                }
+            }
+            else
             {
                 var formatter = options.Resolver.GetFormatterWithVerify<object>();
                 while (reader.ReadIsInObject(ref count))
                 {
                     var propName = reader.ReadPropertyName();
                     var value = formatter.Deserialize(ref reader, options);
-                    ((IDictionary<string, object>)result).Add(propName, value);
-                }
-            }
-            else
-            {
-                while (reader.ReadIsInObject(ref count))
-                {
-                    var propName = reader.ReadPropertyName();
-                    var value = reader.Deserialize<object>(options, deserializer);
-                    ((IDictionary<string, object>)result).Add(propName, value);
+                    ((IDictionary<string, object>) result).Add(propName, value);
                 }
             }
 

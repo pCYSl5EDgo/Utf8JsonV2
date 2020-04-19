@@ -24,7 +24,10 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+
+#if !ENABLE_IL2CPP
 using StaticFunctionPointerHelper;
+#endif
 
 #if IMMUTABLE
 using System.Collections.Immutable;
@@ -35,7 +38,7 @@ namespace Utf8Json.Formatters
 <#foreach(var t in tuples){#>
 <#if(t.Item6 != null){#>#if <#= t.Item6 #><#}#>
 
-    public sealed unsafe class <#= t.Item1 #>Formatter<TKey, TValue>
+    public sealed class <#= t.Item1 #>Formatter<TKey, TValue>
 #if CSHARP_8_OR_NEWER
         : IJsonFormatter<<#= t.Item2 #>?>
         where TKey : notnull
@@ -80,38 +83,39 @@ namespace Utf8Json.Formatters
                 }
 
                 var tuple = e.Current;
-                var valueSerializer = options.Resolver.GetSerializeStatic<TValue>();
                 if (options.Resolver.GetFormatterWithVerify<TKey>() is IObjectPropertyNameFormatter<TKey> keyFormatter)
                 {
                     keyFormatter.SerializeToPropertyName(ref writer, tuple.Key, options);
                     writer.WriteNameSeparator();
-                    
-                    if (valueSerializer.ToPointer() == null)
+#if !ENABLE_IL2CPP
+                    var valueSerializer = options.Resolver.GetSerializeStatic<TValue>();
+                    unsafe
                     {
-                        var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
-                        valueFormatter.Serialize(ref writer, tuple.Value, options);
-
-                        while (e.MoveNext())
+                        if (valueSerializer.ToPointer() != null)
                         {
-                            writer.WriteValueSeparator();
-                            tuple = e.Current;
-                            keyFormatter.SerializeToPropertyName(ref writer, tuple.Key, options);
-                            writer.WriteNameSeparator();
-                            valueFormatter.Serialize(ref writer, tuple.Value, options);
+                            writer.Serialize(tuple.Value, options, valueSerializer);
+                            while (e.MoveNext())
+                            {
+                                writer.WriteValueSeparator();
+                                tuple = e.Current;
+                                keyFormatter.SerializeToPropertyName(ref writer, tuple.Key, options);
+                                writer.WriteNameSeparator();
+                                writer.Serialize(tuple.Value, options, valueSerializer);
+                            }
+                            goto END;
                         }
                     }
-                    else
-                    {
-                        writer.Serialize(tuple.Value, options, valueSerializer);
+#endif
+                    var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
+                    valueFormatter.Serialize(ref writer, tuple.Value, options);
 
-                        while (e.MoveNext())
-                        {
-                            writer.WriteValueSeparator();
-                            tuple = e.Current;
-                            keyFormatter.SerializeToPropertyName(ref writer, tuple.Key, options);
-                            writer.WriteNameSeparator();
-                            writer.Serialize(tuple.Value, options, valueSerializer);
-                        }
+                    while (e.MoveNext())
+                    {
+                        writer.WriteValueSeparator();
+                        tuple = e.Current;
+                        keyFormatter.SerializeToPropertyName(ref writer, tuple.Key, options);
+                        writer.WriteNameSeparator();
+                        valueFormatter.Serialize(ref writer, tuple.Value, options);
                     }
                 }
                 else
@@ -119,35 +123,36 @@ namespace Utf8Json.Formatters
                     var propertyName = tuple.Key.ToString();
                     Debug.Assert(propertyName != null, nameof(propertyName) + " != null");
                     writer.WritePropertyName(propertyName);
-                    
-                    if (valueSerializer.ToPointer() == null)
+#if !ENABLE_IL2CPP
+                    var valueSerializer = options.Resolver.GetSerializeStatic<TValue>();
+                    unsafe
                     {
-                        var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
-                        valueFormatter.Serialize(ref writer, tuple.Value, options);
-
-                        while (e.MoveNext())
+                        if (valueSerializer.ToPointer() != null)
                         {
-                            writer.WriteValueSeparator();
-                            tuple = e.Current;
-                            propertyName = tuple.Key.ToString();
-                            Debug.Assert(propertyName != null, nameof(propertyName) + " != null");
-                            writer.WritePropertyName(propertyName);
-                            valueFormatter.Serialize(ref writer, tuple.Value, options);
+                            writer.Serialize(tuple.Value, options, valueSerializer);
+                            while (e.MoveNext())
+                            {
+                                writer.WriteValueSeparator();
+                                tuple = e.Current;
+                                propertyName = tuple.Key.ToString();
+                                Debug.Assert(propertyName != null, nameof(propertyName) + " != null");
+                                writer.WritePropertyName(propertyName);
+                                writer.Serialize(tuple.Value, options, valueSerializer);
+                            }
+                            goto END;
                         }
                     }
-                    else
+#endif
+                    var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
+                    valueFormatter.Serialize(ref writer, tuple.Value, options);
+                    while (e.MoveNext())
                     {
-                        writer.Serialize(tuple.Value, options, valueSerializer);
-
-                        while (e.MoveNext())
-                        {
-                            writer.WriteValueSeparator();
-                            tuple = e.Current;
-                            propertyName = tuple.Key.ToString();
-                            Debug.Assert(propertyName != null, nameof(propertyName) + " != null");
-                            writer.WritePropertyName(propertyName);
-                            writer.Serialize(tuple.Value, options, valueSerializer);
-                        }
+                        writer.WriteValueSeparator();
+                        tuple = e.Current;
+                        propertyName = tuple.Key.ToString();
+                        Debug.Assert(propertyName != null, nameof(propertyName) + " != null");
+                        writer.WritePropertyName(propertyName);
+                        valueFormatter.Serialize(ref writer, tuple.Value, options);
                     }
                 }
             }
@@ -170,9 +175,9 @@ namespace Utf8Json.Formatters
         }
 
 #if CSHARP_8_OR_NEWER
-        public static <#= t.Item2 #>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+        public static unsafe <#= t.Item2 #>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #else
-        public static <#= t.Item2 #> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+        public static unsafe <#= t.Item2 #> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #endif
         {
             if (reader.ReadIsNull())
@@ -189,19 +194,9 @@ namespace Utf8Json.Formatters
 
             var answer = <#= t.Item3 #>;
             var count = 0;
+#if !ENABLE_IL2CPP
             var valueDeserializer = options.Resolver.GetDeserializeStatic<TValue>();
-            if (valueDeserializer.ToPointer() == null)
-            {
-                var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
-                while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
-                {
-                    var key = keyFormatter.DeserializeFromPropertyName(ref reader, options);
-                    reader.ReadIsNameSeparatorWithVerify();
-                    var value = valueFormatter.Deserialize(ref reader, options);
-                    <#= t.Item4 #>;
-                }
-            }
-            else
+            if (valueDeserializer.ToPointer() != null)
             {
                 while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
                 {
@@ -210,8 +205,20 @@ namespace Utf8Json.Formatters
                     var value = reader.Deserialize<TValue>(options, valueDeserializer);
                     <#= t.Item4 #>;
                 }
+                goto END;
             }
-
+#endif
+            var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
+            while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
+            {
+                var key = keyFormatter.DeserializeFromPropertyName(ref reader, options);
+                reader.ReadIsNameSeparatorWithVerify();
+                var value = valueFormatter.Deserialize(ref reader, options);
+                <#= t.Item4 #>;
+            }
+#if !ENABLE_IL2CPP
+        END:
+#endif
             return <#= t.Item5 #>;
         }
         

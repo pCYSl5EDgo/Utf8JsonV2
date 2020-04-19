@@ -4,12 +4,11 @@
 #if UNITY_2018_4_OR_NEWER
 
 using System;
-using StaticFunctionPointerHelper;
 using UnityEngine;
 
 namespace Utf8Json.Formatters
 {
-    public sealed unsafe class BoundsFormatter : IJsonFormatter<Bounds>
+    public sealed class BoundsFormatter : IJsonFormatter<Bounds>
     {
         public void Serialize(ref JsonWriter writer, Bounds value, JsonSerializerOptions options)
         {
@@ -39,39 +38,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            var serializer = options.Resolver.GetSerializeStatic<Vector3>();
-            if (serializer.ToPointer() == null)
-            {
-                SerializeStaticWithFormatter(ref writer, value.center, value.size, options);
-            }
-            else
-            {
-                writer.Serialize(value.center, options, serializer);
-
-                {
-                    const int sizeHint = 8;
-                    var span = writer.Writer.GetSpan(sizeHint);
-                    span[0] = (byte)',';
-                    span[1] = (byte)'"';
-                    span[2] = (byte)'s';
-                    span[3] = (byte)'i';
-                    span[4] = (byte)'z';
-                    span[5] = (byte)'e';
-                    span[6] = (byte)'"';
-                    span[7] = (byte)':';
-                    writer.Writer.Advance(sizeHint);
-                }
-
-                writer.Serialize(value.size, options, serializer);
-            }
-
-            writer.WriteEndObject();
-        }
-
-        private static void SerializeStaticWithFormatter(ref JsonWriter writer, Vector3 center, Vector3 size, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<Vector3>();
-            formatter.Serialize(ref writer, center, options);
+            Vector3Formatter.SerializeStatic(ref writer, value.center, options);
 
             {
                 const int sizeHint = 8;
@@ -87,7 +54,9 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            formatter.Serialize(ref writer, size, options);
+            Vector3Formatter.SerializeStatic(ref writer, value.size, options);
+
+            writer.WriteEndObject();
         }
 
         public static Bounds DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -98,13 +67,6 @@ namespace Utf8Json.Formatters
             }
 
             reader.ReadIsBeginObjectWithVerify();
-
-            var deserializer = options.Resolver.GetDeserializeStatic<Vector3>();
-            if (deserializer.ToPointer() == null)
-            {
-                return DeserializeStaticWithFormatter(ref reader, options);
-            }
-
             var center = default(Vector3);
             var size = default(Vector3);
             var count = 0;
@@ -119,7 +81,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        size = reader.Deserialize<Vector2>(options, deserializer);
+                        size = Vector3Formatter.DeserializeStatic(ref reader, options);
                         break;
                     case 6: // center
                         if (stringKey[0] != 'c' || stringKey[1] != 'e' || stringKey[2] != 'n' || stringKey[3] != 't' || stringKey[4] != 'e' || stringKey[5] != 'r')
@@ -127,44 +89,7 @@ namespace Utf8Json.Formatters
                             goto default;
                         }
 
-                        center = reader.Deserialize<Vector2>(options, deserializer);
-                        break;
-                    default:
-                        reader.ReadNextBlock();
-                        break;
-                }
-            }
-
-            var answer = new Bounds(center, size);
-            return answer;
-        }
-
-        private static Bounds DeserializeStaticWithFormatter(ref JsonReader reader, JsonSerializerOptions options)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<Vector3>();
-            var center = default(Vector3);
-            var size = default(Vector3);
-            var count = 0;
-            while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
-            {
-                var stringKey = reader.ReadPropertyNameSegmentRaw();
-                switch (stringKey.Length)
-                {
-                    case 4: // size
-                        if (stringKey[0] != 's' || stringKey[1] != 'i' || stringKey[2] != 'z' || stringKey[3] != 'e')
-                        {
-                            goto default;
-                        }
-
-                        size = formatter.Deserialize(ref reader, options);
-                        break;
-                    case 6: // center
-                        if (stringKey[0] != 'c' || stringKey[1] != 'e' || stringKey[2] != 'n' || stringKey[3] != 't' || stringKey[4] != 'e' || stringKey[5] != 'r')
-                        {
-                            goto default;
-                        }
-
-                        center = formatter.Deserialize(ref reader, options);
+                        center = Vector3Formatter.DeserializeStatic(ref reader, options);
                         break;
                     default:
                         reader.ReadNextBlock();

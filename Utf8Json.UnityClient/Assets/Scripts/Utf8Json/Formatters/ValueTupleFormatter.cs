@@ -1,12 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using StaticFunctionPointerHelper;
 using System;
 
 namespace Utf8Json.Formatters
 {
-    public sealed unsafe class ValueTupleFormatter<T1, T2> : IJsonFormatter<ValueTuple<T1, T2>>
+    public sealed class ValueTupleFormatter<T1, T2> : IJsonFormatter<ValueTuple<T1, T2>>
     {
         public void Serialize(ref JsonWriter writer, ValueTuple<T1, T2> value, JsonSerializerOptions options)
         {
@@ -15,7 +14,6 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, ValueTuple<T1, T2> value, JsonSerializerOptions options)
         {
-            var resolver = options.Resolver;
             {
                 const int sizeHint = 9;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -31,18 +29,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T1>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T1>();
-                    formatter.Serialize(ref writer, value.Item1, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item1, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item1);
 
             {
                 const int sizeHint = 9;
@@ -59,18 +46,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T2>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T2>();
-                    formatter.Serialize(ref writer, value.Item2, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item2, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item2);
 
             writer.WriteEndObject();
         }
@@ -84,7 +60,6 @@ namespace Utf8Json.Formatters
         {
             reader.ReadIsBeginObjectWithVerify();
             var answer = default(ValueTuple<T1, T2>);
-            var resolver = options.Resolver;
             var count = 0;
             while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
             {
@@ -94,32 +69,10 @@ namespace Utf8Json.Formatters
                     switch (keySpan[4])
                     {
                         case (byte)'1':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T1>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T1>();
-                                    answer.Item1 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item1 = reader.Deserialize<T1>(options, deserializer);
-                                }
-                            }
+                            answer.Item1 = options.DeserializeWithVerify<T1>(ref reader);
                             continue;
                         case (byte)'2':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T2>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T2>();
-                                    answer.Item2 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item2 = reader.Deserialize<T2>(options, deserializer);
-                                }
-                            }
+                            answer.Item2 = options.DeserializeWithVerify<T2>(ref reader);
                             continue;
                     }
                 }
@@ -150,7 +103,7 @@ namespace Utf8Json.Formatters
         }
     }
 
-    public sealed unsafe class ValueTupleFormatter<T1, T2, T3> : IJsonFormatter<ValueTuple<T1, T2, T3>>
+    public sealed class ValueTupleFormatter<T1, T2, T3> : IJsonFormatter<ValueTuple<T1, T2, T3>>
     {
         public void Serialize(ref JsonWriter writer, ValueTuple<T1, T2, T3> value, JsonSerializerOptions options)
         {
@@ -159,7 +112,6 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, ValueTuple<T1, T2, T3> value, JsonSerializerOptions options)
         {
-            var resolver = options.Resolver;
             {
                 const int sizeHint = 9;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -175,18 +127,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T1>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T1>();
-                    formatter.Serialize(ref writer, value.Item1, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item1, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item1);
 
             {
                 const int sizeHint = 9;
@@ -203,18 +144,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T2>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T2>();
-                    formatter.Serialize(ref writer, value.Item2, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item2, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item2);
 
             {
                 const int sizeHint = 9;
@@ -231,18 +161,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T3>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T3>();
-                    formatter.Serialize(ref writer, value.Item3, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item3, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item3);
 
             writer.WriteEndObject();
         }
@@ -256,7 +175,6 @@ namespace Utf8Json.Formatters
         {
             reader.ReadIsBeginObjectWithVerify();
             var answer = default(ValueTuple<T1, T2, T3>);
-            var resolver = options.Resolver;
             var count = 0;
             while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
             {
@@ -266,46 +184,13 @@ namespace Utf8Json.Formatters
                     switch (keySpan[4])
                     {
                         case (byte)'1':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T1>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T1>();
-                                    answer.Item1 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item1 = reader.Deserialize<T1>(options, deserializer);
-                                }
-                            }
+                            answer.Item1 = options.DeserializeWithVerify<T1>(ref reader);
                             continue;
                         case (byte)'2':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T2>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T2>();
-                                    answer.Item2 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item2 = reader.Deserialize<T2>(options, deserializer);
-                                }
-                            }
+                            answer.Item2 = options.DeserializeWithVerify<T2>(ref reader);
                             continue;
                         case (byte)'3':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T3>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T3>();
-                                    answer.Item3 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item3 = reader.Deserialize<T3>(options, deserializer);
-                                }
-                            }
+                            answer.Item3 = options.DeserializeWithVerify<T3>(ref reader);
                             continue;
                     }
                 }
@@ -336,7 +221,7 @@ namespace Utf8Json.Formatters
         }
     }
 
-    public sealed unsafe class ValueTupleFormatter<T1, T2, T3, T4> : IJsonFormatter<ValueTuple<T1, T2, T3, T4>>
+    public sealed class ValueTupleFormatter<T1, T2, T3, T4> : IJsonFormatter<ValueTuple<T1, T2, T3, T4>>
     {
         public void Serialize(ref JsonWriter writer, ValueTuple<T1, T2, T3, T4> value, JsonSerializerOptions options)
         {
@@ -345,7 +230,6 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, ValueTuple<T1, T2, T3, T4> value, JsonSerializerOptions options)
         {
-            var resolver = options.Resolver;
             {
                 const int sizeHint = 9;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -361,18 +245,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T1>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T1>();
-                    formatter.Serialize(ref writer, value.Item1, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item1, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item1);
 
             {
                 const int sizeHint = 9;
@@ -389,18 +262,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T2>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T2>();
-                    formatter.Serialize(ref writer, value.Item2, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item2, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item2);
 
             {
                 const int sizeHint = 9;
@@ -417,18 +279,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T3>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T3>();
-                    formatter.Serialize(ref writer, value.Item3, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item3, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item3);
 
             {
                 const int sizeHint = 9;
@@ -445,18 +296,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T4>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T4>();
-                    formatter.Serialize(ref writer, value.Item4, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item4, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item4);
 
             writer.WriteEndObject();
         }
@@ -470,7 +310,6 @@ namespace Utf8Json.Formatters
         {
             reader.ReadIsBeginObjectWithVerify();
             var answer = default(ValueTuple<T1, T2, T3, T4>);
-            var resolver = options.Resolver;
             var count = 0;
             while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
             {
@@ -480,60 +319,16 @@ namespace Utf8Json.Formatters
                     switch (keySpan[4])
                     {
                         case (byte)'1':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T1>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T1>();
-                                    answer.Item1 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item1 = reader.Deserialize<T1>(options, deserializer);
-                                }
-                            }
+                            answer.Item1 = options.DeserializeWithVerify<T1>(ref reader);
                             continue;
                         case (byte)'2':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T2>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T2>();
-                                    answer.Item2 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item2 = reader.Deserialize<T2>(options, deserializer);
-                                }
-                            }
+                            answer.Item2 = options.DeserializeWithVerify<T2>(ref reader);
                             continue;
                         case (byte)'3':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T3>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T3>();
-                                    answer.Item3 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item3 = reader.Deserialize<T3>(options, deserializer);
-                                }
-                            }
+                            answer.Item3 = options.DeserializeWithVerify<T3>(ref reader);
                             continue;
                         case (byte)'4':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T4>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T4>();
-                                    answer.Item4 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item4 = reader.Deserialize<T4>(options, deserializer);
-                                }
-                            }
+                            answer.Item4 = options.DeserializeWithVerify<T4>(ref reader);
                             continue;
                     }
                 }
@@ -564,7 +359,7 @@ namespace Utf8Json.Formatters
         }
     }
 
-    public sealed unsafe class ValueTupleFormatter<T1, T2, T3, T4, T5> : IJsonFormatter<ValueTuple<T1, T2, T3, T4, T5>>
+    public sealed class ValueTupleFormatter<T1, T2, T3, T4, T5> : IJsonFormatter<ValueTuple<T1, T2, T3, T4, T5>>
     {
         public void Serialize(ref JsonWriter writer, ValueTuple<T1, T2, T3, T4, T5> value, JsonSerializerOptions options)
         {
@@ -573,7 +368,6 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, ValueTuple<T1, T2, T3, T4, T5> value, JsonSerializerOptions options)
         {
-            var resolver = options.Resolver;
             {
                 const int sizeHint = 9;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -589,18 +383,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T1>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T1>();
-                    formatter.Serialize(ref writer, value.Item1, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item1, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item1);
 
             {
                 const int sizeHint = 9;
@@ -617,18 +400,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T2>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T2>();
-                    formatter.Serialize(ref writer, value.Item2, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item2, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item2);
 
             {
                 const int sizeHint = 9;
@@ -645,18 +417,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T3>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T3>();
-                    formatter.Serialize(ref writer, value.Item3, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item3, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item3);
 
             {
                 const int sizeHint = 9;
@@ -673,18 +434,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T4>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T4>();
-                    formatter.Serialize(ref writer, value.Item4, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item4, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item4);
 
             {
                 const int sizeHint = 9;
@@ -701,18 +451,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T5>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T5>();
-                    formatter.Serialize(ref writer, value.Item5, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item5, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item5);
 
             writer.WriteEndObject();
         }
@@ -726,7 +465,6 @@ namespace Utf8Json.Formatters
         {
             reader.ReadIsBeginObjectWithVerify();
             var answer = default(ValueTuple<T1, T2, T3, T4, T5>);
-            var resolver = options.Resolver;
             var count = 0;
             while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
             {
@@ -736,74 +474,19 @@ namespace Utf8Json.Formatters
                     switch (keySpan[4])
                     {
                         case (byte)'1':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T1>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T1>();
-                                    answer.Item1 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item1 = reader.Deserialize<T1>(options, deserializer);
-                                }
-                            }
+                            answer.Item1 = options.DeserializeWithVerify<T1>(ref reader);
                             continue;
                         case (byte)'2':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T2>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T2>();
-                                    answer.Item2 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item2 = reader.Deserialize<T2>(options, deserializer);
-                                }
-                            }
+                            answer.Item2 = options.DeserializeWithVerify<T2>(ref reader);
                             continue;
                         case (byte)'3':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T3>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T3>();
-                                    answer.Item3 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item3 = reader.Deserialize<T3>(options, deserializer);
-                                }
-                            }
+                            answer.Item3 = options.DeserializeWithVerify<T3>(ref reader);
                             continue;
                         case (byte)'4':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T4>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T4>();
-                                    answer.Item4 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item4 = reader.Deserialize<T4>(options, deserializer);
-                                }
-                            }
+                            answer.Item4 = options.DeserializeWithVerify<T4>(ref reader);
                             continue;
                         case (byte)'5':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T5>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T5>();
-                                    answer.Item5 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item5 = reader.Deserialize<T5>(options, deserializer);
-                                }
-                            }
+                            answer.Item5 = options.DeserializeWithVerify<T5>(ref reader);
                             continue;
                     }
                 }
@@ -834,7 +517,7 @@ namespace Utf8Json.Formatters
         }
     }
 
-    public sealed unsafe class ValueTupleFormatter<T1, T2, T3, T4, T5, T6> : IJsonFormatter<ValueTuple<T1, T2, T3, T4, T5, T6>>
+    public sealed class ValueTupleFormatter<T1, T2, T3, T4, T5, T6> : IJsonFormatter<ValueTuple<T1, T2, T3, T4, T5, T6>>
     {
         public void Serialize(ref JsonWriter writer, ValueTuple<T1, T2, T3, T4, T5, T6> value, JsonSerializerOptions options)
         {
@@ -843,7 +526,6 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, ValueTuple<T1, T2, T3, T4, T5, T6> value, JsonSerializerOptions options)
         {
-            var resolver = options.Resolver;
             {
                 const int sizeHint = 9;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -859,18 +541,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T1>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T1>();
-                    formatter.Serialize(ref writer, value.Item1, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item1, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item1);
 
             {
                 const int sizeHint = 9;
@@ -887,18 +558,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T2>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T2>();
-                    formatter.Serialize(ref writer, value.Item2, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item2, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item2);
 
             {
                 const int sizeHint = 9;
@@ -915,18 +575,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T3>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T3>();
-                    formatter.Serialize(ref writer, value.Item3, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item3, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item3);
 
             {
                 const int sizeHint = 9;
@@ -943,18 +592,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T4>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T4>();
-                    formatter.Serialize(ref writer, value.Item4, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item4, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item4);
 
             {
                 const int sizeHint = 9;
@@ -971,18 +609,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T5>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T5>();
-                    formatter.Serialize(ref writer, value.Item5, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item5, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item5);
 
             {
                 const int sizeHint = 9;
@@ -999,18 +626,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T6>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T6>();
-                    formatter.Serialize(ref writer, value.Item6, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item6, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item6);
 
             writer.WriteEndObject();
         }
@@ -1024,7 +640,6 @@ namespace Utf8Json.Formatters
         {
             reader.ReadIsBeginObjectWithVerify();
             var answer = default(ValueTuple<T1, T2, T3, T4, T5, T6>);
-            var resolver = options.Resolver;
             var count = 0;
             while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
             {
@@ -1034,88 +649,22 @@ namespace Utf8Json.Formatters
                     switch (keySpan[4])
                     {
                         case (byte)'1':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T1>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T1>();
-                                    answer.Item1 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item1 = reader.Deserialize<T1>(options, deserializer);
-                                }
-                            }
+                            answer.Item1 = options.DeserializeWithVerify<T1>(ref reader);
                             continue;
                         case (byte)'2':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T2>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T2>();
-                                    answer.Item2 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item2 = reader.Deserialize<T2>(options, deserializer);
-                                }
-                            }
+                            answer.Item2 = options.DeserializeWithVerify<T2>(ref reader);
                             continue;
                         case (byte)'3':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T3>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T3>();
-                                    answer.Item3 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item3 = reader.Deserialize<T3>(options, deserializer);
-                                }
-                            }
+                            answer.Item3 = options.DeserializeWithVerify<T3>(ref reader);
                             continue;
                         case (byte)'4':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T4>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T4>();
-                                    answer.Item4 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item4 = reader.Deserialize<T4>(options, deserializer);
-                                }
-                            }
+                            answer.Item4 = options.DeserializeWithVerify<T4>(ref reader);
                             continue;
                         case (byte)'5':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T5>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T5>();
-                                    answer.Item5 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item5 = reader.Deserialize<T5>(options, deserializer);
-                                }
-                            }
+                            answer.Item5 = options.DeserializeWithVerify<T5>(ref reader);
                             continue;
                         case (byte)'6':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T6>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T6>();
-                                    answer.Item6 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item6 = reader.Deserialize<T6>(options, deserializer);
-                                }
-                            }
+                            answer.Item6 = options.DeserializeWithVerify<T6>(ref reader);
                             continue;
                     }
                 }
@@ -1146,7 +695,7 @@ namespace Utf8Json.Formatters
         }
     }
 
-    public sealed unsafe class ValueTupleFormatter<T1, T2, T3, T4, T5, T6, T7> : IJsonFormatter<ValueTuple<T1, T2, T3, T4, T5, T6, T7>>
+    public sealed class ValueTupleFormatter<T1, T2, T3, T4, T5, T6, T7> : IJsonFormatter<ValueTuple<T1, T2, T3, T4, T5, T6, T7>>
     {
         public void Serialize(ref JsonWriter writer, ValueTuple<T1, T2, T3, T4, T5, T6, T7> value, JsonSerializerOptions options)
         {
@@ -1155,7 +704,6 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, ValueTuple<T1, T2, T3, T4, T5, T6, T7> value, JsonSerializerOptions options)
         {
-            var resolver = options.Resolver;
             {
                 const int sizeHint = 9;
                 var span = writer.Writer.GetSpan(sizeHint);
@@ -1171,18 +719,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T1>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T1>();
-                    formatter.Serialize(ref writer, value.Item1, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item1, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item1);
 
             {
                 const int sizeHint = 9;
@@ -1199,18 +736,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T2>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T2>();
-                    formatter.Serialize(ref writer, value.Item2, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item2, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item2);
 
             {
                 const int sizeHint = 9;
@@ -1227,18 +753,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T3>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T3>();
-                    formatter.Serialize(ref writer, value.Item3, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item3, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item3);
 
             {
                 const int sizeHint = 9;
@@ -1255,18 +770,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T4>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T4>();
-                    formatter.Serialize(ref writer, value.Item4, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item4, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item4);
 
             {
                 const int sizeHint = 9;
@@ -1283,18 +787,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T5>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T5>();
-                    formatter.Serialize(ref writer, value.Item5, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item5, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item5);
 
             {
                 const int sizeHint = 9;
@@ -1311,18 +804,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T6>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T6>();
-                    formatter.Serialize(ref writer, value.Item6, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item6, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item6);
 
             {
                 const int sizeHint = 9;
@@ -1339,18 +821,7 @@ namespace Utf8Json.Formatters
                 writer.Writer.Advance(sizeHint);
             }
 
-            {
-                var serializer = resolver.GetSerializeStatic<T7>();
-                if (serializer.ToPointer() == null)
-                {
-                    var formatter = resolver.GetFormatterWithVerify<T7>();
-                    formatter.Serialize(ref writer, value.Item7, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Item7, options, serializer);
-                }
-            }
+            options.SerializeWithVerify(ref writer, value.Item7);
 
             writer.WriteEndObject();
         }
@@ -1364,7 +835,6 @@ namespace Utf8Json.Formatters
         {
             reader.ReadIsBeginObjectWithVerify();
             var answer = default(ValueTuple<T1, T2, T3, T4, T5, T6, T7>);
-            var resolver = options.Resolver;
             var count = 0;
             while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
             {
@@ -1374,102 +844,25 @@ namespace Utf8Json.Formatters
                     switch (keySpan[4])
                     {
                         case (byte)'1':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T1>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T1>();
-                                    answer.Item1 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item1 = reader.Deserialize<T1>(options, deserializer);
-                                }
-                            }
+                            answer.Item1 = options.DeserializeWithVerify<T1>(ref reader);
                             continue;
                         case (byte)'2':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T2>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T2>();
-                                    answer.Item2 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item2 = reader.Deserialize<T2>(options, deserializer);
-                                }
-                            }
+                            answer.Item2 = options.DeserializeWithVerify<T2>(ref reader);
                             continue;
                         case (byte)'3':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T3>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T3>();
-                                    answer.Item3 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item3 = reader.Deserialize<T3>(options, deserializer);
-                                }
-                            }
+                            answer.Item3 = options.DeserializeWithVerify<T3>(ref reader);
                             continue;
                         case (byte)'4':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T4>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T4>();
-                                    answer.Item4 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item4 = reader.Deserialize<T4>(options, deserializer);
-                                }
-                            }
+                            answer.Item4 = options.DeserializeWithVerify<T4>(ref reader);
                             continue;
                         case (byte)'5':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T5>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T5>();
-                                    answer.Item5 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item5 = reader.Deserialize<T5>(options, deserializer);
-                                }
-                            }
+                            answer.Item5 = options.DeserializeWithVerify<T5>(ref reader);
                             continue;
                         case (byte)'6':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T6>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T6>();
-                                    answer.Item6 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item6 = reader.Deserialize<T6>(options, deserializer);
-                                }
-                            }
+                            answer.Item6 = options.DeserializeWithVerify<T6>(ref reader);
                             continue;
                         case (byte)'7':
-                            {
-                                var deserializer = resolver.GetDeserializeStatic<T7>();
-                                if (deserializer.ToPointer() == null)
-                                {
-                                    var formatter = resolver.GetFormatterWithVerify<T7>();
-                                    answer.Item7 = formatter.Deserialize(ref reader, options);
-                                }
-                                else
-                                {
-                                    answer.Item7 = reader.Deserialize<T7>(options, deserializer);
-                                }
-                            }
+                            answer.Item7 = options.DeserializeWithVerify<T7>(ref reader);
                             continue;
                     }
                 }

@@ -1,7 +1,6 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using StaticFunctionPointerHelper;
 using System;
 
 namespace Utf8Json
@@ -16,18 +15,12 @@ namespace Utf8Json
         /// <param name="options">The options. Use <c>null</c> to use default options.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
-        public static unsafe T Deserialize<T>(ref JsonReader reader, JsonSerializerOptions options)
+        public static T Deserialize<T>(ref JsonReader reader, JsonSerializerOptions options)
         {
             try
             {
-                var deserializer = options.Resolver.GetDeserializeStatic<T>();
-                if (deserializer.ToPointer() == null)
-                {
-                    var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                    return formatter.Deserialize(ref reader, options);
-                }
-
-                return reader.Deserialize<T>(options, deserializer);
+                var answer = options.DeserializeWithVerify<T>(ref reader);
+                return answer;
             }
             catch (Exception ex)
             {
@@ -43,19 +36,13 @@ namespace Utf8Json
         /// <param name="options">The options. Use <c>null</c> to use default options.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
-        public static unsafe T Deserialize<T>(ReadOnlySpan<byte> span, JsonSerializerOptions options)
+        public static T Deserialize<T>(ReadOnlySpan<byte> span, JsonSerializerOptions options)
         {
             var reader = new JsonReader(span);
             try
             {
-                var deserializer = options.Resolver.GetDeserializeStatic<T>();
-                if (deserializer.ToPointer() == null)
-                {
-                    var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                    return formatter.Deserialize(ref reader, options);
-                }
-
-                return reader.Deserialize<T>(options, deserializer);
+                var answer = options.DeserializeWithVerify<T>(ref reader);
+                return answer;
             }
             catch (Exception ex)
             {
@@ -70,14 +57,12 @@ namespace Utf8Json
         /// <param name="reader">The reader to deserialize from.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
-        public static unsafe T Deserialize<T>(ref JsonReader reader)
+        public static T Deserialize<T>(ref JsonReader reader)
         {
             try
             {
-                var deserializer = DefaultOptions.Resolver.GetDeserializeStatic<T>();
-                return deserializer.ToPointer() == null
-                    ? DefaultOptions.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, DefaultOptions)
-                    : reader.Deserialize<T>(DefaultOptions, deserializer);
+                var answer = DefaultOptions.DeserializeWithVerify<T>(ref reader);
+                return answer;
             }
             catch (Exception ex)
             {
@@ -92,16 +77,13 @@ namespace Utf8Json
         /// <param name="span">The buffer to deserialize from.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
-        public static unsafe T Deserialize<T>(ReadOnlySpan<byte> span)
+        public static T Deserialize<T>(ReadOnlySpan<byte> span)
         {
             var reader = new JsonReader(span);
             try
             {
-                var options = DefaultOptions;
-                var deserializer = options.Resolver.GetDeserializeStatic<T>();
-                return deserializer.ToPointer() == null
-                    ? options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options)
-                    : reader.Deserialize<T>(options, deserializer);
+                var answer = DefaultOptions.DeserializeWithVerify<T>(ref reader);
+                return answer;
             }
             catch (Exception ex)
             {
@@ -117,17 +99,14 @@ namespace Utf8Json
         /// <param name="bytesRead">The number of bytes read.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during deserialization.</exception>
-        public static unsafe T Deserialize<T>(ReadOnlySpan<byte> span, out int bytesRead)
+        public static T Deserialize<T>(ReadOnlySpan<byte> span, out int bytesRead)
         {
             var reader = new JsonReader(span);
             try
             {
-                var deserializer = DefaultOptions.Resolver.GetDeserializeStatic<T>();
-                var result = deserializer.ToPointer() == null
-                    ? DefaultOptions.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, DefaultOptions)
-                    : reader.Deserialize<T>(DefaultOptions, deserializer);
+                var answer = DefaultOptions.DeserializeWithVerify<T>(ref reader);
                 bytesRead = reader.Consumed;
-                return result;
+                return answer;
             }
             catch (Exception ex)
             {

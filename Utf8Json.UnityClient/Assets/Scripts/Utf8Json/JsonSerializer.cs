@@ -1,10 +1,10 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using StaticFunctionPointerHelper;
 using System;
 using System.Buffers;
 using Utf8Json.Internal;
+
 #if SPAN_BUILTIN
 using System.IO;
 using System.Threading;
@@ -40,20 +40,12 @@ namespace Utf8Json
         /// <param name="value">The value to serialize.</param>
         /// <param name="options">The options.</param>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static unsafe void Serialize<T>(IBufferWriter<byte> writer, T value, JsonSerializerOptions options)
+        public static void Serialize<T>(IBufferWriter<byte> writer, T value, JsonSerializerOptions options)
         {
             var fastWriter = new JsonWriter(writer);
             try
             {
-                var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer.ToPointer() == null)
-                {
-                    options.Resolver.GetFormatterWithVerify<T>().Serialize(ref fastWriter, value, options);
-                }
-                else
-                {
-                    fastWriter.Serialize(value, options, serializer);
-                }
+                options.SerializeWithVerify(ref fastWriter, value);
             }
             catch (Exception ex)
             {
@@ -68,20 +60,12 @@ namespace Utf8Json
         /// <param name="writer">The buffer writer to serialize with.</param>
         /// <param name="value">The value to serialize.</param>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static unsafe void Serialize<T>(IBufferWriter<byte> writer, T value)
+        public static void Serialize<T>(IBufferWriter<byte> writer, T value)
         {
             var fastWriter = new JsonWriter(writer);
             try
             {
-                var serializer = DefaultOptions.Resolver.GetSerializeStatic<T>();
-                if (serializer.ToPointer() == null)
-                {
-                    DefaultOptions.Resolver.GetFormatterWithVerify<T>().Serialize(ref fastWriter, value, DefaultOptions);
-                }
-                else
-                {
-                    fastWriter.Serialize(value, DefaultOptions, serializer);
-                }
+                DefaultOptions.SerializeWithVerify(ref fastWriter, value);
             }
             catch (Exception ex)
             {
@@ -135,19 +119,11 @@ namespace Utf8Json
         /// <param name="value">The value to serialize.</param>
         /// <param name="options">The options.</param>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static unsafe void Serialize<T>(ref JsonWriter writer, T value, JsonSerializerOptions options)
+        public static void Serialize<T>(ref JsonWriter writer, T value, JsonSerializerOptions options)
         {
             try
             {
-                var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer.ToPointer() == null)
-                {
-                    options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value, options);
-                }
-                else
-                {
-                    writer.Serialize(value, options, serializer);
-                }
+                options.SerializeWithVerify(ref writer, value);
             }
             catch (Exception ex)
             {
@@ -161,19 +137,11 @@ namespace Utf8Json
         /// <param name="writer">The buffer writer to serialize with.</param>
         /// <param name="value">The value to serialize.</param>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static unsafe void Serialize<T>(ref JsonWriter writer, T value)
+        public static void Serialize<T>(ref JsonWriter writer, T value)
         {
             try
             {
-                var serializer = DefaultOptions.Resolver.GetSerializeStatic<T>();
-                if (serializer.ToPointer() == null)
-                {
-                    DefaultOptions.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value, DefaultOptions);
-                }
-                else
-                {
-                    writer.Serialize(value, DefaultOptions, serializer);
-                }
+                DefaultOptions.SerializeWithVerify(ref writer, value);
             }
             catch (Exception ex)
             {
@@ -190,6 +158,7 @@ namespace Utf8Json
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
         public static unsafe byte[] Serialize<T>(T value, JsonSerializerOptions options)
         {
+#if !ENABLE_IL2CPP
             var calculator = options.Resolver.GetCalcByteLengthForSerialization<T>();
             if (calculator.ToPointer() == null)
             {
@@ -202,11 +171,12 @@ namespace Utf8Json
                 goto INTERNAL;
             }
 
-            var answer = new byte[options.CalcByteLengthForSerialization(value, calculator)];
-            options.SerializeSpan(value, answer.AsSpan(), serializer);
+            var answer = new byte[StaticFunctionPointerHelper.CallHelper.CalcByteLengthForSerialization(options, value, calculator)];
+            StaticFunctionPointerHelper.CallHelper.SerializeSpan(options, value, answer.AsSpan(), serializer);
             return answer;
 
         INTERNAL:
+#endif
             return SerializeInternal(value, options);
         }
 
@@ -220,6 +190,7 @@ namespace Utf8Json
         {
             var options = DefaultOptions;
 
+#if !ENABLE_IL2CPP
             var calculator = options.Resolver.GetCalcByteLengthForSerialization<T>();
             if (calculator.ToPointer() == null)
             {
@@ -232,15 +203,16 @@ namespace Utf8Json
                 goto INTERNAL;
             }
 
-            var answer = new byte[options.CalcByteLengthForSerialization(value, calculator)];
-            options.SerializeSpan(value, answer.AsSpan(), serializer);
+            var answer = new byte[StaticFunctionPointerHelper.CallHelper.CalcByteLengthForSerialization(options, value, calculator)];
+            StaticFunctionPointerHelper.CallHelper.SerializeSpan(options, value, answer.AsSpan(), serializer);
             return answer;
 
         INTERNAL:
+#endif
             return SerializeInternal(value, options);
         }
 
-        private static unsafe byte[] SerializeInternal<T>(T value, JsonSerializerOptions options)
+        private static byte[] SerializeInternal<T>(T value, JsonSerializerOptions options)
         {
             var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
@@ -248,16 +220,7 @@ namespace Utf8Json
                 var writer = new JsonWriter(SequencePool.Shared, array);
                 try
                 {
-                    var serializer = options.Resolver.GetSerializeStatic<T>();
-                    if (serializer.ToPointer() == null)
-                    {
-                        var formatter = options.Resolver.GetFormatterWithVerify<T>();
-                        formatter.Serialize(ref writer, value, options);
-                    }
-                    else
-                    {
-                        writer.Serialize(value, options, serializer);
-                    }
+                    options.SerializeWithVerify(ref writer, value);
                 }
                 catch (Exception ex)
                 {

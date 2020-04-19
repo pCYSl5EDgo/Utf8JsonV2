@@ -1,12 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
-using StaticFunctionPointerHelper;
-
 namespace Utf8Json.Formatters
 {
-    public sealed unsafe class NullableFormatter<T> : IJsonFormatter<T?>
+    public sealed class NullableFormatter<T> : IJsonFormatter<T?>
         where T : struct
     {
         public void Serialize(ref JsonWriter writer, T? value, JsonSerializerOptions options)
@@ -27,15 +24,7 @@ namespace Utf8Json.Formatters
             }
             else
             {
-                var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer.ToPointer() == null)
-                {
-                    options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value.Value, options);
-                }
-                else
-                {
-                    writer.Serialize(value.Value, options, serializer);
-                }
+                options.SerializeWithVerify(ref writer, value.Value);
             }
         }
 
@@ -51,14 +40,8 @@ namespace Utf8Json.Formatters
                 return null;
             }
 
-            var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer.ToPointer() != null)
-            {
-                return reader.Deserialize<T>(options, deserializer);
-            }
-
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            return formatter.Deserialize(ref reader, options);
+            var answer = options.DeserializeWithVerify<T>(ref reader);
+            return answer;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -89,14 +72,8 @@ namespace Utf8Json.Formatters
                 return null;
             }
 
-            var deserializer = options.Resolver.GetDeserializeStatic<T>();
-            if (deserializer.ToPointer() != null)
-            {
-                return reader.Deserialize<T>(options, deserializer);
-            }
-
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            return formatter.Deserialize(ref reader, options);
+            var answer = options.DeserializeWithVerify<T>(ref reader);
+            return answer;
         }
     }
 }

@@ -1,15 +1,17 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using StaticFunctionPointerHelper;
 using System;
 using System.Buffers;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
+
+#if !ENABLE_IL2CPP
+using StaticFunctionPointerHelper;
+#endif
 
 namespace Utf8Json.Formatters
 {
-    public sealed unsafe class ReadOnlyCollectionFormatter<T>
+    public sealed class ReadOnlyCollectionFormatter<T>
 #if CSHARP_8_OR_NEWER
         : IJsonFormatter<ReadOnlyCollection<T>?>
 #else
@@ -42,9 +44,12 @@ namespace Utf8Json.Formatters
                 return;
             }
 
-            var span1 = writer.Writer.GetSpan(1);
-            span1[0] = (byte)'[';
-            writer.Writer.Advance(1);
+            {
+                var span = writer.Writer.GetSpan(1);
+                span[0] = (byte)'[';
+                writer.Writer.Advance(1);
+            }
+
             var enumerator = value.GetEnumerator();
             try
             {
@@ -53,21 +58,34 @@ namespace Utf8Json.Formatters
                     goto END;
                 }
 
+#if !ENABLE_IL2CPP
                 var serializer = options.Resolver.GetSerializeStatic<T>();
-                if (serializer.ToPointer() == null)
+                unsafe
                 {
-                    SerializeWithFormatter(ref writer, options, enumerator);
-                    goto END;
-                }
+                    if (serializer.ToPointer() != null)
+                    {
+                        writer.Serialize(enumerator.Current, options, serializer);
 
-                writer.Serialize(enumerator.Current, options, serializer);
+                        while (enumerator.MoveNext())
+                        {
+                            var span = writer.Writer.GetSpan(1);
+                            span[0] = (byte)',';
+                            writer.Writer.Advance(1);
+                            writer.Serialize(enumerator.Current, options, serializer);
+                        }
+                        goto END;
+                    }
+                }
+#endif
+                var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                formatter.Serialize(ref writer, enumerator.Current, options);
 
                 while (enumerator.MoveNext())
                 {
                     var span = writer.Writer.GetSpan(1);
                     span[0] = (byte)',';
                     writer.Writer.Advance(1);
-                    writer.Serialize(enumerator.Current, options, serializer);
+                    formatter.Serialize(ref writer, enumerator.Current, options);
                 }
             }
             finally
@@ -79,20 +97,6 @@ namespace Utf8Json.Formatters
             var span2 = writer.Writer.GetSpan(1);
             span2[0] = (byte)']';
             writer.Writer.Advance(1);
-        }
-
-        private static void SerializeWithFormatter(ref JsonWriter writer, JsonSerializerOptions options, IEnumerator<T> enumerator)
-        {
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            formatter.Serialize(ref writer, enumerator.Current, options);
-
-            while (enumerator.MoveNext())
-            {
-                var span = writer.Writer.GetSpan(1);
-                span[0] = (byte)',';
-                writer.Writer.Advance(1);
-                formatter.Serialize(ref writer, enumerator.Current, options);
-            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -121,59 +125,53 @@ namespace Utf8Json.Formatters
             var array = pool.Rent(256);
             try
             {
+                var count = 0;
+#if !ENABLE_IL2CPP
                 var deserializer = options.Resolver.GetDeserializeStatic<T>();
-                if (deserializer.ToPointer() == null)
+                unsafe
                 {
-                    return DeserializeWithFormatter(ref reader, options, ref array, pool);
-                }
-                else
-                {
-                    var count = 0;
-                    while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+                    if (deserializer.ToPointer() != null)
                     {
-                        if (array.Length < count)
+                        while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
                         {
-                            var tmp = pool.Rent(count);
-                            Array.Copy(array, tmp, array.Length);
-                            pool.Return(array);
-                            array = tmp;
-                        }
+                            if (array.Length < count)
+                            {
+                                var tmp = pool.Rent(count);
+                                Array.Copy(array, tmp, array.Length);
+                                pool.Return(array);
+                                array = tmp;
+                            }
 
-                        array[count - 1] = reader.Deserialize<T>(options, deserializer);
+                            array[count - 1] = reader.Deserialize<T>(options, deserializer);
+                        }
+                        goto END;
+                    }
+                }
+#endif
+                var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
+                {
+                    if (array.Length < count)
+                    {
+                        var tmp = pool.Rent(count);
+                        Array.Copy(array, tmp, array.Length);
+                        pool.Return(array);
+                        array = tmp;
                     }
 
-                    var answer = new T[count];
-                    Array.Copy(array, answer, count);
-                    return new ReadOnlyCollection<T>(answer);
+                    array[count - 1] = formatter.Deserialize(ref reader, options);
                 }
-
+#if !ENABLE_IL2CPP
+            END:
+#endif
+                var answer = new T[count];
+                Array.Copy(array, answer, count);
+                return new ReadOnlyCollection<T>(answer);
             }
             finally
             {
                 pool.Return(array);
             }
-        }
-
-        private static ReadOnlyCollection<T> DeserializeWithFormatter(ref JsonReader reader, JsonSerializerOptions options, ref T[] array, ArrayPool<T> pool)
-        {
-            var count = 0;
-            var formatter = options.Resolver.GetFormatterWithVerify<T>();
-            while (!reader.ReadIsEndArrayWithSkipValueSeparator(ref count))
-            {
-                if (array.Length < count)
-                {
-                    var tmp = pool.Rent(count);
-                    Array.Copy(array, tmp, array.Length);
-                    pool.Return(array);
-                    array = tmp;
-                }
-
-                array[count - 1] = formatter.Deserialize(ref reader, options);
-            }
-
-            var answer = new T[count];
-            Array.Copy(array, answer, count);
-            return new ReadOnlyCollection<T>(answer);
         }
 
 #if CSHARP_8_OR_NEWER
