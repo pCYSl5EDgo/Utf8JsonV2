@@ -2,9 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using Utf8Json.Formatters;
 using Utf8Json.Internal;
 
-namespace Utf8Json.Formatters
+namespace Utf8Json.Resolvers
 {
     public sealed class ReflectionResolver : IFormatterResolver
     {

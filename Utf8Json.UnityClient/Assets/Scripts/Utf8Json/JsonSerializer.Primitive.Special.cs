@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using Utf8Json.Formatters;
 using Utf8Json.Internal;
 // ReSharper disable RedundantCaseLabel
 
@@ -9,6 +10,34 @@ namespace Utf8Json
 {
     public static partial class JsonSerializer
     {
+        public static object
+#if CSHARP_8_OR_NEWER
+            ?
+#endif
+            Deserialize(ReadOnlySpan<byte> span, JsonSerializerOptions options)
+        {
+            var reader = new JsonReader(span);
+            try
+            {
+                var answer = JsonObjectFormatter.DeserializeStatic(ref reader, options);
+                return answer.ToObject();
+            }
+            catch (Exception ex)
+            {
+                throw new JsonSerializationException("Failed to deserialize JsonObject value.", ex);
+            }
+        }
+
+        public static object
+#if CSHARP_8_OR_NEWER
+            ?
+#endif
+            Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            var answer = JsonObjectFormatter.DeserializeStatic(ref reader, options);
+            return answer.ToObject();
+        }
+
         public static
 #if !SPAN_BUILTIN
             unsafe

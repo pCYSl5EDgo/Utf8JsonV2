@@ -825,7 +825,16 @@ namespace Utf8Json.Formatters
             writer.WriteRaw(isFirst ? info.GetPropertyNameWithQuotationAndNameSeparator() : info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
 
             var targetType = info.TargetType;
-            var formatter = resolver.GetFormatterWithVerify(targetType);
+            IJsonFormatter formatter;
+            try
+            {
+                formatter = resolver.GetFormatterWithVerify(targetType);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
             formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
 
             for (var index = 1; index < data.FieldValueTypeArray.Length; index++)
@@ -926,7 +935,6 @@ namespace Utf8Json.Formatters
             var formatter = default(IJsonFormatter);
             var targetType = default(Type);
             var resolver = options.Resolver;
-            var objectFormatter = resolver.GetFormatterWithVerify<object>();
             while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
             {
                 var propertyName = reader.ReadPropertyNameSegmentRaw();
@@ -936,7 +944,8 @@ namespace Utf8Json.Formatters
                     if (!deserializationDictionary.TryFindParameterIgnoreCase(propertyName, out setter))
                     {
                         var name = PropertyNameHelper.FromSpanToString(propertyName);
-                        var item = objectFormatter.Deserialize(ref reader, options);
+                        var jsonObject = JsonObjectFormatter.DeserializeStatic(ref reader, options);
+                        var item = jsonObject.ToObject();
                         dictionary[name] = item;
                         continue;
                     }
@@ -946,7 +955,8 @@ namespace Utf8Json.Formatters
                     if (!deserializationDictionary.TryFindParameter(propertyName, out setter))
                     {
                         var name = PropertyNameHelper.FromSpanToString(propertyName);
-                        var item = objectFormatter.Deserialize(ref reader, options);
+                        var jsonObject = JsonObjectFormatter.DeserializeStatic(ref reader, options);
+                        var item = jsonObject.ToObject();
                         dictionary[name] = item;
                         continue;
                     }
@@ -1023,49 +1033,30 @@ namespace Utf8Json.Formatters
 #endif
                 parameters)
         {
-            parameters.Clear();
+            data.ConstructorData.Clear(parameters);
             var count = 0;
-            var ignoreCase = options.IgnoreCase;
             var formatter = default(IJsonFormatter);
             var targetType = default(Type);
             var resolver = options.Resolver;
             while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
             {
                 var propertyName = reader.ReadPropertyNameSegmentRaw();
-                if (ignoreCase)
+
+                if (!parameterDictionary.TryFindParameterIgnoreCase(propertyName, out var parameterType, out var index))
                 {
-                    if (!parameterDictionary.TryFindParameterIgnoreCase(propertyName, out var parameterType, out var index))
-                    {
-                        reader.ReadNextBlock();
-                        continue;
-                    }
-
-                    if (!ReferenceEquals(targetType, parameterType))
-                    {
-                        targetType = parameterType;
-                        formatter = resolver.GetFormatter(targetType);
-                    }
-
-                    Debug.Assert(formatter != null, nameof(formatter) + " != null");
-                    parameters[index] = formatter.DeserializeTypeless(ref reader, options);
+                    reader.ReadNextBlock();
+                    continue;
                 }
-                else
+
+                if (!ReferenceEquals(targetType, parameterType))
                 {
-                    if (!parameterDictionary.TryFindParameter(propertyName, out var parameterType, out var index))
-                    {
-                        reader.ReadNextBlock();
-                        continue;
-                    }
-
-                    if (!ReferenceEquals(targetType, parameterType))
-                    {
-                        targetType = parameterType;
-                        formatter = resolver.GetFormatter(targetType);
-                    }
-
-                    Debug.Assert(formatter != null, nameof(formatter) + " != null");
-                    parameters[index] = formatter.DeserializeTypeless(ref reader, options);
+                    targetType = parameterType;
+                    formatter = resolver.GetFormatter(targetType);
                 }
+
+                Debug.Assert(formatter != null, nameof(formatter) + " != null");
+                var deserializedObject = formatter.DeserializeTypeless(ref reader, options);
+                parameters[index] = deserializedObject;
             }
         }
     }

@@ -83,7 +83,7 @@ namespace Utf8Json.Formatters
                 }
             }
 
-            valueArrayArray = new Setter[maxLength - 1][];
+            valueArrayArray = maxLength == 0 ? Array.Empty<Setter[]>() : new Setter[maxLength][];
 
             for (var index = 0; index < setters.Length; index++)
             {

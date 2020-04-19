@@ -74,6 +74,20 @@ namespace Utf8Json
 
         public bool IgnoreCase { get; private set; }
 
+        public JsonSerializerOptions WithIgnoreCase(bool value)
+        {
+            if (this.IgnoreCase == value)
+            {
+                return this;
+            }
+
+            var result = new JsonSerializerOptions(this)
+            {
+                IgnoreCase = value,
+            };
+            return result;
+        }
+
         /// <summary>
         /// Gets a copy of these options with the <see cref="Resolver"/> property set to a new value.
         /// </summary>

@@ -18,10 +18,14 @@ namespace Utf8Json.Internal
 
         public Type TargetType => Info?.PropertyType ?? typeof(Dictionary<string, object>);
 
+#if CSHARP_8_OR_NEWER
+        public ExtensionDataInfo(PropertyInfo? info)
+#else
         public ExtensionDataInfo(PropertyInfo info)
+#endif
         {
             Info = info;
-            Kind = info.PropertyType == typeof(Dictionary<string, object>) ? ExtensionDataKind.Object : ExtensionDataKind.JsonElement;
+            Kind = info?.PropertyType == typeof(Dictionary<string, object>) ? ExtensionDataKind.Object : ExtensionDataKind.JsonElement;
         }
 
 #if CSHARP_8_OR_NEWER

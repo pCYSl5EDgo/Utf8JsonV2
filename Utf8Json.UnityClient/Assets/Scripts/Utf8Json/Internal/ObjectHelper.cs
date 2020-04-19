@@ -2,12 +2,23 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 // ReSharper disable RedundantExplicitArraySize
+
+using System;
+
 namespace Utf8Json.Internal
 {
     public static class ObjectHelper
     {
+        public static readonly object Object = new object();
         public static readonly object True = true;
         public static readonly object False = false;
+        public static readonly object SByte = (sbyte)0;
+        public static readonly object Int16 = (short)0;
+        public static readonly object Char = '\0';
+        public static readonly object Single = 0f;
+        public static readonly object Double = 0d;
+        public static readonly object IntPtr = System.IntPtr.Zero;
+        public static readonly object UIntPtr = System.UIntPtr.Zero;
 
         public static readonly object[] ByteArray = new object[256] {
             (byte)0x00,
@@ -1559,5 +1570,17 @@ namespace Utf8Json.Internal
             (long)0xfe,
             (long)0xff,
         };
+
+        public static readonly ThreadSafeTypeKeyReferenceHashTable<object> ValueTypeDefaultValueHashTable = new ThreadSafeTypeKeyReferenceHashTable<object>();
+
+
+        public static object
+#if CSHARP_8_OR_NEWER
+            ?
+#endif
+            DefaultValueFactory(Type arg)
+        {
+            return Activator.CreateInstance(arg);
+        }
     }
 }

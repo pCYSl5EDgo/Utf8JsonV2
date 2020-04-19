@@ -20,6 +20,73 @@ namespace Utf8Json.Internal
 
         public readonly (ParameterInfo parameter, byte[] originalBytes)[] Parameters;
 
+#if CSHARP_8_OR_NEWER
+        public void Clear(Span<object?> parameterSpan)
+#else
+        public void Clear(Span<object> parameterSpan)
+#endif
+        {
+            for (var index = 0; index < parameterSpan.Length; index++)
+            {
+                var type = Parameters[index].parameter.ParameterType;
+                ref var param = ref parameterSpan[index];
+                if (!type.IsValueType)
+                {
+                    param = default;
+                    continue;
+                }
+
+                switch (type.FullName)
+                {
+                    case "System.IntPtr":
+                        param = ObjectHelper.IntPtr;
+                        break;
+                    case "System.UIntPtr":
+                        param = ObjectHelper.UIntPtr;
+                        break;
+                    case "System.SByte":
+                        param = ObjectHelper.SByte;
+                        break;
+                    case "System.Byte":
+                        param = ObjectHelper.ByteArray[0];
+                        break;
+                    case "System.Int16":
+                        param = ObjectHelper.Int16;
+                        break;
+                    case "System.UInt16":
+                        param = ObjectHelper.UInt16Array[0];
+                        break;
+                    case "System.Int32":
+                        param = ObjectHelper.Int32Array[1];
+                        break;
+                    case "System.UInt32":
+                        param = ObjectHelper.UInt32Array[0];
+                        break;
+                    case "System.Int64":
+                        param = ObjectHelper.Int64Array[1];
+                        break;
+                    case "System.UInt64":
+                        param = ObjectHelper.UInt64Array[0];
+                        break;
+                    case "System.Boolean":
+                        param = ObjectHelper.False;
+                        break;
+                    case "System.Char":
+                        param = ObjectHelper.Char;
+                        break;
+                    case "System.Single":
+                        param = ObjectHelper.Single;
+                        break;
+                    case "System.Double":
+                        param = ObjectHelper.Double;
+                        break;
+                    default:
+                        param = ObjectHelper.ValueTypeDefaultValueHashTable.GetOrAdd(type, ObjectHelper.DefaultValueFactory);
+                        break;
+                }
+            }
+        }
+
         public ConstructorDataInfo(Type targetType)
         {
             TargetType = targetType;

@@ -254,7 +254,7 @@ namespace System.Buffers
         public void AdvanceToAnyOrEnd(ReadOnlySpan<byte> delimiters)
         {
             var index = this.UnreadSpan.IndexOfAny(delimiters);
-            if (index != -1)
+            if (index == -1)
             {
                 this.UnreadSpan = ReadOnlySpan<byte>.Empty;
                 return;

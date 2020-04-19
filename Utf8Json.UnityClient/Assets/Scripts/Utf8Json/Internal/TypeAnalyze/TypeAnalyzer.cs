@@ -225,9 +225,11 @@ namespace Utf8Json.Internal
                     var fieldIsValues = MemoryMarshal.Cast<byte, bool>(byteArray.AsSpan(memberLength, fields.Length));
                     var propertyIsValues = MemoryMarshal.Cast<byte, bool>(byteArray.AsSpan(memberLength + fields.Length, properties.Length));
 
-                    (propertyValueTypes, propertyReferenceTypes, propertyValueTypeShouldSerializes, propertyReferenceTypeShouldSerializes) = CollectProperties(type, ref extensionDataProperty, propertySerializeTypes, propertyIsValues, properties, propertyEncodedNames);
+                    (propertyValueTypes, propertyReferenceTypes, propertyValueTypeShouldSerializes, propertyReferenceTypeShouldSerializes) =
+                        CollectProperties(type, ref extensionDataProperty, propertySerializeTypes, propertyIsValues, properties, propertyEncodedNames);
 
-                    (fieldValueTypes, fieldReferenceTypes, fieldValueTypeShouldSerializes, fieldReferenceTypeShouldSerializes) = CollectFields(type, fieldSerializeTypes, fields, fieldIsValues, fieldEncodedNames);
+                    (fieldValueTypes, fieldReferenceTypes, fieldValueTypeShouldSerializes, fieldReferenceTypeShouldSerializes) = 
+                        CollectFields(type, fieldSerializeTypes, fields, fieldIsValues, fieldEncodedNames);
                 }
                 finally
                 {
@@ -388,6 +390,7 @@ namespace Utf8Json.Internal
                         throw new ArgumentOutOfRangeException();
                 }
             }
+
             var propertyValueTypeShouldSerializes = new ShouldSerializePropertySerializationInfo[propertyValueTypeShouldSerializeCount];
             var propertyReferenceTypeShouldSerializes = new ShouldSerializePropertySerializationInfo[propertyReferenceTypeShouldSerializeCount];
             var propertyValueTypes = new PropertySerializationInfo[propertyValueTypeCount];
@@ -535,7 +538,7 @@ namespace Utf8Json.Internal
         private static void CollectEachProperty(PropertyInfo info, out SerializeType serializeType, out string encodedName, out bool isValue, Type type)
         {
             isValue = info.PropertyType.IsValueType;
-            if (info.CanRead)
+            if (!info.CanRead)
             {
                 serializeType = SerializeType.Ignore;
                 encodedName = string.Empty;

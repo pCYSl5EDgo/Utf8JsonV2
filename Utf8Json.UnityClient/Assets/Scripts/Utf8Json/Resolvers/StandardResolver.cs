@@ -28,13 +28,6 @@ namespace Utf8Json.Resolvers
             Instance = new StandardResolver();
             Options = new JsonSerializerOptions(Instance);
             resolvers = StandardResolverHelper.DefaultResolvers;
-#if ENABLE_IL2CPP
-#else
-            /*var defaultResolversLength = StandardResolverHelper.DefaultResolvers.Length;
-            resolvers = new IFormatterResolver[defaultResolversLength + 1];
-            Array.Copy(StandardResolverHelper.DefaultResolvers, resolvers, defaultResolversLength);*/
-            // Resolvers[defaultResolversLength] = DynamicObjectResolver.Instance; // Try Object
-#endif
         }
 
         public IJsonFormatter<T>
@@ -66,13 +59,20 @@ namespace Utf8Json.Resolvers
             return FormatterCache<T>.SerializeSpanFunctionPointer;
         }
 
-        public IJsonFormatter
 #if CSHARP_8_OR_NEWER
-            ?
+        public IJsonFormatter?
+#else
+        public IJsonFormatter
 #endif
             GetFormatter(Type targetType)
         {
-            StandardResolverHelper.FormatterTable.TryGetValue(targetType, out var formatter);
+            if (StandardResolverHelper.FormatterTable.TryGetValue(targetType, out var formatter))
+            {
+                return formatter;
+            }
+
+            formatter = typeof(FormatterCache<>).MakeGenericType(targetType).GetField("Formatter")?.GetValue(null) as IJsonFormatter;
+            StandardResolverHelper.FormatterTable.TryAdd(new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(targetType, formatter));
             return formatter;
         }
 

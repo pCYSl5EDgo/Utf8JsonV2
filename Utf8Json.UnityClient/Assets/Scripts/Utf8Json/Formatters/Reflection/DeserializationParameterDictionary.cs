@@ -43,9 +43,9 @@ namespace Utf8Json.Formatters
                 }
             }
 
-            originalKeys = new byte[maxLength - 1][][];
-            parameterTypes = new Type[originalKeys.Length][];
-            indices = new int[originalKeys.Length][];
+            originalKeys = maxLength == 0 ? Array.Empty<byte[][]>() : new byte[maxLength][][];
+            parameterTypes = maxLength == 0 ? Array.Empty<Type[]>() : new Type[originalKeys.Length][];
+            indices = maxLength == 0 ? Array.Empty<int[]>() : new int[originalKeys.Length][];
 
             for (var index = 0; index < pairs.Length; index++)
             {
@@ -115,7 +115,7 @@ namespace Utf8Json.Formatters
                 return true;
             }
 
-            for (var keyIndex = 1; keyIndex < originalKeys.Length; keyIndex++)
+            for (var keyIndex = 1; keyIndex < keyArray.Length; keyIndex++)
             {
                 if (!propertyName.SequenceEqual(keyArray[keyIndex]))
                 {
@@ -171,7 +171,7 @@ namespace Utf8Json.Formatters
                 return true;
             }
 
-            for (var keyIndex = 1; keyIndex < originalKeys.Length; keyIndex++)
+            for (var keyIndex = 1; keyIndex < keyArray.Length; keyIndex++)
             {
                 if (!PropertyNameHelper.SequenceEqualsIgnoreCase(keyArray[keyIndex], propertyName))
                 {
