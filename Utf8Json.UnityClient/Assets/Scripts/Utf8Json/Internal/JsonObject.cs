@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using Utf8Json.Internal;
 // ReSharper disable ConvertSwitchStatementToSwitchExpression
 
@@ -13,7 +12,6 @@ using Utf8Json.Internal;
 
 namespace Utf8Json
 {
-    [StructLayout(LayoutKind.Explicit)]
     public struct JsonObject
         : IEquatable<JsonObject>
 #if CSHARP_8_OR_NEWER
@@ -62,23 +60,87 @@ namespace Utf8Json
             }
         }
 
-        [FieldOffset(0)] public Kind Token;
+        public Kind Token;
+        public double Number;
 #if CSHARP_8_OR_NEWER
-        [FieldOffset(4)] public Dictionary<string, JsonObject>? ObjectDictionary;
-        [FieldOffset(4)] public JsonObject[]? ObjectArray;
-        [FieldOffset(4)] public bool[]? BooleanArray; // End Object
-        [FieldOffset(4)] public string?[]? StringArray; // End Array
-        [FieldOffset(4)] public double[]? NumberArray; // Value Separator
-        [FieldOffset(4)] public string? String;
+        private object? union;
 #else
-        [FieldOffset(4)] public Dictionary<string, JsonObject> ObjectDictionary;
-        [FieldOffset(4)] public JsonObject[] ObjectArray;
-        [FieldOffset(4)] public bool[] BooleanArray;
-        [FieldOffset(4)] public string[] StringArray;
-        [FieldOffset(4)] public double[] NumberArray;
-        [FieldOffset(4)] public string String;
+        private object union;
 #endif
-        [FieldOffset(4)] public double Number;
+
+#if CSHARP_8_OR_NEWER
+        public Dictionary<string, JsonObject>? ObjectDictionary
+        {
+            get => union as Dictionary<string, JsonObject>;
+            set => union = value;
+        }
+        
+        public JsonObject[]? ObjectArray
+        {
+            get => union as JsonObject[];
+            set => union = value;
+        }
+
+        public bool[]? BooleanArray
+        {
+            get => union as bool[];
+            set => union = value;
+        }
+
+        public string?[]? StringArray
+        {
+            get => union as string[];
+            set => union = value;
+        }
+
+        public double[]? NumberArray
+        {
+            get => union as double[];
+            set => union = value;
+        }
+
+        public string? String
+        {
+            get => union as string;
+            set => union = value;
+        }
+#else
+        public Dictionary<string, JsonObject> ObjectDictionary
+        {
+            get => union as Dictionary<string, JsonObject>;
+            set => union = value;
+        }
+
+        public JsonObject[] ObjectArray
+        {
+            get => union as JsonObject[];
+            set => union = value;
+        }
+
+        public bool[] BooleanArray
+        {
+            get => union as bool[];
+            set => union = value;
+        }
+
+        public string[] StringArray
+        {
+            get => union as string[];
+            set => union = value;
+        }
+
+        public double[] NumberArray
+        {
+            get => union as double[];
+            set => union = value;
+        }
+
+        public string String
+        {
+            get => union as string;
+            set => union = value;
+        }
+#endif
 
         public void ReCalc()
         {
@@ -145,8 +207,7 @@ namespace Utf8Json
                     }
 
                     this.Token = Kind.NumberArray;
-                    this.ObjectArray = null;
-                    this.NumberArray = numbers;
+                    this.union = numbers;
                     break;
                 case Kind.String:
 #if CSHARP_8_OR_NEWER
@@ -160,8 +221,7 @@ namespace Utf8Json
                     }
 
                     this.Token = Kind.StringArray;
-                    this.ObjectArray = null;
-                    this.StringArray = strings;
+                    this.union = strings;
                     break;
                 case Kind.True:
                 case Kind.False:
@@ -173,8 +233,7 @@ namespace Utf8Json
                     }
 
                     this.Token = Kind.BooleanArray;
-                    this.ObjectArray = null;
-                    this.BooleanArray = booleans;
+                    this.union = booleans;
                     break;
                 default: throw new ArgumentOutOfRangeException();
             }
@@ -227,15 +286,15 @@ namespace Utf8Json
         {
             switch (Token)
             {
-                case Kind.Object: return ObjectDictionary.SequenceEqual(other as Dictionary<string, JsonObject>);
-                case Kind.Array: return ObjectArray.SequenceEqual(other as JsonObject[]);
+                case Kind.Object: return (other as Dictionary<string, JsonObject>)?.SequenceEqual(ObjectDictionary) ?? false;
+                case Kind.Array: return (other as JsonObject[])?.SequenceEqual(ObjectArray) ?? false;
                 case Kind.Number: return other is double dOther && Number == dOther;
                 case Kind.String: return String == other as string;
                 case Kind.True: return other is bool xOther && xOther;
                 case Kind.False: return other is bool yOther && !yOther;
-                case Kind.BooleanArray: return BooleanArray.SequenceEqual(other as bool[]);
-                case Kind.StringArray: return StringArray.SequenceEqual(other as string[]);
-                case Kind.NumberArray: return NumberArray.SequenceEqual(other as double[]);
+                case Kind.BooleanArray: return (other as bool[])?.SequenceEqual(BooleanArray) ?? false;
+                case Kind.StringArray: return (other as string[])?.SequenceEqual(StringArray) ?? false;
+                case Kind.NumberArray: return (other as double[])?.SequenceEqual(NumberArray) ?? false;
                 case Kind.Null: return other == null;
                 case Kind.EmptyObject: return other != null && other.GetType() == typeof(object);
                 case Kind.EmptyArray: return other != null && other is Array array && array.Length == 0;

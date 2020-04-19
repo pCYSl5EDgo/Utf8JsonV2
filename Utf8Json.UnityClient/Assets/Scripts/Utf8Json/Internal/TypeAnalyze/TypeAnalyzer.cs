@@ -35,7 +35,7 @@ namespace Utf8Json.Internal
         private static void CollectConstructorOrFactory(Type type, out ConstructorDataInfo constructorDataInfo)
         {
             constructorDataInfo = new ConstructorDataInfo(type);
-            var constructors = type.GetConstructors();
+            var constructors = type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             foreach (var constructor in constructors)
             {
                 var customAttributes = constructor.CustomAttributes;
@@ -59,7 +59,7 @@ namespace Utf8Json.Internal
                 return;
             }
 
-            var methods = type.GetMethods();
+            var methods = type.GetMethods(BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
             foreach (var method in methods)
             {
                 if (!method.IsStatic || method.ReturnType != type)
@@ -149,14 +149,9 @@ namespace Utf8Json.Internal
                 }
             }
 
-            var methods = type.GetMethods();
+            var methods = type.GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
             foreach (var methodInfo in methods)
             {
-                if (methodInfo.IsStatic)
-                {
-                    continue;
-                }
-
                 var attributes = Attribute.GetCustomAttributes(methodInfo);
                 if (attributes.Length == 0)
                 {
@@ -201,46 +196,31 @@ namespace Utf8Json.Internal
 #else
             extensionDataProperty = new ExtensionDataInfo(null);
 #endif
-            var fieldInfoArray = ArrayPool<FieldInfo>.Shared.Rent(256);
-            var propertyInfoArray = ArrayPool<PropertyInfo>.Shared.Rent(256);
+            var fields = type.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+            var properties = type.GetProperties(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+
+            var memberLength = fields.Length + properties.Length;
+            var byteArray = ArrayPool<byte>.Shared.Rent(memberLength << 1);
+            var stringArray = ArrayPool<string>.Shared.Rent(memberLength);
             try
             {
-                int fsCount;
-                (fsCount, fieldInfoArray) = FillField(type, fieldInfoArray);
+                var fieldEncodedNames = stringArray.AsSpan(0, fields.Length);
+                var propertyEncodedNames = stringArray.AsSpan(fields.Length, properties.Length);
+                var fieldSerializeTypes = MemoryMarshal.Cast<byte, SerializeType>(byteArray.AsSpan(0, fields.Length));
+                var propertySerializeTypes = MemoryMarshal.Cast<byte, SerializeType>(byteArray.AsSpan(fields.Length, properties.Length));
+                var fieldIsValues = MemoryMarshal.Cast<byte, bool>(byteArray.AsSpan(memberLength, fields.Length));
+                var propertyIsValues = MemoryMarshal.Cast<byte, bool>(byteArray.AsSpan(memberLength + fields.Length, properties.Length));
 
-                int psCount;
-                (psCount, propertyInfoArray) = FillProperty(type, propertyInfoArray);
+                (propertyValueTypes, propertyReferenceTypes, propertyValueTypeShouldSerializes, propertyReferenceTypeShouldSerializes) =
+                    CollectProperties(type, ref extensionDataProperty, propertySerializeTypes, propertyIsValues, properties, propertyEncodedNames);
 
-                var fields = fieldInfoArray.AsSpan(0, fsCount);
-                var properties = propertyInfoArray.AsSpan(0, psCount);
-                var memberLength = fields.Length + properties.Length;
-                var byteArray = ArrayPool<byte>.Shared.Rent(memberLength << 1);
-                var stringArray = ArrayPool<string>.Shared.Rent(memberLength);
-                try
-                {
-                    var fieldEncodedNames = stringArray.AsSpan(0, fields.Length);
-                    var propertyEncodedNames = stringArray.AsSpan(fields.Length, properties.Length);
-                    var fieldSerializeTypes = MemoryMarshal.Cast<byte, SerializeType>(byteArray.AsSpan(0, fields.Length));
-                    var propertySerializeTypes = MemoryMarshal.Cast<byte, SerializeType>(byteArray.AsSpan(fields.Length, properties.Length));
-                    var fieldIsValues = MemoryMarshal.Cast<byte, bool>(byteArray.AsSpan(memberLength, fields.Length));
-                    var propertyIsValues = MemoryMarshal.Cast<byte, bool>(byteArray.AsSpan(memberLength + fields.Length, properties.Length));
-
-                    (propertyValueTypes, propertyReferenceTypes, propertyValueTypeShouldSerializes, propertyReferenceTypeShouldSerializes) =
-                        CollectProperties(type, ref extensionDataProperty, propertySerializeTypes, propertyIsValues, properties, propertyEncodedNames);
-
-                    (fieldValueTypes, fieldReferenceTypes, fieldValueTypeShouldSerializes, fieldReferenceTypeShouldSerializes) = 
-                        CollectFields(type, fieldSerializeTypes, fields, fieldIsValues, fieldEncodedNames);
-                }
-                finally
-                {
-                    ArrayPool<byte>.Shared.Return(byteArray);
-                    ArrayPool<string>.Shared.Return(stringArray);
-                }
+                (fieldValueTypes, fieldReferenceTypes, fieldValueTypeShouldSerializes, fieldReferenceTypeShouldSerializes) =
+                    CollectFields(type, fieldSerializeTypes, fields, fieldIsValues, fieldEncodedNames);
             }
             finally
             {
-                ArrayPool<FieldInfo>.Shared.Return(fieldInfoArray);
-                ArrayPool<PropertyInfo>.Shared.Return(propertyInfoArray);
+                ArrayPool<byte>.Shared.Return(byteArray);
+                ArrayPool<string>.Shared.Return(stringArray);
             }
         }
 
@@ -434,66 +414,13 @@ namespace Utf8Json.Internal
             return (propertyValueTypes, propertyReferenceTypes, propertyValueTypeShouldSerializes, propertyReferenceTypeShouldSerializes);
         }
 
-        private static (int psCount, PropertyInfo[] propertyInfoArray) FillProperty(Type type, PropertyInfo[] propertyInfoArray)
-        {
-            var psCount = 0;
-            var pEnumerator = type.GetRuntimeProperties().GetEnumerator();
-            try
-            {
-                while (pEnumerator.MoveNext())
-                {
-                    if (propertyInfoArray.Length < ++psCount)
-                    {
-                        var tmp = ArrayPool<PropertyInfo>.Shared.Rent(psCount << 1);
-                        Array.Copy(propertyInfoArray, tmp, propertyInfoArray.Length);
-                        ArrayPool<PropertyInfo>.Shared.Return(propertyInfoArray);
-                        propertyInfoArray = tmp;
-                    }
-
-                    propertyInfoArray[psCount - 1] = pEnumerator.Current;
-                }
-            }
-            finally
-            {
-                pEnumerator.Dispose();
-            }
-            return (psCount, propertyInfoArray);
-        }
-
-        private static (int fsCount, FieldInfo[] fieldInfoArray) FillField(Type type, FieldInfo[] fieldInfoArray)
-        {
-            var fsCount = 0;
-            var fEnumerator = type.GetRuntimeFields().GetEnumerator();
-            try
-            {
-                while (fEnumerator.MoveNext())
-                {
-                    if (fieldInfoArray.Length < ++fsCount)
-                    {
-                        var tmp = ArrayPool<FieldInfo>.Shared.Rent(fsCount << 1);
-                        Array.Copy(fieldInfoArray, tmp, fieldInfoArray.Length);
-                        ArrayPool<FieldInfo>.Shared.Return(fieldInfoArray);
-                        fieldInfoArray = tmp;
-                    }
-
-                    fieldInfoArray[fsCount - 1] = fEnumerator.Current;
-                }
-            }
-            finally
-            {
-                fEnumerator.Dispose();
-            }
-            return (fsCount, fieldInfoArray);
-        }
-
         private static void CollectEachField(FieldInfo info, out SerializeType serializeType, out string encodedName, out bool isValue, Type type)
         {
             isValue = info.FieldType.IsValueType;
             serializeType = SerializeType.SerializeAlways;
             encodedName = info.Name;
             if (
-                info.IsStatic
-                || typeof(Delegate).IsAssignableFrom(info.FieldType)
+                typeof(Delegate).IsAssignableFrom(info.FieldType)
             )
             {
                 serializeType = SerializeType.Ignore;
@@ -501,7 +428,7 @@ namespace Utf8Json.Internal
             }
 
             var attributes = info.GetCustomAttributes();
-            var hasSerializeFieldAttribute = false;
+            var hasSerializeField = false;
 
             foreach (var attribute in attributes)
             {
@@ -516,13 +443,13 @@ namespace Utf8Json.Internal
                     case "System.Runtime.Serialization.DataMemberAttribute":
                         encodedName = attributeType.GetProperty("Name")?.GetValue(attribute) as string ?? throw new NullReferenceException();
                         break;
-                    case "UnityEngine.SerializeFieldAttribute":
-                        hasSerializeFieldAttribute = true;
+                    case "UnityEngine.SerializeField":
+                        hasSerializeField = true;
                         break;
                 }
             }
 
-            if (!hasSerializeFieldAttribute && !info.IsPublic)
+            if (!hasSerializeField && !info.IsPublic)
             {
                 serializeType = SerializeType.Ignore;
                 return;

@@ -1,11 +1,9 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
 using System.Text;
 using NUnit.Framework;
 using UnityEngine;
-using Utf8Json.Resolvers;
 
 namespace Utf8Json.Test
 {
@@ -50,7 +48,7 @@ namespace Utf8Json.Test
         public void YTest(string value)
         {
             var bytes = JsonSerializer.Serialize(new Y { A = value });
-            Console.WriteLine(Encoding.UTF8.GetString(bytes));
+            TestContext.WriteLine(Encoding.UTF8.GetString(bytes));
             var deserialize = JsonSerializer.Deserialize<Y>(bytes);
             Assert.AreEqual(value, deserialize.A);
         }
@@ -60,7 +58,7 @@ namespace Utf8Json.Test
 #if !UNITY_2018_4_OR_NEWER
 namespace UnityEngine
 {
-    public sealed class SerializeFieldAttribute : System.Attribute
+    public sealed class SerializeField : System.Attribute
     {
     }
 }

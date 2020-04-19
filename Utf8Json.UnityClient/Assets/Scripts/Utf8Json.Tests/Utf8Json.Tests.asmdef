@@ -1,7 +1,8 @@
 {
     "name": "Utf8Json.Tests",
     "references": [
-        "Utf8Json"
+        "Utf8Json",
+        "Utf8Json.Annotations"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"
