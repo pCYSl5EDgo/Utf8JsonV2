@@ -18,5 +18,6 @@ namespace Utf8Json
         IntPtr GetDeserializeStatic<T>();
         IntPtr GetCalcByteLengthForSerialization<T>();
         IntPtr GetSerializeSpan<T>();
+        IJsonFormatter[] CollectCurrentRegisteredFormatters();
     }
 }

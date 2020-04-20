@@ -6,7 +6,6 @@ using System.ComponentModel;
 
 namespace Utf8Json
 {
-    [EditorBrowsable(EditorBrowsableState.Never)]
     public interface IJsonFormatter
     {
 #if CSHARP_8_OR_NEWER

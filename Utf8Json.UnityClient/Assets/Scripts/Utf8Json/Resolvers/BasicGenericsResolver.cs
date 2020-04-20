@@ -49,6 +49,11 @@ namespace Utf8Json.Resolvers
             return FormatterCache<T>.SerializeSpanFunctionPointer;
         }
 
+        public IJsonFormatter[] CollectCurrentRegisteredFormatters()
+        {
+            return formatterTable.ToArray();
+        }
+
         internal struct FormatterCache<T>
         {
             public static readonly IntPtr SerializeFunctionPointer;

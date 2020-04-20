@@ -70,5 +70,10 @@ namespace Utf8Json.Resolvers
         {
             return default;
         }
+
+        public IJsonFormatter[] CollectCurrentRegisteredFormatters()
+        {
+            return formatterTable.ToArray();
+        }
     }
 }

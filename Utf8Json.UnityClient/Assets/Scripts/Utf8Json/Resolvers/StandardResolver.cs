@@ -58,6 +58,29 @@ namespace Utf8Json.Resolvers
             return FormatterCache<T>.SerializeSpanFunctionPointer;
         }
 
+        public IJsonFormatter[] CollectCurrentRegisteredFormatters()
+        {
+            var formatterArrayArray = new IJsonFormatter[resolvers.Length][];
+            var totalLength = 0;
+            for (var index = 0; index < resolvers.Length; index++)
+            {
+                var resolver = resolvers[index];
+                ref var formatterArray = ref formatterArrayArray[index];
+                formatterArrayArray[index] = resolver.CollectCurrentRegisteredFormatters();
+                totalLength += formatterArray.Length;
+            }
+
+            var answer = new IJsonFormatter[totalLength];
+            var count = 0;
+            foreach (var formatters in formatterArrayArray)
+            {
+                Array.Copy(formatters, 0, answer, count, formatters.Length);
+                count += formatters.Length;
+            }
+
+            return answer;
+        }
+
 #if CSHARP_8_OR_NEWER
         public IJsonFormatter? GetFormatter(Type targetType)
 #else

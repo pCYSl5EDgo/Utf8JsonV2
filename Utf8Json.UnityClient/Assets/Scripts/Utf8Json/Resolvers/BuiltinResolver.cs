@@ -37,6 +37,11 @@ namespace Utf8Json.Resolvers
             return FormatterCache<T>.SerializeSpanFunctionPointer;
         }
 
+        public IJsonFormatter[] CollectCurrentRegisteredFormatters()
+        {
+            return formattersCache.ToArray();
+        }
+
         public IJsonFormatter
 #if CSHARP_8_OR_NEWER
             ?

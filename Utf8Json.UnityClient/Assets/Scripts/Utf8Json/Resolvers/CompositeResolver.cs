@@ -223,6 +223,39 @@ namespace Utf8Json.Resolvers
                 return new IntPtr(null);
             }
 
+            public IJsonFormatter[] CollectCurrentRegisteredFormatters()
+            {
+                var totalLength = this.subFormatters.Length;
+                var registeredFormatterArray = formattersCache.ToArray();
+                totalLength += registeredFormatterArray.Length;
+                var subResolversFormatters = new IJsonFormatter[subResolvers.Length][];
+                for (var index = 0; index < subResolvers.Length; index++)
+                {
+                    var resolver = subResolvers[index];
+                    var formatters = resolver.CollectCurrentRegisteredFormatters();
+                    subResolversFormatters[index] = formatters;
+                    totalLength += formatters.Length;
+                }
+
+                if (totalLength == 0)
+                {
+                    return Array.Empty<IJsonFormatter>();
+                }
+
+                var answer = new IJsonFormatter[totalLength];
+                Array.Copy(registeredFormatterArray, answer, registeredFormatterArray.Length);
+                var count = registeredFormatterArray.Length;
+                Array.Copy(this.subFormatters, 0, answer, count, this.subFormatters.Length);
+                count += this.subFormatters.Length;
+                foreach (var formatterArray in subResolversFormatters)
+                {
+                    Array.Copy(formatterArray, 0, answer, count, formatterArray.Length);
+                    count += formatterArray.Length;
+                }
+
+                return answer;
+            }
+
             public
 #if CSHARP_8_OR_NEWER
                 IJsonFormatter?
