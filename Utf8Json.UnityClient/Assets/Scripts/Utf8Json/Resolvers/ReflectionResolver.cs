@@ -19,24 +19,8 @@ namespace Utf8Json.Resolvers
 #endif
             GetFormatter<T>()
         {
-            var targetType = typeof(T);
-            if (formatterTable.TryGetValue(targetType, out var answer))
-            {
-                return answer as IJsonFormatter<T>;
-            }
-
-            if (targetType.IsValueType)
-            {
-                answer = Activator.CreateInstance(typeof(ValueTypeReflectionFormatter<>).MakeGenericType(targetType)) as IJsonFormatter;
-                formatterTable.TryAdd(new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(targetType, answer));
-            }
-            else
-            {
-                answer = Activator.CreateInstance(typeof(ReferenceTypeReflectionFormatter<>).MakeGenericType(targetType)) as IJsonFormatter;
-                formatterTable.TryAdd(new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(targetType, answer));
-            }
-
-            return answer as IJsonFormatter<T>;
+            var formatter = GetFormatter(typeof(T)) as IJsonFormatter<T>;
+            return formatter;
         }
 
         public IJsonFormatter
@@ -45,23 +29,26 @@ namespace Utf8Json.Resolvers
 #endif
             GetFormatter(Type targetType)
         {
-            if (formatterTable.TryGetValue(targetType, out var answer))
+            var formatter = formatterTable.GetOrAdd(targetType, NotFoundCreateFactory);
+            return formatter;
+        }
+
+#if CSHARP_8_OR_NEWER
+        private static IJsonFormatter? NotFoundCreateFactory(Type targetType)
+#else
+        private static IJsonFormatter NotFoundCreateFactory(Type targetType)
+#endif
+        {
+            if (targetType.IsEnum)
             {
-                return answer;
+                return default;
             }
 
-            if (targetType.IsValueType)
-            {
-                answer = Activator.CreateInstance(typeof(ValueTypeReflectionFormatter<>).MakeGenericType(targetType)) as IJsonFormatter;
-                formatterTable.TryAdd(new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(targetType, answer));
-            }
-            else
-            {
-                answer = Activator.CreateInstance(typeof(ReferenceTypeReflectionFormatter<>).MakeGenericType(targetType)) as IJsonFormatter;
-                formatterTable.TryAdd(new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(targetType, answer));
-            }
+            var answer = targetType.IsValueType
+                ? Activator.CreateInstance(typeof(ValueTypeReflectionFormatter<>).MakeGenericType(targetType))
+                : Activator.CreateInstance(typeof(ReferenceTypeReflectionFormatter<>).MakeGenericType(targetType));
 
-            return answer;
+            return answer as IJsonFormatter;
         }
 
         public IntPtr GetSerializeStatic<T>()

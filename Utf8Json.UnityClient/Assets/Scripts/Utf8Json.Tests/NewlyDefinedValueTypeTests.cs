@@ -29,6 +29,13 @@ namespace Utf8Json.Test
             public string A { get; set; }
         }
 
+        public class Z
+        {
+            public X FFF;
+
+            public Y ときはきた { get; set; }
+        }
+
         [TestCase(0, 0)]
         [TestCase(1, 2)]
         [TestCase(33, -4)]
@@ -51,6 +58,26 @@ namespace Utf8Json.Test
             TestContext.WriteLine(Encoding.UTF8.GetString(bytes));
             var deserialize = JsonSerializer.Deserialize<Y>(bytes);
             Assert.AreEqual(value, deserialize.A);
+        }
+
+        [TestCase(0, 0, default(string))]
+        [TestCase(int.MinValue, int.MaxValue, "")]
+        [TestCase(33, 4, "TNOK")]
+        public void ZTest(int xc, int xb, string ya)
+        {
+            var value = new Z
+            {
+                FFF = new X(xc, xb),
+                ときはきた = new Y
+                {
+                    A = ya,
+                }
+            };
+            var bytes = JsonSerializer.Serialize(value);
+            var deserialize = JsonSerializer.Deserialize<Z>(bytes);
+            Assert.AreEqual(deserialize.ときはきた.A, ya);
+            Assert.AreEqual(deserialize.FFF.c, xc);
+            Assert.IsTrue(deserialize.FFF.SameB(xb));
         }
     }
 }

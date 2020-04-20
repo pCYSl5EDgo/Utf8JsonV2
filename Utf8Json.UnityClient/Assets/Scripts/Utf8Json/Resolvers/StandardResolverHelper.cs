@@ -13,7 +13,5 @@ namespace Utf8Json.Internal.Resolvers
             new BasicGenericsResolver(),
             new ReflectionResolver(),
         };
-
-        public static readonly ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter> FormatterTable = new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>();
     }
 }

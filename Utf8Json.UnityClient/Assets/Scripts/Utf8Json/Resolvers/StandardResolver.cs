@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using Utf8Json.Internal;
 using Utf8Json.Internal.Resolvers;
 
 namespace Utf8Json.Resolvers
@@ -60,20 +59,21 @@ namespace Utf8Json.Resolvers
         }
 
 #if CSHARP_8_OR_NEWER
-        public IJsonFormatter?
+        public IJsonFormatter? GetFormatter(Type targetType)
 #else
-        public IJsonFormatter
+        public IJsonFormatter GetFormatter(Type targetType)
 #endif
-            GetFormatter(Type targetType)
         {
-            if (StandardResolverHelper.FormatterTable.TryGetValue(targetType, out var formatter))
+            foreach (var resolver in resolvers)
             {
-                return formatter;
+                var formatter = resolver.GetFormatter(targetType);
+                if (formatter != null)
+                {
+                    return formatter;
+                }
             }
 
-            formatter = typeof(FormatterCache<>).MakeGenericType(targetType).GetField("Formatter")?.GetValue(null) as IJsonFormatter;
-            StandardResolverHelper.FormatterTable.TryAdd(new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(targetType, formatter));
-            return formatter;
+            return default;
         }
 
         private static class FormatterCache<T>
@@ -114,10 +114,10 @@ namespace Utf8Json.Resolvers
                     }
 
                     // ReSharper disable once InvertIf
+                    // ReSharper disable once ConvertIfStatementToNullCoalescingAssignment
                     if (Formatter is null)
                     {
                         Formatter = formatterResolver.GetFormatter<T>();
-                        StandardResolverHelper.FormatterTable.TryAdd(new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(T), Formatter));
                     }
                 }
             }
