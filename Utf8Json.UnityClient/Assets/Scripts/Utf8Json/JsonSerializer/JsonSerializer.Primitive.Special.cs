@@ -10,42 +10,6 @@ namespace Utf8Json
 {
     public static partial class JsonSerializer
     {
-        public static object
-#if CSHARP_8_OR_NEWER
-            ?
-#endif
-            Deserialize(ReadOnlySpan<byte> span, JsonSerializerOptions options)
-        {
-            if (span.Length >= 3)
-            {
-                if (span[0] == JsonReader.Bom0 && span[1] == JsonReader.Bom1 && span[2] == JsonReader.Bom2)
-                {
-                    span = span.Slice(3);
-                }
-            }
-
-            var reader = new JsonReader(span);
-            try
-            {
-                var answer = JsonObjectFormatter.DeserializeStatic(ref reader, options);
-                return answer.ToObject();
-            }
-            catch (Exception ex)
-            {
-                throw new JsonSerializationException("Failed to deserialize JsonObject value.", ex);
-            }
-        }
-
-        public static object
-#if CSHARP_8_OR_NEWER
-            ?
-#endif
-            Deserialize(ref JsonReader reader, JsonSerializerOptions options)
-        {
-            var answer = JsonObjectFormatter.DeserializeStatic(ref reader, options);
-            return answer.ToObject();
-        }
-
         public static
 #if !SPAN_BUILTIN
             unsafe
