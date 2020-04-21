@@ -54,7 +54,7 @@ namespace Utf8Json.Formatters
                 return;
             }
 
-            writer.SerializeInternal(boxedValue, options, data);
+            writer.SerializeTypeless(boxedValue, options, data);
         }
 
 #if CSHARP_8_OR_NEWER

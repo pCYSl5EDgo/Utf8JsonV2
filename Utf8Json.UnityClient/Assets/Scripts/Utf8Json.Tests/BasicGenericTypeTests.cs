@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 namespace Utf8Json.Test
 {
+    [TestFixture]
     public class BasicGenericTypeTests
     {
         [TestCase("", null)]

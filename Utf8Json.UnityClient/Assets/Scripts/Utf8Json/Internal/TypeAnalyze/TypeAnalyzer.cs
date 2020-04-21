@@ -285,28 +285,29 @@ namespace Utf8Json.Internal
                 var isValue = fieldIsValues[index];
                 var encodedName = fieldEncodedNames[index];
                 var info = fields[index];
+                var jsonFormatter = JsonFormatterAttributeHelper.FromJsonFormatterAttribute(info.GetCustomAttribute<JsonFormatterAttribute>());
                 if (serializeType == SerializeType.SeeShouldSerializeMethod)
                 {
                     var shouldSerialize = type.GetMethod("ShouldSerialize" + info.Name, Array.Empty<Type>());
                     Debug.Assert(shouldSerialize != null);
                     if (isValue)
                     {
-                        fieldValueTypeShouldSerializes[--fieldValueTypeShouldSerializeCount] = new ShouldSerializeFieldSerializationInfo(info, shouldSerialize, encodedName);
+                        fieldValueTypeShouldSerializes[--fieldValueTypeShouldSerializeCount] = new ShouldSerializeFieldSerializationInfo(info, shouldSerialize, encodedName, jsonFormatter);
                     }
                     else
                     {
-                        fieldReferenceTypeShouldSerializes[--fieldReferenceTypeShouldSerializeCount] = new ShouldSerializeFieldSerializationInfo(info, shouldSerialize, encodedName);
+                        fieldReferenceTypeShouldSerializes[--fieldReferenceTypeShouldSerializeCount] = new ShouldSerializeFieldSerializationInfo(info, shouldSerialize, encodedName, jsonFormatter);
                     }
                 }
                 else
                 {
                     if (isValue)
                     {
-                        fieldValueTypes[--fieldValueTypeCount] = new FieldSerializationInfo(info, encodedName);
+                        fieldValueTypes[--fieldValueTypeCount] = new FieldSerializationInfo(info, encodedName, jsonFormatter);
                     }
                     else
                     {
-                        fieldReferenceTypes[--fieldReferenceTypeCount] = new FieldSerializationInfo(info, encodedName);
+                        fieldReferenceTypes[--fieldReferenceTypeCount] = new FieldSerializationInfo(info, encodedName, jsonFormatter);
                     }
                 }
             }
@@ -387,16 +388,17 @@ namespace Utf8Json.Internal
                         {
                             var encodedName = propertyEncodedNames[index];
                             var info = properties[index];
+                            var jsonFormatter = JsonFormatterAttributeHelper.FromJsonFormatterAttribute(info.GetCustomAttribute<JsonFormatterAttribute>());
                             var shouldSerialize = type.GetMethod("ShouldSerialize" + info.Name, Array.Empty<Type>());
                             Debug.Assert(shouldSerialize != null);
                             var isValue = propertyIsValues[index];
                             if (isValue)
                             {
-                                propertyValueTypeShouldSerializes[--propertyValueTypeShouldSerializeCount] = new ShouldSerializePropertySerializationInfo(info, shouldSerialize, encodedName);
+                                propertyValueTypeShouldSerializes[--propertyValueTypeShouldSerializeCount] = new ShouldSerializePropertySerializationInfo(info, shouldSerialize, encodedName, jsonFormatter);
                             }
                             else
                             {
-                                propertyReferenceTypeShouldSerializes[--propertyReferenceTypeShouldSerializeCount] = new ShouldSerializePropertySerializationInfo(info, shouldSerialize, encodedName);
+                                propertyReferenceTypeShouldSerializes[--propertyReferenceTypeShouldSerializeCount] = new ShouldSerializePropertySerializationInfo(info, shouldSerialize, encodedName, jsonFormatter);
                             }
                         }
                         break;
@@ -404,14 +406,15 @@ namespace Utf8Json.Internal
                         {
                             var encodedName = propertyEncodedNames[index];
                             var info = properties[index];
+                            var jsonFormatter = JsonFormatterAttributeHelper.FromJsonFormatterAttribute(info.GetCustomAttribute<JsonFormatterAttribute>());
                             var isValue = propertyIsValues[index];
                             if (isValue)
                             {
-                                propertyValueTypes[--propertyValueTypeCount] = new PropertySerializationInfo(info, encodedName);
+                                propertyValueTypes[--propertyValueTypeCount] = new PropertySerializationInfo(info, encodedName, jsonFormatter);
                             }
                             else
                             {
-                                propertyReferenceTypes[--propertyReferenceTypeCount] = new PropertySerializationInfo(info, encodedName);
+                                propertyReferenceTypes[--propertyReferenceTypeCount] = new PropertySerializationInfo(info, encodedName, jsonFormatter);
                             }
                         }
                         break;

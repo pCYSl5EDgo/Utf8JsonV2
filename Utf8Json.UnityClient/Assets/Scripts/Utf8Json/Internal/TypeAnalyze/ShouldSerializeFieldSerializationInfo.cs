@@ -12,6 +12,12 @@ namespace Utf8Json.Internal
         public readonly MethodInfo Method;
         private readonly byte[] bytes;
 
+#if CSHARP_8_OR_NEWER
+        public IJsonFormatter? Formatter { get; }
+#else
+        public IJsonFormatter Formatter { get; }
+#endif
+
         public Type TargetType => Info.FieldType;
 
         public ReadOnlySpan<byte> GetPropertyNameRaw()
@@ -34,10 +40,17 @@ namespace Utf8Json.Internal
             return bytes;
         }
 
-        public ShouldSerializeFieldSerializationInfo(FieldInfo info, MethodInfo method, string name)
+        public ShouldSerializeFieldSerializationInfo(FieldInfo info, MethodInfo method, string name,
+#if CSHARP_8_OR_NEWER
+            IJsonFormatter?
+#else
+            IJsonFormatter
+#endif
+                formatter)
         {
             Info = info;
             Method = method;
+            Formatter = formatter;
             bytes = PropertyNameHelper.CalculatePropertyNameBytes(name);
         }
 

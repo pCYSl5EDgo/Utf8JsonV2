@@ -10,6 +10,11 @@ namespace Utf8Json.Internal
     {
         public readonly FieldInfo Info;
         private readonly byte[] bytes;
+#if CSHARP_8_OR_NEWER
+        public IJsonFormatter? Formatter { get; }
+#else
+        public IJsonFormatter Formatter { get; }
+#endif
 
         public Type TargetType => Info.FieldType;
 
@@ -33,10 +38,17 @@ namespace Utf8Json.Internal
             return bytes;
         }
 
-        public FieldSerializationInfo(FieldInfo info, string name)
+        public FieldSerializationInfo(FieldInfo info, string name,
+#if CSHARP_8_OR_NEWER
+            IJsonFormatter?
+#else
+            IJsonFormatter
+#endif
+                formatter)
         {
             Info = info;
             bytes = PropertyNameHelper.CalculatePropertyNameBytes(name);
+            Formatter = formatter;
         }
 
 #if CSHARP_8_OR_NEWER

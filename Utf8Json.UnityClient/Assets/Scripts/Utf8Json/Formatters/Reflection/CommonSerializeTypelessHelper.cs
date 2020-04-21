@@ -10,7 +10,7 @@ namespace Utf8Json.Formatters
 {
     internal static class CommonSerializeTypelessHelper
     {
-        public static void SerializeInternal(this ref JsonWriter writer, object boxedValue, JsonSerializerOptions options, in TypeAnalyzeResult data)
+        public static void SerializeTypeless(this ref JsonWriter writer, object boxedValue, JsonSerializerOptions options, in TypeAnalyzeResult data)
         {
             foreach (var callback in data.OnSerializing)
             {
@@ -275,7 +275,7 @@ namespace Utf8Json.Formatters
                 }
 
                 targetType = info.Info.PropertyType;
-                formatter = resolver.GetFormatterWithVerify(targetType);
+                formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
                 formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
             }
 
@@ -301,7 +301,7 @@ namespace Utf8Json.Formatters
                 if (!ReferenceEquals(tmpTargetType, targetType))
                 {
                     targetType = tmpTargetType;
-                    formatter = resolver.GetFormatterWithVerify(targetType);
+                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
                 }
 
 #if CSHARP_8_OR_NEWER
@@ -336,7 +336,7 @@ namespace Utf8Json.Formatters
                     }
 
                     targetType = info.TargetType;
-                    formatter = resolver.GetFormatterWithVerify(targetType);
+                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
                     formatter.SerializeTypeless(ref writer, value, options);
                 }
             }
@@ -369,7 +369,7 @@ namespace Utf8Json.Formatters
                 if (!ReferenceEquals(tmpTargetType, targetType))
                 {
                     targetType = tmpTargetType;
-                    formatter = resolver.GetFormatterWithVerify(targetType);
+                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
                 }
 
                 Debug.Assert(formatter != null, nameof(formatter) + " != null");
@@ -397,7 +397,7 @@ namespace Utf8Json.Formatters
                 }
 
                 targetType = info.TargetType;
-                formatter = resolver.GetFormatterWithVerify(targetType);
+                formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
                 formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
             }
 
@@ -423,7 +423,7 @@ namespace Utf8Json.Formatters
                 if (!ReferenceEquals(targetType, tmpTargetType))
                 {
                     targetType = tmpTargetType;
-                    formatter = resolver.GetFormatterWithVerify(targetType);
+                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
                 }
 
                 Debug.Assert(formatter != null, nameof(formatter) + " != null");
@@ -454,7 +454,7 @@ namespace Utf8Json.Formatters
                     }
 
                     targetType = info.TargetType;
-                    formatter = resolver.GetFormatterWithVerify(targetType);
+                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
                     formatter.SerializeTypeless(ref writer, value, options);
                 }
             }
@@ -487,7 +487,7 @@ namespace Utf8Json.Formatters
                 if (!ReferenceEquals(targetType, tmpTargetType))
                 {
                     targetType = tmpTargetType;
-                    formatter = resolver.GetFormatterWithVerify(targetType);
+                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
                 }
 
                 Debug.Assert(formatter != null, nameof(formatter) + " != null");
@@ -504,7 +504,7 @@ namespace Utf8Json.Formatters
             writer.WriteRaw(isFirst ? info.GetPropertyNameWithQuotationAndNameSeparator() : info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
 
             var targetType = info.TargetType;
-            var formatter = resolver.GetFormatterWithVerify(targetType);
+            var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
             formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
 
             for (var index = 1; index < data.PropertyReferenceTypeArray.Length; index++)
@@ -515,7 +515,7 @@ namespace Utf8Json.Formatters
                 if (!ReferenceEquals(tmpTargetType, targetType))
                 {
                     targetType = tmpTargetType;
-                    formatter = resolver.GetFormatterWithVerify(targetType);
+                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
                 }
 
                 formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
@@ -541,7 +541,7 @@ namespace Utf8Json.Formatters
                 }
 
                 targetType = info.TargetType;
-                formatter = resolver.GetFormatterWithVerify(targetType);
+                formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
                 formatter.SerializeTypeless(ref writer, value, options);
             }
 
@@ -568,7 +568,7 @@ namespace Utf8Json.Formatters
                 if (!ReferenceEquals(tmpTargetType, targetType))
                 {
                     targetType = tmpTargetType;
-                    formatter = resolver.GetFormatterWithVerify(targetType);
+                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
                 }
 
                 Debug.Assert(formatter != null, nameof(formatter) + " != null");
@@ -584,7 +584,7 @@ namespace Utf8Json.Formatters
             writer.WriteRaw(isFirst ? info.GetPropertyNameWithQuotationAndNameSeparator() : info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
 
             var targetType = info.TargetType;
-            var formatter = resolver.GetFormatterWithVerify(targetType);
+            var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
             formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
 
             for (var index = 1; index < data.FieldReferenceTypeArray.Length; index++)
@@ -595,7 +595,7 @@ namespace Utf8Json.Formatters
                 if (!ReferenceEquals(tmpTargetType, targetType))
                 {
                     targetType = tmpTargetType;
-                    formatter = resolver.GetFormatterWithVerify(targetType);
+                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
                 }
 
                 formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
@@ -621,7 +621,7 @@ namespace Utf8Json.Formatters
                 }
 
                 targetType = info.TargetType;
-                formatter = resolver.GetFormatterWithVerify(targetType);
+                formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
                 formatter.SerializeTypeless(ref writer, value, options);
             }
 
@@ -648,7 +648,7 @@ namespace Utf8Json.Formatters
                 if (!ReferenceEquals(tmpTargetType, targetType))
                 {
                     targetType = tmpTargetType;
-                    formatter = resolver.GetFormatterWithVerify(targetType);
+                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
                 }
 
                 Debug.Assert(formatter != null, nameof(formatter) + " != null");
@@ -676,7 +676,7 @@ namespace Utf8Json.Formatters
                 }
 
                 targetType = info.TargetType;
-                formatter = resolver.GetFormatterWithVerify(targetType);
+                formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
                 formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
             }
 
@@ -702,7 +702,7 @@ namespace Utf8Json.Formatters
                 if (!ReferenceEquals(tmpTargetType, targetType))
                 {
                     targetType = tmpTargetType;
-                    formatter = resolver.GetFormatterWithVerify(targetType);
+                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
                 }
 
                 Debug.Assert(formatter != null, nameof(formatter) + " != null");
@@ -718,7 +718,7 @@ namespace Utf8Json.Formatters
             writer.WriteRaw(isFirst ? info.GetPropertyNameWithQuotationAndNameSeparator() : info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
 
             var targetType = info.TargetType;
-            var formatter = resolver.GetFormatterWithVerify(targetType);
+            var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
             formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
 
             for (var index = 1; index < data.PropertyValueTypeArray.Length; index++)
@@ -729,7 +729,7 @@ namespace Utf8Json.Formatters
                 if (!ReferenceEquals(tmpTargetType, targetType))
                 {
                     targetType = tmpTargetType;
-                    formatter = resolver.GetFormatterWithVerify(targetType);
+                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
                 }
 
                 formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
@@ -754,7 +754,7 @@ namespace Utf8Json.Formatters
                 }
 
                 targetType = info.TargetType;
-                formatter = resolver.GetFormatterWithVerify(targetType);
+                formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
                 formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
             }
 
@@ -780,7 +780,7 @@ namespace Utf8Json.Formatters
                 if (!ReferenceEquals(tmpTargetType, targetType))
                 {
                     targetType = tmpTargetType;
-                    formatter = resolver.GetFormatterWithVerify(targetType);
+                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
                 }
 
                 Debug.Assert(formatter != null, nameof(formatter) + " != null");
@@ -796,7 +796,7 @@ namespace Utf8Json.Formatters
             writer.WriteRaw(isFirst ? info.GetPropertyNameWithQuotationAndNameSeparator() : info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
 
             var targetType = info.TargetType;
-            var formatter = resolver.GetFormatterWithVerify(targetType);
+            var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
             formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
 
             for (var index = 1; index < data.FieldValueTypeArray.Length; index++)
@@ -807,7 +807,7 @@ namespace Utf8Json.Formatters
                 if (!ReferenceEquals(tmpTargetType, targetType))
                 {
                     targetType = tmpTargetType;
-                    formatter = resolver.GetFormatterWithVerify(targetType);
+                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
                 }
 
                 formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);

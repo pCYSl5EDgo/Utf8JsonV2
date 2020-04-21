@@ -23,7 +23,7 @@ namespace Utf8Json.Formatters
         public void Serialize(ref JsonWriter writer, T value, JsonSerializerOptions options)
         {
             var boxedValue = (object)value;
-            writer.SerializeInternal(boxedValue, options, data);
+            writer.SerializeTypeless(boxedValue, options, data);
         }
 
         public T Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -34,7 +34,7 @@ namespace Utf8Json.Formatters
         public static void SerializeStatic(ref JsonWriter writer, T value, JsonSerializerOptions options)
         {
             var boxedValue = (object)value;
-            writer.SerializeInternal(boxedValue, options, data);
+            writer.SerializeTypeless(boxedValue, options, data);
         }
 
         public static T DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
@@ -54,7 +54,7 @@ namespace Utf8Json.Formatters
                 throw new ArgumentNullException();
             }
 
-            writer.SerializeInternal(value, options, in data);
+            writer.SerializeTypeless(value, options, in data);
         }
 
         public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)

@@ -16,8 +16,10 @@ namespace Utf8Json.Internal
 
 #if CSHARP_8_OR_NEWER
         object? GetValue(object @this);
+        IJsonFormatter? Formatter { get; }
 #else
         object GetValue(object @this);
+        IJsonFormatter Formatter { get; }
 #endif
     }
 }

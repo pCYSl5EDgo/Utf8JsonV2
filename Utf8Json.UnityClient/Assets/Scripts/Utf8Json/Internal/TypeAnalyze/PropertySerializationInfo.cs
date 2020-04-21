@@ -10,6 +10,11 @@ namespace Utf8Json.Internal
     {
         public readonly PropertyInfo Info;
         private readonly byte[] bytes;
+#if CSHARP_8_OR_NEWER
+        public IJsonFormatter? Formatter { get; }
+#else
+        public IJsonFormatter Formatter { get; }
+#endif
 
         public Type TargetType => Info.PropertyType;
 
@@ -33,9 +38,16 @@ namespace Utf8Json.Internal
             return bytes;
         }
 
-        public PropertySerializationInfo(PropertyInfo info, string name)
+        public PropertySerializationInfo(PropertyInfo info, string name,
+#if CSHARP_8_OR_NEWER
+            IJsonFormatter?
+#else
+            IJsonFormatter
+#endif
+                formatter)
         {
             Info = info;
+            Formatter = formatter;
             bytes = PropertyNameHelper.CalculatePropertyNameBytes(name);
         }
 
