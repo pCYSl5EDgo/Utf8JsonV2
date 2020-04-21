@@ -378,37 +378,45 @@ namespace Utf8Json.Internal
             for (var index = 0; index < propertySerializeTypes.Length; index++)
             {
                 var serializeType = propertySerializeTypes[index];
-                if (serializeType == SerializeType.Ignore)
+                switch (serializeType)
                 {
-                    continue;
-                }
-
-                var isValue = propertyIsValues[index];
-                var encodedName = propertyEncodedNames[index];
-                var info = properties[index];
-                if (serializeType == SerializeType.SeeShouldSerializeMethod)
-                {
-                    var shouldSerialize = type.GetMethod("ShouldSerialize" + info.Name, Array.Empty<Type>());
-                    Debug.Assert(shouldSerialize != null);
-                    if (isValue)
-                    {
-                        propertyValueTypeShouldSerializes[--propertyValueTypeShouldSerializeCount] = new ShouldSerializePropertySerializationInfo(info, shouldSerialize, encodedName);
-                    }
-                    else
-                    {
-                        propertyReferenceTypeShouldSerializes[--propertyReferenceTypeShouldSerializeCount] = new ShouldSerializePropertySerializationInfo(info, shouldSerialize, encodedName);
-                    }
-                }
-                else
-                {
-                    if (isValue)
-                    {
-                        propertyValueTypes[--propertyValueTypeCount] = new PropertySerializationInfo(info, encodedName);
-                    }
-                    else
-                    {
-                        propertyReferenceTypes[--propertyReferenceTypeCount] = new PropertySerializationInfo(info, encodedName);
-                    }
+                    case SerializeType.Ignore:
+                    case SerializeType.ExtensionData:
+                        continue;
+                    case SerializeType.SeeShouldSerializeMethod:
+                        {
+                            var encodedName = propertyEncodedNames[index];
+                            var info = properties[index];
+                            var shouldSerialize = type.GetMethod("ShouldSerialize" + info.Name, Array.Empty<Type>());
+                            Debug.Assert(shouldSerialize != null);
+                            var isValue = propertyIsValues[index];
+                            if (isValue)
+                            {
+                                propertyValueTypeShouldSerializes[--propertyValueTypeShouldSerializeCount] = new ShouldSerializePropertySerializationInfo(info, shouldSerialize, encodedName);
+                            }
+                            else
+                            {
+                                propertyReferenceTypeShouldSerializes[--propertyReferenceTypeShouldSerializeCount] = new ShouldSerializePropertySerializationInfo(info, shouldSerialize, encodedName);
+                            }
+                        }
+                        break;
+                    case SerializeType.SerializeAlways:
+                        {
+                            var encodedName = propertyEncodedNames[index];
+                            var info = properties[index];
+                            var isValue = propertyIsValues[index];
+                            if (isValue)
+                            {
+                                propertyValueTypes[--propertyValueTypeCount] = new PropertySerializationInfo(info, encodedName);
+                            }
+                            else
+                            {
+                                propertyReferenceTypes[--propertyReferenceTypeCount] = new PropertySerializationInfo(info, encodedName);
+                            }
+                        }
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
                 }
             }
             return (propertyValueTypes, propertyReferenceTypes, propertyValueTypeShouldSerializes, propertyReferenceTypeShouldSerializes);

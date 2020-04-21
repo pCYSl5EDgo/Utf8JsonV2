@@ -74,9 +74,8 @@ namespace Utf8Json.Formatters
             }
 
             var maxLength = 0;
-            for (var index = 0; index < setters.Length; index++)
+            foreach (ref readonly var setter in setters)
             {
-                ref readonly var setter = ref setters[index];
                 if (maxLength < setter.Bytes.Length)
                 {
                     maxLength = setter.Bytes.Length;
@@ -85,9 +84,8 @@ namespace Utf8Json.Formatters
 
             valueArrayArray = maxLength == 0 ? Array.Empty<Setter[]>() : new Setter[maxLength][];
 
-            for (var index = 0; index < setters.Length; index++)
+            foreach (ref readonly var setter in setters)
             {
-                ref readonly var setter = ref setters[index];
                 var bytesLength = setter.Bytes.Length;
                 ref var parameterTypeArray = ref valueArrayArray[bytesLength - 1];
                 if (parameterTypeArray == null)
@@ -107,17 +105,21 @@ namespace Utf8Json.Formatters
 
         public bool TryFindParameter(ReadOnlySpan<byte> propertyName, out Setter setter)
         {
-            setter = default;
             if (propertyName.IsEmpty)
             {
-                return false;
+                goto NOT_FOUND;
             }
 
             var key = propertyName.Length - 1;
+            if (key >= valueArrayArray.Length)
+            {
+                goto NOT_FOUND;
+            }
+
             var keyArray = valueArrayArray[key];
             if (keyArray == null)
             {
-                return false;
+                goto NOT_FOUND;
             }
 
             if (propertyName.SequenceEqual(keyArray[0].Bytes))
@@ -137,22 +139,28 @@ namespace Utf8Json.Formatters
                 return true;
             }
 
+        NOT_FOUND:
+            setter = default;
             return false;
         }
 
         public bool TryFindParameterIgnoreCase(ReadOnlySpan<byte> propertyName, out Setter setter)
         {
-            setter = default;
             if (propertyName.IsEmpty)
             {
-                return false;
+                goto NOT_FOUND;
             }
 
             var key = propertyName.Length - 1;
+            if (key >= valueArrayArray.Length)
+            {
+                goto NOT_FOUND;
+            }
+
             var keyArray = valueArrayArray[key];
             if (keyArray == null)
             {
-                return false;
+                goto NOT_FOUND;
             }
 
             if (PropertyNameHelper.SequenceEqualsIgnoreCase(keyArray[0].Bytes, propertyName))
@@ -172,6 +180,8 @@ namespace Utf8Json.Formatters
                 return true;
             }
 
+        NOT_FOUND:
+            setter = default;
             return false;
         }
     }

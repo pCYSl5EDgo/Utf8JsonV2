@@ -123,7 +123,7 @@ namespace Utf8Json.Formatters
             return buffer;
         }
 
-        
+
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -256,7 +256,7 @@ namespace Utf8Json.Formatters
             return buffer;
         }
 
-        
+
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -389,7 +389,7 @@ namespace Utf8Json.Formatters
             return buffer;
         }
 
-        
+
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -522,7 +522,7 @@ namespace Utf8Json.Formatters
             return buffer;
         }
 
-        
+
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -655,7 +655,7 @@ namespace Utf8Json.Formatters
             return buffer;
         }
 
-        
+
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -788,7 +788,7 @@ namespace Utf8Json.Formatters
             return buffer;
         }
 
-        
+
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -921,7 +921,7 @@ namespace Utf8Json.Formatters
             return buffer;
         }
 
-        
+
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else

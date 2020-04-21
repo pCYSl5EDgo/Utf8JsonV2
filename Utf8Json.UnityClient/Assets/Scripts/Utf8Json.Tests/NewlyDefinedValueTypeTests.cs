@@ -1,11 +1,14 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 using System.Text;
+using System.Text.Json.Serialization;
 using UnityEngine;
 
 namespace Utf8Json.Test
@@ -37,6 +40,28 @@ namespace Utf8Json.Test
             public X FFF;
 
             public Y ときはきた { get; set; }
+        }
+
+        public class W
+        {
+            [JsonExtensionData]
+            public Dictionary<string, object> Ext { get; } = new Dictionary<string, object>();
+
+            [DataMember(Name = "MyName")]
+            public int A { get; set; }
+        }
+
+        [Test]
+        public void ExtensionDataTest()
+        {
+            var value = new W()
+            {
+                A = 114514,
+                Ext = { { "Hoge", LayoutKind.Auto }, { "Foo", 33 } }
+            };
+            var bytes = JsonSerializer.Serialize(value);
+            var deserialize = JsonSerializer.Deserialize<W>(bytes);
+            Assert.AreEqual(value.A, deserialize.A);
         }
 
         [Test]
