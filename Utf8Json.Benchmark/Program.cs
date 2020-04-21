@@ -18,6 +18,146 @@ namespace Utf8JsonBenchmark
             BenchmarkRunner.Run<JsonStringTester>();
             BenchmarkRunner.Run<JsonStringDeserializeTester>();
             BenchmarkRunner.Run<JsonCharTester>();
+            BenchmarkRunner.Run<JsonEnumInt32Tester>();
+            BenchmarkRunner.Run<JsonEnumByteTester>();
+            BenchmarkRunner.Run<JsonEnumUInt64Tester>();
+            BenchmarkRunner.Run<JsonEnumUInt16Tester>();
+        }
+    }
+
+    [MemoryDiagnoser]
+    public class JsonEnumUInt16Tester
+    {
+        public enum MyEnum : ushort
+        {
+            None,
+            Alice,
+            Bob,
+            Charles,
+            Django,
+        }
+
+        [Params(MyEnum.Alice, MyEnum.Bob, MyEnum.Charles, MyEnum.Django, MyEnum.None)]
+        public MyEnum Value;
+
+        [Benchmark]
+        public byte[] SerializeUtf8JsonV1()
+        {
+            return global::Utf8Json.JsonSerializer.Serialize(Value);
+        }
+
+        [Benchmark]
+        public byte[] SerializeUtf8JsonV2()
+        {
+            return V2::Utf8Json.JsonSerializer.Serialize(Value);
+        }
+
+        [Benchmark]
+        public byte[] SerializeSystemTextJson()
+        {
+            return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(Value);
+        }
+    }
+
+    [MemoryDiagnoser]
+    public class JsonEnumUInt64Tester
+    {
+        public enum MyEnum : ulong
+        {
+            None,
+            Alice,
+            Bob,
+            Charles,
+            Django,
+        }
+
+        [Params(MyEnum.Alice, MyEnum.Bob, MyEnum.Charles, MyEnum.Django, MyEnum.None)]
+        public MyEnum Value;
+
+        [Benchmark]
+        public byte[] SerializeUtf8JsonV1()
+        {
+            return global::Utf8Json.JsonSerializer.Serialize(Value);
+        }
+
+        [Benchmark]
+        public byte[] SerializeUtf8JsonV2()
+        {
+            return V2::Utf8Json.JsonSerializer.Serialize(Value);
+        }
+
+        [Benchmark]
+        public byte[] SerializeSystemTextJson()
+        {
+            return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(Value);
+        }
+    }
+
+    [MemoryDiagnoser]
+    public class JsonEnumByteTester
+    {
+        public enum MyEnum : byte
+        {
+            None,
+            Alice,
+            Bob,
+            Charles,
+            Django,
+        }
+
+        [Params(MyEnum.Alice, MyEnum.Bob, MyEnum.Charles, MyEnum.Django, MyEnum.None)]
+        public MyEnum Value;
+
+        [Benchmark]
+        public byte[] SerializeUtf8JsonV1()
+        {
+            return global::Utf8Json.JsonSerializer.Serialize(Value);
+        }
+
+        [Benchmark]
+        public byte[] SerializeUtf8JsonV2()
+        {
+            return V2::Utf8Json.JsonSerializer.Serialize(Value);
+        }
+
+        [Benchmark]
+        public byte[] SerializeSystemTextJson()
+        {
+            return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(Value);
+        }
+    }
+
+    [MemoryDiagnoser]
+    public class JsonEnumInt32Tester
+    {
+        public enum MyEnum
+        {
+            None,
+            Alice,
+            Bob,
+            Charles,
+            Django,
+        }
+
+        [Params(MyEnum.Alice, MyEnum.Bob, MyEnum.Charles, MyEnum.Django, MyEnum.None)]
+        public MyEnum Value;
+
+        [Benchmark]
+        public byte[] SerializeUtf8JsonV1()
+        {
+            return global::Utf8Json.JsonSerializer.Serialize(Value);
+        }
+
+        [Benchmark]
+        public byte[] SerializeUtf8JsonV2()
+        {
+            return V2::Utf8Json.JsonSerializer.Serialize(Value);
+        }
+
+        [Benchmark]
+        public byte[] SerializeSystemTextJson()
+        {
+            return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(Value);
         }
     }
 
