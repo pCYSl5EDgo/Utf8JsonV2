@@ -95,7 +95,7 @@ namespace Utf8Json.Formatters
         public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
 #endif
         {
-            if(value==null)
+            if (value == null)
             {
                 throw new NullReferenceException();
             }

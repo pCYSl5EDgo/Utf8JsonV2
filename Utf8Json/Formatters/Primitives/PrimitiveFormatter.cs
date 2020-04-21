@@ -42,7 +42,7 @@ namespace Utf8Json.Formatters
             {
                 throw new NullReferenceException();
             }
-            
+
             writer.Write(innerValue);
         }
 
@@ -85,7 +85,7 @@ namespace Utf8Json.Formatters
             {
                 throw new NullReferenceException();
             }
-            
+
             writer.Write(innerValue);
         }
 
@@ -128,7 +128,7 @@ namespace Utf8Json.Formatters
             {
                 throw new NullReferenceException();
             }
-            
+
             writer.Write(innerValue);
         }
 
@@ -171,7 +171,7 @@ namespace Utf8Json.Formatters
             {
                 throw new NullReferenceException();
             }
-            
+
             writer.Write(innerValue);
         }
 

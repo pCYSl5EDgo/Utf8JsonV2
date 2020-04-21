@@ -36,6 +36,7 @@ namespace Utf8Json.Internal
                     continue;
                 }
 
+                // ReSharper disable once ConvertSwitchStatementToSwitchExpression
                 switch (type.FullName)
                 {
                     case "System.IntPtr":

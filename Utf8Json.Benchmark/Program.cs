@@ -1,7 +1,7 @@
 ﻿extern alias V2;
-using System;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
+using System;
 
 namespace Utf8JsonBenchmark
 {

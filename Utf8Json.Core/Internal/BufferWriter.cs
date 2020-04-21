@@ -122,7 +122,7 @@ namespace Utf8Json.Internal
             {
                 EnsureMore(sizeHint);
             }
-            
+
             return this.innerSpan;
         }
 

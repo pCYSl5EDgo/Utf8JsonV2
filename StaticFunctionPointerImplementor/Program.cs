@@ -71,7 +71,7 @@ namespace StaticFunctionPointerImplementor
                 var callHelper = module.GetType("StaticFunctionPointerHelper", "CallHelper");
                 var serialize = callHelper.Methods[0];
                 ProcessSerialize(serialize);
-                
+
                 var deserialize = callHelper.Methods[1];
                 ProcessDeserialize(deserialize);
 

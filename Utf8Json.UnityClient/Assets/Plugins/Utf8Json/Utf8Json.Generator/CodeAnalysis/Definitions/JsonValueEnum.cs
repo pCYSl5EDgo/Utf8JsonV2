@@ -3,5 +3,5 @@
 
 namespace Utf8Json.Generator
 {
-    
+
 }

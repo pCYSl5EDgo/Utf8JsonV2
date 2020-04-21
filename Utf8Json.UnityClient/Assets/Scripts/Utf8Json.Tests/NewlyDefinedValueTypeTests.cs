@@ -1,11 +1,11 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using NUnit.Framework;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
-using NUnit.Framework;
 using UnityEngine;
 
 namespace Utf8Json.Test
@@ -14,13 +14,13 @@ namespace Utf8Json.Test
     {
         public struct X
         {
-            public int c { get; set; }
-            [SerializeField] private int b;
+            public int C { get; }
+            [SerializeField] private readonly int b;
 
             [SerializationConstructor]
-            public X(int C, int b)
+            public X(int c, int b)
             {
-                this.c = C;
+                this.C = c;
                 this.b = b;
             }
 
@@ -61,7 +61,7 @@ namespace Utf8Json.Test
             var value = new X(a, b);
             var bytes = JsonSerializer.Serialize(value);
             var deserialize = JsonSerializer.Deserialize<X>(bytes);
-            Assert.AreEqual(a, deserialize.c);
+            Assert.AreEqual(a, deserialize.C);
             Assert.IsTrue(deserialize.SameB(b));
         }
 
@@ -93,7 +93,7 @@ namespace Utf8Json.Test
             var bytes = JsonSerializer.Serialize(value);
             var deserialize = JsonSerializer.Deserialize<Z>(bytes);
             Assert.AreEqual(deserialize.ときはきた.A, ya);
-            Assert.AreEqual(deserialize.FFF.c, xc);
+            Assert.AreEqual(deserialize.FFF.C, xc);
             Assert.IsTrue(deserialize.FFF.SameB(xb));
         }
     }

@@ -74,7 +74,7 @@ namespace Utf8Json
             get => union as Dictionary<string, JsonObject>;
             set => union = value;
         }
-        
+
         public JsonObject[]? ObjectArray
         {
             get => union as JsonObject[];

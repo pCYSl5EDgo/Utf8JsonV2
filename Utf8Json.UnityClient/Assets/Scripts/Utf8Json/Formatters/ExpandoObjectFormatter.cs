@@ -74,7 +74,7 @@ namespace Utf8Json.Formatters
                 {
                     var propName = reader.ReadPropertyName();
                     var value = reader.Deserialize<object>(options, deserializer);
-                    ((IDictionary<string, object>) result).Add(propName, value);
+                    ((IDictionary<string, object>)result).Add(propName, value);
                 }
             }
             else
@@ -84,7 +84,7 @@ namespace Utf8Json.Formatters
                 {
                     var propName = reader.ReadPropertyName();
                     var value = formatter.Deserialize(ref reader, options);
-                    ((IDictionary<string, object>) result).Add(propName, value);
+                    ((IDictionary<string, object>)result).Add(propName, value);
                 }
             }
 
