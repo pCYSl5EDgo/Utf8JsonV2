@@ -1,6 +1,9 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Generic;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using NUnit.Framework;
 using UnityEngine;
@@ -34,6 +37,20 @@ namespace Utf8Json.Test
             public X FFF;
 
             public Y ときはきた { get; set; }
+        }
+
+        [Test]
+        public void LayoutKindTest()
+        {
+            var dictionary = new Dictionary<LayoutKind, BindingFlags>
+            {
+                { LayoutKind.Explicit, BindingFlags.Static },
+            };
+            var bytes = JsonSerializer.Serialize(dictionary);
+            var deserialize = JsonSerializer.Deserialize<Dictionary<LayoutKind, BindingFlags>>(bytes);
+            Assert.IsTrue(deserialize.ContainsKey(LayoutKind.Explicit));
+            Assert.IsTrue((deserialize[LayoutKind.Explicit] & BindingFlags.Static) != 0);
+            Assert.AreEqual(1, deserialize.Count);
         }
 
         [TestCase(0, 0)]

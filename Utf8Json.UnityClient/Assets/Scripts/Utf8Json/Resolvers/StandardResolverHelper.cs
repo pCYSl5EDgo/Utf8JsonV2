@@ -9,9 +9,9 @@ namespace Utf8Json.Internal.Resolvers
     {
         public static readonly IFormatterResolver[] DefaultResolvers =
         {
-            new BuiltinResolver(),
-            new BasicGenericsResolver(),
-            new ReflectionResolver(),
+            BuiltinResolver.Instance,
+            BasicGenericsResolver.Instance,
+            ReflectionResolver.Instance,
         };
     }
 }

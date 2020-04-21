@@ -796,17 +796,7 @@ namespace Utf8Json.Formatters
             writer.WriteRaw(isFirst ? info.GetPropertyNameWithQuotationAndNameSeparator() : info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
 
             var targetType = info.TargetType;
-            IJsonFormatter formatter;
-            try
-            {
-                formatter = resolver.GetFormatterWithVerify(targetType);
-            }
-            catch
-            {
-                Console.WriteLine(resolver.GetType().FullName);
-                Console.WriteLine(targetType.FullName);
-                throw;
-            }
+            var formatter = resolver.GetFormatterWithVerify(targetType);
             formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
 
             for (var index = 1; index < data.FieldValueTypeArray.Length; index++)

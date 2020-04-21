@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Buffers;
+
 // ReSharper disable UseIndexFromEndExpression
 
 namespace Utf8Json.Internal
@@ -28,15 +30,7 @@ namespace Utf8Json.Internal
             {
                 var code = entry.Key.GetHashCode() & bitMask;
                 ref var array = ref pairArrayArray[code];
-                if (array == null)
-                {
-                    array = new[] { entry };
-                }
-                else
-                {
-                    Array.Resize(ref array, array.Length + 1);
-                    array[array.Length - 1] = entry;
-                }
+                HashTableHelper.Add(ref array, entry);
             }
         }
 
@@ -46,16 +40,18 @@ namespace Utf8Json.Internal
         public TValue GetOrAdd(Type type, Func<Type, TValue> factory)
 #endif
         {
-            if (TryGetValue(type, out var v))
-            {
-                return v;
-            }
-
             lock (pairArrayArray)
             {
-                TryAddInternal(new Entry(type, factory(type)), out v);
+                if (TryGetValue(type, out var answer))
+                {
+                    return answer;
+                }
+
+                var value = factory(type);
+                var entry = new Entry(type, value);
+                TryAddInternal(entry, out answer);
+                return answer;
             }
-            return v;
         }
 
 
@@ -141,6 +137,59 @@ namespace Utf8Json.Internal
             array[array.Length - 1] = entry;
             value = entry.Value;
             return true;
+        }
+
+        public TValue[] ToArray()
+        {
+            lock (pairArrayArray)
+            {
+                var pool = ArrayPool<TValue>.Shared;
+                var array = pool.Rent(pairArrayArray.Length);
+                try
+                {
+                    var count = 0;
+                    foreach (var entryArray in pairArrayArray)
+                    {
+                        if (entryArray == null)
+                        {
+                            continue;
+                        }
+
+                        // ReSharper disable once ForCanBeConvertedToForeach
+                        for (var index = 0; index < entryArray.Length; index++)
+                        {
+                            ref readonly var entry = ref entryArray[index];
+                            if (entry.Value == null)
+                            {
+                                continue;
+                            }
+
+                            if (array.Length < ++count)
+                            {
+                                var tmp = pool.Rent(count << 1);
+                                Array.Copy(array, tmp, array.Length);
+                                pool.Return(array);
+                                array = tmp;
+                            }
+
+                            array[count - 1] = entry.Value;
+                        }
+                    }
+
+                    if (count == 0)
+                    {
+                        return Array.Empty<TValue>();
+                    }
+
+                    var answer = new TValue[count];
+                    Array.Copy(array, answer, answer.Length);
+                    return answer;
+                }
+                finally
+                {
+                    pool.Return(array);
+                }
+            }
         }
 
 

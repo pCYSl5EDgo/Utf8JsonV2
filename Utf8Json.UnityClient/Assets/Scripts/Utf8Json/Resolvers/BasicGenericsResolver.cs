@@ -8,6 +8,12 @@ namespace Utf8Json.Resolvers
 {
     public sealed partial class BasicGenericsResolver : IFormatterResolver
     {
+        public static readonly BasicGenericsResolver Instance = new BasicGenericsResolver();
+
+        private BasicGenericsResolver()
+        {
+        }
+
         public IJsonFormatter<T>
 #if CSHARP_8_OR_NEWER
             ?
@@ -25,8 +31,16 @@ namespace Utf8Json.Resolvers
 #endif
             GetFormatter(Type targetType)
         {
-            formatterTable.TryGetValue(targetType, out var formatter);
-            return formatter;
+            return formatterTable.GetOrAdd(targetType, Factory);
+        }
+
+#if CSHARP_8_OR_NEWER
+        private static IJsonFormatter? Factory(Type targetType)
+#else
+        private static IJsonFormatter Factory(Type targetType)
+#endif
+        {
+            return typeof(FormatterCache<>).MakeGenericType(targetType).GetField("Formatter")?.GetValue(null) as IJsonFormatter;
         }
 
         public IntPtr GetSerializeStatic<T>()

@@ -19,6 +19,7 @@ namespace Utf8Json
             this.MaxDepth = 64;
             this.WriteIndented = false;
             this.IgnoreCase = false;
+            this.ProcessEnumAsString = true;
         }
 
         /// <summary>
@@ -34,6 +35,7 @@ namespace Utf8Json
             this.MaxDepth = copyFrom.MaxDepth;
             this.WriteIndented = copyFrom.WriteIndented;
             this.IgnoreCase = copyFrom.IgnoreCase;
+            this.ProcessEnumAsString = copyFrom.ProcessEnumAsString;
         }
 
         /// <summary>
@@ -70,6 +72,22 @@ namespace Utf8Json
             {
                 throw new JsonSerializationException("Deserialization attempted to create the type " + type.FullName + " which is not allowed.");
             }
+        }
+
+        public bool ProcessEnumAsString { get; private set; }
+
+        public JsonSerializerOptions WithProcessEnumAsString(bool value)
+        {
+            if (this.ProcessEnumAsString == value)
+            {
+                return this;
+            }
+
+            var result = new JsonSerializerOptions(this)
+            {
+                ProcessEnumAsString = value,
+            };
+            return result;
         }
 
         public bool IgnoreCase { get; private set; }

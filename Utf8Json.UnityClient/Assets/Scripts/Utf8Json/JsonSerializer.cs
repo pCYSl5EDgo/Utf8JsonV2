@@ -156,28 +156,48 @@ namespace Utf8Json
         /// <param name="options">The options.</param>
         /// <returns>A byte array with the serialized value.</returns>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static unsafe byte[] Serialize<T>(T value, JsonSerializerOptions options)
+        public static byte[] Serialize<T>(T value, JsonSerializerOptions options)
         {
 #if !ENABLE_IL2CPP
             var calculator = options.Resolver.GetCalcByteLengthForSerialization<T>();
-            if (calculator.ToPointer() == null)
+            unsafe
             {
-                goto INTERNAL;
-            }
+                if (calculator.ToPointer() == null)
+                {
+                    goto INTERNAL;
+                }
 
-            var serializer = options.Resolver.GetSerializeSpan<T>();
-            if (serializer.ToPointer() == null)
-            {
-                goto INTERNAL;
-            }
+                var serializer = options.Resolver.GetSerializeSpan<T>();
+                if (serializer.ToPointer() == null)
+                {
+                    goto INTERNAL;
+                }
 
-            var answer = new byte[StaticFunctionPointerHelper.CallHelper.CalcByteLengthForSerialization(options, value, calculator)];
-            StaticFunctionPointerHelper.CallHelper.SerializeSpan(options, value, answer.AsSpan(), serializer);
-            return answer;
+                var answer = new byte[StaticFunctionPointerHelper.CallHelper.CalcByteLengthForSerialization(options, value, calculator)];
+                StaticFunctionPointerHelper.CallHelper.SerializeSpan(options, value, answer.AsSpan(), serializer);
+                return answer;
+            }
 
         INTERNAL:
 #endif
-            return SerializeInternal(value, options);
+            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
+            try
+            {
+                var writer = new JsonWriter(SequencePool.Shared, array);
+                try
+                {
+                    options.SerializeWithVerify(ref writer, value);
+                }
+                catch (Exception ex)
+                {
+                    throw new JsonSerializationException($"Failed to serialize {typeof(T).FullName} value.", ex);
+                }
+                return writer.FlushAndGetArray();
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(array);
+            }
         }
 
         /// <summary>
@@ -186,34 +206,32 @@ namespace Utf8Json
         /// <param name="value">The value to serialize.</param>
         /// <returns>A byte array with the serialized value.</returns>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static unsafe byte[] Serialize<T>(T value)
+        public static byte[] Serialize<T>(T value)
         {
             var options = DefaultOptions;
 
 #if !ENABLE_IL2CPP
             var calculator = options.Resolver.GetCalcByteLengthForSerialization<T>();
-            if (calculator.ToPointer() == null)
+            unsafe
             {
-                goto INTERNAL;
-            }
+                if (calculator.ToPointer() == null)
+                {
+                    goto INTERNAL;
+                }
 
-            var serializer = options.Resolver.GetSerializeSpan<T>();
-            if (serializer.ToPointer() == null)
-            {
-                goto INTERNAL;
-            }
+                var serializer = options.Resolver.GetSerializeSpan<T>();
+                if (serializer.ToPointer() == null)
+                {
+                    goto INTERNAL;
+                }
 
-            var answer = new byte[StaticFunctionPointerHelper.CallHelper.CalcByteLengthForSerialization(options, value, calculator)];
-            StaticFunctionPointerHelper.CallHelper.SerializeSpan(options, value, answer.AsSpan(), serializer);
-            return answer;
+                var answer = new byte[StaticFunctionPointerHelper.CallHelper.CalcByteLengthForSerialization(options, value, calculator)];
+                StaticFunctionPointerHelper.CallHelper.SerializeSpan(options, value, answer.AsSpan(), serializer);
+                return answer;
+            }
 
         INTERNAL:
 #endif
-            return SerializeInternal(value, options);
-        }
-
-        private static byte[] SerializeInternal<T>(T value, JsonSerializerOptions options)
-        {
             var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {

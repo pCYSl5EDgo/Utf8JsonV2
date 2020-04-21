@@ -8,6 +8,12 @@ namespace Utf8Json.Resolvers
 {
     public sealed partial class BuiltinResolver : IFormatterResolver
     {
+        public static readonly BuiltinResolver Instance = new BuiltinResolver();
+
+        private BuiltinResolver()
+        {
+        }
+
 #if CSHARP_8_OR_NEWER
         public IJsonFormatter<T>? GetFormatter<T>()
 #else

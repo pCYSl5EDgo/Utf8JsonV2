@@ -21,7 +21,8 @@ namespace Utf8Json
                 }
             }
 #endif
-            options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value, options);
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
+            formatter.Serialize(ref writer, value, options);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

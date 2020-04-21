@@ -46,15 +46,7 @@ namespace Utf8Json.Internal
                 var entryKey = entry.Key;
                 var code = entryKey.GetHashCode() & bitMask;
                 ref var array = ref typeArrayArray[code];
-                if (array == null)
-                {
-                    array = new[] { entryKey };
-                }
-                else
-                {
-                    Array.Resize(ref array, array.Length + 1);
-                    array[array.Length - 1] = entryKey;
-                }
+                HashTableHelper.Add(ref array, entryKey);
 
                 if (maxCount < array.Length)
                 {
