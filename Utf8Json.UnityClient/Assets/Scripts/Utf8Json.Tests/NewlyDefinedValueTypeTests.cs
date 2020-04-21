@@ -10,6 +10,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Text.Json.Serialization;
 using UnityEngine;
+using Utf8Json.Formatters;
 
 namespace Utf8Json.Test
 {
@@ -49,17 +50,21 @@ namespace Utf8Json.Test
 
             [DataMember(Name = "MyName")]
             public int A { get; set; }
+
+            [JsonFormatter(typeof(DateTimeFormatter))]
+            public DateTime DateTimeNow { get; set; } = DateTime.Now;
         }
 
         [Test]
         public void ExtensionDataTest()
         {
-            var value = new W()
+            var value = new W
             {
                 A = 114514,
                 Ext = { { "Hoge", LayoutKind.Auto }, { "Foo", 33 } }
             };
             var bytes = JsonSerializer.Serialize(value);
+            TestContext.WriteLine(Encoding.UTF8.GetString(bytes));
             var deserialize = JsonSerializer.Deserialize<W>(bytes);
             Assert.AreEqual(value.A, deserialize.A);
         }

@@ -28,7 +28,7 @@ namespace Utf8Json.Formatters
 
         public T Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return (T)reader.DeserializeInternal(options, parameterDictionary, deserializationDictionary, data);
+            return (T)reader.DeserializeTypeless(options, parameterDictionary, deserializationDictionary, data);
         }
 
         public static void SerializeStatic(ref JsonWriter writer, T value, JsonSerializerOptions options)
@@ -39,7 +39,7 @@ namespace Utf8Json.Formatters
 
         public static T DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return (T)reader.DeserializeInternal(options, parameterDictionary, deserializationDictionary, data);
+            return (T)reader.DeserializeTypeless(options, parameterDictionary, deserializationDictionary, data);
         }
 
 
@@ -59,7 +59,7 @@ namespace Utf8Json.Formatters
 
         public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.DeserializeInternal(options, parameterDictionary, deserializationDictionary, data);
+            return reader.DeserializeTypeless(options, parameterDictionary, deserializationDictionary, data);
         }
     }
 }

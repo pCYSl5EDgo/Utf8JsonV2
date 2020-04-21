@@ -16,27 +16,43 @@ namespace Utf8Json.Formatters
 #if CSHARP_8_OR_NEWER
             public readonly FieldInfo? Field;
             public readonly PropertyInfo? Property;
+            public readonly IJsonFormatter? Formatter;
 #else
             public readonly FieldInfo Field;
             public readonly PropertyInfo Property;
+            public readonly IJsonFormatter Formatter;
 #endif
 
             public readonly Type TargetType;
             public readonly byte[] Bytes;
 
-            public Setter(FieldInfo info, byte[] bytes)
+            public Setter(FieldInfo info, byte[] bytes,
+#if CSHARP_8_OR_NEWER
+                IJsonFormatter?
+#else
+                IJsonFormatter
+#endif
+                    formatter)
             {
                 Field = info;
                 Bytes = bytes;
+                Formatter = formatter;
                 Property = default;
                 TargetType = info.FieldType;
             }
 
-            public Setter(PropertyInfo info, byte[] bytes)
+            public Setter(PropertyInfo info, byte[] bytes,
+#if CSHARP_8_OR_NEWER
+                IJsonFormatter?
+#else
+                IJsonFormatter
+#endif
+                    formatter)
             {
                 Field = default;
                 Property = info;
                 Bytes = bytes;
+                Formatter = formatter;
                 TargetType = info.PropertyType;
             }
 

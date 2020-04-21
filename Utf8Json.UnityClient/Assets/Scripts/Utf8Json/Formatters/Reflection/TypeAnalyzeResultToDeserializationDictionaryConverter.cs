@@ -25,22 +25,22 @@ namespace Utf8Json.Formatters
             {
                 foreach (ref readonly var info in result.FieldReferenceTypeArray.AsSpan())
                 {
-                    array[count++] = new DeserializationDictionary.Setter(info.Info, info.GetPropertyNameRaw().ToArray());
+                    array[count++] = new DeserializationDictionary.Setter(info.Info, info.GetPropertyNameRaw().ToArray(), info.Formatter);
                 }
 
                 foreach (ref readonly var info in result.FieldValueTypeArray.AsSpan())
                 {
-                    array[count++] = new DeserializationDictionary.Setter(info.Info, info.GetPropertyNameRaw().ToArray());
+                    array[count++] = new DeserializationDictionary.Setter(info.Info, info.GetPropertyNameRaw().ToArray(), info.Formatter);
                 }
 
                 foreach (ref readonly var info in result.FieldReferenceTypeShouldSerializeArray.AsSpan())
                 {
-                    array[count++] = new DeserializationDictionary.Setter(info.Info, info.GetPropertyNameRaw().ToArray());
+                    array[count++] = new DeserializationDictionary.Setter(info.Info, info.GetPropertyNameRaw().ToArray(), info.Formatter);
                 }
 
                 foreach (ref readonly var info in result.FieldValueTypeShouldSerializeArray.AsSpan())
                 {
-                    array[count++] = new DeserializationDictionary.Setter(info.Info, info.GetPropertyNameRaw().ToArray());
+                    array[count++] = new DeserializationDictionary.Setter(info.Info, info.GetPropertyNameRaw().ToArray(), info.Formatter);
                 }
 
                 foreach (ref readonly var info in result.PropertyReferenceTypeArray.AsSpan())
@@ -50,7 +50,7 @@ namespace Utf8Json.Formatters
                         continue;
                     }
 
-                    array[count++] = new DeserializationDictionary.Setter(info.Info, info.GetPropertyNameRaw().ToArray());
+                    array[count++] = new DeserializationDictionary.Setter(info.Info, info.GetPropertyNameRaw().ToArray(), info.Formatter);
                 }
 
                 foreach (ref readonly var info in result.PropertyValueTypeArray.AsSpan())
@@ -60,7 +60,7 @@ namespace Utf8Json.Formatters
                         continue;
                     }
 
-                    array[count++] = new DeserializationDictionary.Setter(info.Info, info.GetPropertyNameRaw().ToArray());
+                    array[count++] = new DeserializationDictionary.Setter(info.Info, info.GetPropertyNameRaw().ToArray(), info.Formatter);
                 }
 
                 foreach (ref readonly var info in result.PropertyReferenceTypeShouldSerializeArray.AsSpan())
@@ -70,7 +70,7 @@ namespace Utf8Json.Formatters
                         continue;
                     }
 
-                    array[count++] = new DeserializationDictionary.Setter(info.Info, info.GetPropertyNameRaw().ToArray());
+                    array[count++] = new DeserializationDictionary.Setter(info.Info, info.GetPropertyNameRaw().ToArray(), info.Formatter);
                 }
 
                 foreach (ref readonly var info in result.PropertyValueTypeShouldSerializeArray.AsSpan())
@@ -80,7 +80,7 @@ namespace Utf8Json.Formatters
                         continue;
                     }
 
-                    array[count++] = new DeserializationDictionary.Setter(info.Info, info.GetPropertyNameRaw().ToArray());
+                    array[count++] = new DeserializationDictionary.Setter(info.Info, info.GetPropertyNameRaw().ToArray(), info.Formatter);
                 }
 
                 var answer = new DeserializationDictionary(array.AsSpan(0, count));

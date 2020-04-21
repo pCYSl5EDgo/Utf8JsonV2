@@ -10,7 +10,7 @@ namespace Utf8Json.Formatters
 {
     internal static class CommonDeserializeTypelessHelper
     {
-        public static object DeserializeInternal(this ref JsonReader reader, JsonSerializerOptions options,
+        public static object DeserializeTypeless(this ref JsonReader reader, JsonSerializerOptions options,
             DeserializationParameterDictionary parameterDictionary,
             DeserializationDictionary deserializationDictionary, in TypeAnalyzeResult data)
         {
@@ -70,8 +70,6 @@ namespace Utf8Json.Formatters
             var count = 0;
             var ignoreCase = options.IgnoreCase;
             var ignoreNull = options.IgnoreNullValues;
-            var formatter = default(IJsonFormatter);
-            var targetType = default(Type);
             var resolver = options.Resolver;
             while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
             {
@@ -100,12 +98,7 @@ namespace Utf8Json.Formatters
                     }
                 }
 
-                if (!ReferenceEquals(targetType, setter.TargetType))
-                {
-                    targetType = setter.TargetType;
-                    formatter = resolver.GetFormatterWithVerify(targetType);
-                }
-
+                var formatter = setter.Formatter ?? resolver.GetFormatterWithVerify(setter.TargetType);
                 Debug.Assert(formatter != null, nameof(formatter) + " != null");
                 var value = formatter.DeserializeTypeless(ref reader, options);
                 if (ignoreNull && value == null)
@@ -122,8 +115,6 @@ namespace Utf8Json.Formatters
             var count = 0;
             var ignoreCase = options.IgnoreCase;
             var ignoreNull = options.IgnoreNullValues;
-            var formatter = default(IJsonFormatter);
-            var targetType = default(Type);
             var resolver = options.Resolver;
             while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
             {
@@ -146,12 +137,7 @@ namespace Utf8Json.Formatters
                     }
                 }
 
-                if (!ReferenceEquals(targetType, setter.TargetType))
-                {
-                    targetType = setter.TargetType;
-                    formatter = resolver.GetFormatterWithVerify(targetType);
-                }
-
+                var formatter = setter.Formatter ?? resolver.GetFormatterWithVerify(setter.TargetType);
                 Debug.Assert(formatter != null, nameof(formatter) + " != null");
                 var value = formatter.DeserializeTypeless(ref reader, options);
                 if (ignoreNull && value == null)

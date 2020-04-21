@@ -68,7 +68,7 @@ namespace Utf8Json.Formatters
                 return null;
             }
 
-            var answer = reader.DeserializeInternal(options, parameterDictionary, deserializationDictionary, data) as T;
+            var answer = reader.DeserializeTypeless(options, parameterDictionary, deserializationDictionary, data) as T;
             return answer;
         }
 
@@ -92,7 +92,7 @@ namespace Utf8Json.Formatters
                 return null;
             }
 
-            var answer = reader.DeserializeInternal(options, parameterDictionary, deserializationDictionary, data);
+            var answer = reader.DeserializeTypeless(options, parameterDictionary, deserializationDictionary, data);
             return answer;
         }
     }

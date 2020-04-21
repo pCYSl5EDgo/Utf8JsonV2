@@ -130,8 +130,8 @@ namespace Utf8Json.Formatters
                 var pair = enumerator.Current;
                 writer.WritePropertyName(pair.Key);
                 var value = pair.Value;
-                var targetType = default(Type);
-                var formatter = default(IJsonFormatter);
+                Type targetType;
+                IJsonFormatter formatter;
                 if (value == null)
                 {
                     writer.WriteNull();
@@ -155,18 +155,9 @@ namespace Utf8Json.Formatters
                         continue;
                     }
 
-                    var tmpTargetType = value.GetType();
-                    if (!ReferenceEquals(tmpTargetType, targetType))
-                    {
-                        targetType = tmpTargetType;
-                        formatter = resolver.GetFormatterWithVerify(targetType);
-                    }
-
-#if CSHARP_8_OR_NEWER
-                    formatter!.SerializeTypeless(ref writer, value, options);
-#else
+                    targetType = value.GetType();
+                    formatter = resolver.GetFormatterWithVerify(targetType);
                     formatter.SerializeTypeless(ref writer, value, options);
-#endif
                 }
             }
             finally
@@ -194,8 +185,8 @@ namespace Utf8Json.Formatters
                     return isFirst;
                 }
 
-                var targetType = default(Type);
-                var formatter = default(IJsonFormatter);
+                Type targetType;
+                IJsonFormatter formatter;
 
                 var pair = enumerator.Current;
                 var value = pair.Value;
@@ -235,18 +226,9 @@ namespace Utf8Json.Formatters
                     }
 
                     writer.WritePropertyName(pair.Key);
-                    var tmpTargetType = value.GetType();
-                    if (!ReferenceEquals(tmpTargetType, targetType))
-                    {
-                        targetType = tmpTargetType;
-                        formatter = resolver.GetFormatterWithVerify(targetType);
-                    }
-
-#if CSHARP_8_OR_NEWER
-                    formatter!.SerializeTypeless(ref writer, value, options);
-#else
+                    targetType = value.GetType();
+                    formatter = resolver.GetFormatterWithVerify(targetType);
                     formatter.SerializeTypeless(ref writer, value, options);
-#endif
                 }
             }
             finally
@@ -260,8 +242,7 @@ namespace Utf8Json.Formatters
         private static bool SerializePropertyReferenceTypeShouldSerializesWriteNull(ref JsonWriter writer, JsonSerializerOptions options, IFormatterResolver resolver, object boxedValue, bool isFirst, in TypeAnalyzeResult data)
         {
             ref readonly var info = ref data.PropertyReferenceTypeShouldSerializeArray[0];
-            var targetType = default(Type);
-            var formatter = default(IJsonFormatter);
+            IJsonFormatter formatter;
             if (info.ShouldSerialize(boxedValue))
             {
                 if (isFirst)
@@ -274,8 +255,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                targetType = info.Info.PropertyType;
-                formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
+                formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.Info.PropertyType);
                 formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
             }
 
@@ -297,18 +277,8 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                var tmpTargetType = info.Info.PropertyType;
-                if (!ReferenceEquals(tmpTargetType, targetType))
-                {
-                    targetType = tmpTargetType;
-                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
-                }
-
-#if CSHARP_8_OR_NEWER
-                formatter!.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
-#else
+                formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.Info.PropertyType);
                 formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
-#endif
             }
 
             return isFirst;
@@ -317,9 +287,6 @@ namespace Utf8Json.Formatters
         private static bool SerializePropertyReferenceTypeShouldSerializesIgnoreNull(ref JsonWriter writer, JsonSerializerOptions options, IFormatterResolver resolver, object boxedValue, bool isFirst, in TypeAnalyzeResult data)
         {
             ref readonly var info = ref data.PropertyReferenceTypeShouldSerializeArray[0];
-            var targetType = default(Type);
-            var formatter = default(IJsonFormatter);
-
             if (info.ShouldSerialize(boxedValue))
             {
                 var value = info.GetValue(boxedValue);
@@ -335,8 +302,7 @@ namespace Utf8Json.Formatters
                         writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                     }
 
-                    targetType = info.TargetType;
-                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
+                    var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.Info.PropertyType);
                     formatter.SerializeTypeless(ref writer, value, options);
                 }
             }
@@ -365,13 +331,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                var tmpTargetType = info.TargetType;
-                if (!ReferenceEquals(tmpTargetType, targetType))
-                {
-                    targetType = tmpTargetType;
-                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
-                }
-
+                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
                 Debug.Assert(formatter != null, nameof(formatter) + " != null");
                 formatter.SerializeTypeless(ref writer, value, options);
             }
@@ -382,8 +342,6 @@ namespace Utf8Json.Formatters
         private static bool SerializeFieldReferenceTypeShouldSerializesWriteNull(ref JsonWriter writer, JsonSerializerOptions options, IFormatterResolver resolver, object boxedValue, bool isFirst, in TypeAnalyzeResult data)
         {
             ref readonly var info = ref data.FieldReferenceTypeShouldSerializeArray[0];
-            var targetType = default(Type);
-            var formatter = default(IJsonFormatter);
             if (info.ShouldSerialize(boxedValue))
             {
                 if (isFirst)
@@ -396,8 +354,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                targetType = info.TargetType;
-                formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
+                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
                 formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
             }
 
@@ -419,13 +376,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                var tmpTargetType = info.TargetType;
-                if (!ReferenceEquals(targetType, tmpTargetType))
-                {
-                    targetType = tmpTargetType;
-                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
-                }
-
+                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
                 Debug.Assert(formatter != null, nameof(formatter) + " != null");
                 formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
             }
@@ -436,8 +387,6 @@ namespace Utf8Json.Formatters
         private static bool SerializeFieldReferenceTypeShouldSerializesIgnoreNull(ref JsonWriter writer, JsonSerializerOptions options, IFormatterResolver resolver, object boxedValue, bool isFirst, in TypeAnalyzeResult data)
         {
             ref readonly var info = ref data.FieldReferenceTypeShouldSerializeArray[0];
-            var targetType = default(Type);
-            var formatter = default(IJsonFormatter);
             if (info.ShouldSerialize(boxedValue))
             {
                 var value = info.GetValue(boxedValue);
@@ -453,8 +402,7 @@ namespace Utf8Json.Formatters
                         writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                     }
 
-                    targetType = info.TargetType;
-                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
+                    var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
                     formatter.SerializeTypeless(ref writer, value, options);
                 }
             }
@@ -483,13 +431,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                var tmpTargetType = info.TargetType;
-                if (!ReferenceEquals(targetType, tmpTargetType))
-                {
-                    targetType = tmpTargetType;
-                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
-                }
-
+                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
                 Debug.Assert(formatter != null, nameof(formatter) + " != null");
                 formatter.SerializeTypeless(ref writer, value, options);
             }
@@ -502,30 +444,23 @@ namespace Utf8Json.Formatters
             ref readonly var info = ref data.PropertyReferenceTypeArray[0];
 
             writer.WriteRaw(isFirst ? info.GetPropertyNameWithQuotationAndNameSeparator() : info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
-
-            var targetType = info.TargetType;
-            var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
-            formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
+            {
+                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
+                formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
+            }
 
             for (var index = 1; index < data.PropertyReferenceTypeArray.Length; index++)
             {
                 info = ref data.PropertyReferenceTypeArray[index];
                 writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
-                var tmpTargetType = info.TargetType;
-                if (!ReferenceEquals(tmpTargetType, targetType))
-                {
-                    targetType = tmpTargetType;
-                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
-                }
 
+                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
                 formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
             }
         }
 
         private static bool SerializePropertyReferenceTypesIgnoreNull(ref JsonWriter writer, JsonSerializerOptions options, IFormatterResolver resolver, object boxedValue, bool isFirst, in TypeAnalyzeResult data)
         {
-            var formatter = default(IJsonFormatter);
-            var targetType = default(Type);
             ref readonly var info = ref data.PropertyReferenceTypeArray[0];
             var value = info.GetValue(boxedValue);
             if (value != null)
@@ -540,8 +475,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                targetType = info.TargetType;
-                formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
+                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
                 formatter.SerializeTypeless(ref writer, value, options);
             }
 
@@ -564,13 +498,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                var tmpTargetType = info.TargetType;
-                if (!ReferenceEquals(tmpTargetType, targetType))
-                {
-                    targetType = tmpTargetType;
-                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
-                }
-
+                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
                 Debug.Assert(formatter != null, nameof(formatter) + " != null");
                 formatter.SerializeTypeless(ref writer, value, options);
             }
@@ -582,30 +510,21 @@ namespace Utf8Json.Formatters
         {
             ref readonly var info = ref data.FieldReferenceTypeArray[0];
             writer.WriteRaw(isFirst ? info.GetPropertyNameWithQuotationAndNameSeparator() : info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
-
-            var targetType = info.TargetType;
-            var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
-            formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
-
+            {
+                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
+                formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
+            }
             for (var index = 1; index < data.FieldReferenceTypeArray.Length; index++)
             {
                 info = ref data.FieldReferenceTypeArray[index];
                 writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
-                var tmpTargetType = info.TargetType;
-                if (!ReferenceEquals(tmpTargetType, targetType))
-                {
-                    targetType = tmpTargetType;
-                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
-                }
-
+                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
                 formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
             }
         }
 
         private static bool SerializeFieldReferenceTypesIgnoreNull(ref JsonWriter writer, JsonSerializerOptions options, IFormatterResolver resolver, object boxedValue, bool isFirst, in TypeAnalyzeResult data)
         {
-            var formatter = default(IJsonFormatter);
-            var targetType = default(Type);
             ref readonly var info = ref data.FieldReferenceTypeArray[0];
             var value = info.GetValue(boxedValue);
             if (value != null)
@@ -620,8 +539,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                targetType = info.TargetType;
-                formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
+                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
                 formatter.SerializeTypeless(ref writer, value, options);
             }
 
@@ -644,13 +562,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                var tmpTargetType = info.TargetType;
-                if (!ReferenceEquals(tmpTargetType, targetType))
-                {
-                    targetType = tmpTargetType;
-                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
-                }
-
+                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
                 Debug.Assert(formatter != null, nameof(formatter) + " != null");
                 formatter.SerializeTypeless(ref writer, value, options);
             }
@@ -660,8 +572,6 @@ namespace Utf8Json.Formatters
 
         private static bool SerializePropertyValueTypeShouldSerializes(ref JsonWriter writer, JsonSerializerOptions options, IFormatterResolver resolver, object boxedValue, bool isFirst, in TypeAnalyzeResult data)
         {
-            var formatter = default(IJsonFormatter);
-            var targetType = default(Type);
             ref readonly var info = ref data.PropertyValueTypeShouldSerializeArray[0];
             if (info.ShouldSerialize(boxedValue))
             {
@@ -675,8 +585,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                targetType = info.TargetType;
-                formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
+                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
                 formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
             }
 
@@ -698,13 +607,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                var tmpTargetType = info.TargetType;
-                if (!ReferenceEquals(tmpTargetType, targetType))
-                {
-                    targetType = tmpTargetType;
-                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
-                }
-
+                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
                 Debug.Assert(formatter != null, nameof(formatter) + " != null");
                 formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
             }
@@ -716,30 +619,22 @@ namespace Utf8Json.Formatters
         {
             ref readonly var info = ref data.PropertyValueTypeArray[0];
             writer.WriteRaw(isFirst ? info.GetPropertyNameWithQuotationAndNameSeparator() : info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
-
-            var targetType = info.TargetType;
-            var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
-            formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
+            {
+                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
+                formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
+            }
 
             for (var index = 1; index < data.PropertyValueTypeArray.Length; index++)
             {
                 info = ref data.PropertyValueTypeArray[index];
                 writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
-                var tmpTargetType = info.TargetType;
-                if (!ReferenceEquals(tmpTargetType, targetType))
-                {
-                    targetType = tmpTargetType;
-                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
-                }
-
+                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
                 formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
             }
         }
 
         private static bool SerializeFieldValueTypeShouldSerializes(ref JsonWriter writer, JsonSerializerOptions options, IFormatterResolver resolver, object boxedValue, bool isFirst, in TypeAnalyzeResult data)
         {
-            var formatter = default(IJsonFormatter);
-            var targetType = default(Type);
             ref readonly var info = ref data.FieldValueTypeShouldSerializeArray[0];
             if (info.ShouldSerialize(boxedValue))
             {
@@ -753,8 +648,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                targetType = info.TargetType;
-                formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
+                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
                 formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
             }
 
@@ -776,13 +670,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                var tmpTargetType = info.TargetType;
-                if (!ReferenceEquals(tmpTargetType, targetType))
-                {
-                    targetType = tmpTargetType;
-                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
-                }
-
+                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
                 Debug.Assert(formatter != null, nameof(formatter) + " != null");
                 formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
             }
@@ -794,22 +682,14 @@ namespace Utf8Json.Formatters
         {
             ref readonly var info = ref data.FieldValueTypeArray[0];
             writer.WriteRaw(isFirst ? info.GetPropertyNameWithQuotationAndNameSeparator() : info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
-
-            var targetType = info.TargetType;
-            var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
+            var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
             formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
 
             for (var index = 1; index < data.FieldValueTypeArray.Length; index++)
             {
                 info = ref data.FieldValueTypeArray[index];
                 writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
-                var tmpTargetType = info.TargetType;
-                if (!ReferenceEquals(tmpTargetType, targetType))
-                {
-                    targetType = tmpTargetType;
-                    formatter = info.Formatter ?? resolver.GetFormatterWithVerify(targetType);
-                }
-
+                formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
                 formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
             }
         }

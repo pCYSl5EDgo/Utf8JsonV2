@@ -22,7 +22,6 @@ namespace Utf8Json.Formatters
         private readonly int[][] indices;
 #endif
 
-
         public DeserializationParameterDictionary((ParameterInfo parameter, byte[] originalBytes)[] pairs)
         {
             if (pairs.Length == 0)
