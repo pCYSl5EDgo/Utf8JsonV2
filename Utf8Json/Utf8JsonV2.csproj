@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\**\*.cs" Exclude="..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Unity\**;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Shims\**;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\退避~\**;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Annotations\**;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Emit\**;" />
+    <Compile Include="..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\**\*.cs" Exclude="..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Unity\**;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Shims\**;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\退避~\**;..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json\Annotations\**;" />
   </ItemGroup>
 
   <ItemGroup>
@@ -38,7 +38,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Utf8Json.Annotations\Utf8Json.Annotations.csproj" />
     <ProjectReference Include="..\Utf8Json.Core\Utf8Json.Core.csproj" />
-    <ProjectReference Include="..\Utf8Json.Emit\Utf8Json.Emit.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -16,6 +16,14 @@ namespace Utf8Json
 #endif
             Deserialize(ReadOnlySpan<byte> span, JsonSerializerOptions options)
         {
+            if (span.Length >= 3)
+            {
+                if (span[0] == JsonReader.Bom0 && span[1] == JsonReader.Bom1 && span[2] == JsonReader.Bom2)
+                {
+                    span = span.Slice(3);
+                }
+            }
+
             var reader = new JsonReader(span);
             try
             {

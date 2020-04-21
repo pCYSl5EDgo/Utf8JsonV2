@@ -10,7 +10,11 @@ using Utf8Json.Internal;
 
 namespace Utf8Json
 {
-    public unsafe ref struct JsonWriter
+    public
+#if !SPAN_BUILTIN
+        unsafe
+#endif
+        ref struct JsonWriter
     {
         public uint Depth { get; set; }
 

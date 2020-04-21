@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
+    <LangVersion>8.0</LangVersion>
+    <LangVersion Condition="'$(TargetFramework)'=='netstandard2.0' Or '$(TargetFramework)'=='netcoreapp2.1'">7.3</LangVersion>
+    <DefineConstants Condition="'$(TargetFramework)'=='netcoreapp3.1'">$(DefineConstants);ASP_NET_CORE_APP_FRAMEWORK</DefineConstants>
+    <DefineConstants Condition="'$(LangVersion)'&gt;=8.0">$(DefineConstants);CSHARP_8_OR_NEWER</DefineConstants>
+    <Nullable Condition="'$(LangVersion)'&gt;=8.0">enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <Choose>
+    <When Condition="'$(TargetFramework)'=='netcoreapp3.1'">
+      <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+      </ItemGroup>
+    </When>
+    <Otherwise>
+      <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Abstractions" Version="2.2.0" />
+      </ItemGroup>
+    </Otherwise>
+  </Choose>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Utf8Json\Utf8JsonV2.csproj" />
+  </ItemGroup>
+
+</Project>

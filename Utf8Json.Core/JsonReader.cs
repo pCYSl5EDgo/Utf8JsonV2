@@ -14,9 +14,9 @@ namespace Utf8Json
 {
     public ref struct JsonReader
     {
-        private const byte Bom0 = 0xEF;
-        private const byte Bom1 = 0xBB;
-        private const byte Bom2 = 0xBF;
+        public const byte Bom0 = 0xEF;
+        public const byte Bom1 = 0xBB;
+        public const byte Bom2 = 0xBF;
         private const string ExpectedFirst = "expected:'";
         private const string ExpectedLast = "'";
 
@@ -28,17 +28,9 @@ namespace Utf8Json
         /// <summary>
         /// Initializes a new instance of the <see cref="JsonReader"/> struct.
         /// </summary>
-        /// <param name="span">The buffer to read from.</param>
+        /// <param name="span">The buffer to read from. No BOM.</param>
         public JsonReader(ReadOnlySpan<byte> span)
         {
-            if (span.Length > 3)
-            {
-                if (span[0] == Bom0 && span[1] == Bom1 && span[2] == Bom2)
-                {
-                    span = span.Slice(3);
-                }
-            }
-
             this.Reader = new SequenceReader(span);
         }
 

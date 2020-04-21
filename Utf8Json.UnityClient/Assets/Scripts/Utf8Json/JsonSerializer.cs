@@ -3,13 +3,10 @@
 
 using System;
 using System.Buffers;
-using Utf8Json.Internal;
-
-#if SPAN_BUILTIN
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-#endif
+using Utf8Json.Internal;
 
 namespace Utf8Json
 {
@@ -40,7 +37,8 @@ namespace Utf8Json
         /// <param name="value">The value to serialize.</param>
         /// <param name="options">The options.</param>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static void Serialize<T>(IBufferWriter<byte> writer, T value, JsonSerializerOptions options)
+        public static void Serialize<TWriter, T>(TWriter writer, T value, JsonSerializerOptions options)
+            where TWriter : IBufferWriter<byte>
         {
             var fastWriter = new JsonWriter(writer);
             try
@@ -49,67 +47,72 @@ namespace Utf8Json
             }
             catch (Exception ex)
             {
-                throw new JsonSerializationException($"Failed to serialize {typeof(T).FullName} value.", ex);
+                throw new JsonSerializationException("Failed to serialize " + typeof(T).FullName + " value.", ex);
             }
             fastWriter.Flush();
         }
 
-        /// <summary>
-        /// Serializes a given value with the specified buffer writer.
-        /// </summary>
-        /// <param name="writer">The buffer writer to serialize with.</param>
-        /// <param name="value">The value to serialize.</param>
-        /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static void Serialize<T>(IBufferWriter<byte> writer, T value)
+#if CSHARP_8_OR_NEWER
+        public static void SerializeTypeless<TWriter>(Type targetType, TWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public static void SerializeTypeless<TWriter>(Type targetType, TWriter writer, object value, JsonSerializerOptions options)
+#endif
+            where TWriter : IBufferWriter<byte>
         {
             var fastWriter = new JsonWriter(writer);
             try
             {
-                DefaultOptions.SerializeWithVerify(ref fastWriter, value);
+                var formatter = options.Resolver.GetFormatterWithVerify(targetType);
+                formatter.SerializeTypeless(ref fastWriter, value, options);
             }
             catch (Exception ex)
             {
-                throw new JsonSerializationException($"Failed to serialize {typeof(T).FullName} value.", ex);
+                throw new JsonSerializationException("Failed to serialize " + targetType.FullName + " value.", ex);
             }
             fastWriter.Flush();
         }
 
-        public static void Serialize(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#if CSHARP_8_OR_NEWER
+        public static async Task SerializeTypelessAsync(Type targetType, Stream stream, object? value, JsonSerializerOptions options, CancellationToken cancellationToken)
+#else
+        public static async Task SerializeTypelessAsync(Type targetType, Stream stream, object value, JsonSerializerOptions options, CancellationToken cancellationToken)
+#endif
         {
-            var targetType = value.GetType();
+            cancellationToken.ThrowIfCancellationRequested();
+#if SPAN_BUILTIN
+            var sequenceRental = SequencePool.Shared.Rent();
             try
             {
-                options.Resolver.GetFormatterWithVerify(targetType).SerializeTypeless(ref writer, value, options);
-            }
-            catch (Exception ex)
-            {
-                throw new JsonSerializationException($"Failed to serialize {targetType.FullName} value.", ex);
-            }
-        }
+                SerializeTypeless(targetType, sequenceRental.Value, value, options);
 
-        public static byte[] Serialize(object value, JsonSerializerOptions options)
-        {
-            var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
-            try
-            {
-                var writer = new JsonWriter(SequencePool.Shared, array);
-                var targetType = value.GetType();
                 try
                 {
-                    var formatter = options.Resolver.GetFormatterWithVerify(targetType);
-                    formatter.SerializeTypeless(ref writer, value, options);
+                    foreach (var segment in (ReadOnlySequence<byte>)sequenceRental.Value)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        await stream.WriteAsync(segment, cancellationToken).ConfigureAwait(false);
+                    }
                 }
                 catch (Exception ex)
                 {
-                    throw new JsonSerializationException($"Failed to serialize {targetType.FullName} value.", ex);
+                    throw new JsonSerializationException("Error occurred while writing the serialized data to the stream.", ex);
                 }
-
-                return writer.FlushAndGetArray();
             }
             finally
             {
-                ArrayPool<byte>.Shared.Return(array);
+                sequenceRental.Dispose();
             }
+#else
+            var array = SerializeTypeless(targetType, value, options);
+            try
+            {
+                await stream.WriteAsync(array, 0, array.Length, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                throw new JsonSerializationException("Error occurred while writing the serialized data to the stream.", ex);
+            }
+#endif
         }
 
         /// <summary>
@@ -127,25 +130,7 @@ namespace Utf8Json
             }
             catch (Exception ex)
             {
-                throw new JsonSerializationException($"Failed to serialize {typeof(T).FullName} value.", ex);
-            }
-        }
-
-        /// <summary>
-        /// Serializes a given value with the specified buffer writer.
-        /// </summary>
-        /// <param name="writer">The buffer writer to serialize with.</param>
-        /// <param name="value">The value to serialize.</param>
-        /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static void Serialize<T>(ref JsonWriter writer, T value)
-        {
-            try
-            {
-                DefaultOptions.SerializeWithVerify(ref writer, value);
-            }
-            catch (Exception ex)
-            {
-                throw new JsonSerializationException($"Failed to serialize {typeof(T).FullName} value.", ex);
+                throw new JsonSerializationException("Failed to serialize " + typeof(T).FullName + " value.", ex);
             }
         }
 
@@ -156,8 +141,17 @@ namespace Utf8Json
         /// <param name="options">The options.</param>
         /// <returns>A byte array with the serialized value.</returns>
         /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static byte[] Serialize<T>(T value, JsonSerializerOptions options)
+#if CSHARP_8_OR_NEWER
+        public static byte[] Serialize<T>(T value, JsonSerializerOptions? options = default)
+#else
+        public static byte[] Serialize<T>(T value, JsonSerializerOptions options = default)
+#endif
         {
+            // ReSharper disable once ConvertIfStatementToNullCoalescingAssignment
+            if (options == null)
+            {
+                options = DefaultOptions;
+            }
 #if !ENABLE_IL2CPP
             var calculator = options.Resolver.GetCalcByteLengthForSerialization<T>();
             unsafe
@@ -190,7 +184,7 @@ namespace Utf8Json
                 }
                 catch (Exception ex)
                 {
-                    throw new JsonSerializationException($"Failed to serialize {typeof(T).FullName} value.", ex);
+                    throw new JsonSerializationException("Failed to serialize " + typeof(T).FullName + " value.", ex);
                 }
                 return writer.FlushAndGetArray();
             }
@@ -200,49 +194,24 @@ namespace Utf8Json
             }
         }
 
-        /// <summary>
-        /// Serializes a given value with the specified buffer writer.
-        /// </summary>
-        /// <param name="value">The value to serialize.</param>
-        /// <returns>A byte array with the serialized value.</returns>
-        /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static byte[] Serialize<T>(T value)
-        {
-            var options = DefaultOptions;
-
-#if !ENABLE_IL2CPP
-            var calculator = options.Resolver.GetCalcByteLengthForSerialization<T>();
-            unsafe
-            {
-                if (calculator.ToPointer() == null)
-                {
-                    goto INTERNAL;
-                }
-
-                var serializer = options.Resolver.GetSerializeSpan<T>();
-                if (serializer.ToPointer() == null)
-                {
-                    goto INTERNAL;
-                }
-
-                var answer = new byte[StaticFunctionPointerHelper.CallHelper.CalcByteLengthForSerialization(options, value, calculator)];
-                StaticFunctionPointerHelper.CallHelper.SerializeSpan(options, value, answer.AsSpan(), serializer);
-                return answer;
-            }
-
-        INTERNAL:
+#if CSHARP_8_OR_NEWER
+        public static byte[] SerializeTypeless(Type targetType, object? value, JsonSerializerOptions options)
+#else
+        public static byte[] SerializeTypeless(Type targetType, object value, JsonSerializerOptions options)
 #endif
+        {
             var array = ArrayPool<byte>.Shared.Rent(80 * 1024);
             try
             {
                 var writer = new JsonWriter(SequencePool.Shared, array);
                 try
                 {
-                    options.SerializeWithVerify(ref writer, value);
+                    var formatter = options.Resolver.GetFormatterWithVerify(targetType);
+                    formatter.SerializeTypeless(ref writer, value, options);
                 }
                 catch (Exception ex)
                 {
-                    throw new JsonSerializationException($"Failed to serialize {typeof(T).FullName} value.", ex);
+                    throw new JsonSerializationException("Failed to serialize " + targetType.FullName + " value.", ex);
                 }
                 return writer.FlushAndGetArray();
             }
@@ -251,147 +220,5 @@ namespace Utf8Json
                 ArrayPool<byte>.Shared.Return(array);
             }
         }
-
-#if SPAN_BUILTIN
-        /// <summary>
-        /// Serializes a given value to the specified stream.
-        /// </summary>
-        /// <param name="stream">The stream to serialize to.</param>
-        /// <param name="value">The value to serialize.</param>
-        /// <param name="options">The options</param>
-        /// <param name="cancellationToken">A cancellation token.</param>
-        /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static void Serialize<T>(Stream stream, T value, JsonSerializerOptions options, CancellationToken cancellationToken = default)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            var sequenceRental = SequencePool.Shared.Rent();
-            try
-            {
-                Serialize(sequenceRental.Value, value, options);
-
-                try
-                {
-                    foreach (var segment in (ReadOnlySequence<byte>)sequenceRental.Value)
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                        stream.Write(segment.Span);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    throw new JsonSerializationException("Error occurred while writing the serialized data to the stream.", ex);
-                }
-            }
-            finally
-            {
-                sequenceRental.Dispose();
-            }
-        }
-
-        /// <summary>
-        /// Serializes a given value to the specified stream.
-        /// </summary>
-        /// <param name="stream">The stream to serialize to.</param>
-        /// <param name="value">The value to serialize.</param>
-        /// <param name="cancellationToken">A cancellation token.</param>
-        /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static void Serialize<T>(Stream stream, T value, CancellationToken cancellationToken = default)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            var sequenceRental = SequencePool.Shared.Rent();
-            try
-            {
-                Serialize(sequenceRental.Value, value);
-
-                try
-                {
-                    foreach (var segment in (ReadOnlySequence<byte>)sequenceRental.Value)
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                        stream.Write(segment.Span);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    throw new JsonSerializationException("Error occurred while writing the serialized data to the stream.", ex);
-                }
-            }
-            finally
-            {
-                sequenceRental.Dispose();
-            }
-        }
-
-        /// <summary>
-        /// Serializes a given value to the specified stream.
-        /// </summary>
-        /// <param name="stream">The stream to serialize to.</param>
-        /// <param name="value">The value to serialize.</param>
-        /// <param name="options">The options.</param>
-        /// <param name="cancellationToken">A cancellation token.</param>
-        /// <returns>A task that completes with the result of the async serialization operation.</returns>
-        /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static async Task SerializeAsync<T>(Stream stream, T value, JsonSerializerOptions options, CancellationToken cancellationToken = default)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            var sequenceRental = SequencePool.Shared.Rent();
-            try
-            {
-                Serialize(sequenceRental.Value, value, options);
-
-                try
-                {
-                    foreach (var segment in (ReadOnlySequence<byte>)sequenceRental.Value)
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                        await stream.WriteAsync(segment, cancellationToken).ConfigureAwait(false);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    throw new JsonSerializationException("Error occurred while writing the serialized data to the stream.", ex);
-                }
-            }
-            finally
-            {
-                sequenceRental.Dispose();
-            }
-        }
-
-        /// <summary>
-        /// Serializes a given value to the specified stream.
-        /// </summary>
-        /// <param name="stream">The stream to serialize to.</param>
-        /// <param name="value">The value to serialize.</param>
-        /// <param name="cancellationToken">A cancellation token.</param>
-        /// <returns>A task that completes with the result of the async serialization operation.</returns>
-        /// <exception cref="JsonSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static async Task SerializeAsync<T>(Stream stream, T value, CancellationToken cancellationToken = default)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            var sequenceRental = SequencePool.Shared.Rent();
-            try
-            {
-                Serialize(sequenceRental.Value, value);
-
-                try
-                {
-                    foreach (var segment in (ReadOnlySequence<byte>)sequenceRental.Value)
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                        await stream.WriteAsync(segment, cancellationToken).ConfigureAwait(false);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    throw new JsonSerializationException("Error occurred while writing the serialized data to the stream.", ex);
-                }
-            }
-            finally
-            {
-                sequenceRental.Dispose();
-            }
-        }
-#endif
     }
 }
