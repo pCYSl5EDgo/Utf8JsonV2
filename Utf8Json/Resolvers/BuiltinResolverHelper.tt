@@ -36,6 +36,15 @@ new ValueTuple<string, string>("System.Collections.BitArray", "BitArrayFormatter
 new ValueTuple<string, string>("System.Type", "TypeFormatter"),
 new ValueTuple<string, string>("System.Uri", "UriFormatter"),
 new ValueTuple<string, string>("System.Version", "VersionFormatter"),
+
+new ValueTuple<string, string>("System.Exception",  "ExceptionFormatter"),
+new ValueTuple<string, string>("System.Reflection.MethodBase",  "MethodBaseFormatter"),
+new ValueTuple<string, string>("System.Reflection.MethodInfo",  "MethodInfoFormatter"),
+new ValueTuple<string, string>("System.Reflection.ConstructorInfo",  "ConstructorInfoFormatter"),
+new ValueTuple<string, string>("System.Reflection.TypeInfo",  "TypeInfoFormatter"),
+new ValueTuple<string, string>("System.Reflection.FieldInfo",  "FieldInfoFormatter"),
+new ValueTuple<string, string>("System.Reflection.PropertyInfo",  "PropertyInfoFormatter"),
+new ValueTuple<string, string>("System.Reflection.MemberInfo",  "MemberInfoFormatter"),
 };
 ValueTuple<string, string>[] unityTuples = new[]{
 new ValueTuple<string, string>("      UnityEngine.Rect",  "RectFormatter"),

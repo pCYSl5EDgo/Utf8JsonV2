@@ -11,7 +11,7 @@ namespace Utf8Json.Resolvers
         internal static class BuiltinResolverGetFormatterHelper
         {
             private static readonly ThreadSafeTypeKeyFormatterHashTable formatterHashTable
-            #region table
+#region table
             = new ThreadSafeTypeKeyFormatterHashTable(new[]
             {
                 FromTypeToMethodHandles.GetEntry<  byte, ByteFormatter>(),
@@ -40,6 +40,14 @@ namespace Utf8Json.Resolvers
                 FromTypeToMethodHandles.GetEntry<System.Type, TypeFormatter>(),
                 FromTypeToMethodHandles.GetEntry<System.Uri, UriFormatter>(),
                 FromTypeToMethodHandles.GetEntry<System.Version, VersionFormatter>(),
+                FromTypeToMethodHandles.GetEntry<System.Exception, ExceptionFormatter>(),
+                FromTypeToMethodHandles.GetEntry<System.Reflection.MethodBase, MethodBaseFormatter>(),
+                FromTypeToMethodHandles.GetEntry<System.Reflection.MethodInfo, MethodInfoFormatter>(),
+                FromTypeToMethodHandles.GetEntry<System.Reflection.ConstructorInfo, ConstructorInfoFormatter>(),
+                FromTypeToMethodHandles.GetEntry<System.Reflection.TypeInfo, TypeInfoFormatter>(),
+                FromTypeToMethodHandles.GetEntry<System.Reflection.FieldInfo, FieldInfoFormatter>(),
+                FromTypeToMethodHandles.GetEntry<System.Reflection.PropertyInfo, PropertyInfoFormatter>(),
+                FromTypeToMethodHandles.GetEntry<System.Reflection.MemberInfo, MemberInfoFormatter>(),
 
 #if UNITY_2018_4_OR_NEWER
                 FromTypeToMethodHandles.GetEntry<      UnityEngine.Rect, RectFormatter>(),
@@ -60,14 +68,14 @@ namespace Utf8Json.Resolvers
                 FromTypeToMethodHandles.GetEntry<System.Dynamic.ExpandoObject, ExpandoObjectFormatter>(),
 #endif
             }, 0.5d);
-            #endregion
+#endregion
 
             internal static ThreadSafeTypeKeyFormatterHashTable.FunctionPair GetFunctionPointers(System.Type t)
             {
                 return formatterHashTable[t];
             }
 
-            private static readonly ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter> formatters = new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>(new[]
+            private static readonly ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter> formatters =  new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>(new[]
             {
                 new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(  byte), new ByteFormatter()),
                 new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(  char), new CharFormatter()),
@@ -95,6 +103,14 @@ namespace Utf8Json.Resolvers
                 new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Type), new TypeFormatter()),
                 new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Uri), new UriFormatter()),
                 new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Version), new VersionFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Exception), new ExceptionFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Reflection.MethodBase), new MethodBaseFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Reflection.MethodInfo), new MethodInfoFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Reflection.ConstructorInfo), new ConstructorInfoFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Reflection.TypeInfo), new TypeInfoFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Reflection.FieldInfo), new FieldInfoFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Reflection.PropertyInfo), new PropertyInfoFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Reflection.MemberInfo), new MemberInfoFormatter()),
 
 #if UNITY_2018_4_OR_NEWER
                 new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(      UnityEngine.Rect), new RectFormatter()),
@@ -115,7 +131,7 @@ namespace Utf8Json.Resolvers
                 new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Dynamic.ExpandoObject), new ExpandoObjectFormatter()),
 #endif
             }, 0.5d);
-
+            
             internal static ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter> GetFormatterCache() => formatters;
         }
     }

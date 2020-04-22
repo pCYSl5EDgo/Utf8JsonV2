@@ -56,6 +56,24 @@ namespace Utf8Json.Test
         }
 
         [Test]
+        public void SerializableTest()
+        {
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                foreach (var type in assembly.GetTypes())
+                {
+                    var attribute = type.GetCustomAttribute<SerializableAttribute>();
+                    if (attribute == null)
+                    {
+                        continue;
+                    }
+                    TestContext.WriteLine(type.FullName);
+                }
+            }
+            //Assert.True(false);
+        }
+
+        [Test]
         public void ExtensionDataTest()
         {
             var value = new W
