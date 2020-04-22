@@ -40,12 +40,6 @@ namespace Utf8Json.Formatters
         {
             switch (value)
             {
-                case ConstructorInfo constructorInfo:
-                    ConstructorInfoFormatter.SerializeStatic(ref writer, constructorInfo, options);
-                    return;
-                case MethodInfo methodInfo:
-                    MethodInfoFormatter.SerializeStatic(ref writer, methodInfo, options);
-                    return;
                 case FieldInfo fieldInfo:
                     FieldInfoFormatter.SerializeStatic(ref writer, fieldInfo, options);
                     return;
@@ -57,6 +51,12 @@ namespace Utf8Json.Formatters
                     return;
                 case Type type:
                     TypeFormatter.SerializeStatic(ref writer, type, options);
+                    return;
+                case ConstructorInfo constructorInfo:
+                    ConstructorInfoFormatter.SerializeStatic(ref writer, constructorInfo, options);
+                    return;
+                case MethodInfo methodInfo:
+                    MethodInfoFormatter.SerializeStatic(ref writer, methodInfo, options);
                     return;
                 default:
                     writer.WriteNull();

@@ -45,6 +45,9 @@ new ValueTuple<string, string>("System.Reflection.TypeInfo",  "TypeInfoFormatter
 new ValueTuple<string, string>("System.Reflection.FieldInfo",  "FieldInfoFormatter"),
 new ValueTuple<string, string>("System.Reflection.PropertyInfo",  "PropertyInfoFormatter"),
 new ValueTuple<string, string>("System.Reflection.MemberInfo",  "MemberInfoFormatter"),
+new ValueTuple<string, string>("System.Reflection.CustomAttributeData",  "CustomAttributeDataFormatter"),
+new ValueTuple<string, string>("System.Reflection.CustomAttributeNamedArgument",  "CustomAttributeNamedArgumentFormatter"),
+new ValueTuple<string, string>("System.Reflection.CustomAttributeTypedArgument",  "CustomAttributeTypedArgumentFormatter"),
 };
 ValueTuple<string, string>[] unityTuples = new[]{
 new ValueTuple<string, string>("      UnityEngine.Rect",  "RectFormatter"),

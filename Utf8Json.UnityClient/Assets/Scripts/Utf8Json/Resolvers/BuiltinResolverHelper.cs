@@ -48,6 +48,9 @@ namespace Utf8Json.Resolvers
                 FromTypeToMethodHandles.GetEntry<System.Reflection.FieldInfo, FieldInfoFormatter>(),
                 FromTypeToMethodHandles.GetEntry<System.Reflection.PropertyInfo, PropertyInfoFormatter>(),
                 FromTypeToMethodHandles.GetEntry<System.Reflection.MemberInfo, MemberInfoFormatter>(),
+                FromTypeToMethodHandles.GetEntry<System.Reflection.CustomAttributeData, CustomAttributeDataFormatter>(),
+                FromTypeToMethodHandles.GetEntry<System.Reflection.CustomAttributeNamedArgument, CustomAttributeNamedArgumentFormatter>(),
+                FromTypeToMethodHandles.GetEntry<System.Reflection.CustomAttributeTypedArgument, CustomAttributeTypedArgumentFormatter>(),
 
 #if UNITY_2018_4_OR_NEWER
                 FromTypeToMethodHandles.GetEntry<      UnityEngine.Rect, RectFormatter>(),
@@ -111,6 +114,9 @@ namespace Utf8Json.Resolvers
                 new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Reflection.FieldInfo), new FieldInfoFormatter()),
                 new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Reflection.PropertyInfo), new PropertyInfoFormatter()),
                 new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Reflection.MemberInfo), new MemberInfoFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Reflection.CustomAttributeData), new CustomAttributeDataFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Reflection.CustomAttributeNamedArgument), new CustomAttributeNamedArgumentFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Reflection.CustomAttributeTypedArgument), new CustomAttributeTypedArgumentFormatter()),
 
 #if UNITY_2018_4_OR_NEWER
                 new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(      UnityEngine.Rect), new RectFormatter()),

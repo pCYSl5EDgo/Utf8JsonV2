@@ -131,13 +131,13 @@ namespace Utf8Json.Formatters
                 }
 
                 var customAttribute = enumerator.Current;
-                options.SerializeWithVerify(ref writer, customAttribute);
+                CustomAttributeDataFormatter.SerializeStatic(ref writer, customAttribute, options);
 
                 while (enumerator.MoveNext())
                 {
                     writer.WriteValueSeparator();
                     customAttribute = enumerator.Current;
-                    options.SerializeWithVerify(ref writer, customAttribute);
+                    CustomAttributeDataFormatter.SerializeStatic(ref writer, customAttribute, options);
                 }
             }
             finally
