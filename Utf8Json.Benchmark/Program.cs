@@ -22,6 +22,59 @@ namespace Utf8JsonBenchmark
             BenchmarkRunner.Run<JsonEnumByteTester>();
             BenchmarkRunner.Run<JsonEnumUInt64Tester>();
             BenchmarkRunner.Run<JsonEnumUInt16Tester>();
+            BenchmarkRunner.Run<Json8IntegerFieldObjectSerializeTester>();
+        }
+    }
+
+    [MemoryDiagnoser]
+    public class Json8IntegerFieldObjectSerializeTester
+    {
+        public class MyClass
+        {
+            public int FirstInt32 { get; set; }
+            public int Second { get; set; }
+            public int Third { get; set; }
+            public int FourthInt { get; set; }
+            public int FifthNum { get; set; }
+            public int SixthInteger { get; set; }
+            public int SeventhDigit { get; set; }
+            public int EighthNumber { get; set; }
+        }
+
+        public MyClass Value;
+
+        [GlobalSetup]
+        public void GlobalSetup()
+        {
+            Value = new MyClass
+            {
+                FirstInt32 = int.MinValue,
+                Second = int.MaxValue,
+                Third = 0,
+                FourthInt = -1,
+                FifthNum = 114514,
+                SixthInteger = -334810,
+                SeventhDigit = new Random().Next(int.MinValue, int.MaxValue),
+                EighthNumber = new Random().Next(int.MinValue, int.MaxValue),
+            };
+        }
+
+        [Benchmark]
+        public byte[] SerializeUtf8JsonV1()
+        {
+            return global::Utf8Json.JsonSerializer.Serialize(Value);
+        }
+
+        [Benchmark]
+        public byte[] SerializeUtf8JsonV2()
+        {
+            return V2::Utf8Json.JsonSerializer.Serialize(Value);
+        }
+
+        [Benchmark]
+        public byte[] SerializeSystemTextJson()
+        {
+            return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(Value);
         }
     }
 
