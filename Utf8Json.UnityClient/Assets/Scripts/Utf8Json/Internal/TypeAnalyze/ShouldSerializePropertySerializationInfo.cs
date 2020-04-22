@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace Utf8Json.Internal
 {
-    public readonly struct ShouldSerializePropertySerializationInfo : IMemberContainer
+    public readonly struct ShouldSerializePropertySerializationInfo : IMemberContainer, IComparable<ShouldSerializePropertySerializationInfo>
     {
         public readonly PropertyInfo Info;
         public readonly MethodInfo Method;
@@ -75,6 +75,17 @@ namespace Utf8Json.Internal
             }
 
             return result;
+        }
+
+        public int CompareTo(ShouldSerializePropertySerializationInfo other)
+        {
+            var c = IsFormatterDirect.CompareTo(other.IsFormatterDirect);
+            if (c == 0)
+            {
+                c = string.CompareOrdinal(TargetType.FullName, other.TargetType.FullName);
+            }
+
+            return c;
         }
     }
 }

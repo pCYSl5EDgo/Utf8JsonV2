@@ -19,6 +19,15 @@ namespace Utf8Json.Internal
         {
             CollectFieldAndProperty(type, out var fieldValueTypes, out var fieldReferenceTypes, out var fieldValueTypeShouldSerializes, out var fieldReferenceTypeShouldSerializes, out var propertyValueTypes, out var propertyReferenceTypes, out var propertyValueTypeShouldSerializes, out var propertyReferenceTypeShouldSerializes, out var extensionDataProperty);
 
+            Array.Sort(fieldValueTypes);
+            Array.Sort(fieldReferenceTypes);
+            Array.Sort(fieldValueTypeShouldSerializes);
+            Array.Sort(fieldReferenceTypeShouldSerializes);
+            Array.Sort(propertyValueTypes);
+            Array.Sort(propertyReferenceTypes);
+            Array.Sort(propertyValueTypeShouldSerializes);
+            Array.Sort(propertyReferenceTypeShouldSerializes);
+
             CollectCallbacks(type, out var onSerializing, out var onSerialized, out var onDeserializing, out var onDeserialized);
 
             CollectConstructorOrFactory(type, out var constructorData);

@@ -8,7 +8,6 @@ namespace Utf8Json.Internal
 {
     public enum DirectTypeEnum
     {
-        None,
         Byte,
         SByte,
         UInt16,
@@ -22,6 +21,7 @@ namespace Utf8Json.Internal
         Single,
         Double,
         String,
+        None,
     }
 
     public static class DirectTypeEnumHelper

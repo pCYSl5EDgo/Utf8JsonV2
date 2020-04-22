@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Utf8Json.Internal;
+// ReSharper disable RedundantCaseLabel
 
 namespace Utf8Json.Formatters
 {
@@ -242,7 +243,6 @@ namespace Utf8Json.Formatters
         private static bool SerializePropertyReferenceTypeShouldSerializesWriteNull(ref JsonWriter writer, JsonSerializerOptions options, IFormatterResolver resolver, object boxedValue, bool isFirst, in TypeAnalyzeResult data)
         {
             ref readonly var info = ref data.PropertyReferenceTypeShouldSerializeArray[0];
-            IJsonFormatter formatter;
             if (info.ShouldSerialize(boxedValue))
             {
                 if (isFirst)
@@ -255,8 +255,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.Info.PropertyType);
-                formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
+                Serialize(info, ref writer, boxedValue, options, resolver);
             }
 
             for (var index = 1; index < data.PropertyReferenceTypeShouldSerializeArray.Length; index++)
@@ -277,8 +276,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.Info.PropertyType);
-                formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
+                Serialize(info, ref writer, boxedValue, options, resolver);
             }
 
             return isFirst;
@@ -302,8 +300,7 @@ namespace Utf8Json.Formatters
                         writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                     }
 
-                    var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.Info.PropertyType);
-                    formatter.SerializeTypeless(ref writer, value, options);
+                    Serialize(info, ref writer, boxedValue, options, resolver);
                 }
             }
 
@@ -331,9 +328,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
-                Debug.Assert(formatter != null, nameof(formatter) + " != null");
-                formatter.SerializeTypeless(ref writer, value, options);
+                Serialize(info, ref writer, boxedValue, options, resolver);
             }
 
             return false;
@@ -354,8 +349,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
-                formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
+                Serialize(info, ref writer, boxedValue, options, resolver);
             }
 
             for (var index = 1; index < data.FieldReferenceTypeShouldSerializeArray.Length; index++)
@@ -376,9 +370,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
-                Debug.Assert(formatter != null, nameof(formatter) + " != null");
-                formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
+                Serialize(info, ref writer, boxedValue, options, resolver);
             }
 
             return isFirst;
@@ -402,8 +394,7 @@ namespace Utf8Json.Formatters
                         writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                     }
 
-                    var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
-                    formatter.SerializeTypeless(ref writer, value, options);
+                    Serialize(info, ref writer, boxedValue, options, resolver);
                 }
             }
 
@@ -431,9 +422,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
-                Debug.Assert(formatter != null, nameof(formatter) + " != null");
-                formatter.SerializeTypeless(ref writer, value, options);
+                Serialize(info, ref writer, boxedValue, options, resolver);
             }
 
             return isFirst;
@@ -444,18 +433,13 @@ namespace Utf8Json.Formatters
             ref readonly var info = ref data.PropertyReferenceTypeArray[0];
 
             writer.WriteRaw(isFirst ? info.GetPropertyNameWithQuotationAndNameSeparator() : info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
-            {
-                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
-                formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
-            }
+            Serialize(info, ref writer, boxedValue, options, resolver);
 
             for (var index = 1; index < data.PropertyReferenceTypeArray.Length; index++)
             {
                 info = ref data.PropertyReferenceTypeArray[index];
                 writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
-
-                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
-                formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
+                Serialize(info, ref writer, boxedValue, options, resolver);
             }
         }
 
@@ -475,8 +459,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
-                formatter.SerializeTypeless(ref writer, value, options);
+                Serialize(info, ref writer, boxedValue, options, resolver);
             }
 
             for (var index = 1; index < data.PropertyReferenceTypeArray.Length; index++)
@@ -498,9 +481,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
-                Debug.Assert(formatter != null, nameof(formatter) + " != null");
-                formatter.SerializeTypeless(ref writer, value, options);
+                Serialize(info, ref writer, boxedValue, options, resolver);
             }
 
             return isFirst;
@@ -510,16 +491,13 @@ namespace Utf8Json.Formatters
         {
             ref readonly var info = ref data.FieldReferenceTypeArray[0];
             writer.WriteRaw(isFirst ? info.GetPropertyNameWithQuotationAndNameSeparator() : info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
-            {
-                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
-                formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
-            }
+            Serialize(info, ref writer, boxedValue, options, resolver);
+
             for (var index = 1; index < data.FieldReferenceTypeArray.Length; index++)
             {
                 info = ref data.FieldReferenceTypeArray[index];
                 writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
-                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
-                formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
+                Serialize(info, ref writer, boxedValue, options, resolver);
             }
         }
 
@@ -539,8 +517,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
-                formatter.SerializeTypeless(ref writer, value, options);
+                Serialize(info, ref writer, boxedValue, options, resolver);
             }
 
             for (var index = 1; index < data.FieldReferenceTypeArray.Length; index++)
@@ -562,9 +539,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
-                Debug.Assert(formatter != null, nameof(formatter) + " != null");
-                formatter.SerializeTypeless(ref writer, value, options);
+                Serialize(info, ref writer, boxedValue, options, resolver);
             }
 
             return isFirst;
@@ -585,8 +560,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
-                formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
+                Serialize(info, ref writer, boxedValue, options, resolver);
             }
 
             for (var index = 1; index < data.PropertyValueTypeShouldSerializeArray.Length; index++)
@@ -607,9 +581,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
-                Debug.Assert(formatter != null, nameof(formatter) + " != null");
-                formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
+                Serialize(info, ref writer, boxedValue, options, resolver);
             }
 
             return isFirst;
@@ -619,17 +591,13 @@ namespace Utf8Json.Formatters
         {
             ref readonly var info = ref data.PropertyValueTypeArray[0];
             writer.WriteRaw(isFirst ? info.GetPropertyNameWithQuotationAndNameSeparator() : info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
-            {
-                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
-                formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
-            }
+            Serialize(info, ref writer, boxedValue, options, resolver);
 
             for (var index = 1; index < data.PropertyValueTypeArray.Length; index++)
             {
                 info = ref data.PropertyValueTypeArray[index];
                 writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
-                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
-                formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
+                Serialize(info, ref writer, boxedValue, options, resolver);
             }
         }
 
@@ -648,8 +616,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
-                formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
+                Serialize(info, ref writer, boxedValue, options, resolver);
             }
 
             for (var index = 1; index < data.FieldValueTypeShouldSerializeArray.Length; index++)
@@ -670,9 +637,7 @@ namespace Utf8Json.Formatters
                     writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
                 }
 
-                var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
-                Debug.Assert(formatter != null, nameof(formatter) + " != null");
-                formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
+                Serialize(info, ref writer, boxedValue, options, resolver);
             }
 
             return isFirst;
@@ -682,17 +647,274 @@ namespace Utf8Json.Formatters
         {
             ref readonly var info = ref data.FieldValueTypeArray[0];
             writer.WriteRaw(isFirst ? info.GetPropertyNameWithQuotationAndNameSeparator() : info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
-            var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
-            formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
+            Serialize(info, ref writer, boxedValue, options, resolver);
 
             for (var index = 1; index < data.FieldValueTypeArray.Length; index++)
             {
                 info = ref data.FieldValueTypeArray[index];
                 writer.WriteRaw(info.GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator());
-                formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
-                formatter.SerializeTypeless(ref writer, info.GetValue(boxedValue), options);
+                Serialize(info, ref writer, boxedValue, options, resolver);
             }
         }
 
+        private static void Serialize(in FieldSerializationInfo info, ref JsonWriter writer, object boxedValue, JsonSerializerOptions options, IFormatterResolver resolver)
+        {
+            var value = info.GetValue(boxedValue);
+            switch (info.IsFormatterDirect)
+            {
+                case DirectTypeEnum.None:
+                    var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
+                    formatter.SerializeTypeless(ref writer, value, options);
+                    break;
+                case DirectTypeEnum.Byte:
+                    Debug.Assert(value != null);
+                    writer.Write((byte)value);
+                    break;
+                case DirectTypeEnum.SByte:
+                    Debug.Assert(value != null);
+                    writer.Write((sbyte)value);
+                    break;
+                case DirectTypeEnum.UInt16:
+                    Debug.Assert(value != null);
+                    writer.Write((ushort)value);
+                    break;
+                case DirectTypeEnum.Int16:
+                    Debug.Assert(value != null);
+                    writer.Write((short)value);
+                    break;
+                case DirectTypeEnum.UInt32:
+                    Debug.Assert(value != null);
+                    writer.Write((uint)value);
+                    break;
+                case DirectTypeEnum.Int32:
+                    Debug.Assert(value != null);
+                    writer.Write((int)value);
+                    break;
+                case DirectTypeEnum.UInt64:
+                    Debug.Assert(value != null);
+                    writer.Write((ulong)value);
+                    break;
+                case DirectTypeEnum.Int64:
+                    Debug.Assert(value != null);
+                    writer.Write((long)value);
+                    break;
+                case DirectTypeEnum.Boolean:
+                    Debug.Assert(value != null);
+                    writer.Write((bool)value);
+                    break;
+                case DirectTypeEnum.Char:
+                    Debug.Assert(value != null);
+                    writer.Write((char)value);
+                    break;
+                case DirectTypeEnum.Single:
+                    Debug.Assert(value != null);
+                    writer.Write((float)value);
+                    break;
+                case DirectTypeEnum.Double:
+                    Debug.Assert(value != null);
+                    writer.Write((double)value);
+                    break;
+                case DirectTypeEnum.String:
+                    writer.Write(value as string);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private static void Serialize(in ShouldSerializeFieldSerializationInfo info, ref JsonWriter writer, object boxedValue, JsonSerializerOptions options, IFormatterResolver resolver)
+        {
+            var value = info.GetValue(boxedValue);
+            switch (info.IsFormatterDirect)
+            {
+                case DirectTypeEnum.None:
+                    var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
+                    formatter.SerializeTypeless(ref writer, value, options);
+                    break;
+                case DirectTypeEnum.Byte:
+                    Debug.Assert(value != null);
+                    writer.Write((byte)value);
+                    break;
+                case DirectTypeEnum.SByte:
+                    Debug.Assert(value != null);
+                    writer.Write((sbyte)value);
+                    break;
+                case DirectTypeEnum.UInt16:
+                    Debug.Assert(value != null);
+                    writer.Write((ushort)value);
+                    break;
+                case DirectTypeEnum.Int16:
+                    Debug.Assert(value != null);
+                    writer.Write((short)value);
+                    break;
+                case DirectTypeEnum.UInt32:
+                    Debug.Assert(value != null);
+                    writer.Write((uint)value);
+                    break;
+                case DirectTypeEnum.Int32:
+                    Debug.Assert(value != null);
+                    writer.Write((int)value);
+                    break;
+                case DirectTypeEnum.UInt64:
+                    Debug.Assert(value != null);
+                    writer.Write((ulong)value);
+                    break;
+                case DirectTypeEnum.Int64:
+                    Debug.Assert(value != null);
+                    writer.Write((long)value);
+                    break;
+                case DirectTypeEnum.Boolean:
+                    Debug.Assert(value != null);
+                    writer.Write((bool)value);
+                    break;
+                case DirectTypeEnum.Char:
+                    Debug.Assert(value != null);
+                    writer.Write((char)value);
+                    break;
+                case DirectTypeEnum.Single:
+                    Debug.Assert(value != null);
+                    writer.Write((float)value);
+                    break;
+                case DirectTypeEnum.Double:
+                    Debug.Assert(value != null);
+                    writer.Write((double)value);
+                    break;
+                case DirectTypeEnum.String:
+                    writer.Write(value as string);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private static void Serialize(in ShouldSerializePropertySerializationInfo info, ref JsonWriter writer, object boxedValue, JsonSerializerOptions options, IFormatterResolver resolver)
+        {
+            var value = info.GetValue(boxedValue);
+            switch (info.IsFormatterDirect)
+            {
+                case DirectTypeEnum.None:
+                    var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
+                    formatter.SerializeTypeless(ref writer, value, options);
+                    break;
+                case DirectTypeEnum.Byte:
+                    Debug.Assert(value != null);
+                    writer.Write((byte)value);
+                    break;
+                case DirectTypeEnum.SByte:
+                    Debug.Assert(value != null);
+                    writer.Write((sbyte)value);
+                    break;
+                case DirectTypeEnum.UInt16:
+                    Debug.Assert(value != null);
+                    writer.Write((ushort)value);
+                    break;
+                case DirectTypeEnum.Int16:
+                    Debug.Assert(value != null);
+                    writer.Write((short)value);
+                    break;
+                case DirectTypeEnum.UInt32:
+                    Debug.Assert(value != null);
+                    writer.Write((uint)value);
+                    break;
+                case DirectTypeEnum.Int32:
+                    Debug.Assert(value != null);
+                    writer.Write((int)value);
+                    break;
+                case DirectTypeEnum.UInt64:
+                    Debug.Assert(value != null);
+                    writer.Write((ulong)value);
+                    break;
+                case DirectTypeEnum.Int64:
+                    Debug.Assert(value != null);
+                    writer.Write((long)value);
+                    break;
+                case DirectTypeEnum.Boolean:
+                    Debug.Assert(value != null);
+                    writer.Write((bool)value);
+                    break;
+                case DirectTypeEnum.Char:
+                    Debug.Assert(value != null);
+                    writer.Write((char)value);
+                    break;
+                case DirectTypeEnum.Single:
+                    Debug.Assert(value != null);
+                    writer.Write((float)value);
+                    break;
+                case DirectTypeEnum.Double:
+                    Debug.Assert(value != null);
+                    writer.Write((double)value);
+                    break;
+                case DirectTypeEnum.String:
+                    writer.Write(value as string);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private static void Serialize(in PropertySerializationInfo info, ref JsonWriter writer, object boxedValue, JsonSerializerOptions options, IFormatterResolver resolver)
+        {
+            var value = info.GetValue(boxedValue);
+            switch (info.IsFormatterDirect)
+            {
+                case DirectTypeEnum.None:
+                    var formatter = info.Formatter ?? resolver.GetFormatterWithVerify(info.TargetType);
+                    formatter.SerializeTypeless(ref writer, value, options);
+                    break;
+                case DirectTypeEnum.Byte:
+                    Debug.Assert(value != null);
+                    writer.Write((byte)value);
+                    break;
+                case DirectTypeEnum.SByte:
+                    Debug.Assert(value != null);
+                    writer.Write((sbyte)value);
+                    break;
+                case DirectTypeEnum.UInt16:
+                    Debug.Assert(value != null);
+                    writer.Write((ushort)value);
+                    break;
+                case DirectTypeEnum.Int16:
+                    Debug.Assert(value != null);
+                    writer.Write((short)value);
+                    break;
+                case DirectTypeEnum.UInt32:
+                    Debug.Assert(value != null);
+                    writer.Write((uint)value);
+                    break;
+                case DirectTypeEnum.Int32:
+                    Debug.Assert(value != null);
+                    writer.Write((int)value);
+                    break;
+                case DirectTypeEnum.UInt64:
+                    Debug.Assert(value != null);
+                    writer.Write((ulong)value);
+                    break;
+                case DirectTypeEnum.Int64:
+                    Debug.Assert(value != null);
+                    writer.Write((long)value);
+                    break;
+                case DirectTypeEnum.Boolean:
+                    Debug.Assert(value != null);
+                    writer.Write((bool)value);
+                    break;
+                case DirectTypeEnum.Char:
+                    Debug.Assert(value != null);
+                    writer.Write((char)value);
+                    break;
+                case DirectTypeEnum.Single:
+                    Debug.Assert(value != null);
+                    writer.Write((float)value);
+                    break;
+                case DirectTypeEnum.Double:
+                    Debug.Assert(value != null);
+                    writer.Write((double)value);
+                    break;
+                case DirectTypeEnum.String:
+                    writer.Write(value as string);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
     }
 }
