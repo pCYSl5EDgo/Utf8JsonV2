@@ -5,12 +5,14 @@
 <#@ import namespace="System.Collections.Generic" #>
 <#@ output extension=".cs" #>
 <#
-ValueTuple<Type, string, int>[] types =
+ValueTuple<Type, string>[] types =
 {
-new ValueTuple<Type, string, int>(typeof(Single), "float", 4),
-new ValueTuple<Type, string, int>(typeof(Double), "double", 8),
-new ValueTuple<Type, string, int>(typeof(DateTime), "DateTime", 8),
-new ValueTuple<Type, string, int>(typeof(decimal), "decimal", 16),
+new ValueTuple<Type, string>(typeof(IntPtr), "IntPtr"),
+new ValueTuple<Type, string>(typeof(UIntPtr), "UIntPtr"),
+new ValueTuple<Type, string>(typeof(Single), "float"),
+new ValueTuple<Type, string>(typeof(Double), "double"),
+new ValueTuple<Type, string>(typeof(DateTime), "DateTime"),
+new ValueTuple<Type, string>(typeof(decimal), "decimal"),
 };
 #>
 // Copyright (c) All contributors. All rights reserved.

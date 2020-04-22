@@ -25,6 +25,18 @@ namespace Utf8Json
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Write(ref this JsonWriter writer, UIntPtr value)
+        {
+            writer.Write(value.ToUInt64());
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Write(ref this JsonWriter writer, IntPtr value)
+        {
+            writer.Write(value.ToInt64());
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Write(ref this JsonWriter writer, byte value)
         {
             writer.Write(value);

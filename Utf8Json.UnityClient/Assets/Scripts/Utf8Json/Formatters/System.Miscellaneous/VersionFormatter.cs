@@ -1,7 +1,7 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#pragma warning disable IDE0060 // 未使用のパラメーターを削除します
+#pragma warning disable IDE0060
 using System;
 
 namespace Utf8Json.Formatters
@@ -18,7 +18,9 @@ namespace Utf8Json.Formatters
 #else
         public void Serialize(ref JsonWriter writer, Version value, JsonSerializerOptions options)
 #endif
-        => SerializeStatic(ref writer, value, options);
+        {
+            SerializeStatic(ref writer, value, options);
+        }
 
 #if CSHARP_8_OR_NEWER
         public static void SerializeStatic(ref JsonWriter writer, Version? value, JsonSerializerOptions options)

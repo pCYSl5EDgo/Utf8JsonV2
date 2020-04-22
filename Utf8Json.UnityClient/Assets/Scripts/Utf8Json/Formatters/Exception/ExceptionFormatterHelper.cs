@@ -96,7 +96,7 @@ namespace Utf8Json.Formatters
             (byte) '"',
             (byte) ':',
         };
-        
+
         public static readonly byte[] BytesInnerException = {
             (byte) ',',
             (byte) '"',
@@ -154,11 +154,7 @@ namespace Utf8Json.Formatters
             }
 
             var innerException = value.InnerException;
-            if (innerException == null)
-            {
-                return;
-            }
-
+            if (innerException == null) return;
             writer.WriteRaw(BytesInnerException);
             SerializeStaticWithoutWritingEndObject(ref writer, innerException, options);
             writer.WriteEndObject();

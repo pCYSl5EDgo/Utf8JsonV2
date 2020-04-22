@@ -9,6 +9,92 @@ using System;
 #pragma warning disable IDE0060
 namespace Utf8Json.Formatters
 {
+    public sealed class IntPtrFormatter
+    : IJsonFormatter<IntPtr>
+    {
+        public static void SerializeStatic(ref JsonWriter writer, IntPtr value, JsonSerializerOptions options)
+        {
+            writer.Write(value);
+        }
+
+        public void Serialize(ref JsonWriter writer, IntPtr value, JsonSerializerOptions options)
+        {
+            writer.Write(value);
+        }
+
+        public static IntPtr DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            return reader.ReadIntPtr();
+        }
+
+        public IntPtr Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            return reader.ReadIntPtr();
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            if (!(value is IntPtr innerValue))
+            {
+                throw new NullReferenceException();
+            }
+            
+            writer.Write(innerValue);
+        }
+
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            return reader.ReadIntPtr();
+        }
+    }
+
+    public sealed class UIntPtrFormatter
+    : IJsonFormatter<UIntPtr>
+    {
+        public static void SerializeStatic(ref JsonWriter writer, UIntPtr value, JsonSerializerOptions options)
+        {
+            writer.Write(value);
+        }
+
+        public void Serialize(ref JsonWriter writer, UIntPtr value, JsonSerializerOptions options)
+        {
+            writer.Write(value);
+        }
+
+        public static UIntPtr DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            return reader.ReadUIntPtr();
+        }
+
+        public UIntPtr Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            return reader.ReadUIntPtr();
+        }
+
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            if (!(value is UIntPtr innerValue))
+            {
+                throw new NullReferenceException();
+            }
+            
+            writer.Write(innerValue);
+        }
+
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+        {
+            return reader.ReadUIntPtr();
+        }
+    }
+
     public sealed class SingleFormatter
     : IJsonFormatter<float>
     {

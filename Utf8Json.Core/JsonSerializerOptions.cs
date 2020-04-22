@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace Utf8Json
 {
@@ -20,6 +21,8 @@ namespace Utf8Json
             this.WriteIndented = false;
             this.IgnoreCase = false;
             this.ProcessEnumAsString = true;
+            this.UseCultureInfo = false;
+            this.CultureInfo = CultureInfo.InvariantCulture;
         }
 
         /// <summary>
@@ -36,6 +39,8 @@ namespace Utf8Json
             this.WriteIndented = copyFrom.WriteIndented;
             this.IgnoreCase = copyFrom.IgnoreCase;
             this.ProcessEnumAsString = copyFrom.ProcessEnumAsString;
+            this.UseCultureInfo = copyFrom.UseCultureInfo;
+            this.CultureInfo = copyFrom.CultureInfo;
         }
 
         /// <summary>
@@ -72,6 +77,38 @@ namespace Utf8Json
             {
                 throw new JsonSerializationException("Deserialization attempted to create the type " + type.FullName + " which is not allowed.");
             }
+        }
+
+        public bool UseCultureInfo { get; private set; }
+
+        public JsonSerializerOptions WithUseCultureInfo(bool value)
+        {
+            if (this.UseCultureInfo == value)
+            {
+                return this;
+            }
+
+            var result = new JsonSerializerOptions(this)
+            {
+                UseCultureInfo = value,
+            };
+            return result;
+        }
+
+        public CultureInfo CultureInfo { get; private set; }
+
+        public JsonSerializerOptions WithCultureInfo(CultureInfo value)
+        {
+            if (ReferenceEquals(this.CultureInfo, value))
+            {
+                return this;
+            }
+
+            var result = new JsonSerializerOptions(this)
+            {
+                CultureInfo = value,
+            };
+            return result;
         }
 
         public bool ProcessEnumAsString { get; private set; }

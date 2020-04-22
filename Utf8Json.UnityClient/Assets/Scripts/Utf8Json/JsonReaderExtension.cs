@@ -600,6 +600,18 @@ namespace Utf8Json
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UIntPtr ReadUIntPtr(ref this JsonReader reader)
+        {
+            return new UIntPtr(reader.ReadUInt64());
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static IntPtr ReadIntPtr(ref this JsonReader reader)
+        {
+            return new IntPtr(reader.ReadInt64());
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static byte ReadByte(ref this JsonReader reader)
         {
             return checked((byte)reader.ReadUInt64());
