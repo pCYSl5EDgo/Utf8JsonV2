@@ -7,6 +7,7 @@ namespace Utf8Json.Internal
 {
     public interface IMemberContainer
     {
+        DirectTypeEnum IsFormatterDirect { get; }
         Type TargetType { get; }
 
         ReadOnlySpan<byte> GetPropertyNameRaw();

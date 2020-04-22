@@ -16,6 +16,8 @@ namespace Utf8Json.Internal
         public IJsonFormatter Formatter { get; }
 #endif
 
+        public DirectTypeEnum IsFormatterDirect { get; }
+
         public Type TargetType => Info.FieldType;
 
         public ReadOnlySpan<byte> GetPropertyNameRaw()
@@ -49,6 +51,7 @@ namespace Utf8Json.Internal
             Info = info;
             bytes = PropertyNameHelper.CalculatePropertyNameBytes(name);
             Formatter = formatter;
+            IsFormatterDirect = DirectTypeEnumHelper.FromTypeAndFormatter(info.FieldType, formatter);
         }
 
 #if CSHARP_8_OR_NEWER
