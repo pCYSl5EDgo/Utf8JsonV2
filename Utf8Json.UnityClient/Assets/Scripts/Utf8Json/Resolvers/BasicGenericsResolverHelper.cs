@@ -341,6 +341,24 @@ namespace Utf8Json.Resolvers
                     case "System.ValueTuple`7":
                         formatterType = typeof(ValueTupleFormatter<,,,,,,>).MakeGenericType(genericArguments);
                         break;
+                    case "System.Tuple`2":
+                        formatterType = typeof(TupleFormatter<,>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.Tuple`3":
+                        formatterType = typeof(TupleFormatter<,,>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.Tuple`4":
+                        formatterType = typeof(TupleFormatter<,,,>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.Tuple`5":
+                        formatterType = typeof(TupleFormatter<,,,,>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.Tuple`6":
+                        formatterType = typeof(TupleFormatter<,,,,,>).MakeGenericType(genericArguments);
+                        break;
+                    case "System.Tuple`7":
+                        formatterType = typeof(TupleFormatter<,,,,,,>).MakeGenericType(genericArguments);
+                        break;
 #if UNITY_2018_4_OR_NEWER
                     case "Unity.Collections.NativeArray`1":
                         formatterType = typeof(NativeArrayFormatter<>).MakeGenericType(genericArguments);

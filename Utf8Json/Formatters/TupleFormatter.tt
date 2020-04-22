@@ -1,0 +1,164 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+
+namespace Utf8Json.Formatters
+{
+<#for (var dimension = 2; dimension <= 7; dimension++){
+    string typeArguments;
+    {
+        var buffer = new StringBuilder().Append("T1");
+        for (var i = 2; i <= dimension; i++)
+        {
+            buffer.Append(", T").Append(i);
+        }
+
+        typeArguments = buffer.ToString();
+    }
+#>
+    public sealed class TupleFormatter<<#= typeArguments #>>
+#if CSHARP_8_OR_NEWER
+    : IJsonFormatter<Tuple<<#= typeArguments #>>?>
+#else
+    : IJsonFormatter<Tuple<<#= typeArguments #>>>
+#endif
+    {
+#if CSHARP_8_OR_NEWER
+        public void Serialize(ref JsonWriter writer, Tuple<<#= typeArguments #>>? value, JsonSerializerOptions options)
+#else
+        public void Serialize(ref JsonWriter writer, Tuple<<#= typeArguments #>> value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value, options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public static void SerializeStatic(ref JsonWriter writer, Tuple<<#= typeArguments #>>? value, JsonSerializerOptions options)
+#else
+        public static void SerializeStatic(ref JsonWriter writer, Tuple<<#= typeArguments #>> value, JsonSerializerOptions options)
+#endif
+        {
+            if (value == null)
+            {
+                writer.WriteNull();
+                return;
+            }
+
+            {
+                const int sizeHint = 9;
+                var span = writer.Writer.GetSpan(sizeHint);
+                span[0] = (byte)'{';
+                span[1] = (byte)'"';
+                span[2] = (byte)'I';
+                span[3] = (byte)'t';
+                span[4] = (byte)'e';
+                span[5] = (byte)'m';
+                span[6] = (byte)'1';
+                span[7] = (byte)'"';
+                span[8] = (byte)':';
+                writer.Writer.Advance(sizeHint);
+            }
+
+            options.SerializeWithVerify(ref writer, value.Item1);
+<#for (var i = 2; i <= dimension; i++){#>
+
+            {
+                const int sizeHint = 9;
+                var span = writer.Writer.GetSpan(sizeHint);
+                span[0] = (byte)',';
+                span[1] = (byte)'"';
+                span[2] = (byte)'I';
+                span[3] = (byte)'t';
+                span[4] = (byte)'e';
+                span[5] = (byte)'m';
+                span[6] = (byte)'<#= i #>';
+                span[7] = (byte)'"';
+                span[8] = (byte)':';
+                writer.Writer.Advance(sizeHint);
+            }
+
+            options.SerializeWithVerify(ref writer, value.Item<#= i #>);
+<#}#>
+
+            writer.WriteEndObject();
+        }
+
+#if CSHARP_8_OR_NEWER
+        public Tuple<<#= typeArguments #>>? Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public Tuple<<#= typeArguments #>> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public static Tuple<<#= typeArguments #>>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public static Tuple<<#= typeArguments #>> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            if (reader.ReadIsNull())
+            {
+                return default;
+            }
+
+            reader.ReadIsBeginObjectWithVerify();
+<#for (var i = 1; i <= dimension; i++){#>
+            var answerItem<#= i #> = default(T<#= i #>);
+<#}#>
+            var count = 0;
+            while (!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
+            {
+                var keySpan = reader.ReadPropertyNameSegmentRaw();
+                if (keySpan.Length == 5 && keySpan[0] == 'I' && keySpan[1] == 't' && keySpan[2] == 'e' && keySpan[3] == 'm')
+                {
+                    switch (keySpan[4])
+                    {
+<#for (var i = 1; i <= dimension; i++){#>
+                        case (byte)'<#= i #>':
+                            answerItem<#= i #> = options.DeserializeWithVerify<T<#= i #>>(ref reader);
+                            continue;
+<#}#>
+                    }
+                }
+                
+                reader.ReadNextBlock();
+            }
+
+#if CSHARP_8_OR_NEWER
+            var answer = new Tuple<<#= typeArguments #>>(answerItem1!<#for (var i = 2; i <= dimension; i++){#>, answerItem<#= i #>!<#}#>);
+#else
+            var answer = new Tuple<<#= typeArguments #>>(answerItem1<#for (var i = 2; i <= dimension; i++){#>, answerItem<#= i #><#}#>);
+#endif
+            return answer;
+        }
+        
+#if CSHARP_8_OR_NEWER
+        public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
+#else
+        public void SerializeTypeless(ref JsonWriter writer, object value, JsonSerializerOptions options)
+#endif
+        {
+            SerializeStatic(ref writer, value as Tuple<<#= typeArguments #>>, options);
+        }
+
+#if CSHARP_8_OR_NEWER
+        public object? DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#else
+        public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
+#endif
+        {
+            return DeserializeStatic(ref reader, options);
+        }
+    }
+
+<#}#>
+}
