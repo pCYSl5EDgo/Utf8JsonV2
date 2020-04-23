@@ -24,7 +24,7 @@ namespace Utf8Json.Internal
                     throw new NullReferenceException(nameof(constant));
                 }
 
-                string encodedName = constant.Name;
+                var encodedName = constant.Name;
                 var customAttributes = constant.GetCustomAttributes();
                 foreach (var attribute in customAttributes)
                 {
