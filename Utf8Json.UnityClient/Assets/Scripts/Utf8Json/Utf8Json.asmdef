@@ -1,8 +1,7 @@
 {
     "name": "Utf8Json",
     "references": [
-        "Utf8Json.Annotations",
-        "Utf8Json.Emit"
+        "Utf8Json.Annotations"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [],
@@ -14,7 +13,8 @@
         "System.Memory.dll",
         "System.Threading.Tasks.Extensions.dll",
         "StaticFunctionPointerHelper.dll",
-        "Utf8Json.Core.dll"
+        "Utf8Json.Core.dll",
+        "System.Reflection.Emit.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": []

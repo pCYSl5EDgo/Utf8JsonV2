@@ -40,9 +40,13 @@ namespace Utf8Json.Internal
         public TValue GetOrAdd(Type type, Func<Type, TValue> factory)
 #endif
         {
+            if (TryGetValue(type, out var answer))
+            {
+                return answer;
+            }
             lock (pairArrayArray)
             {
-                if (TryGetValue(type, out var answer))
+                if (TryGetValue(type, out answer))
                 {
                     return answer;
                 }
@@ -62,7 +66,7 @@ namespace Utf8Json.Internal
 #endif
         {
             var code = type.GetHashCode() & bitMask;
-            var array = pairArrayArray[code];
+            ref var array = ref pairArrayArray[code];
             if (array == null)
             {
                 goto NOT_FOUND;
