@@ -1,6 +1,7 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Reflection;
 
 namespace Utf8Json.Formatters
@@ -27,8 +28,7 @@ namespace Utf8Json.Formatters
 #endif
             DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
         {
-            reader.ReadNextBlock();
-            return default;
+            return DeserializeStatic(ref reader, options);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -62,8 +62,7 @@ namespace Utf8Json.Formatters
 #endif
             Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            reader.ReadNextBlock();
-            return default;
+            return DeserializeStatic(ref reader, options);
         }
 
         public static FieldInfo
@@ -72,8 +71,15 @@ namespace Utf8Json.Formatters
 #endif
             DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
-            reader.ReadNextBlock();
-            return default;
+            if (reader.ReadIsNull())
+            {
+                return default;
+            }
+
+            var (name, declaringType) = MemberInfoFormatterHelper.ReadNameAndDeclaringType(ref reader, options);
+
+            var answer = declaringType.GetField(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
+            return answer;
         }
     }
 }

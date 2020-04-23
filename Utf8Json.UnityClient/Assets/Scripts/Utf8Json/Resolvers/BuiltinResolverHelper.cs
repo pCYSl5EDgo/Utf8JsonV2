@@ -51,6 +51,7 @@ namespace Utf8Json.Resolvers
                 FromTypeToMethodHandles.GetEntry<System.Reflection.CustomAttributeData, CustomAttributeDataFormatter>(),
                 FromTypeToMethodHandles.GetEntry<System.Reflection.CustomAttributeNamedArgument, CustomAttributeNamedArgumentFormatter>(),
                 FromTypeToMethodHandles.GetEntry<System.Reflection.CustomAttributeTypedArgument, CustomAttributeTypedArgumentFormatter>(),
+                FromTypeToMethodHandles.GetEntry<System.Reflection.ParameterInfo, ParameterInfoFormatter>(),
                 FromTypeToMethodHandles.GetEntry<System.Globalization.CultureInfo, CultureInfoFormatter>(),
 
 #if UNITY_2018_4_OR_NEWER
@@ -118,6 +119,7 @@ namespace Utf8Json.Resolvers
                 new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Reflection.CustomAttributeData), new CustomAttributeDataFormatter()),
                 new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Reflection.CustomAttributeNamedArgument), new CustomAttributeNamedArgumentFormatter()),
                 new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Reflection.CustomAttributeTypedArgument), new CustomAttributeTypedArgumentFormatter()),
+                new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Reflection.ParameterInfo), new ParameterInfoFormatter()),
                 new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Globalization.CultureInfo), new CultureInfoFormatter()),
 
 #if UNITY_2018_4_OR_NEWER

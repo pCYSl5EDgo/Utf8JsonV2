@@ -48,6 +48,7 @@ new ValueTuple<string, string>("System.Reflection.MemberInfo",  "MemberInfoForma
 new ValueTuple<string, string>("System.Reflection.CustomAttributeData",  "CustomAttributeDataFormatter"),
 new ValueTuple<string, string>("System.Reflection.CustomAttributeNamedArgument",  "CustomAttributeNamedArgumentFormatter"),
 new ValueTuple<string, string>("System.Reflection.CustomAttributeTypedArgument",  "CustomAttributeTypedArgumentFormatter"),
+new ValueTuple<string, string>("System.Reflection.ParameterInfo",  "ParameterInfoFormatter"),
 
 new ValueTuple<string, string>("System.Globalization.CultureInfo",  "CultureInfoFormatter"),
 };

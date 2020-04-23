@@ -27,8 +27,7 @@ namespace Utf8Json.Formatters
 #endif
             DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
         {
-            reader.ReadNextBlock();
-            return default;
+            return DeserializeStatic(ref reader, options);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -62,8 +61,7 @@ namespace Utf8Json.Formatters
 #endif
             Deserialize(ref JsonReader reader, JsonSerializerOptions options)
         {
-            reader.ReadNextBlock();
-            return default;
+            return DeserializeStatic(ref reader, options);
         }
 
         public static PropertyInfo
@@ -72,8 +70,14 @@ namespace Utf8Json.Formatters
 #endif
             DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
         {
-            reader.ReadNextBlock();
-            return default;
+            if (reader.ReadIsNull())
+            {
+                return default;
+            }
+
+            var (name, declaringType) = MemberInfoFormatterHelper.ReadNameAndDeclaringType(ref reader, options);
+
+            return declaringType.GetProperty(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
         }
     }
 }
