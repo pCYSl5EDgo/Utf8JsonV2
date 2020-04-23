@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using Utf8Json.Internal;
 
 namespace Utf8Json.Formatters
 {
@@ -54,7 +55,10 @@ namespace Utf8Json.Formatters
 
         public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
         {
-            return reader.ReadInt16();
+            var answer = reader.ReadInt16();
+            if (answer == -1) return ObjectHelper.Int16Array[256];
+            if (answer >= 0 && answer < 256) return ObjectHelper.Int16Array[answer];
+            return answer;
         }
     }
 }

@@ -180,8 +180,8 @@ namespace Utf8Json.Formatters
         public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
         {
             var answer = reader.ReadInt32();
-            if (answer == -1) return ObjectHelper.Int32Array[0];
-            if (answer >= 0 && answer < 256) return ObjectHelper.Int32Array[answer + 1];
+            if (answer == -1) return ObjectHelper.Int32Array[256];
+            if (answer >= 0 && answer < 256) return ObjectHelper.Int32Array[answer];
             return answer;
         }
     }

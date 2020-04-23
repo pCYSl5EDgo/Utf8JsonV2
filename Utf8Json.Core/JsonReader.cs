@@ -332,18 +332,6 @@ namespace Utf8Json
             return key;
         }
 
-        internal static readonly byte[] NumberBreaks =
-        {
-            (byte)' ',
-            (byte)'\t',
-            (byte)'\r',
-            (byte)'\n',
-            (byte)',',
-            (byte)']',
-            (byte)'}',
-            (byte)'"',
-        };
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ReadNext()
         {
@@ -379,7 +367,17 @@ namespace Utf8Json
                     }
                     break;
                 case JsonToken.Number:
-                    Reader.AdvanceToAnyOrEnd(NumberBreaks);
+                    Reader.AdvanceToAnyOrEnd(new[]
+                    {
+                        (byte)' ',
+                        (byte)'\t',
+                        (byte)'\r',
+                        (byte)'\n',
+                        (byte)',',
+                        (byte)']',
+                        (byte)'}',
+                        (byte)'"',
+                    });
                     break;
                 case JsonToken.None:
                 default:

@@ -90,14 +90,8 @@ namespace Utf8Json.Internal.DoubleConversion
 
         // C# constants
         private const int InfinitySymbolLength = 8;
-        // StringEncoding.UTF8.GetBytes(double.PositiveInfinity.ToString(CultureInfo.InvariantCulture));
-        // ReSharper disable once RedundantExplicitArraySize
-        private static readonly byte[] infinitySymbol = new byte[InfinitySymbolLength] { 0x49, 0x6E, 0x66, 0x69, 0x6E, 0x69, 0x74, 0x79, };
 
         private const int NanSymbolLength = 3;
-        // StringEncoding.UTF8.GetBytes(double.NaN.ToString(CultureInfo.InvariantCulture));
-        // ReSharper disable once RedundantExplicitArraySize
-        private static readonly byte[] nanSymbol = new byte[NanSymbolLength] { 0x4E, 0x61, 0x4E, };
 
         // constructor parameter, same as EcmaScriptConverter
         //DoubleToStringConverter(int flags,
@@ -503,12 +497,17 @@ namespace Utf8Json.Internal.DoubleConversion
                     resultBuilder.EnsureAdditionalCapacity(InfinitySymbolLength);
                 }
 
-                infinitySymbol.CopyTo(resultBuilder.WritableSpan);
+                // StringEncoding.UTF8.GetBytes(double.PositiveInfinity.ToString(CultureInfo.InvariantCulture));
+                // ReSharper disable once RedundantExplicitArraySize
+                new ReadOnlySpan<byte>(new byte[] { 0x49, 0x6E, 0x66, 0x69, 0x6E, 0x69, 0x74, 0x79, }).CopyTo(resultBuilder.WritableSpan);
                 resultBuilder.Advance(InfinitySymbolLength);
                 return true;
             }
 
-            if (!ieeeDoubleInspect.IsNan() || nanSymbol == null)
+            // StringEncoding.UTF8.GetBytes(double.NaN.ToString(CultureInfo.InvariantCulture));
+            // ReSharper disable once RedundantExplicitArraySize
+            ReadOnlySpan<byte> nanSymbol = new byte[NanSymbolLength] { 0x4E, 0x61, 0x4E, };
+            if (!ieeeDoubleInspect.IsNan())
             {
                 return false;
             }
@@ -668,18 +667,6 @@ namespace Utf8Json.Internal.DoubleConversion
                         buffer.Slice(firstCharPos, maxExponentLength).CopyTo(resultBuilder.WritableSpan);
                         resultBuilder.Advance(maxExponentLength);
                     }
-                    else if (exponent == 0)
-                    {
-                        resultBuilder.EnsureAdditionalCapacity(decimalRepLength + 4);
-
-                        resultBuilder.AppendByteUnsafe(decimalRep[0]);
-                        resultBuilder.AppendCharDotUnsafe();
-                        decimalRep.Slice(1, decimalRepLength - 1).CopyTo(resultBuilder.WritableSpan);
-                        resultBuilder.Advance(decimalRepLength - 1);
-                        resultBuilder.AppendCharEUnsafe();
-                        resultBuilder.AppendCharPlusUnsafe();
-                        resultBuilder.AppendChar0Unsafe();
-                    }
                     else
                     {
                         Span<byte> buffer = stackalloc byte[kMaxExponentLength + 1];
@@ -731,15 +718,6 @@ namespace Utf8Json.Internal.DoubleConversion
                         resultBuilder.AppendCharMinusUnsafe();
                         buffer.Slice(firstCharPos, maxExponentLength).CopyTo(resultBuilder.WritableSpan);
                         resultBuilder.Advance(maxExponentLength);
-                    }
-                    else if (exponent == 0)
-                    {
-                        resultBuilder.EnsureAdditionalCapacity(4);
-
-                        resultBuilder.AppendByteUnsafe(decimalRep[0]);
-                        resultBuilder.AppendCharEUnsafe();
-                        resultBuilder.AppendCharPlusUnsafe();
-                        resultBuilder.AppendChar0Unsafe();
                     }
                     else
                     {

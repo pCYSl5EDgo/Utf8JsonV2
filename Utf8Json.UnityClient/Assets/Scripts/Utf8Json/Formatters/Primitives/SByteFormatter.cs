@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using Utf8Json.Internal;
 
 namespace Utf8Json.Formatters
 {
@@ -82,7 +83,8 @@ namespace Utf8Json.Formatters
 
         public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
         {
-            var answer = DeserializeStatic(ref reader, options);
+            var number = reader.ReadSByte();
+            var answer = ObjectHelper.SByteArray[(byte)number];
             return answer;
         }
     }

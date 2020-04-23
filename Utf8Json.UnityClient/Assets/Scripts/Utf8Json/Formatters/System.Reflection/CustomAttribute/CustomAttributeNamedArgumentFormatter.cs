@@ -32,114 +32,103 @@ namespace Utf8Json.Formatters
             SerializeStatic(ref writer, value, options);
         }
 
-        private static readonly byte[] bytesIsField =
-        {
-            (byte)'{',
-            (byte)'"',
-            (byte)'I',
-            (byte)'s',
-            (byte)'F',
-            (byte)'i',
-            (byte)'e',
-            (byte)'l',
-            (byte)'d',
-            (byte)'"',
-            (byte)':',
-            (byte)'t',
-            (byte)'r',
-            (byte)'u',
-            (byte)'e',
-            (byte)',',
-            (byte)'"',
-            (byte)'M',
-            (byte)'e',
-            (byte)'m',
-            (byte)'b',
-            (byte)'e',
-            (byte)'r',
-            (byte)'N',
-            (byte)'a',
-            (byte)'m',
-            (byte)'e',
-            (byte)'"',
-            (byte)':',
-        };
-
-        private static readonly byte[] bytesFalseMemberName =
-        {
-            (byte)'f',
-            (byte)'a',
-            (byte)'l',
-            (byte)'s',
-            (byte)'e',
-            (byte)',',
-            (byte)'"',
-            (byte)'M',
-            (byte)'e',
-            (byte)'m',
-            (byte)'b',
-            (byte)'e',
-            (byte)'r',
-            (byte)'N',
-            (byte)'a',
-            (byte)'m',
-            (byte)'e',
-            (byte)'"',
-            (byte)':',
-        };
-
-        private static readonly byte[] bytesMemberInfo =
-        {
-            (byte)',',
-            (byte)'"',
-            (byte)'M',
-            (byte)'e',
-            (byte)'m',
-            (byte)'b',
-            (byte)'e',
-            (byte)'r',
-            (byte)'I',
-            (byte)'n',
-            (byte)'f',
-            (byte)'o',
-            (byte)'"',
-            (byte)':',
-        };
-
-        private static readonly byte[] bytesTypedValue =
-        {
-            (byte)',',
-            (byte)'"',
-            (byte)'T',
-            (byte)'y',
-            (byte)'p',
-            (byte)'e',
-            (byte)'d',
-            (byte)'V',
-            (byte)'a',
-            (byte)'l',
-            (byte)'u',
-            (byte)'e',
-            (byte)'"',
-            (byte)':',
-        };
-
         public static void SerializeStatic(ref JsonWriter writer, CustomAttributeNamedArgument value, JsonSerializerOptions options)
         {
+            ReadOnlySpan<byte> bytesIsField = new[] {
+                (byte)'{',
+                (byte)'"',
+                (byte)'I',
+                (byte)'s',
+                (byte)'F',
+                (byte)'i',
+                (byte)'e',
+                (byte)'l',
+                (byte)'d',
+                (byte)'"',
+                (byte)':',
+                (byte)'t',
+                (byte)'r',
+                (byte)'u',
+                (byte)'e',
+                (byte)',',
+                (byte)'"',
+                (byte)'M',
+                (byte)'e',
+                (byte)'m',
+                (byte)'b',
+                (byte)'e',
+                (byte)'r',
+                (byte)'N',
+                (byte)'a',
+                (byte)'m',
+                (byte)'e',
+                (byte)'"',
+                (byte)':',
+            };
             if (value.IsField)
             {
                 writer.WriteRaw(bytesIsField);
             }
             else
             {
-                writer.WriteRaw(bytesIsField.AsSpan(0, 11));
-                writer.WriteRaw(bytesFalseMemberName);
+                writer.WriteRaw(bytesIsField.Slice(0, 11));
+                writer.WriteRaw(new[] {
+                    (byte)'f',
+                    (byte)'a',
+                    (byte)'l',
+                    (byte)'s',
+                    (byte)'e',
+                    (byte)',',
+                    (byte)'"',
+                    (byte)'M',
+                    (byte)'e',
+                    (byte)'m',
+                    (byte)'b',
+                    (byte)'e',
+                    (byte)'r',
+                    (byte)'N',
+                    (byte)'a',
+                    (byte)'m',
+                    (byte)'e',
+                    (byte)'"',
+                    (byte)':',
+                });
             }
 
             writer.Write(value.MemberName);
-            writer.WriteRaw(bytesMemberInfo);
+            writer.WriteRaw(new[] {
+                (byte)',',
+                (byte)'"',
+                (byte)'M',
+                (byte)'e',
+                (byte)'m',
+                (byte)'b',
+                (byte)'e',
+                (byte)'r',
+                (byte)'I',
+                (byte)'n',
+                (byte)'f',
+                (byte)'o',
+                (byte)'"',
+                (byte)':',
+            });
             MemberInfoFormatter.SerializeStatic(ref writer, value.MemberInfo, options);
-            writer.WriteRaw(bytesTypedValue);
+            writer.WriteRaw(new[] {
+                (byte)',',
+                (byte)'"',
+                (byte)'T',
+                (byte)'y',
+                (byte)'p',
+                (byte)'e',
+                (byte)'d',
+                (byte)'V',
+                (byte)'a',
+                (byte)'l',
+                (byte)'u',
+                (byte)'e',
+                (byte)'"',
+                (byte)':',
+            });
             CustomAttributeTypedArgumentFormatter.SerializeStatic(ref writer, value.TypedValue, options);
             writer.WriteEndObject();
         }

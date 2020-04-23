@@ -67,32 +67,29 @@ namespace Utf8Json.Internal.DoubleConversion
                 current = nextNonSpace;
             }
 
-            if (infinitySymbol != null)
+            ReadOnlySpan<byte> infinitySymbol = new byte[] { 0x49, 0x6E, 0x66, 0x69, 0x6E, 0x69, 0x74, 0x79, };
+            if (current.Value == infinitySymbol[0])
             {
-                if (current.Value == infinitySymbol[0])
+                if (!ConsumeSubString(ref current, end, infinitySymbol))
                 {
-                    if (!ConsumeSubString(ref current, end, infinitySymbol))
-                    {
-                        return double.NaN;
-                    }
-
-                    readCount = current - input;
-                    return sign ? double.NegativeInfinity : double.PositiveInfinity;
+                    return double.NaN;
                 }
+
+                readCount = current - input;
+                return sign ? double.NegativeInfinity : double.PositiveInfinity;
             }
 
-            if (nanSymbol != null)
+            // StringEncoding.UTF8.GetBytes(double.NaN.ToString(CultureInfo.InvariantCulture));
+            ReadOnlySpan<byte> nanSymbol = new byte[] { 0x4E, 0x61, 0x4E, };
+            if (current.Value == nanSymbol[0])
             {
-                if (current.Value == nanSymbol[0])
+                if (!ConsumeSubString(ref current, end, nanSymbol))
                 {
-                    if (!ConsumeSubString(ref current, end, nanSymbol))
-                    {
-                        return double.NaN;
-                    }
-
-                    readCount = current - input;
-                    return sign ? -double.NaN : double.NaN;
+                    return double.NaN;
                 }
+
+                readCount = current - input;
+                return sign ? -double.NaN : double.NaN;
             }
 
             var leadingZero = false;
@@ -349,32 +346,30 @@ namespace Utf8Json.Internal.DoubleConversion
                 current = nextNonSpace;
             }
 
-            if (infinitySymbol != null)
+            // StringEncoding.UTF8.GetBytes(double.PositiveInfinity.ToString(CultureInfo.InvariantCulture));
+            ReadOnlySpan<byte> infinitySymbol = new byte[] { 0x49, 0x6E, 0x66, 0x69, 0x6E, 0x69, 0x74, 0x79, };
+            if (current.Value == infinitySymbol[0])
             {
-                if (current.Value == infinitySymbol[0])
+                if (!ConsumeSubString(ref current, end, infinitySymbol))
                 {
-                    if (!ConsumeSubString(ref current, end, infinitySymbol))
-                    {
-                        return float.NaN;
-                    }
-
-                    readCount = current - input;
-                    return sign ? float.NegativeInfinity : float.PositiveInfinity;
+                    return float.NaN;
                 }
+
+                readCount = current - input;
+                return sign ? float.NegativeInfinity : float.PositiveInfinity;
             }
 
-            if (nanSymbol != null)
+            // StringEncoding.UTF8.GetBytes(double.NaN.ToString(CultureInfo.InvariantCulture));
+            ReadOnlySpan<byte> nanSymbol = new byte[] { 0x4E, 0x61, 0x4E, };
+            if (current.Value == nanSymbol[0])
             {
-                if (current.Value == nanSymbol[0])
+                if (!ConsumeSubString(ref current, end, nanSymbol))
                 {
-                    if (!ConsumeSubString(ref current, end, nanSymbol))
-                    {
-                        return float.NaN;
-                    }
-
-                    readCount = current - input;
-                    return sign ? -float.NaN : float.NaN;
+                    return float.NaN;
                 }
+
+                readCount = current - input;
+                return sign ? -float.NaN : float.NaN;
             }
 
             var leadingZero = false;
@@ -580,13 +575,8 @@ namespace Utf8Json.Internal.DoubleConversion
 
         private const int KMaxSignificantDigits = 772;
         private const int KBufferSize = KMaxSignificantDigits + 10;
-        // StringEncoding.UTF8.GetBytes(double.PositiveInfinity.ToString(CultureInfo.InvariantCulture));
-        private static readonly byte[] infinitySymbol = { 0x49, 0x6E, 0x66, 0x69, 0x6E, 0x69, 0x74, 0x79, };
-        // StringEncoding.UTF8.GetBytes(double.NaN.ToString(CultureInfo.InvariantCulture));
-        private static readonly byte[] nanSymbol = { 0x4E, 0x61, 0x4E, };
 
         private const int KWhitespaceTable7Length = 6;
-        private static readonly byte[] kWhitespaceTable7 = new byte[KWhitespaceTable7Length] { 32, 13, 10, 9, 11, 12 };
 
         private const int KWhitespaceTable16Length = 20;
         private static readonly ushort[] kWhitespaceTable16 = new ushort[KWhitespaceTable16Length]
@@ -600,6 +590,7 @@ namespace Utf8Json.Internal.DoubleConversion
         {
             if (x < 128)
             {
+                ReadOnlySpan<byte> kWhitespaceTable7 = new byte[KWhitespaceTable7Length] { 32, 13, 10, 9, 11, 12 };
                 for (var i = 0; i < KWhitespaceTable7Length; i++)
                 {
                     if (kWhitespaceTable7[i] == x)
@@ -637,7 +628,7 @@ namespace Utf8Json.Internal.DoubleConversion
             return false;
         }
 
-        private static bool ConsumeSubString(ref Iterator current, in Iterator end, byte[] substring)
+        private static bool ConsumeSubString(ref Iterator current, in Iterator end, ReadOnlySpan<byte> substring)
         {
             for (var i = 1; i < substring.Length; i++)
             {

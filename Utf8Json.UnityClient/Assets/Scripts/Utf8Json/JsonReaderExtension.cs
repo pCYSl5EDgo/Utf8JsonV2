@@ -103,7 +103,7 @@ namespace Utf8Json
                             unwrittenSpan[0] = '\t';
                             goto INCREMENT;
 
-        #region OTHER
+                        #region OTHER
                         case 0x23:
                         case 0x24:
                         case 0x25:
@@ -180,7 +180,7 @@ namespace Utf8Json
                         case 0x71:
                         case 0x73:
                         default:
-        #endregion
+                            #endregion
                             throw new JsonParsingException("Invalid string.");
                     }
 
@@ -314,7 +314,7 @@ namespace Utf8Json
                             case (byte)'t':
                                 *dstPtr++ = '\t';
                                 goto INCREMENT;
-                            #region OTHER
+        #region OTHER
                             case 0x23:
                             case 0x24:
                             case 0x25:
@@ -391,7 +391,7 @@ namespace Utf8Json
                             case 0x71:
                             case 0x73:
                             default:
-                                #endregion
+        #endregion
                                 goto ERROR;
                         }
 
@@ -528,12 +528,8 @@ namespace Utf8Json
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool AdvanceFalse(ref this JsonReader reader)
         {
-#if CSHARP_8_OR_NEWER
-            if (!reader.Reader.UnreadSpan.StartsWith(stackalloc byte[] { (byte)'f', (byte)'a', (byte)'l', (byte)'s', (byte)'e' }))
-#else
             ReadOnlySpan<byte> bytes = stackalloc byte[] { (byte)'f', (byte)'a', (byte)'l', (byte)'s', (byte)'e' };
             if (!reader.Reader.UnreadSpan.StartsWith(bytes))
-#endif
             {
                 return false;
             }
@@ -583,7 +579,17 @@ namespace Utf8Json
         public static long ReadInt64(ref this JsonReader reader)
         {
             reader.SkipWhiteSpace();
-            var span = reader.Reader.ReadToAnyOfDelimitersOrEndDoNotPastDelimiter(JsonReader.NumberBreaks);
+            var span = reader.Reader.ReadToAnyOfDelimitersOrEndDoNotPastDelimiter(new[]
+            {
+                (byte) ' ',
+                (byte) '\t',
+                (byte) '\r',
+                (byte) '\n',
+                (byte) ',',
+                (byte) ']',
+                (byte) '}',
+                (byte) '"',
+            });
 
             if (span.IsEmpty || span.Length > (span[0] == '-' ? 21 : 20))
             {
@@ -631,7 +637,17 @@ namespace Utf8Json
         public static ulong ReadUInt64(ref this JsonReader reader)
         {
             reader.SkipWhiteSpace();
-            var span = reader.Reader.ReadToAnyOfDelimitersOrEndDoNotPastDelimiter(JsonReader.NumberBreaks);
+            var span = reader.Reader.ReadToAnyOfDelimitersOrEndDoNotPastDelimiter(new[]
+            {
+                (byte) ' ',
+                (byte) '\t',
+                (byte) '\r',
+                (byte) '\n',
+                (byte) ',',
+                (byte) ']',
+                (byte) '}',
+                (byte) '"',
+            });
 
             if (span.IsEmpty || span.Length > 20)
             {
@@ -650,7 +666,17 @@ namespace Utf8Json
         public static float ReadSingle(ref this JsonReader reader)
         {
             reader.SkipWhiteSpace();
-            var span = reader.Reader.ReadToAnyOfDelimitersOrEndDoNotPastDelimiter(JsonReader.NumberBreaks);
+            var span = reader.Reader.ReadToAnyOfDelimitersOrEndDoNotPastDelimiter(new[]
+            {
+                (byte) ' ',
+                (byte) '\t',
+                (byte) '\r',
+                (byte) '\n',
+                (byte) ',',
+                (byte) ']',
+                (byte) '}',
+                (byte) '"',
+            });
             var answer = StringToDoubleConverter.ToSingle(span, out var readCount);
 
             if (readCount == span.Length)
@@ -664,7 +690,17 @@ namespace Utf8Json
         public static double ReadDouble(ref this JsonReader reader)
         {
             reader.SkipWhiteSpace();
-            var span = reader.Reader.ReadToAnyOfDelimitersOrEndDoNotPastDelimiter(JsonReader.NumberBreaks);
+            var span = reader.Reader.ReadToAnyOfDelimitersOrEndDoNotPastDelimiter(new[]
+            {
+                (byte) ' ',
+                (byte) '\t',
+                (byte) '\r',
+                (byte) '\n',
+                (byte) ',',
+                (byte) ']',
+                (byte) '}',
+                (byte) '"',
+            });
             var answer = StringToDoubleConverter.ToDouble(span, out var readCount);
 
             if (readCount == span.Length)
@@ -678,7 +714,17 @@ namespace Utf8Json
         public static decimal ReadDecimal(ref this JsonReader reader)
         {
             reader.SkipWhiteSpace();
-            var span = reader.Reader.ReadToAnyOfDelimitersOrEndDoNotPastDelimiter(JsonReader.NumberBreaks);
+            var span = reader.Reader.ReadToAnyOfDelimitersOrEndDoNotPastDelimiter(new[]
+            {
+                (byte) ' ',
+                (byte) '\t',
+                (byte) '\r',
+                (byte) '\n',
+                (byte) ',',
+                (byte) ']',
+                (byte) '}',
+                (byte) '"',
+            });
             var answer = StringToDoubleConverter.ToDecimal(span, out var readCount);
 
             if (readCount == span.Length)

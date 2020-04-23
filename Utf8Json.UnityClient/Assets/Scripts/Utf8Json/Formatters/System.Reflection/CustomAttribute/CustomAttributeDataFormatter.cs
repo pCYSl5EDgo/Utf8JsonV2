@@ -40,46 +40,6 @@ namespace Utf8Json.Formatters
             SerializeStatic(ref writer, value, options);
         }
 
-        private static readonly byte[] bytesAttributeType =
-        {
-            (byte)'{',
-            (byte)'"',
-            (byte)'A',
-            (byte)'t',
-            (byte)'t',
-            (byte)'r',
-            (byte)'i',
-            (byte)'b',
-            (byte)'u',
-            (byte)'t',
-            (byte)'e',
-            (byte)'T',
-            (byte)'y',
-            (byte)'p',
-            (byte)'e',
-            (byte)'"',
-            (byte)':',
-        };
-
-        private static readonly byte[] bytesConstructor =
-        {
-            (byte)',',
-            (byte)'"',
-            (byte)'C',
-            (byte)'o',
-            (byte)'n',
-            (byte)'s',
-            (byte)'t',
-            (byte)'r',
-            (byte)'u',
-            (byte)'c',
-            (byte)'t',
-            (byte)'o',
-            (byte)'r',
-            (byte)'"',
-            (byte)':',
-        };
-
 #if CSHARP_8_OR_NEWER
         public static void SerializeStatic(ref JsonWriter writer, CustomAttributeData? value, JsonSerializerOptions options)
 #else
@@ -92,10 +52,44 @@ namespace Utf8Json.Formatters
                 return;
             }
 
-            writer.WriteRaw(bytesAttributeType);
+            writer.WriteRaw(new[] {
+                (byte)'{',
+                (byte)'"',
+                (byte)'A',
+                (byte)'t',
+                (byte)'t',
+                (byte)'r',
+                (byte)'i',
+                (byte)'b',
+                (byte)'u',
+                (byte)'t',
+                (byte)'e',
+                (byte)'T',
+                (byte)'y',
+                (byte)'p',
+                (byte)'e',
+                (byte)'"',
+                (byte)':',
+            });
             TypeFormatter.SerializeStatic(ref writer, value.AttributeType, options);
 
-            writer.WriteRaw(bytesConstructor);
+            writer.WriteRaw(new[] {
+                (byte)',',
+                (byte)'"',
+                (byte)'C',
+                (byte)'o',
+                (byte)'n',
+                (byte)'s',
+                (byte)'t',
+                (byte)'r',
+                (byte)'u',
+                (byte)'c',
+                (byte)'t',
+                (byte)'o',
+                (byte)'r',
+                (byte)'"',
+                (byte)':',
+            });
             ConstructorInfoFormatter.SerializeStatic(ref writer, value.Constructor, options);
 
             writer.WriteEndObject();

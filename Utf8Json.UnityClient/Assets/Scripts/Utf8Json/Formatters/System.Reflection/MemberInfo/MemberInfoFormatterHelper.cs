@@ -7,120 +7,105 @@ namespace Utf8Json.Formatters
 {
     internal static class MemberInfoFormatterHelper
     {
-        public static readonly byte[] BytesName =
-        {
-            (byte)'{',
-            (byte)'"',
-            (byte)'N',
-            (byte)'a',
-            (byte)'m',
-            (byte)'e',
-            (byte)'"',
-            (byte)':',
-        };
-
-        public static readonly byte[] BytesMemberType =
-        {
-            (byte)',',
-            (byte)'"',
-            (byte)'M',
-            (byte)'e',
-            (byte)'m',
-            (byte)'b',
-            (byte)'e',
-            (byte)'r',
-            (byte)'T',
-            (byte)'y',
-            (byte)'p',
-            (byte)'e',
-            (byte)'"',
-            (byte)':',
-        };
-
-        public static readonly byte[] BytesMetadataToken =
-        {
-            (byte)',',
-            (byte)'"',
-            (byte)'M',
-            (byte)'e',
-            (byte)'t',
-            (byte)'a',
-            (byte)'d',
-            (byte)'a',
-            (byte)'t',
-            (byte)'a',
-            (byte)'T',
-            (byte)'o',
-            (byte)'k',
-            (byte)'e',
-            (byte)'n',
-            (byte)'"',
-            (byte)':',
-        };
-
-        public static readonly byte[] BytesDeclaringType =
-        {
-            (byte)',',
-            (byte)'"',
-            (byte)'D',
-            (byte)'e',
-            (byte)'c',
-            (byte)'l',
-            (byte)'a',
-            (byte)'r',
-            (byte)'i',
-            (byte)'n',
-            (byte)'g',
-            (byte)'T',
-            (byte)'y',
-            (byte)'p',
-            (byte)'e',
-            (byte)'"',
-            (byte)':',
-        };
-
-        public static readonly byte[] BytesCustomAttributes =
-        {
-            (byte)',',
-            (byte)'"',
-            (byte)'C',
-            (byte)'u',
-            (byte)'s',
-            (byte)'t',
-            (byte)'o',
-            (byte)'m',
-            (byte)'A',
-            (byte)'t',
-            (byte)'t',
-            (byte)'r',
-            (byte)'i',
-            (byte)'b',
-            (byte)'u',
-            (byte)'t',
-            (byte)'e',
-            (byte)'s',
-            (byte)'"',
-            (byte)':',
-            (byte)'[',
-        };
-
         public static void SerializeStaticWithoutEndObject(ref JsonWriter writer, MemberInfo value, JsonSerializerOptions options)
         {
-            writer.WriteRaw(BytesName);
+            writer.WriteRaw(new[] {
+                (byte)'{',
+                (byte)'"',
+                (byte)'N',
+                (byte)'a',
+                (byte)'m',
+                (byte)'e',
+                (byte)'"',
+                (byte)':',
+            });
             writer.Write(value.Name);
-            writer.WriteRaw(BytesMetadataToken);
+            writer.WriteRaw(new[] {
+                (byte)',',
+                (byte)'"',
+                (byte)'M',
+                (byte)'e',
+                (byte)'t',
+                (byte)'a',
+                (byte)'d',
+                (byte)'a',
+                (byte)'t',
+                (byte)'a',
+                (byte)'T',
+                (byte)'o',
+                (byte)'k',
+                (byte)'e',
+                (byte)'n',
+                (byte)'"',
+                (byte)':',
+            });
             writer.Write(value.MetadataToken);
-            writer.WriteRaw(BytesMemberType);
+            writer.WriteRaw(new[] {
+                (byte)',',
+                (byte)'"',
+                (byte)'M',
+                (byte)'e',
+                (byte)'m',
+                (byte)'b',
+                (byte)'e',
+                (byte)'r',
+                (byte)'T',
+                (byte)'y',
+                (byte)'p',
+                (byte)'e',
+                (byte)'"',
+                (byte)':',
+            });
             writer.Write((int)value.MemberType);
 
             var declaringType = value.DeclaringType;
             if (!options.IgnoreNullValues || declaringType != null)
             {
-                writer.WriteRaw(BytesDeclaringType);
+                writer.WriteRaw(new[] {
+                    (byte)',',
+                    (byte)'"',
+                    (byte)'D',
+                    (byte)'e',
+                    (byte)'c',
+                    (byte)'l',
+                    (byte)'a',
+                    (byte)'r',
+                    (byte)'i',
+                    (byte)'n',
+                    (byte)'g',
+                    (byte)'T',
+                    (byte)'y',
+                    (byte)'p',
+                    (byte)'e',
+                    (byte)'"',
+                    (byte)':',
+                });
                 TypeFormatter.SerializeStatic(ref writer, declaringType, options);
             }
 
-            writer.WriteRaw(BytesCustomAttributes);
+            writer.WriteRaw(new[] {
+                (byte)',',
+                (byte)'"',
+                (byte)'C',
+                (byte)'u',
+                (byte)'s',
+                (byte)'t',
+                (byte)'o',
+                (byte)'m',
+                (byte)'A',
+                (byte)'t',
+                (byte)'t',
+                (byte)'r',
+                (byte)'i',
+                (byte)'b',
+                (byte)'u',
+                (byte)'t',
+                (byte)'e',
+                (byte)'s',
+                (byte)'"',
+                (byte)':',
+                (byte)'[',
+            });
             var customAttributes = value.CustomAttributes;
             var enumerator = customAttributes.GetEnumerator();
             try

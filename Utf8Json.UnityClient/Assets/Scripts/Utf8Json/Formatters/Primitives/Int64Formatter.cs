@@ -278,8 +278,8 @@ namespace Utf8Json.Formatters
         public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
         {
             var answer = reader.ReadInt64();
-            if (answer == -1) return ObjectHelper.Int64Array[0];
-            if (answer >= 0 && answer < 256) return ObjectHelper.Int64Array[answer + 1];
+            if (answer == -1) return ObjectHelper.Int64Array[256];
+            if (answer >= 0 && answer < 256) return ObjectHelper.Int64Array[answer];
             return answer;
         }
     }

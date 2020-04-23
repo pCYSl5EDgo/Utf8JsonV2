@@ -46,13 +46,13 @@ namespace Utf8Json.Internal
                         param = ObjectHelper.UIntPtr;
                         break;
                     case "System.SByte":
-                        param = ObjectHelper.SByte;
+                        param = ObjectHelper.SByteArray[0];
                         break;
                     case "System.Byte":
                         param = ObjectHelper.ByteArray[0];
                         break;
                     case "System.Int16":
-                        param = ObjectHelper.Int16;
+                        param = ObjectHelper.Int16Array[0];
                         break;
                     case "System.UInt16":
                         param = ObjectHelper.UInt16Array[0];

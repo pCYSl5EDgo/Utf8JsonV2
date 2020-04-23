@@ -10,9 +10,6 @@ namespace Utf8Json.Formatters
     // ReSharper disable once InconsistentNaming
     public sealed class ISO8601TimeSpanFormatter : IJsonFormatter<TimeSpan>
     {
-        // StringEncoding.UTF8.GetBytes("\"" + TimeSpan.MinValue + "\"");
-        private static readonly byte[] minValue = { 0x22, 0x2D, 0x31, 0x30, 0x36, 0x37, 0x35, 0x31, 0x39, 0x39, 0x2E, 0x30, 0x32, 0x3A, 0x34, 0x38, 0x3A, 0x30, 0x35, 0x2E, 0x34, 0x37, 0x37, 0x35, 0x38, 0x30, 0x38, 0x22, };
-
         public void Serialize(ref JsonWriter writer, TimeSpan value, JsonSerializerOptions options)
         {
             SerializeStatic(ref writer, value, options);
@@ -23,7 +20,8 @@ namespace Utf8Json.Formatters
             // can not negate, use cache
             if (value == TimeSpan.MinValue)
             {
-                writer.Writer.Write((ReadOnlySpan<byte>)minValue);
+                // StringEncoding.UTF8.GetBytes("\"" + TimeSpan.MinValue + "\"");
+                writer.Writer.Write(new byte[] { 0x22, 0x2D, 0x31, 0x30, 0x36, 0x37, 0x35, 0x31, 0x39, 0x39, 0x2E, 0x30, 0x32, 0x3A, 0x34, 0x38, 0x3A, 0x30, 0x35, 0x2E, 0x34, 0x37, 0x37, 0x35, 0x38, 0x30, 0x38, 0x22, });
                 return;
             }
 
