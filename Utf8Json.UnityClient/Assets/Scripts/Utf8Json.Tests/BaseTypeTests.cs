@@ -36,13 +36,13 @@ namespace Utf8Json.Test
         {
             for (byte value = 0; value < byte.MaxValue; value++)
             {
-                var bytes = JsonSerializer.Serialize<byte>(value);
+                var bytes = JsonSerializer.Serialize(value);
                 var deserialize = JsonSerializer.Deserialize<byte>(bytes);
                 Assert.IsTrue(value == deserialize);
             }
 
             {
-                var bytes = JsonSerializer.Serialize<byte>(byte.MaxValue);
+                var bytes = JsonSerializer.Serialize(byte.MaxValue);
                 var deserialize = JsonSerializer.Deserialize<byte>(bytes);
                 Assert.IsTrue(byte.MaxValue == deserialize);
             }
@@ -69,13 +69,13 @@ namespace Utf8Json.Test
         {
             for (sbyte value = sbyte.MinValue; value < sbyte.MaxValue; value++)
             {
-                var bytes = JsonSerializer.Serialize<sbyte>(value);
+                var bytes = JsonSerializer.Serialize(value);
                 var deserialize = JsonSerializer.Deserialize<sbyte>(bytes);
                 Assert.IsTrue(value == deserialize);
             }
 
             {
-                var bytes = JsonSerializer.Serialize<sbyte>(sbyte.MaxValue);
+                var bytes = JsonSerializer.Serialize(sbyte.MaxValue);
                 Console.WriteLine(bytes.ToArrayString());
                 var deserialize = JsonSerializer.Deserialize<sbyte>(bytes);
                 Assert.IsTrue(sbyte.MaxValue == deserialize);
@@ -87,7 +87,7 @@ namespace Utf8Json.Test
         {
             for (ushort value = 0; value < ushort.MaxValue; value++)
             {
-                var bytes = JsonSerializer.Serialize<ushort>(value);
+                var bytes = JsonSerializer.Serialize(value);
                 var deserialize = JsonSerializer.Deserialize<ushort>(bytes);
                 Assert.AreEqual(value, deserialize);
             }
@@ -104,13 +104,13 @@ namespace Utf8Json.Test
         {
             for (short value = short.MinValue; value < short.MaxValue; value++)
             {
-                var bytes = JsonSerializer.Serialize<short>(value);
+                var bytes = JsonSerializer.Serialize(value);
                 var deserialize = JsonSerializer.Deserialize<short>(bytes);
                 Assert.AreEqual(value, deserialize);
             }
 
             {
-                var bytes = JsonSerializer.Serialize<short>(short.MaxValue);
+                var bytes = JsonSerializer.Serialize(short.MaxValue);
                 var deserialize = JsonSerializer.Deserialize<short>(bytes);
                 Assert.AreEqual(short.MaxValue, deserialize);
             }
