@@ -4,9 +4,12 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.InteropServices;
 using Utf8Json.Internal;
+using RuntimeFeature = Utf8Json.Internal.RuntimeFeature;
 
 namespace Utf8Json.Resolvers
 {
@@ -15,18 +18,44 @@ namespace Utf8Json.Resolvers
         public static readonly DynamicAssemblyBuilderResolver Instance;
 
 #if CSHARP_8_OR_NEWER
-        private static readonly ConcurrentDictionary<byte[], FieldInfo>? dataFieldDictionary;
         private static readonly AssemblyBuilder? assemblyBuilder;
         private static readonly ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>? formatterTable;
 #else
-        private static readonly ConcurrentDictionary<byte[], FieldInfo> dataFieldDictionary;
         private static readonly AssemblyBuilder assemblyBuilder;
         private static readonly ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter> formatterTable;
 #endif
+
+        private static readonly ConcurrentDictionary<Assembly, object> assemblyDictionary;
+        private static readonly BinaryDictionary dataFieldDictionary;
         private static readonly ModuleBuilder moduleBuilder;
+        private static readonly ConstructorInfo constructorIgnoresAccessChecksToAttribute;
+
+        private static readonly uint @null;
+        private static readonly uint @true;
 
         static DynamicAssemblyBuilderResolver()
         {
+            {
+                ReadOnlySpan<byte> number = stackalloc byte[4]
+                {
+                    (byte)'n',
+                    (byte)'u',
+                    (byte)'l',
+                    (byte)'l',
+                };
+                @null = MemoryMarshal.Cast<byte, uint>(number)[0];
+            }
+            {
+                ReadOnlySpan<byte> number = stackalloc byte[4]
+                {
+                    (byte)'t',
+                    (byte)'r',
+                    (byte)'u',
+                    (byte)'e',
+                };
+                @true = MemoryMarshal.Cast<byte, uint>(number)[0];
+            }
+
             Instance = new DynamicAssemblyBuilderResolver();
             if (!RuntimeFeature.IsDynamicCodeSupported)
             {
@@ -34,10 +63,15 @@ namespace Utf8Json.Resolvers
                 formatterTable = default;
 #if CSHARP_8_OR_NEWER
                 moduleBuilder = default!;
+                constructorIgnoresAccessChecksToAttribute = default!;
+                dataFieldDictionary = default!;
+                assemblyDictionary = default!;
 #else
                 moduleBuilder = default;
-#endif
+                constructorIgnoresAccessChecksToAttribute = default;
                 dataFieldDictionary = default;
+                assemblyDictionary = default;
+#endif
                 return;
             }
 
@@ -45,7 +79,98 @@ namespace Utf8Json.Resolvers
             const string assemblyName = "Utf8Json.IL.Emit";
             assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(assemblyName), AssemblyBuilderAccess.Run);
             moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName);
-            dataFieldDictionary = new ConcurrentDictionary<byte[], FieldInfo>(new DataByteArrayComparer());
+            dataFieldDictionary = new BinaryDictionary();
+            constructorIgnoresAccessChecksToAttribute = CreateIgnoresAccessChecksToAttribute();
+            assemblyDictionary = new ConcurrentDictionary<Assembly, object>();
+            assemblyDictionary.GetOrAdd(assemblyBuilder, FactoryOfIgnoresAccess);
+            EnsurePrivateAccess(typeof(JsonSerializerOptions));
+        }
+
+        private static void EnsurePrivateAccess(Type targetType)
+        {
+            assemblyDictionary.GetOrAdd(targetType.Assembly, FactoryOfIgnoresAccess);
+        }
+
+        private static object FactoryOfIgnoresAccess(Assembly assembly)
+        {
+            // InternalsVisibleTo declarations cannot have a version, culture, public key token, or processor architecture specified.
+            var name = assembly.GetName().Name ?? throw new NullReferenceException();
+            assemblyBuilder?.SetCustomAttribute(new CustomAttributeBuilder(constructorIgnoresAccessChecksToAttribute, new object[]
+            {
+                name,
+            }));
+
+            return ObjectHelper.Object;
+        }
+
+        private static ConstructorInfo CreateIgnoresAccessChecksToAttribute()
+        {
+            Debug.Assert(!(assemblyBuilder is null));
+            var attributeBuilder = moduleBuilder.DefineType("System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute", TypeAttributes.BeforeFieldInit, typeof(Attribute));
+
+            AddCustomAttributeToIgnoresAccessChecksToAttribute(attributeBuilder);
+
+            var constructor = DefineMembersInIgnoresAccessChecksToAttribute(attributeBuilder);
+
+#if TYPEBUILDER_CREATE_TYPE
+            attributeBuilder.CreateType();
+#else
+            attributeBuilder.CreateTypeInfo();
+#endif
+            return constructor;
+        }
+
+        private static void AddCustomAttributeToIgnoresAccessChecksToAttribute(TypeBuilder attributeBuilder)
+        {
+            var usageConstructor = typeof(AttributeUsageAttribute).GetConstructor(new[] { typeof(AttributeTargets) });
+            Debug.Assert(!(usageConstructor is null));
+            var propertyAllowMultiple = typeof(AttributeUsageAttribute).GetProperty("AllowMultiple");
+            Debug.Assert(!(propertyAllowMultiple is null));
+            attributeBuilder.SetCustomAttribute(new CustomAttributeBuilder(usageConstructor,
+            new object[]
+            {
+                AttributeTargets.Assembly,
+            },
+            new[]
+            {
+                propertyAllowMultiple
+            },
+            new[]
+            {
+                ObjectHelper.True,
+            }));
+        }
+
+        private static ConstructorInfo DefineMembersInIgnoresAccessChecksToAttribute(TypeBuilder attributeBuilder)
+        {
+            var assemblyName = attributeBuilder.DefineField("<AssemblyName>k__BackingField", typeof(string), FieldAttributes.Private | FieldAttributes.InitOnly);
+            var get_AssemblyName = attributeBuilder.DefineMethod("get_AssemblyName", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName, typeof(string), Array.Empty<Type>());
+            {
+                var processor = get_AssemblyName.GetILGenerator();
+                processor.Emit(OpCodes.Ldarg_0);
+                processor.Emit(OpCodes.Ldfld, assemblyName);
+                processor.Emit(OpCodes.Ret);
+            }
+            var propertyAssemblyName = attributeBuilder.DefineProperty("AssemblyName", PropertyAttributes.None, typeof(string), Array.Empty<Type>());
+            propertyAssemblyName.SetGetMethod(get_AssemblyName);
+
+            var constructor = attributeBuilder.DefineConstructor(MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName, CallingConventions.HasThis, new[] { typeof(string) });
+            {
+                var parentConstructor = typeof(Attribute).GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null, Array.Empty<Type>(), null);
+                Debug.Assert(!(parentConstructor is null));
+
+                var processor = constructor.GetILGenerator();
+                processor.Emit(OpCodes.Ldarg_0);
+                processor.Emit(OpCodes.Call, parentConstructor);
+
+                processor.Emit(OpCodes.Ldarg_0);
+                processor.Emit(OpCodes.Ldarg_1);
+                processor.Emit(OpCodes.Stfld, assemblyName);
+
+                processor.Emit(OpCodes.Ret);
+            }
+
+            return constructor;
         }
 
         private sealed class DataByteArrayComparer : IComparer<byte[]>, IEqualityComparer<byte[]>
@@ -141,6 +266,8 @@ namespace Utf8Json.Resolvers
             }
 
             if (!targetType.IsEnum) return default;
+
+            EnsurePrivateAccess(targetType);
 
             var builderSet = PrepareBuilderSet(targetType);
 

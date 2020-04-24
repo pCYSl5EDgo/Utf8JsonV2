@@ -16,6 +16,70 @@ namespace Utf8Json.Test
 {
     public class NewlyDefinedValueTypeTests
     {
+        private enum ByteEnum : byte
+        {
+            None,
+            Help,
+            Want,
+            Queue,
+        }
+
+        private enum SByteEnum : sbyte
+        {
+            None,
+            Help,
+            Want,
+            Queue,
+        }
+
+        private enum Int16Enum : short
+        {
+            None,
+            Help,
+            Want,
+            Queue,
+        }
+
+        private enum UInt16Enum : ushort
+        {
+            None,
+            Help,
+            Want,
+            Queue,
+        }
+
+        private enum Int32Enum : int
+        {
+            None,
+            Help,
+            Want,
+            Queue,
+        }
+
+        private enum UInt32Enum : uint
+        {
+            None,
+            Help,
+            Want,
+            Queue,
+        }
+
+        private enum Int64Enum : long
+        {
+            None,
+            Help,
+            Want,
+            Queue,
+        }
+
+        private enum UInt64Enum : ulong
+        {
+            None,
+            Help,
+            Want,
+            Queue,
+        }
+
         public struct X
         {
             public int C { get; }
@@ -53,6 +117,43 @@ namespace Utf8Json.Test
 
             [JsonFormatter(typeof(DateTimeFormatter))]
             public DateTime DateTimeNow { get; set; } = DateTime.Now;
+        }
+
+        [Test]
+        public void SimpleEnumTest()
+        {
+            {
+                const ByteEnum a = ByteEnum.Help;
+                Assert.AreEqual(JsonSerializer.Deserialize<ByteEnum>(JsonSerializer.Serialize(a)), a);
+            }
+            {
+                const SByteEnum a = SByteEnum.None;
+                Assert.AreEqual(JsonSerializer.Deserialize<SByteEnum>(JsonSerializer.Serialize(a)), a);
+            }
+            {
+                const Int16Enum a = Int16Enum.Queue;
+                Assert.AreEqual(JsonSerializer.Deserialize<Int16Enum>(JsonSerializer.Serialize(a)), a);
+            }
+            {
+                const UInt16Enum a = UInt16Enum.Queue;
+                Assert.AreEqual(JsonSerializer.Deserialize<UInt16Enum>(JsonSerializer.Serialize(a)), a);
+            }
+            {
+                const Int32Enum a = Int32Enum.Want;
+                Assert.AreEqual(JsonSerializer.Deserialize<Int32Enum>(JsonSerializer.Serialize(a)), a);
+            }
+            {
+                const UInt32Enum a = UInt32Enum.Want;
+                Assert.AreEqual(JsonSerializer.Deserialize<UInt32Enum>(JsonSerializer.Serialize(a)), a);
+            }
+            {
+                const Int64Enum a = (Int64Enum)long.MaxValue;
+                Assert.AreEqual(JsonSerializer.Deserialize<Int64Enum>(JsonSerializer.Serialize(a)), a);
+            }
+            {
+                const UInt64Enum a = (UInt64Enum)ulong.MaxValue;
+                Assert.AreEqual(JsonSerializer.Deserialize<UInt64Enum>(JsonSerializer.Serialize(a)), a);
+            }
         }
 
         [Test]

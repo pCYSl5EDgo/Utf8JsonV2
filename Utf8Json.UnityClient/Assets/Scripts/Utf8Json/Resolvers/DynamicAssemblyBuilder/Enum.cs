@@ -62,7 +62,7 @@ namespace Utf8Json.Resolvers
             }
         }
 
-        private static Entry<T> Factory<T>(FieldInfo info)
+        private static Entry<T> EnumEntryFactory<T>(FieldInfo info)
             where T : unmanaged, IEquatable<T>, IComparable<T>
         {
             var number = FillValue<T>(info);
