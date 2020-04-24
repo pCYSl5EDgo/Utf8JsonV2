@@ -69,6 +69,16 @@ namespace Utf8Json.Test
             Assert.AreEqual(value.A, deserialize.A);
         }
 
+        [TestCase(LayoutKind.Explicit)]
+        [TestCase(LayoutKind.Sequential)]
+        [TestCase(LayoutKind.Auto)]
+        public void SimpleEnumTest(LayoutKind value)
+        {
+            var bytes = JsonSerializer.Serialize(value);
+            var deserialize = JsonSerializer.Deserialize<LayoutKind>(bytes);
+            Assert.IsTrue(value == deserialize);
+        }
+
         [Test]
         public void LayoutKindTest()
         {

@@ -28,4 +28,20 @@ namespace Utf8Json
     public class SerializationConstructorAttribute : Attribute
     {
     }
+
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+    public sealed class ReferenceLoopAttribute : Attribute
+    {
+    }
+
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class ReferenceLoopHandlingIgnoreMemberWhenReferenceEqualsAttribute : Attribute
+    {
+        public string MemberName;
+    }
+
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class ReferenceLoopHandlingEmbedIdReference : Attribute
+    {
+    }
 }

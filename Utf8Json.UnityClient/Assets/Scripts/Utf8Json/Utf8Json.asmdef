@@ -14,7 +14,8 @@
         "System.Threading.Tasks.Extensions.dll",
         "StaticFunctionPointerHelper.dll",
         "Utf8Json.Core.dll",
-        "System.Reflection.Emit.dll"
+        "System.Reflection.Emit.dll",
+        "System.Reflection.Emit.ILGeneration.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": []

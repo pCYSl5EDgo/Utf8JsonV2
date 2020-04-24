@@ -12,6 +12,7 @@ namespace Utf8Json.Internal.Resolvers
             BuiltinResolver.Instance,
             BasicGenericsResolver.Instance,
             AttributeFormatterResolver.Instance,
+            DynamicAssemblyBuilderResolver.Instance,
             ReflectionResolver.Instance,
         };
     }

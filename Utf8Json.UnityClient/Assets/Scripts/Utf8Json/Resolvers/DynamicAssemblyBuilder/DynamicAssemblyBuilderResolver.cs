@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using Utf8Json.Internal;
@@ -13,9 +15,11 @@ namespace Utf8Json.Resolvers
         public static readonly DynamicAssemblyBuilderResolver Instance;
 
 #if CSHARP_8_OR_NEWER
+        private static readonly ConcurrentDictionary<byte[], FieldInfo>? dataFieldDictionary;
         private static readonly AssemblyBuilder? assemblyBuilder;
         private static readonly ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>? formatterTable;
 #else
+        private static readonly ConcurrentDictionary<byte[], FieldInfo> dataFieldDictionary;
         private static readonly AssemblyBuilder assemblyBuilder;
         private static readonly ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter> formatterTable;
 #endif
@@ -33,6 +37,7 @@ namespace Utf8Json.Resolvers
 #else
                 moduleBuilder = default;
 #endif
+                dataFieldDictionary = default;
                 return;
             }
 
@@ -40,6 +45,50 @@ namespace Utf8Json.Resolvers
             const string assemblyName = "Utf8Json.IL.Emit";
             assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(assemblyName), AssemblyBuilderAccess.Run);
             moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName);
+            dataFieldDictionary = new ConcurrentDictionary<byte[], FieldInfo>(new DataByteArrayComparer());
+        }
+
+        private sealed class DataByteArrayComparer : IComparer<byte[]>, IEqualityComparer<byte[]>
+        {
+            public int Compare(byte[] x, byte[] y)
+            {
+                var c = x.LongLength.CompareTo(y.LongLength);
+                if (c != 0)
+                {
+                    return c;
+                }
+
+                for (var index = 0; index < x.Length; index++)
+                {
+                    c = x[index].CompareTo(y[index]);
+                    if (c != 0)
+                    {
+                        return c;
+                    }
+                }
+
+                return 0;
+            }
+
+            public bool Equals(byte[] x, byte[] y)
+            {
+                if (x.LongLength != y.LongLength)
+                {
+                    return false;
+                }
+
+                for (var i = 0; i < x.Length; i++)
+                {
+                    if (x[i] != y[i])
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            public int GetHashCode(byte[] obj) => obj.Length - 1;
         }
 
         public IJsonFormatter[] CollectCurrentRegisteredFormatters()
@@ -91,12 +140,21 @@ namespace Utf8Json.Resolvers
                 return default;
             }
 
+            if (!targetType.IsEnum) return default;
+
             var builderSet = PrepareBuilderSet(targetType);
 
             if (targetType.IsEnum)
             {
-                var enumUnderlyingType = targetType.GetEnumUnderlyingType();
-                EnumFactory(targetType, enumUnderlyingType, in builderSet);
+                var flags = targetType.GetCustomAttribute<FlagsAttribute>();
+                if (flags is null)
+                {
+                    EnumNumberFactory(targetType, in builderSet);
+                }
+                else
+                {
+                    EnumNumberFactory(targetType, in builderSet);
+                }
             }
             else
             {
@@ -115,6 +173,9 @@ namespace Utf8Json.Resolvers
             return answer;
         }
 
+        private const MethodAttributes StaticMethodFlags = MethodAttributes.Public | MethodAttributes.Static | MethodAttributes.HideBySig;
+        private const MethodAttributes InstanceMethodFlags = MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual;
+
         private static BuilderSet PrepareBuilderSet(Type targetType)
         {
             var typeBuilder = moduleBuilder.DefineType(
@@ -127,35 +188,57 @@ namespace Utf8Json.Resolvers
                     typeof(IJsonFormatter<>).MakeGenericType(targetType),
                 });
 
-            var defaultConstructor = typeBuilder.DefineDefaultConstructor(MethodAttributes.SpecialName | MethodAttributes.RTSpecialName | MethodAttributes.Public | MethodAttributes.HideBySig);
-            const MethodAttributes staticMethodFlags = MethodAttributes.Public | MethodAttributes.Static | MethodAttributes.HideBySig;
-            const MethodAttributes instanceMethodFlags = MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual;
             var writerParams = new[]
             {
                 typeof(JsonWriter).MakeByRefType(),
                 targetType,
                 typeof(JsonSerializerOptions),
             };
-            var serializeStatic = typeBuilder.DefineMethod("SerializeStatic", staticMethodFlags, typeof(void), writerParams);
-            var serialize = typeBuilder.DefineMethod("Serialize", instanceMethodFlags, typeof(void), writerParams);
+            var serializeStatic = typeBuilder.DefineMethod("SerializeStatic", StaticMethodFlags, typeof(void), writerParams);
+            {
+                var serialize = typeBuilder.DefineMethod("Serialize", InstanceMethodFlags, typeof(void), writerParams);
+                GenerateIntermediateLanguageCodesForSerialize(serializeStatic, serialize);
+            }
             var writerTypelessParams = new[]
             {
                 typeof(JsonWriter).MakeByRefType(),
                 typeof(object),
                 typeof(JsonSerializerOptions),
             };
-            var serializeTypeless = typeBuilder.DefineMethod("SerializeTypeless", instanceMethodFlags, typeof(void), writerTypelessParams);
+            var serializeTypeless = typeBuilder.DefineMethod("SerializeTypeless", InstanceMethodFlags, typeof(void), writerTypelessParams);
             var readerParams = new[]
             {
                 typeof(JsonReader).MakeByRefType(),
                 typeof(JsonSerializerOptions),
             };
-            var deserializeStatic = typeBuilder.DefineMethod("DeserializeStatic", staticMethodFlags, targetType, readerParams);
-            var deserialize = typeBuilder.DefineMethod("Deserialize", instanceMethodFlags, targetType, readerParams);
-            var deserializeTypeless = typeBuilder.DefineMethod("DeserializeTypeless", instanceMethodFlags, typeof(object), readerParams);
+            var deserializeStatic = typeBuilder.DefineMethod("DeserializeStatic", StaticMethodFlags, targetType, readerParams);
+            {
+                var deserialize = typeBuilder.DefineMethod("Deserialize", InstanceMethodFlags, targetType, readerParams);
+                GenerateIntermediateLanguageCodesForDeserialize(deserializeStatic, deserialize);
+            }
+            var deserializeTypeless = typeBuilder.DefineMethod("DeserializeTypeless", InstanceMethodFlags, typeof(object), readerParams);
 
-            var builderSet = new BuilderSet(typeBuilder, defaultConstructor, serialize, serializeStatic, serializeTypeless, deserialize, deserializeStatic, deserializeTypeless);
+            var builderSet = new BuilderSet(typeBuilder, serializeStatic, serializeTypeless, deserializeStatic, deserializeTypeless);
             return builderSet;
+        }
+
+        private static void GenerateIntermediateLanguageCodesForDeserialize(MethodInfo deserializeStatic, MethodBuilder deserialize)
+        {
+            var processor = deserialize.GetILGenerator();
+            processor.Emit(OpCodes.Ldarg_1);
+            processor.Emit(OpCodes.Ldarg_2);
+            processor.EmitCall(OpCodes.Call, deserializeStatic, null);
+            processor.Emit(OpCodes.Ret);
+        }
+
+        private static void GenerateIntermediateLanguageCodesForSerialize(MethodInfo serializeStatic, MethodBuilder serialize)
+        {
+            var processor = serialize.GetILGenerator();
+            processor.Emit(OpCodes.Ldarg_1);
+            processor.Emit(OpCodes.Ldarg_2);
+            processor.Emit(OpCodes.Ldarg_3);
+            processor.EmitCall(OpCodes.Call, serializeStatic, null);
+            processor.Emit(OpCodes.Ret);
         }
 
 #if CSHARP_8_OR_NEWER
@@ -219,22 +302,16 @@ namespace Utf8Json.Resolvers
         private readonly struct BuilderSet
         {
             public readonly TypeBuilder Type;
-            public readonly ConstructorBuilder DefaultConstructor;
-            public readonly MethodBuilder Serialize;
             public readonly MethodBuilder SerializeStatic;
             public readonly MethodBuilder SerializeTypeless;
-            public readonly MethodBuilder Deserialize;
             public readonly MethodBuilder DeserializeStatic;
             public readonly MethodBuilder DeserializeTypeless;
 
-            public BuilderSet(TypeBuilder type, ConstructorBuilder defaultConstructor, MethodBuilder serialize, MethodBuilder serializeStatic, MethodBuilder serializeTypeless, MethodBuilder deserialize, MethodBuilder deserializeStatic, MethodBuilder deserializeTypeless)
+            public BuilderSet(TypeBuilder type, MethodBuilder serializeStatic, MethodBuilder serializeTypeless, MethodBuilder deserializeStatic, MethodBuilder deserializeTypeless)
             {
                 Type = type;
-                DefaultConstructor = defaultConstructor;
-                Serialize = serialize;
                 SerializeStatic = serializeStatic;
                 SerializeTypeless = serializeTypeless;
-                Deserialize = deserialize;
                 DeserializeStatic = deserializeStatic;
                 DeserializeTypeless = deserializeTypeless;
             }

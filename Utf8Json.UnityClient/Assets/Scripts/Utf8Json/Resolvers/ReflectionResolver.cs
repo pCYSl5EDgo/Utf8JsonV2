@@ -43,56 +43,19 @@ namespace Utf8Json.Resolvers
         private static IJsonFormatter NotFoundCreateFactory(Type targetType)
 #endif
         {
-            var answer = default(IJsonFormatter);
-            if (targetType.IsEnum)
+            if (targetType.IsEnum) return default;
+            
+            if (targetType.IsValueType)
             {
-                var underlyingType = targetType.GetEnumUnderlyingType();
-                if (underlyingType == typeof(int))
-                {
-                    answer = Activator.CreateInstance(typeof(EnumInt32Formatter<>).MakeGenericType(targetType)) as IJsonFormatter;
-                }
-                else if (underlyingType == typeof(uint))
-                {
-                    answer = Activator.CreateInstance(typeof(EnumUInt32Formatter<>).MakeGenericType(targetType)) as IJsonFormatter;
-                }
-                else if (underlyingType == typeof(byte))
-                {
-                    answer = Activator.CreateInstance(typeof(EnumByteFormatter<>).MakeGenericType(targetType)) as IJsonFormatter;
-                }
-                else if (underlyingType == typeof(ulong))
-                {
-                    answer = Activator.CreateInstance(typeof(EnumUInt64Formatter<>).MakeGenericType(targetType)) as IJsonFormatter;
-                }
-                else if (underlyingType == typeof(ushort))
-                {
-                    answer = Activator.CreateInstance(typeof(EnumUInt16Formatter<>).MakeGenericType(targetType)) as IJsonFormatter;
-                }
-                else if (underlyingType == typeof(long))
-                {
-                    answer = Activator.CreateInstance(typeof(EnumInt64Formatter<>).MakeGenericType(targetType)) as IJsonFormatter;
-                }
-                else if (underlyingType == typeof(sbyte))
-                {
-                    answer = Activator.CreateInstance(typeof(EnumSByteFormatter<>).MakeGenericType(targetType)) as IJsonFormatter;
-                }
-                else if (underlyingType == typeof(short))
-                {
-                    answer = Activator.CreateInstance(typeof(EnumInt16Formatter<>).MakeGenericType(targetType)) as IJsonFormatter;
-                }
+                var answer = Activator.CreateInstance(typeof(ValueTypeReflectionFormatter<>).MakeGenericType(targetType)) as IJsonFormatter;
+                return answer;
             }
             else
             {
-                if (targetType.IsValueType)
-                {
-                    answer = Activator.CreateInstance(typeof(ValueTypeReflectionFormatter<>).MakeGenericType(targetType)) as IJsonFormatter;
-                }
-                else
-                {
-                    answer = Activator.CreateInstance(typeof(ReferenceTypeReflectionFormatter<>).MakeGenericType(targetType)) as IJsonFormatter;
-                }
+                var answer = Activator.CreateInstance(typeof(ReferenceTypeReflectionFormatter<>).MakeGenericType(targetType)) as IJsonFormatter;
+                return answer;
             }
 
-            return answer;
         }
 
         public IntPtr GetSerializeStatic<T>()
