@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Reflection;
 
 namespace Utf8Json.Internal
 {
@@ -10,17 +11,17 @@ namespace Utf8Json.Internal
         DirectTypeEnum IsFormatterDirect { get; }
         Type TargetType { get; }
 
-        ReadOnlySpan<byte> GetPropertyNameRaw();
-        ReadOnlySpan<byte> GetPropertyNameWithQuotation();
-        ReadOnlySpan<byte> GetPropertyNameWithQuotationAndNameSeparator();
-        ReadOnlySpan<byte> GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator();
+        string MemberName { get; }
 
 #if CSHARP_8_OR_NEWER
-        object? GetValue(object @this);
-        IJsonFormatter? Formatter { get; }
+        JsonFormatterAttribute? FormatterInfo { get; }
 #else
-        object GetValue(object @this);
-        IJsonFormatter Formatter { get; }
+        JsonFormatterAttribute FormatterInfo { get; }
 #endif
+    }
+
+    public interface IShouldSerializeMemberContainer : IMemberContainer
+    {
+        MethodInfo ShouldSerialize { get; }
     }
 }

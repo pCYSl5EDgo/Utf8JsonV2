@@ -6,75 +6,34 @@ using System.Reflection;
 
 namespace Utf8Json.Internal
 {
-    public readonly struct ShouldSerializeFieldSerializationInfo : IMemberContainer, IComparable<ShouldSerializeFieldSerializationInfo>
+    public readonly struct ShouldSerializeFieldSerializationInfo : IShouldSerializeMemberContainer, IComparable<ShouldSerializeFieldSerializationInfo>
     {
         public readonly FieldInfo Info;
-        public readonly MethodInfo Method;
-        private readonly byte[] bytes;
+        public MethodInfo ShouldSerialize { get; }
 
 #if CSHARP_8_OR_NEWER
-        public IJsonFormatter? Formatter { get; }
+        public JsonFormatterAttribute? FormatterInfo { get; }
 #else
-        public IJsonFormatter Formatter { get; }
+        public JsonFormatterAttribute FormatterInfo { get; }
 #endif
 
         public Type TargetType => Info.FieldType;
 
         public DirectTypeEnum IsFormatterDirect { get; }
 
-        public ReadOnlySpan<byte> GetPropertyNameRaw()
-        {
-            return bytes.AsSpan(2, bytes.Length - 4);
-        }
+        public string MemberName { get; }
 
-        public ReadOnlySpan<byte> GetPropertyNameWithQuotation()
-        {
-            return bytes.AsSpan(1, bytes.Length - 2);
-        }
-
-        public ReadOnlySpan<byte> GetPropertyNameWithQuotationAndNameSeparator()
-        {
-            return bytes.AsSpan(1);
-        }
-
-        public ReadOnlySpan<byte> GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator()
-        {
-            return bytes;
-        }
-
-        public ShouldSerializeFieldSerializationInfo(FieldInfo info, MethodInfo method, string name,
 #if CSHARP_8_OR_NEWER
-            IJsonFormatter?
+        public ShouldSerializeFieldSerializationInfo(FieldInfo info, MethodInfo shouldSerialize, string name, JsonFormatterAttribute? formatterInfo)
 #else
-            IJsonFormatter
+        public ShouldSerializeFieldSerializationInfo(FieldInfo info, MethodInfo shouldSerialize, string name, JsonFormatterAttribute formatterInfo)
 #endif
-                formatter)
         {
             Info = info;
-            Method = method;
-            Formatter = formatter;
-            bytes = PropertyNameHelper.CalculatePropertyNameBytes(name);
-            IsFormatterDirect = DirectTypeEnumHelper.FromTypeAndFormatter(info.FieldType, formatter);
-        }
-
-#if CSHARP_8_OR_NEWER
-        public object? GetValue(object @this)
-#else
-        public object GetValue(object @this)
-#endif
-        {
-            return Info.GetValue(@this);
-        }
-
-        public bool ShouldSerialize(object @this)
-        {
-            var answer = Method.Invoke(@this, Array.Empty<object>());
-            if (!(answer is bool result))
-            {
-                throw new NullReferenceException();
-            }
-
-            return result;
+            ShouldSerialize = shouldSerialize;
+            MemberName = name;
+            FormatterInfo = formatterInfo;
+            IsFormatterDirect = DirectTypeEnumHelper.FromTypeAndFormatter(info.FieldType, FormatterInfo?.FormatterType);
         }
 
         public int CompareTo(ShouldSerializeFieldSerializationInfo other)

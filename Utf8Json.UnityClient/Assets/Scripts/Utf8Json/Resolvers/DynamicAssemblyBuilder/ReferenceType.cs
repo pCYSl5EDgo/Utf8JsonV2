@@ -2,15 +2,13 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Reflection;
-using System.Reflection.Emit;
 using Utf8Json.Internal;
 
-namespace Utf8Json.Resolvers
+namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 {
-    public sealed partial class DynamicAssemblyBuilderResolver
+    public static class ReferenceEmbedHelper
     {
-        private static void ReferenceTypeFactory(Type targetType, in TypeAnalyzeResult analyzeResult, in BuilderSet builderSet)
+        public static void Factory(Type targetType, in TypeAnalyzeResult analyzeResult, in BuilderSet builderSet)
         {
         }
     }

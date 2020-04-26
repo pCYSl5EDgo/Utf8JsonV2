@@ -2,8 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Diagnostics;
 using Utf8Json.Formatters;
 using Utf8Json.Internal;
+using Utf8Json.Internal.Reflection;
 using FP = Utf8Json.Internal.ThreadSafeTypeKeyFormatterHashTable.FunctionPair;
 
 namespace Utf8Json.Resolvers
@@ -160,7 +162,7 @@ namespace Utf8Json.Resolvers
                     return default;
                 }
 
-                var formatterType = arrayFormatterBase.MakeGenericType(elementType);
+                var formatterType = arrayFormatterBase.MakeGeneric(elementType);
                 return formatterType;
             }
 
@@ -196,172 +198,209 @@ namespace Utf8Json.Resolvers
                     case "System.Collections.ObjectModel.ReadOnlyDictionary`2":
                         if (genericArguments[0] == typeof(string))
                         {
-                            formatterType = typeof(StringKeyReadOnlyDictionaryFormatter<>).MakeGenericType(genericArguments[1]);
+                            formatterType = typeof(StringKeyReadOnlyDictionaryFormatter<>).MakeGeneric(genericArguments[1]);
                         }
                         else
                         {
-                            formatterType = typeof(ReadOnlyDictionaryFormatter<,>).MakeGenericType(genericArguments);
+                            Debug.Assert(genericArguments.Length == 2);
+                            formatterType = typeof(ReadOnlyDictionaryFormatter<,>).MakeGeneric(genericArguments[0], genericArguments[1]);
                         }
                         break;
                     case "System.Collections.Generic.IDictionary`2":
                         if (genericArguments[0] == typeof(string))
                         {
-                            formatterType = typeof(StringKeyInterfaceDictionaryFormatter<>).MakeGenericType(genericArguments[1]);
+                            formatterType = typeof(StringKeyInterfaceDictionaryFormatter<>).MakeGeneric(genericArguments[1]);
                         }
                         else
                         {
-                            formatterType = typeof(InterfaceDictionaryFormatter<,>).MakeGenericType(genericArguments);
+                            Debug.Assert(genericArguments.Length == 2);
+                            formatterType = typeof(InterfaceDictionaryFormatter<,>).MakeGeneric(genericArguments[0], genericArguments[1]);
                         }
                         break;
                     case "System.Collections.Generic.Dictionary`2":
                         if (genericArguments[0] == typeof(string))
                         {
-                            formatterType = typeof(StringKeyDictionaryFormatter<>).MakeGenericType(genericArguments[1]);
+                            formatterType = typeof(StringKeyDictionaryFormatter<>).MakeGeneric(genericArguments[1]);
                         }
                         else
                         {
-                            formatterType = typeof(DictionaryFormatter<,>).MakeGenericType(genericArguments);
+                            Debug.Assert(genericArguments.Length == 2);
+                            formatterType = typeof(DictionaryFormatter<,>).MakeGeneric(genericArguments[0], genericArguments[1]);
                         }
                         break;
                     case "System.Collections.Generic.SortedDictionary`2":
                         if (genericArguments[0] == typeof(string))
                         {
-                            formatterType = typeof(StringKeySortedDictionaryFormatter<>).MakeGenericType(genericArguments[1]);
+                            formatterType = typeof(StringKeySortedDictionaryFormatter<>).MakeGeneric(genericArguments[1]);
                         }
                         else
                         {
-                            formatterType = typeof(SortedDictionaryFormatter<,>).MakeGenericType(genericArguments);
+                            Debug.Assert(genericArguments.Length == 2);
+                            formatterType = typeof(SortedDictionaryFormatter<,>).MakeGeneric(genericArguments[0], genericArguments[1]);
                         }
                         break;
                     case "System.Collections.Generic.SortedList`2":
                         if (genericArguments[0] == typeof(string))
                         {
-                            formatterType = typeof(StringKeySortedListFormatter<>).MakeGenericType(genericArguments[1]);
+                            formatterType = typeof(StringKeySortedListFormatter<>).MakeGeneric(genericArguments[1]);
                         }
                         else
                         {
-                            formatterType = typeof(SortedListFormatter<,>).MakeGenericType(genericArguments);
+                            Debug.Assert(genericArguments.Length == 2);
+                            formatterType = typeof(SortedListFormatter<,>).MakeGeneric(genericArguments[0], genericArguments[1]);
                         }
                         break;
                     case "System.Collections.Concurrent.ConcurrentDictionary`2":
                         if (genericArguments[0] == typeof(string))
                         {
-                            formatterType = typeof(StringKeyConcurrentDictionaryFormatter<>).MakeGenericType(genericArguments[1]);
+                            formatterType = typeof(StringKeyConcurrentDictionaryFormatter<>).MakeGeneric(genericArguments[1]);
                         }
                         else
                         {
-                            formatterType = typeof(ConcurrentDictionaryFormatter<,>).MakeGenericType(genericArguments);
+                            Debug.Assert(genericArguments.Length == 2);
+                            formatterType = typeof(ConcurrentDictionaryFormatter<,>).MakeGeneric(genericArguments[0], genericArguments[1]);
                         }
                         break;
 #if IMMUTABLE
                     case "System.Collections.Immutable.ImmutableDictionary`2":
                         if (genericArguments[0] == typeof(string))
                         {
-                            formatterType = typeof(StringKeyImmutableDictionaryFormatter<>).MakeGenericType(genericArguments[1]);
+                            formatterType = typeof(StringKeyImmutableDictionaryFormatter<>).MakeGeneric(genericArguments[1]);
                         }
                         else
                         {
-                            formatterType = typeof(ImmutableDictionaryFormatter<,>).MakeGenericType(genericArguments);
+                            Debug.Assert(genericArguments.Length == 2);
+                            formatterType = typeof(ImmutableDictionaryFormatter<,>).MakeGeneric(genericArguments[0], genericArguments[1]);
                         }
                         break;
                     case "System.Collections.Immutable.ImmutableSortedDictionary`2":
                         if (genericArguments[0] == typeof(string))
                         {
-                            formatterType = typeof(StringKeyImmutableSortedDictionaryFormatter<>).MakeGenericType(genericArguments[1]);
+                            formatterType = typeof(StringKeyImmutableSortedDictionaryFormatter<>).MakeGeneric(genericArguments[1]);
                         }
                         else
                         {
-                            formatterType = typeof(ImmutableSortedDictionaryFormatter<,>).MakeGenericType(genericArguments);
+                            Debug.Assert(genericArguments.Length == 2);
+                            formatterType = typeof(ImmutableSortedDictionaryFormatter<,>).MakeGeneric(genericArguments[0], genericArguments[1]);
                         }
                         break;
 #endif
                     case "System.Collections.Generic.IEnumerable`1":
-                        formatterType = typeof(InterfaceEnumerableFormatter<>).MakeGenericType(genericArguments);
+                        Debug.Assert(genericArguments.Length == 1);
+                        formatterType = typeof(InterfaceEnumerableFormatter<>).MakeGeneric(genericArguments[0]);
                         break;
                     case "System.Collections.Generic.IList`1":
-                        formatterType = typeof(InterfaceListFormatter<>).MakeGenericType(genericArguments);
+                        Debug.Assert(genericArguments.Length == 1);
+                        formatterType = typeof(InterfaceListFormatter<>).MakeGeneric(genericArguments[0]);
                         break;
                     case "System.Collections.Generic.ICollection`1":
-                        formatterType = typeof(InterfaceCollectionFormatter<>).MakeGenericType(genericArguments);
+                        Debug.Assert(genericArguments.Length == 1);
+                        formatterType = typeof(InterfaceCollectionFormatter<>).MakeGeneric(genericArguments[0]);
                         break;
                     case "System.Collections.Generic.ILookup`2":
-                        formatterType = typeof(InterfaceLookupFormatter<,>).MakeGenericType(genericArguments);
+                        Debug.Assert(genericArguments.Length == 1);
+                        formatterType = typeof(InterfaceLookupFormatter<,>).MakeGeneric(genericArguments[0], genericArguments[1]);
                         break;
                     case "System.Collections.Generic.IGrouping`2":
-                        formatterType = typeof(InterfaceGroupingFormatter<,>).MakeGenericType(genericArguments);
+                        Debug.Assert(genericArguments.Length == 2);
+                        formatterType = typeof(InterfaceGroupingFormatter<,>).MakeGeneric(genericArguments[0], genericArguments[1]);
                         break;
                     case "System.Collections.Generic.KeyValuePair`2":
-                        formatterType = typeof(KeyValuePairFormatter<,>).MakeGenericType(genericArguments);
+                        Debug.Assert(genericArguments.Length == 2);
+                        formatterType = typeof(KeyValuePairFormatter<,>).MakeGeneric(genericArguments[0], genericArguments[1]);
                         break;
                     case "System.ArraySegment`1":
-                        formatterType = typeof(ArraySegmentFormatter<>).MakeGenericType(genericArguments);
+                        Debug.Assert(genericArguments.Length == 1);
+                        formatterType = typeof(ArraySegmentFormatter<>).MakeGeneric(genericArguments[0]);
                         break;
                     case "System.Threading.Tasks.ValueTask`1":
-                        formatterType = typeof(ValueTaskValueFormatter<>).MakeGenericType(genericArguments);
+                        Debug.Assert(genericArguments.Length == 1);
+                        formatterType = typeof(ValueTaskValueFormatter<>).MakeGeneric(genericArguments[0]);
                         break;
                     case "System.Threading.Task`1":
-                        formatterType = typeof(TaskValueFormatter<>).MakeGenericType(genericArguments);
+                        Debug.Assert(genericArguments.Length == 1);
+                        formatterType = typeof(TaskValueFormatter<>).MakeGeneric(genericArguments[0]);
                         break;
                     case "System.Nullable`1":
-                        formatterType = typeof(NullableFormatter<>).MakeGenericType(genericArguments);
+                        Debug.Assert(genericArguments.Length == 1);
+                        formatterType = typeof(NullableFormatter<>).MakeGeneric(genericArguments[0]);
                         break;
                     case "System.Collections.Generic.Queue`1":
-                        formatterType = typeof(QueueFormatter<>).MakeGenericType(genericArguments);
+                        Debug.Assert(genericArguments.Length == 1);
+                        formatterType = typeof(QueueFormatter<>).MakeGeneric(genericArguments[0]);
                         break;
                     case "System.Collections.Generic.Stack`1":
-                        formatterType = typeof(StackFormatter<>).MakeGenericType(genericArguments);
+                        Debug.Assert(genericArguments.Length == 1);
+                        formatterType = typeof(StackFormatter<>).MakeGeneric(genericArguments[0]);
                         break;
                     case "System.Collections.Generic.HashSet`1":
-                        formatterType = typeof(HashSetFormatter<>).MakeGenericType(genericArguments);
+                        Debug.Assert(genericArguments.Length == 1);
+                        formatterType = typeof(HashSetFormatter<>).MakeGeneric(genericArguments[0]);
                         break;
                     case "System.Collections.Generic.LinkedList`1":
-                        formatterType = typeof(LinkedListFormatter<>).MakeGenericType(genericArguments);
+                        Debug.Assert(genericArguments.Length == 1);
+                        formatterType = typeof(LinkedListFormatter<>).MakeGeneric(genericArguments[0]);
                         break;
                     case "System.Collections.Generic.List`1":
-                        formatterType = typeof(ListFormatter<>).MakeGenericType(genericArguments);
+                        Debug.Assert(genericArguments.Length == 1);
+                        formatterType = typeof(ListFormatter<>).MakeGeneric(genericArguments[0]);
                         break;
                     case "System.Collections.ObjectModel.ReadOnlyCollection`1":
-                        formatterType = typeof(ReadOnlyCollectionFormatter<>).MakeGenericType(genericArguments);
+                        Debug.Assert(genericArguments.Length == 1);
+                        formatterType = typeof(ReadOnlyCollectionFormatter<>).MakeGeneric(genericArguments[0]);
                         break;
                     case "System.ValueTuple`2":
+                        Debug.Assert(genericArguments.Length == 2);
                         formatterType = typeof(ValueTupleFormatter<,>).MakeGenericType(genericArguments);
                         break;
                     case "System.ValueTuple`3":
+                        Debug.Assert(genericArguments.Length == 3);
                         formatterType = typeof(ValueTupleFormatter<,,>).MakeGenericType(genericArguments);
                         break;
                     case "System.ValueTuple`4":
+                        Debug.Assert(genericArguments.Length == 4);
                         formatterType = typeof(ValueTupleFormatter<,,,>).MakeGenericType(genericArguments);
                         break;
                     case "System.ValueTuple`5":
+                        Debug.Assert(genericArguments.Length == 5);
                         formatterType = typeof(ValueTupleFormatter<,,,,>).MakeGenericType(genericArguments);
                         break;
                     case "System.ValueTuple`6":
+                        Debug.Assert(genericArguments.Length == 6);
                         formatterType = typeof(ValueTupleFormatter<,,,,,>).MakeGenericType(genericArguments);
                         break;
                     case "System.ValueTuple`7":
+                        Debug.Assert(genericArguments.Length == 7);
                         formatterType = typeof(ValueTupleFormatter<,,,,,,>).MakeGenericType(genericArguments);
                         break;
                     case "System.Tuple`2":
+                        Debug.Assert(genericArguments.Length == 2);
                         formatterType = typeof(TupleFormatter<,>).MakeGenericType(genericArguments);
                         break;
                     case "System.Tuple`3":
+                        Debug.Assert(genericArguments.Length == 3);
                         formatterType = typeof(TupleFormatter<,,>).MakeGenericType(genericArguments);
                         break;
                     case "System.Tuple`4":
+                        Debug.Assert(genericArguments.Length == 4);
                         formatterType = typeof(TupleFormatter<,,,>).MakeGenericType(genericArguments);
                         break;
                     case "System.Tuple`5":
+                        Debug.Assert(genericArguments.Length == 5);
                         formatterType = typeof(TupleFormatter<,,,,>).MakeGenericType(genericArguments);
                         break;
                     case "System.Tuple`6":
+                        Debug.Assert(genericArguments.Length == 6);
                         formatterType = typeof(TupleFormatter<,,,,,>).MakeGenericType(genericArguments);
                         break;
                     case "System.Tuple`7":
+                        Debug.Assert(genericArguments.Length == 7);
                         formatterType = typeof(TupleFormatter<,,,,,,>).MakeGenericType(genericArguments);
                         break;
 #if UNITY_2018_4_OR_NEWER
                     case "Unity.Collections.NativeArray`1":
-                        formatterType = typeof(NativeArrayFormatter<>).MakeGenericType(genericArguments);
+                        Debug.Assert(genericArguments.Length == 1);
+                        formatterType = typeof(NativeArrayFormatter<>).MakeGeneric(genericArguments[0]);
                         break;
 #endif
                     default:
@@ -432,7 +471,7 @@ namespace Utf8Json.Resolvers
                     }
 
                     var arguments = interfaces[index].GetGenericArguments();
-                    return typeof(GenericDictionaryFormatter<,,>).MakeGenericType(targetType, arguments[0], arguments[1]);
+                    return typeof(GenericDictionaryFormatter<,,>).MakeGeneric(targetType, arguments[0], arguments[1]);
                 }
 
                 return default;

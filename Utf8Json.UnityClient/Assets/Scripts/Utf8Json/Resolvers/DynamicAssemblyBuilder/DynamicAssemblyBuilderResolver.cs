@@ -3,17 +3,16 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Runtime.InteropServices;
 using Utf8Json.Internal;
+using Utf8Json.Internal.Reflection;
 using RuntimeFeature = Utf8Json.Internal.RuntimeFeature;
 
-namespace Utf8Json.Resolvers
+namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 {
-    public sealed partial class DynamicAssemblyBuilderResolver : IFormatterResolver
+    public sealed class DynamicAssemblyBuilderResolver : IFormatterResolver
     {
         public static readonly DynamicAssemblyBuilderResolver Instance;
 
@@ -26,36 +25,12 @@ namespace Utf8Json.Resolvers
 #endif
 
         private static readonly ConcurrentDictionary<Assembly, object> assemblyDictionary;
-        private static readonly BinaryDictionary dataFieldDictionary;
         private static readonly ModuleBuilder moduleBuilder;
         private static readonly ConstructorInfo constructorIgnoresAccessChecksToAttribute;
-
-        private static readonly uint @null;
-        private static readonly uint @true;
+        private static readonly BinaryDictionary dataFieldDictionary;
 
         static DynamicAssemblyBuilderResolver()
         {
-            {
-                ReadOnlySpan<byte> number = stackalloc byte[4]
-                {
-                    (byte)'n',
-                    (byte)'u',
-                    (byte)'l',
-                    (byte)'l',
-                };
-                @null = MemoryMarshal.Cast<byte, uint>(number)[0];
-            }
-            {
-                ReadOnlySpan<byte> number = stackalloc byte[4]
-                {
-                    (byte)'t',
-                    (byte)'r',
-                    (byte)'u',
-                    (byte)'e',
-                };
-                @true = MemoryMarshal.Cast<byte, uint>(number)[0];
-            }
-
             Instance = new DynamicAssemblyBuilderResolver();
             if (!RuntimeFeature.IsDynamicCodeSupported)
             {
@@ -122,7 +97,9 @@ namespace Utf8Json.Resolvers
 
         private static void AddCustomAttributeToIgnoresAccessChecksToAttribute(TypeBuilder attributeBuilder)
         {
-            var usageConstructor = typeof(AttributeUsageAttribute).GetConstructor(new[] { typeof(AttributeTargets) });
+            var types = TypeArrayHolder.TypeArrayLength1;
+            types[0] = typeof(AttributeTargets);
+            var usageConstructor = typeof(AttributeUsageAttribute).GetConstructor(types);
             Debug.Assert(!(usageConstructor is null));
             var propertyAllowMultiple = typeof(AttributeUsageAttribute).GetProperty("AllowMultiple");
             Debug.Assert(!(propertyAllowMultiple is null));
@@ -144,17 +121,19 @@ namespace Utf8Json.Resolvers
         private static ConstructorInfo DefineMembersInIgnoresAccessChecksToAttribute(TypeBuilder attributeBuilder)
         {
             var assemblyName = attributeBuilder.DefineField("<AssemblyName>k__BackingField", typeof(string), FieldAttributes.Private | FieldAttributes.InitOnly);
-            var get_AssemblyName = attributeBuilder.DefineMethod("get_AssemblyName", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName, typeof(string), Array.Empty<Type>());
+            var getAssemblyName = attributeBuilder.DefineMethod("get_AssemblyName", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName, typeof(string), Array.Empty<Type>());
             {
-                var processor = get_AssemblyName.GetILGenerator();
+                var processor = getAssemblyName.GetILGenerator();
                 processor.Emit(OpCodes.Ldarg_0);
                 processor.Emit(OpCodes.Ldfld, assemblyName);
                 processor.Emit(OpCodes.Ret);
             }
             var propertyAssemblyName = attributeBuilder.DefineProperty("AssemblyName", PropertyAttributes.None, typeof(string), Array.Empty<Type>());
-            propertyAssemblyName.SetGetMethod(get_AssemblyName);
+            propertyAssemblyName.SetGetMethod(getAssemblyName);
 
-            var constructor = attributeBuilder.DefineConstructor(MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName, CallingConventions.HasThis, new[] { typeof(string) });
+            var paramTypes = TypeArrayHolder.TypeArrayLength1;
+            paramTypes[0] = typeof(string);
+            var constructor = attributeBuilder.DefineConstructor(MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName, CallingConventions.HasThis, paramTypes);
             {
                 var parentConstructor = typeof(Attribute).GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null, Array.Empty<Type>(), null);
                 Debug.Assert(!(parentConstructor is null));
@@ -173,49 +152,6 @@ namespace Utf8Json.Resolvers
             return constructor;
         }
 
-        private sealed class DataByteArrayComparer : IComparer<byte[]>, IEqualityComparer<byte[]>
-        {
-            public int Compare(byte[] x, byte[] y)
-            {
-                var c = x.LongLength.CompareTo(y.LongLength);
-                if (c != 0)
-                {
-                    return c;
-                }
-
-                for (var index = 0; index < x.Length; index++)
-                {
-                    c = x[index].CompareTo(y[index]);
-                    if (c != 0)
-                    {
-                        return c;
-                    }
-                }
-
-                return 0;
-            }
-
-            public bool Equals(byte[] x, byte[] y)
-            {
-                if (x.LongLength != y.LongLength)
-                {
-                    return false;
-                }
-
-                for (var i = 0; i < x.Length; i++)
-                {
-                    if (x[i] != y[i])
-                    {
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-
-            public int GetHashCode(byte[] obj) => obj.Length - 1;
-        }
-
         public IJsonFormatter[] CollectCurrentRegisteredFormatters()
         {
             return formatterTable?.ToArray() ?? Array.Empty<IJsonFormatter>();
@@ -228,7 +164,7 @@ namespace Utf8Json.Resolvers
 
         public IntPtr GetDeserializeStatic<T>()
         {
-            return FormatterCache<T>.DeserializeStatic;
+            return default;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -265,8 +201,6 @@ namespace Utf8Json.Resolvers
                 return default;
             }
 
-            if (!targetType.IsEnum) return default;
-
             EnsurePrivateAccess(targetType);
 
             var builderSet = PrepareBuilderSet(targetType);
@@ -276,11 +210,11 @@ namespace Utf8Json.Resolvers
                 var flags = targetType.GetCustomAttribute<FlagsAttribute>();
                 if (flags is null)
                 {
-                    EnumNumberFactory(targetType, in builderSet);
+                    EnumNumberEmbedHelper.Factory(targetType, in builderSet);
                 }
                 else
                 {
-                    EnumNumberFactory(targetType, in builderSet);
+                    EnumNumberEmbedHelper.Factory(targetType, in builderSet);
                 }
             }
             else
@@ -288,11 +222,11 @@ namespace Utf8Json.Resolvers
                 TypeAnalyzer.Analyze(targetType, out var analyzeResult);
                 if (targetType.IsValueType)
                 {
-                    ValueTypeFactory(targetType, in analyzeResult, in builderSet);
+                    ValueEmbedHelper.Factory(targetType, in analyzeResult, in builderSet, dataFieldDictionary);
                 }
                 else
                 {
-                    ReferenceTypeFactory(targetType, in analyzeResult, in builderSet);
+                    ReferenceEmbedHelper.Factory(targetType, in analyzeResult, in builderSet);
                 }
             }
 
@@ -300,8 +234,8 @@ namespace Utf8Json.Resolvers
             return answer;
         }
 
-        private const MethodAttributes StaticMethodFlags = MethodAttributes.Public | MethodAttributes.Static | MethodAttributes.HideBySig;
-        private const MethodAttributes InstanceMethodFlags = MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual;
+        public const MethodAttributes StaticMethodFlags = MethodAttributes.Public | MethodAttributes.Static | MethodAttributes.HideBySig;
+        public const MethodAttributes InstanceMethodFlags = MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual;
 
         private static BuilderSet PrepareBuilderSet(Type targetType)
         {
@@ -312,32 +246,28 @@ namespace Utf8Json.Resolvers
                 new[]
                 {
                     typeof(IJsonFormatter),
-                    typeof(IJsonFormatter<>).MakeGenericType(targetType),
+                    typeof(IJsonFormatter<>).MakeGeneric(targetType),
                 });
 
-            var writerParams = new[]
-            {
-                typeof(JsonWriter).MakeByRefType(),
-                targetType,
-                typeof(JsonSerializerOptions),
-            };
+            var writerParams = TypeArrayHolder.TypeArrayLength3;
+            writerParams[0] = typeof(JsonWriter).MakeByRefType();
+            writerParams[1] = targetType;
+            writerParams[2] = typeof(JsonSerializerOptions);
             var serializeStatic = typeBuilder.DefineMethod("SerializeStatic", StaticMethodFlags, typeof(void), writerParams);
             {
                 var serialize = typeBuilder.DefineMethod("Serialize", InstanceMethodFlags, typeof(void), writerParams);
                 GenerateIntermediateLanguageCodesForSerialize(serializeStatic, serialize);
             }
-            var writerTypelessParams = new[]
-            {
-                typeof(JsonWriter).MakeByRefType(),
-                typeof(object),
-                typeof(JsonSerializerOptions),
-            };
+
+            var writerTypelessParams = TypeArrayHolder.TypeArrayLength3;
+            writerTypelessParams[0] = typeof(JsonWriter).MakeByRefType();
+            writerTypelessParams[1] = typeof(object);
+            writerTypelessParams[2] = typeof(JsonSerializerOptions);
             var serializeTypeless = typeBuilder.DefineMethod("SerializeTypeless", InstanceMethodFlags, typeof(void), writerTypelessParams);
-            var readerParams = new[]
-            {
-                typeof(JsonReader).MakeByRefType(),
-                typeof(JsonSerializerOptions),
-            };
+            
+            var readerParams = TypeArrayHolder.TypeArrayLength2;
+            readerParams[0] = typeof(JsonReader).MakeByRefType();
+            readerParams[1] = typeof(JsonSerializerOptions);
             var deserializeStatic = typeBuilder.DefineMethod("DeserializeStatic", StaticMethodFlags, targetType, readerParams);
             {
                 var deserialize = typeBuilder.DefineMethod("Deserialize", InstanceMethodFlags, targetType, readerParams);
@@ -396,7 +326,7 @@ namespace Utf8Json.Resolvers
 
         public IntPtr GetSerializeStatic<T>()
         {
-            return FormatterCache<T>.SerializeStatic;
+            return default;
         }
 
         private struct FormatterCache<T>
@@ -406,41 +336,9 @@ namespace Utf8Json.Resolvers
 #else
             public static readonly IJsonFormatter<T> Formatter;
 #endif
-            public static readonly IntPtr SerializeStatic;
-            public static readonly IntPtr DeserializeStatic;
-
             static FormatterCache()
             {
                 Formatter = formatterTable?.GetOrAdd(typeof(T), Factory) as IJsonFormatter<T>;
-                if (Formatter == null)
-                {
-                    SerializeStatic = IntPtr.Zero;
-                    DeserializeStatic = IntPtr.Zero;
-                }
-                else
-                {
-                    var formatterType = Formatter.GetType();
-                    SerializeStatic = StaticHelper.GetSerializeStatic(formatterType);
-                    DeserializeStatic = StaticHelper.GetDeserializeStatic(formatterType);
-                }
-            }
-        }
-
-        private readonly struct BuilderSet
-        {
-            public readonly TypeBuilder Type;
-            public readonly MethodBuilder SerializeStatic;
-            public readonly MethodBuilder SerializeTypeless;
-            public readonly MethodBuilder DeserializeStatic;
-            public readonly MethodBuilder DeserializeTypeless;
-
-            public BuilderSet(TypeBuilder type, MethodBuilder serializeStatic, MethodBuilder serializeTypeless, MethodBuilder deserializeStatic, MethodBuilder deserializeTypeless)
-            {
-                Type = type;
-                SerializeStatic = serializeStatic;
-                SerializeTypeless = serializeTypeless;
-                DeserializeStatic = deserializeStatic;
-                DeserializeTypeless = deserializeTypeless;
             }
         }
     }

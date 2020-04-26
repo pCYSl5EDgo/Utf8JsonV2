@@ -8,7 +8,7 @@ namespace Utf8Json.Internal
         public static bool IsDynamicCodeSupported =>
 #if RUNTIME_FEATURE_DYNAMIC_CODE_SUPPORTED
             System.Runtime.CompilerServices.RuntimeFeature.IsDynamicCodeSupported;
-#elif ENABLE_IL2CPP
+#elif UNITY_2018_4_OR_NEWER && (ENABLE_IL2CPP || NET_STANDARD_2_0)
             false;
 #else
             true;

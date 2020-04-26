@@ -9,39 +9,32 @@ namespace Utf8Json
     public class JsonFormatterAttribute : Attribute
     {
         public Type FormatterType { get; private set; }
+
+#if CSHARP_8_OR_NEWER
+        public object?[]? Arguments { get; private set; }
+#else
         public object[] Arguments { get; private set; }
+#endif
 
         public JsonFormatterAttribute(Type formatterType)
         {
-            this.FormatterType = formatterType;
-            Arguments = Array.Empty<object>();
+            FormatterType = formatterType;
+            Arguments = default;
         }
 
+#if CSHARP_8_OR_NEWER
+        public JsonFormatterAttribute(Type formatterType, params object?[] arguments)
+#else
         public JsonFormatterAttribute(Type formatterType, params object[] arguments)
+#endif
         {
-            this.FormatterType = formatterType;
-            this.Arguments = arguments;
+            FormatterType = formatterType;
+            Arguments = arguments;
         }
     }
 
     [AttributeUsage(AttributeTargets.Constructor)]
     public class SerializationConstructorAttribute : Attribute
-    {
-    }
-
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-    public sealed class ReferenceLoopAttribute : Attribute
-    {
-    }
-
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
-    public sealed class ReferenceLoopHandlingIgnoreMemberWhenReferenceEqualsAttribute : Attribute
-    {
-        public string MemberName;
-    }
-
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
-    public sealed class ReferenceLoopHandlingEmbedIdReference : Attribute
     {
     }
 }

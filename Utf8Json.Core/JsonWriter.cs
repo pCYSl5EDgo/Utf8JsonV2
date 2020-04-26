@@ -21,7 +21,7 @@ namespace Utf8Json
         /// <summary>
         /// The writer to use.
         /// </summary>
-        internal BufferWriter Writer;
+        public BufferWriter Writer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="JsonWriter"/> struct.

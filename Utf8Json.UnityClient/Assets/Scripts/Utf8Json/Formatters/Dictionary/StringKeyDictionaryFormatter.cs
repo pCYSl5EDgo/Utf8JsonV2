@@ -17,36 +17,24 @@ using System.Collections.Immutable;
 namespace Utf8Json.Formatters
 {
 
-#if CSHARP_8_OR_NEWER
     public sealed unsafe class StringKeyDictionaryFormatter<TValue>
+#if CSHARP_8_OR_NEWER
         : IJsonFormatter<Dictionary<string, TValue>?>
     {
-        public void Serialize(ref JsonWriter writer, Dictionary<string, TValue>? value, JsonSerializerOptions options)
-        {
-            SerializeStatic(ref writer, value, options);
-        }
-
+        public void Serialize(ref JsonWriter writer, Dictionary<string, TValue>? value, JsonSerializerOptions options) => SerializeStatic(ref writer, value, options);
+        
         public static void SerializeStatic(ref JsonWriter writer, Dictionary<string, TValue>? value, JsonSerializerOptions options)
 #else
-    public sealed unsafe class StringKeyDictionaryFormatter<TValue>
         : IJsonFormatter<Dictionary<string, TValue>>
     {
-        public void Serialize(ref JsonWriter writer, Dictionary<string, TValue> value, JsonSerializerOptions options)
-        {
-            SerializeStatic(ref writer, value, options);
-        }
-
+        public void Serialize(ref JsonWriter writer, Dictionary<string, TValue> value, JsonSerializerOptions options) => SerializeStatic(ref writer, value, options);
+        
         public static void SerializeStatic(ref JsonWriter writer, Dictionary<string, TValue> value, JsonSerializerOptions options)
 #endif
         {
-            if (value == null)
+            if (value is null)
             {
-                var span = writer.Writer.GetSpan(4);
-                span[0] = (byte)'n';
-                span[1] = (byte)'u';
-                span[2] = (byte)'l';
-                span[3] = (byte)'l';
-                writer.Writer.Advance(4);
+                writer.WriteNull();
                 return;
             }
 
@@ -107,7 +95,7 @@ namespace Utf8Json.Formatters
         {
             return DeserializeStatic(ref reader, options);
         }
-
+      
         public static Dictionary<string, TValue>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #else
         public Dictionary<string, TValue> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -152,7 +140,7 @@ namespace Utf8Json.Formatters
 #endif
             return answer;
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -173,36 +161,24 @@ namespace Utf8Json.Formatters
     }
 
 
-#if CSHARP_8_OR_NEWER
     public sealed unsafe class StringKeyReadOnlyDictionaryFormatter<TValue>
+#if CSHARP_8_OR_NEWER
         : IJsonFormatter<ReadOnlyDictionary<string, TValue>?>
     {
-        public void Serialize(ref JsonWriter writer, ReadOnlyDictionary<string, TValue>? value, JsonSerializerOptions options)
-        {
-            SerializeStatic(ref writer, value, options);
-        }
-
+        public void Serialize(ref JsonWriter writer, ReadOnlyDictionary<string, TValue>? value, JsonSerializerOptions options) => SerializeStatic(ref writer, value, options);
+        
         public static void SerializeStatic(ref JsonWriter writer, ReadOnlyDictionary<string, TValue>? value, JsonSerializerOptions options)
 #else
-    public sealed unsafe class StringKeyReadOnlyDictionaryFormatter<TValue>
         : IJsonFormatter<ReadOnlyDictionary<string, TValue>>
     {
-        public void Serialize(ref JsonWriter writer, ReadOnlyDictionary<string, TValue> value, JsonSerializerOptions options)
-        {
-            SerializeStatic(ref writer, value, options);
-        }
-
+        public void Serialize(ref JsonWriter writer, ReadOnlyDictionary<string, TValue> value, JsonSerializerOptions options) => SerializeStatic(ref writer, value, options);
+        
         public static void SerializeStatic(ref JsonWriter writer, ReadOnlyDictionary<string, TValue> value, JsonSerializerOptions options)
 #endif
         {
-            if (value == null)
+            if (value is null)
             {
-                var span = writer.Writer.GetSpan(4);
-                span[0] = (byte)'n';
-                span[1] = (byte)'u';
-                span[2] = (byte)'l';
-                span[3] = (byte)'l';
-                writer.Writer.Advance(4);
+                writer.WriteNull();
                 return;
             }
 
@@ -263,7 +239,7 @@ namespace Utf8Json.Formatters
         {
             return DeserializeStatic(ref reader, options);
         }
-
+      
         public static ReadOnlyDictionary<string, TValue>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #else
         public ReadOnlyDictionary<string, TValue> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -308,7 +284,7 @@ namespace Utf8Json.Formatters
 #endif
             return new ReadOnlyDictionary<string, TValue>(answer);
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -329,36 +305,24 @@ namespace Utf8Json.Formatters
     }
 
 
-#if CSHARP_8_OR_NEWER
     public sealed unsafe class StringKeySortedDictionaryFormatter<TValue>
+#if CSHARP_8_OR_NEWER
         : IJsonFormatter<SortedDictionary<string, TValue>?>
     {
-        public void Serialize(ref JsonWriter writer, SortedDictionary<string, TValue>? value, JsonSerializerOptions options)
-        {
-            SerializeStatic(ref writer, value, options);
-        }
-
+        public void Serialize(ref JsonWriter writer, SortedDictionary<string, TValue>? value, JsonSerializerOptions options) => SerializeStatic(ref writer, value, options);
+        
         public static void SerializeStatic(ref JsonWriter writer, SortedDictionary<string, TValue>? value, JsonSerializerOptions options)
 #else
-    public sealed unsafe class StringKeySortedDictionaryFormatter<TValue>
         : IJsonFormatter<SortedDictionary<string, TValue>>
     {
-        public void Serialize(ref JsonWriter writer, SortedDictionary<string, TValue> value, JsonSerializerOptions options)
-        {
-            SerializeStatic(ref writer, value, options);
-        }
-
+        public void Serialize(ref JsonWriter writer, SortedDictionary<string, TValue> value, JsonSerializerOptions options) => SerializeStatic(ref writer, value, options);
+        
         public static void SerializeStatic(ref JsonWriter writer, SortedDictionary<string, TValue> value, JsonSerializerOptions options)
 #endif
         {
-            if (value == null)
+            if (value is null)
             {
-                var span = writer.Writer.GetSpan(4);
-                span[0] = (byte)'n';
-                span[1] = (byte)'u';
-                span[2] = (byte)'l';
-                span[3] = (byte)'l';
-                writer.Writer.Advance(4);
+                writer.WriteNull();
                 return;
             }
 
@@ -419,7 +383,7 @@ namespace Utf8Json.Formatters
         {
             return DeserializeStatic(ref reader, options);
         }
-
+      
         public static SortedDictionary<string, TValue>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #else
         public SortedDictionary<string, TValue> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -464,7 +428,7 @@ namespace Utf8Json.Formatters
 #endif
             return answer;
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -485,47 +449,24 @@ namespace Utf8Json.Formatters
     }
 
 
-#if CSHARP_8_OR_NEWER
     public sealed unsafe class StringKeySortedListFormatter<TValue>
+#if CSHARP_8_OR_NEWER
         : IJsonFormatter<SortedList<string, TValue>?>
     {
-        public void Serialize(ref JsonWriter writer, SortedList<string, TValue>? value, JsonSerializerOptions options)
-        {
-            SerializeStatic(ref writer, value, options);
-        }
-
+        public void Serialize(ref JsonWriter writer, SortedList<string, TValue>? value, JsonSerializerOptions options) => SerializeStatic(ref writer, value, options);
+        
         public static void SerializeStatic(ref JsonWriter writer, SortedList<string, TValue>? value, JsonSerializerOptions options)
 #else
-    public sealed unsafe class StringKeySortedListFormatter<TValue>
         : IJsonFormatter<SortedList<string, TValue>>
     {
-        public void Serialize(ref JsonWriter writer, SortedList<string, TValue> value, JsonSerializerOptions options)
-        {
-            SerializeStatic(ref writer, value, options);
-
-/* プロジェクト 'Utf8JsonV2 (netcoreapp2.1)' からのマージされていない変更
-前:
-        }
+        public void Serialize(ref JsonWriter writer, SortedList<string, TValue> value, JsonSerializerOptions options) => SerializeStatic(ref writer, value, options);
         
-        public static void SerializeStatic(ref JsonWriter writer, SortedList<string, TValue> value, JsonSerializerOptions options)
-後:
-        }
-
-        public static void SerializeStatic(ref JsonWriter writer, SortedList<string, TValue> value, JsonSerializerOptions options)
-*/
-        }
-
         public static void SerializeStatic(ref JsonWriter writer, SortedList<string, TValue> value, JsonSerializerOptions options)
 #endif
         {
-            if (value == null)
+            if (value is null)
             {
-                var span = writer.Writer.GetSpan(4);
-                span[0] = (byte)'n';
-                span[1] = (byte)'u';
-                span[2] = (byte)'l';
-                span[3] = (byte)'l';
-                writer.Writer.Advance(4);
+                writer.WriteNull();
                 return;
             }
 
@@ -586,7 +527,7 @@ namespace Utf8Json.Formatters
         {
             return DeserializeStatic(ref reader, options);
         }
-
+      
         public static SortedList<string, TValue>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #else
         public SortedList<string, TValue> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -631,7 +572,7 @@ namespace Utf8Json.Formatters
 #endif
             return answer;
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -652,36 +593,24 @@ namespace Utf8Json.Formatters
     }
 
 
-#if CSHARP_8_OR_NEWER
     public sealed unsafe class StringKeyInterfaceDictionaryFormatter<TValue>
+#if CSHARP_8_OR_NEWER
         : IJsonFormatter<IDictionary<string, TValue>?>
     {
-        public void Serialize(ref JsonWriter writer, IDictionary<string, TValue>? value, JsonSerializerOptions options)
-        {
-            SerializeStatic(ref writer, value, options);
-        }
-
+        public void Serialize(ref JsonWriter writer, IDictionary<string, TValue>? value, JsonSerializerOptions options) => SerializeStatic(ref writer, value, options);
+        
         public static void SerializeStatic(ref JsonWriter writer, IDictionary<string, TValue>? value, JsonSerializerOptions options)
 #else
-    public sealed unsafe class StringKeyInterfaceDictionaryFormatter<TValue>
         : IJsonFormatter<IDictionary<string, TValue>>
     {
-        public void Serialize(ref JsonWriter writer, IDictionary<string, TValue> value, JsonSerializerOptions options)
-        {
-            SerializeStatic(ref writer, value, options);
-        }
-
+        public void Serialize(ref JsonWriter writer, IDictionary<string, TValue> value, JsonSerializerOptions options) => SerializeStatic(ref writer, value, options);
+        
         public static void SerializeStatic(ref JsonWriter writer, IDictionary<string, TValue> value, JsonSerializerOptions options)
 #endif
         {
-            if (value == null)
+            if (value is null)
             {
-                var span = writer.Writer.GetSpan(4);
-                span[0] = (byte)'n';
-                span[1] = (byte)'u';
-                span[2] = (byte)'l';
-                span[3] = (byte)'l';
-                writer.Writer.Advance(4);
+                writer.WriteNull();
                 return;
             }
 
@@ -742,7 +671,7 @@ namespace Utf8Json.Formatters
         {
             return DeserializeStatic(ref reader, options);
         }
-
+      
         public static IDictionary<string, TValue>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #else
         public IDictionary<string, TValue> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -787,7 +716,7 @@ namespace Utf8Json.Formatters
 #endif
             return answer;
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -808,36 +737,24 @@ namespace Utf8Json.Formatters
     }
 
 
-#if CSHARP_8_OR_NEWER
     public sealed unsafe class StringKeyConcurrentDictionaryFormatter<TValue>
+#if CSHARP_8_OR_NEWER
         : IJsonFormatter<ConcurrentDictionary<string, TValue>?>
     {
-        public void Serialize(ref JsonWriter writer, ConcurrentDictionary<string, TValue>? value, JsonSerializerOptions options)
-        {
-            SerializeStatic(ref writer, value, options);
-        }
-
+        public void Serialize(ref JsonWriter writer, ConcurrentDictionary<string, TValue>? value, JsonSerializerOptions options) => SerializeStatic(ref writer, value, options);
+        
         public static void SerializeStatic(ref JsonWriter writer, ConcurrentDictionary<string, TValue>? value, JsonSerializerOptions options)
 #else
-    public sealed unsafe class StringKeyConcurrentDictionaryFormatter<TValue>
         : IJsonFormatter<ConcurrentDictionary<string, TValue>>
     {
-        public void Serialize(ref JsonWriter writer, ConcurrentDictionary<string, TValue> value, JsonSerializerOptions options)
-        {
-            SerializeStatic(ref writer, value, options);
-        }
-
+        public void Serialize(ref JsonWriter writer, ConcurrentDictionary<string, TValue> value, JsonSerializerOptions options) => SerializeStatic(ref writer, value, options);
+        
         public static void SerializeStatic(ref JsonWriter writer, ConcurrentDictionary<string, TValue> value, JsonSerializerOptions options)
 #endif
         {
-            if (value == null)
+            if (value is null)
             {
-                var span = writer.Writer.GetSpan(4);
-                span[0] = (byte)'n';
-                span[1] = (byte)'u';
-                span[2] = (byte)'l';
-                span[3] = (byte)'l';
-                writer.Writer.Advance(4);
+                writer.WriteNull();
                 return;
             }
 
@@ -898,7 +815,7 @@ namespace Utf8Json.Formatters
         {
             return DeserializeStatic(ref reader, options);
         }
-
+      
         public static ConcurrentDictionary<string, TValue>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #else
         public ConcurrentDictionary<string, TValue> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -943,7 +860,7 @@ namespace Utf8Json.Formatters
 #endif
             return answer;
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -964,36 +881,24 @@ namespace Utf8Json.Formatters
     }
 
 #if IMMUTABLE
-#if CSHARP_8_OR_NEWER
     public sealed unsafe class StringKeyImmutableDictionaryFormatter<TValue>
+#if CSHARP_8_OR_NEWER
         : IJsonFormatter<ImmutableDictionary<string, TValue>?>
     {
-        public void Serialize(ref JsonWriter writer, ImmutableDictionary<string, TValue>? value, JsonSerializerOptions options)
-        {
-            SerializeStatic(ref writer, value, options);
-        }
-
+        public void Serialize(ref JsonWriter writer, ImmutableDictionary<string, TValue>? value, JsonSerializerOptions options) => SerializeStatic(ref writer, value, options);
+        
         public static void SerializeStatic(ref JsonWriter writer, ImmutableDictionary<string, TValue>? value, JsonSerializerOptions options)
 #else
-    public sealed unsafe class StringKeyImmutableDictionaryFormatter<TValue>
         : IJsonFormatter<ImmutableDictionary<string, TValue>>
     {
-        public void Serialize(ref JsonWriter writer, ImmutableDictionary<string, TValue> value, JsonSerializerOptions options)
-        {
-            SerializeStatic(ref writer, value, options);
-        }
-
+        public void Serialize(ref JsonWriter writer, ImmutableDictionary<string, TValue> value, JsonSerializerOptions options) => SerializeStatic(ref writer, value, options);
+        
         public static void SerializeStatic(ref JsonWriter writer, ImmutableDictionary<string, TValue> value, JsonSerializerOptions options)
 #endif
         {
-            if (value == null)
+            if (value is null)
             {
-                var span = writer.Writer.GetSpan(4);
-                span[0] = (byte)'n';
-                span[1] = (byte)'u';
-                span[2] = (byte)'l';
-                span[3] = (byte)'l';
-                writer.Writer.Advance(4);
+                writer.WriteNull();
                 return;
             }
 
@@ -1054,7 +959,7 @@ namespace Utf8Json.Formatters
         {
             return DeserializeStatic(ref reader, options);
         }
-
+      
         public static ImmutableDictionary<string, TValue>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #else
         public ImmutableDictionary<string, TValue> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -1099,7 +1004,7 @@ namespace Utf8Json.Formatters
 #endif
             return ImmutableDictionary<string, TValue>.Empty.AddRange(answer);
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -1120,36 +1025,24 @@ namespace Utf8Json.Formatters
     }
 #endif
 #if IMMUTABLE
-#if CSHARP_8_OR_NEWER
     public sealed unsafe class StringKeyImmutableSortedDictionaryFormatter<TValue>
+#if CSHARP_8_OR_NEWER
         : IJsonFormatter<ImmutableSortedDictionary<string, TValue>?>
     {
-        public void Serialize(ref JsonWriter writer, ImmutableSortedDictionary<string, TValue>? value, JsonSerializerOptions options)
-        {
-            SerializeStatic(ref writer, value, options);
-        }
-
+        public void Serialize(ref JsonWriter writer, ImmutableSortedDictionary<string, TValue>? value, JsonSerializerOptions options) => SerializeStatic(ref writer, value, options);
+        
         public static void SerializeStatic(ref JsonWriter writer, ImmutableSortedDictionary<string, TValue>? value, JsonSerializerOptions options)
 #else
-    public sealed unsafe class StringKeyImmutableSortedDictionaryFormatter<TValue>
         : IJsonFormatter<ImmutableSortedDictionary<string, TValue>>
     {
-        public void Serialize(ref JsonWriter writer, ImmutableSortedDictionary<string, TValue> value, JsonSerializerOptions options)
-        {
-            SerializeStatic(ref writer, value, options);
-        }
-
+        public void Serialize(ref JsonWriter writer, ImmutableSortedDictionary<string, TValue> value, JsonSerializerOptions options) => SerializeStatic(ref writer, value, options);
+        
         public static void SerializeStatic(ref JsonWriter writer, ImmutableSortedDictionary<string, TValue> value, JsonSerializerOptions options)
 #endif
         {
-            if (value == null)
+            if (value is null)
             {
-                var span = writer.Writer.GetSpan(4);
-                span[0] = (byte)'n';
-                span[1] = (byte)'u';
-                span[2] = (byte)'l';
-                span[3] = (byte)'l';
-                writer.Writer.Advance(4);
+                writer.WriteNull();
                 return;
             }
 
@@ -1210,7 +1103,7 @@ namespace Utf8Json.Formatters
         {
             return DeserializeStatic(ref reader, options);
         }
-
+      
         public static ImmutableSortedDictionary<string, TValue>? DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)
 #else
         public ImmutableSortedDictionary<string, TValue> Deserialize(ref JsonReader reader, JsonSerializerOptions options)
@@ -1255,7 +1148,7 @@ namespace Utf8Json.Formatters
 #endif
             return ImmutableSortedDictionary<string, TValue>.Empty.AddRange(answer);
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else

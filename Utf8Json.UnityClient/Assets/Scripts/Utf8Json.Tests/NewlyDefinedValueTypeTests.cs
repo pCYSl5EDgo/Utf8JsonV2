@@ -156,7 +156,7 @@ namespace Utf8Json.Test
             }
         }
 
-        [Test]
+        //[Test]
         public void ExtensionDataTest()
         {
             var value = new W
@@ -194,9 +194,69 @@ namespace Utf8Json.Test
             Assert.AreEqual(1, deserialize.Count);
         }
 
-        [TestCase(0, 0)]
-        [TestCase(1, 2)]
-        [TestCase(33, -4)]
+        private struct EmptyStruct
+        {
+        }
+
+        private struct Callback : IBeforeSerializationCallback
+        {
+            public string A;
+
+            [SerializeField] private string B;
+
+            public string C { get; }
+
+            [NonSerialized] public int D;
+
+            public bool ShouldSerializeB()
+            {
+                return B.Length < 14;
+            }
+
+            [JsonExtensionData]
+            private Dictionary<string, object> Dictionary { get; }
+
+            public Callback(string b)
+            {
+                A = "aaaa";
+                B = b;
+                Dictionary = new Dictionary<string, object>
+                {
+                    {"たいよう", 1},
+                    {"つきかげ", "このみちをゆく"},
+                    {"きたかぜ", new byte[] { 11, 12, 0, 255 }},
+                };
+                C = b + b;
+                D = 9;
+            }
+
+            public void OnSerializing()
+            {
+                TestContext.WriteLine(B);
+            }
+        }
+
+        [TestCase("どれだけしんじてもしんじてもうらぎられるんだ")]
+        [TestCase("こんなに！")]
+        public void CallbackTest(string v)
+        {
+            var value = new Callback(v);
+            var bytes = JsonSerializer.Serialize(value);
+            TestContext.WriteLine(Encoding.UTF8.GetString(bytes));
+            Assert.True(false);
+        }
+
+        //[Test]
+        public void EmptyStructTest()
+        {
+            var value = new EmptyStruct();
+            var bytes = JsonSerializer.Serialize(value);
+            JsonSerializer.Deserialize<EmptyStruct>(bytes);
+        }
+
+        //[TestCase(0, 0)]
+        //[TestCase(1, 2)]
+        //[TestCase(33, -4)]
         public void XTest(int a, int b)
         {
             var value = new X(a, b);
@@ -206,10 +266,10 @@ namespace Utf8Json.Test
             Assert.IsTrue(deserialize.SameB(b));
         }
 
-        [TestCase("")]
-        [TestCase("null")]
-        [TestCase(default(string))]
-        [TestCase("大好きなのはあなた")]
+        //[TestCase("")]
+        //[TestCase("null")]
+        //[TestCase(default(string))]
+        //[TestCase("大好きなのはあなた")]
         public void YTest(string value)
         {
             var bytes = JsonSerializer.Serialize(new Y { A = value });
@@ -218,9 +278,9 @@ namespace Utf8Json.Test
             Assert.AreEqual(value, deserialize.A);
         }
 
-        [TestCase(0, 0, default(string))]
-        [TestCase(int.MinValue, int.MaxValue, "")]
-        [TestCase(33, 4, "TNOK")]
+        //[TestCase(0, 0, default(string))]
+        //[TestCase(int.MinValue, int.MaxValue, "")]
+        //[TestCase(33, 4, "TNOK")]
         public void ZTest(int xc, int xb, string ya)
         {
             var value = new Z

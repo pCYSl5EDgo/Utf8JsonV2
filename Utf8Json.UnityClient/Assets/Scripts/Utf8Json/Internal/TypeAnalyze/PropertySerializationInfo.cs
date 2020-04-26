@@ -9,58 +9,29 @@ namespace Utf8Json.Internal
     public readonly struct PropertySerializationInfo : IMemberContainer, IComparable<PropertySerializationInfo>
     {
         public readonly PropertyInfo Info;
-        private readonly byte[] bytes;
-#if CSHARP_8_OR_NEWER
-        public IJsonFormatter? Formatter { get; }
-#else
-        public IJsonFormatter Formatter { get; }
-#endif
+
+        #if CSHARP_8_OR_NEWER
+        public JsonFormatterAttribute? FormatterInfo { get; }
+        #else
+        public JsonFormatterAttribute FormatterInfo { get; }
+        #endif
 
         public Type TargetType => Info.PropertyType;
 
         public DirectTypeEnum IsFormatterDirect { get; }
 
-        public ReadOnlySpan<byte> GetPropertyNameRaw()
-        {
-            return bytes.AsSpan(2, bytes.Length - 4);
-        }
+        public string MemberName { get; }
 
-        public ReadOnlySpan<byte> GetPropertyNameWithQuotation()
-        {
-            return bytes.AsSpan(1, bytes.Length - 2);
-        }
-
-        public ReadOnlySpan<byte> GetPropertyNameWithQuotationAndNameSeparator()
-        {
-            return bytes.AsSpan(1);
-        }
-
-        public ReadOnlySpan<byte> GetValueSeparatorAndPropertyNameWithQuotationAndNameSeparator()
-        {
-            return bytes;
-        }
-
-        public PropertySerializationInfo(PropertyInfo info, string name,
 #if CSHARP_8_OR_NEWER
-            IJsonFormatter?
+        public PropertySerializationInfo(PropertyInfo info, string name, JsonFormatterAttribute? formatterInfo)
 #else
-            IJsonFormatter
+        public PropertySerializationInfo(PropertyInfo info, string name, JsonFormatterAttribute formatterInfo)
 #endif
-                formatter)
         {
             Info = info;
-            Formatter = formatter;
-            bytes = PropertyNameHelper.CalculatePropertyNameBytes(name);
-            IsFormatterDirect = DirectTypeEnumHelper.FromTypeAndFormatter(info.PropertyType, formatter);
-        }
-
-#if CSHARP_8_OR_NEWER
-        public object? GetValue(object @this)
-#else
-        public object GetValue(object @this)
-#endif
-        {
-            return Info.GetValue(@this);
+            MemberName = name;
+            FormatterInfo = formatterInfo;
+            IsFormatterDirect = DirectTypeEnumHelper.FromTypeAndFormatter(info.PropertyType, FormatterInfo?.FormatterType);
         }
 
         public int CompareTo(PropertySerializationInfo other)

@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using Utf8Json.Internal;
+using Utf8Json.Internal.Reflection;
 
 namespace Utf8Json
 {
@@ -96,7 +97,7 @@ namespace Utf8Json
 #endif
             }
 
-            var getFormatterGenericInstanceMethod = getFormatterRuntimeMethod.MakeGenericMethod(type);
+            var getFormatterGenericInstanceMethod = getFormatterRuntimeMethod.MakeGeneric(type);
             var inputResolver = Expression.Parameter(typeof(IFormatterResolver), "inputResolver");
 #if CSHARP_8_OR_NEWER
             formatterGetter = Expression.Lambda<Func<IFormatterResolver, IJsonFormatter?>>(Expression.Call(inputResolver, getFormatterGenericInstanceMethod), inputResolver).Compile();

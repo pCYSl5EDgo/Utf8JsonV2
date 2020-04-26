@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using Utf8Json.Internal.Reflection;
 
 namespace Utf8Json.Internal
 {
@@ -39,8 +40,8 @@ namespace Utf8Json.Internal
 
         private static IntPtr GetFunctionPointer(Type formatterType, string name)
         {
-            var method = formatterType.GetMethod(name);
-            return method == null ? IntPtr.Zero : method.MethodHandle.GetFunctionPointer();
+            var method = formatterType.GetMethodStatic(name);
+            return method?.MethodHandle.GetFunctionPointer() ?? IntPtr.Zero;
         }
     }
 }

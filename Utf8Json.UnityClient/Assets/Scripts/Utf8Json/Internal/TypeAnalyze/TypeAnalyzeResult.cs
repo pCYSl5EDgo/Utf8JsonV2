@@ -22,6 +22,35 @@ namespace Utf8Json.Internal
         public readonly ExtensionDataInfo ExtensionData;
         public readonly ConstructorDataInfo ConstructorData;
 
+        public bool HasReferenceTypeWhenSerialize
+        {
+            get
+            {
+                if (FieldReferenceTypeArray.Length != 0 || FieldReferenceTypeShouldSerializeArray.Length != 0)
+                {
+                    return true;
+                }
+
+                for (var i = 0; i < PropertyReferenceTypeArray.Length; i++)
+                {
+                    if(!(PropertyReferenceTypeArray[i].Info.GetMethod is null))
+                    {
+                        return true;
+                    }
+                }
+
+                for (var i = 0; i < PropertyReferenceTypeShouldSerializeArray.Length; i++)
+                {
+                    if (!(PropertyReferenceTypeShouldSerializeArray[i].Info.GetMethod is null))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+
         public TypeAnalyzeResult(FieldSerializationInfo[] fieldValueTypeArray, FieldSerializationInfo[] fieldReferenceTypeArray, PropertySerializationInfo[] propertyValueTypeArray, PropertySerializationInfo[] propertyReferenceTypeArray, ShouldSerializeFieldSerializationInfo[] fieldValueTypeShouldSerializeArray, ShouldSerializeFieldSerializationInfo[] fieldReferenceTypeShouldSerializeArray, ShouldSerializePropertySerializationInfo[] propertyValueTypeShouldSerializeArray, ShouldSerializePropertySerializationInfo[] propertyReferenceTypeShouldSerializeArray, MethodInfo[] onSerializing, MethodInfo[] onSerialized, MethodInfo[] onDeserializing, MethodInfo[] onDeserialized, ExtensionDataInfo extensionData, ConstructorDataInfo constructorData)
         {
             FieldValueTypeArray = fieldValueTypeArray;

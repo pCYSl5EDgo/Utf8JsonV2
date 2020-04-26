@@ -8,7 +8,7 @@ namespace Utf8Json
     public static class JsonSerializerOptionsExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void SerializeWithVerify<T>(this JsonSerializerOptions options, ref JsonWriter writer, in T value)
+        public static void SerializeWithVerify<T>(this JsonSerializerOptions options, ref JsonWriter writer, T value)
         {
 #if !ENABLE_IL2CPP
             var serializer = options.Resolver.GetSerializeStatic<T>();

@@ -3,9 +3,12 @@
 
 using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Utf8Json.Internal.Reflection;
+
 // ReSharper disable RedundantCaseLabel
 // ReSharper disable UseIndexFromEndExpression
 
@@ -125,7 +128,7 @@ namespace Utf8Json.Internal
             if (typeof(IAfterDeserializationCallback).IsAssignableFrom(type))
             {
                 var method = type.GetMethod(nameof(IAfterDeserializationCallback.OnDeserialized), Array.Empty<Type>());
-                if (method != null)
+                if (!(method is null))
                 {
                     Add(ref onDeserialized, method);
                 }
@@ -134,7 +137,7 @@ namespace Utf8Json.Internal
             if (typeof(IAfterSerializationCallback).IsAssignableFrom(type))
             {
                 var method = type.GetMethod(nameof(IAfterSerializationCallback.OnSerialized), Array.Empty<Type>());
-                if (method != null)
+                if (!(method is null))
                 {
                     Add(ref onSerialized, method);
                 }
@@ -143,7 +146,7 @@ namespace Utf8Json.Internal
             if (typeof(IBeforeDeserializationCallback).IsAssignableFrom(type))
             {
                 var method = type.GetMethod(nameof(IBeforeDeserializationCallback.OnDeserializing), Array.Empty<Type>());
-                if (method != null)
+                if (!(method is null))
                 {
                     Add(ref onDeserializing, method);
                 }
@@ -152,7 +155,7 @@ namespace Utf8Json.Internal
             if (typeof(IBeforeSerializationCallback).IsAssignableFrom(type))
             {
                 var method = type.GetMethod(nameof(IBeforeSerializationCallback.OnSerializing), Array.Empty<Type>());
-                if (method != null)
+                if (!(method is null))
                 {
                     Add(ref onSerializing, method);
                 }
@@ -294,7 +297,7 @@ namespace Utf8Json.Internal
                 var isValue = fieldIsValues[index];
                 var encodedName = fieldEncodedNames[index];
                 var info = fields[index];
-                var jsonFormatter = JsonFormatterAttributeHelper.FromJsonFormatterAttribute(info.GetCustomAttribute<JsonFormatterAttribute>());
+                var jsonFormatter = info.GetCustomAttribute<JsonFormatterAttribute>();
                 if (serializeType == SerializeType.SeeShouldSerializeMethod)
                 {
                     var shouldSerialize = type.GetMethod("ShouldSerialize" + info.Name, Array.Empty<Type>());
@@ -397,9 +400,8 @@ namespace Utf8Json.Internal
                         {
                             var encodedName = propertyEncodedNames[index];
                             var info = properties[index];
-                            var jsonFormatter = JsonFormatterAttributeHelper.FromJsonFormatterAttribute(info.GetCustomAttribute<JsonFormatterAttribute>());
-                            var shouldSerialize = type.GetMethod("ShouldSerialize" + info.Name, Array.Empty<Type>());
-                            Debug.Assert(shouldSerialize != null);
+                            var jsonFormatter = info.GetCustomAttribute<JsonFormatterAttribute>();
+                            var shouldSerialize = type.GetMethodEmptyParameter("ShouldSerialize" + info.Name);
                             var isValue = propertyIsValues[index];
                             if (isValue)
                             {
@@ -415,7 +417,7 @@ namespace Utf8Json.Internal
                         {
                             var encodedName = propertyEncodedNames[index];
                             var info = properties[index];
-                            var jsonFormatter = JsonFormatterAttributeHelper.FromJsonFormatterAttribute(info.GetCustomAttribute<JsonFormatterAttribute>());
+                            var jsonFormatter = info.GetCustomAttribute<JsonFormatterAttribute>();
                             var isValue = propertyIsValues[index];
                             if (isValue)
                             {
@@ -508,8 +510,11 @@ namespace Utf8Json.Internal
                         serializeType = SerializeType.Ignore;
                         return;
                     case "System.Text.Json.Serialization.JsonExtensionDataAttribute":
-                        serializeType = SerializeType.ExtensionData;
-                        mustReturn = true;
+                        if (info.PropertyType == typeof(Dictionary<string, object>))
+                        {
+                            serializeType = SerializeType.ExtensionData;
+                            mustReturn = true;
+                        }
                         break;
                     case "System.Runtime.Serialization.DataMember":
                     case "System.Text.Json.Serialization.JsonPropertyNameAttribute":

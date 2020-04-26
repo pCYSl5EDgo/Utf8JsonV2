@@ -19,6 +19,9 @@ new ValueTuple<string, string>(" float",  "SingleFormatter"),
 new ValueTuple<string, string>("double",  "DoubleFormatter"),
 new ValueTuple<string, string>("  bool",  "BooleanFormatter"),
 
+new ValueTuple<string, string>("object",  "ObjectFormatter"),
+new ValueTuple<string, string>("object[]",  "ObjectArrayFormatter"),
+
 new ValueTuple<string, string>("System.Numerics.BigInteger", "BigIntegerFormatter"),
 new ValueTuple<string, string>("System.Numerics.Complex", "ComplexFormatter"),
 new ValueTuple<string, string>("System.Threading.Tasks.Task", "TaskUnitFormatter"),
@@ -51,6 +54,7 @@ new ValueTuple<string, string>("System.Reflection.CustomAttributeTypedArgument",
 new ValueTuple<string, string>("System.Reflection.ParameterInfo",  "ParameterInfoFormatter"),
 
 new ValueTuple<string, string>("System.Globalization.CultureInfo",  "CultureInfoFormatter"),
+new ValueTuple<string, string>("System.Collections.Generic.Dictionary<string, object>",  "StringKeyObjectValueDictionaryFormatter"),
 };
 ValueTuple<string, string>[] unityTuples = new[]{
 new ValueTuple<string, string>("      UnityEngine.Rect",  "RectFormatter"),

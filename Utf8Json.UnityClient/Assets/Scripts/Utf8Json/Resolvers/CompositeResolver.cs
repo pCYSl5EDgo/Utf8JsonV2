@@ -3,6 +3,7 @@
 
 using System;
 using Utf8Json.Internal;
+using Utf8Json.Internal.Reflection;
 
 namespace Utf8Json.Resolvers
 {
@@ -269,7 +270,7 @@ namespace Utf8Json.Resolvers
                     goto RETURN;
                 }
 
-                var interfaceFormatter = typeof(IJsonFormatter<>).MakeGenericType(targetType);
+                var interfaceFormatter = typeof(IJsonFormatter<>).MakeGeneric(targetType);
 
                 foreach (var subFormatter in subFormatters)
                 {

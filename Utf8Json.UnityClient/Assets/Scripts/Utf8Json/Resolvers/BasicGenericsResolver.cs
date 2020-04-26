@@ -3,6 +3,7 @@
 
 using System;
 using Utf8Json.Internal;
+using Utf8Json.Internal.Reflection;
 
 namespace Utf8Json.Resolvers
 {
@@ -40,7 +41,7 @@ namespace Utf8Json.Resolvers
         private static IJsonFormatter Factory(Type targetType)
 #endif
         {
-            return typeof(FormatterCache<>).MakeGenericType(targetType).GetField("Formatter")?.GetValue(null) as IJsonFormatter;
+            return typeof(FormatterCache<>).MakeGeneric(targetType).GetField("Formatter")?.GetValue(null) as IJsonFormatter;
         }
 
         public IntPtr GetSerializeStatic<T>()

@@ -90,17 +90,8 @@ namespace Utf8Json.Formatters
             return DeserializeStatic(ref reader, options);
         }
 
-#if CSHARP_8_OR_NEWER
-        public static int CalcByteLengthForSerialization(JsonSerializerOptions options, string? value)
-#else
-        public static int CalcByteLengthForSerialization(JsonSerializerOptions options, string value)
-#endif
+        public static int CalcByteLength(string value)
         {
-            if (value is null)
-            {
-                return 4;
-            }
-
             var answer = 2 + value.Length;
             foreach (var c in value)
             {
@@ -257,20 +248,20 @@ namespace Utf8Json.Formatters
         }
 
 #if CSHARP_8_OR_NEWER
-        public static unsafe void SerializeSpan(JsonSerializerOptions options, string? value, Span<byte> span)
+        public static int CalcByteLengthForSerialization(JsonSerializerOptions options, string? value)
 #else
-        public static unsafe void SerializeSpan(JsonSerializerOptions options, string value, Span<byte> span)
+        public static int CalcByteLengthForSerialization(JsonSerializerOptions options, string value)
 #endif
         {
-            if (value == null)
-            {
-                span[0] = (byte)'n';
-                span[1] = (byte)'u';
-                span[2] = (byte)'l';
-                span[3] = (byte)'l';
-                return;
-            }
+            return value is null ? 4 : CalcByteLength(value);
+        }
 
+        public static
+#if !SPAN_BUILTIN
+            unsafe
+#endif
+            void SerializeSpanNotNull(string value, Span<byte> span)
+        {
             span[0] = (byte)'"';
             span = span.Slice(1);
             var input = value.AsSpan();
@@ -448,6 +439,32 @@ namespace Utf8Json.Formatters
             }
 
             span[0] = (byte)'"';
+        }
+
+#if CSHARP_8_OR_NEWER
+        public static
+#if !SPAN_BUILTIN
+            unsafe
+#endif
+            void SerializeSpan(JsonSerializerOptions options, string? value, Span<byte> span)
+#else
+        public static
+#if !SPAN_BUILTIN
+            unsafe
+# endif
+            void SerializeSpan(JsonSerializerOptions options, string value, Span<byte> span)
+#endif
+        {
+            if (value == null)
+            {
+                span[0] = (byte)'n';
+                span[1] = (byte)'u';
+                span[2] = (byte)'l';
+                span[3] = (byte)'l';
+                return;
+            }
+
+            SerializeSpanNotNull(value, span);
         }
     }
 }

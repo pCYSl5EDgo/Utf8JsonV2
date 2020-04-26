@@ -27,17 +27,5 @@ namespace Utf8Json.Internal
             Info = info;
             Kind = info?.PropertyType == typeof(Dictionary<string, object>) ? ExtensionDataKind.Object : ExtensionDataKind.JsonElement;
         }
-
-#if CSHARP_8_OR_NEWER
-        public Dictionary<string, object?>? GetValue(object @this)
-        {
-            return Info?.GetValue(@this) as Dictionary<string, object?>;
-        }
-#else
-        public Dictionary<string, object> GetValue(object @this)
-        {
-            return Info?.GetValue(@this) as Dictionary<string, object>;
-        }
-#endif
     }
 }

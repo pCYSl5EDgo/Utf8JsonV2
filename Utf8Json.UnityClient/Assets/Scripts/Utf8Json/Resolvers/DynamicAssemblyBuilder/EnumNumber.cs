@@ -2,28 +2,28 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Emit;
+using Utf8Json.Internal.Reflection;
 
-namespace Utf8Json.Resolvers
+namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 {
-    public sealed partial class DynamicAssemblyBuilderResolver
+    public static class EnumNumberEmbedHelper
     {
-        private static void EnumNumberFactory(Type targetType, in BuilderSet builderSet)
+        public static void Factory(Type targetType, in BuilderSet builderSet)
         {
-            builderSet.Type.AddInterfaceImplementation(typeof(IObjectPropertyNameFormatter<>).MakeGenericType(targetType));
+            builderSet.Type.AddInterfaceImplementation(typeof(IObjectPropertyNameFormatter<>).MakeGeneric(targetType));
 
-            GenerateIntermediateLanguageCodesForSerializeTypeLessValueType(targetType, builderSet.SerializeStatic, builderSet.SerializeTypeless);
-            GenerateIntermediateLanguageCodesForDeserializeTypelessValueType(targetType, builderSet.DeserializeStatic, builderSet.DeserializeTypeless);
+            ValueTypeEmbedTypelessHelper.SerializeTypeless(targetType, builderSet.SerializeStatic, builderSet.SerializeTypeless);
+            ValueTypeEmbedTypelessHelper.DeserializeTypeless(targetType, builderSet.DeserializeStatic, builderSet.DeserializeTypeless);
 
             var underlyingType = targetType.GetEnumUnderlyingType();
 
-            var writeNumber = GetWriteNumber(underlyingType);
-            DefineEnumNumberSerializeToPropertyName(targetType, builderSet.Type, underlyingType, writeNumber);
+            var writeNumber = ReadWritePrimitive.GetWriteNumber(underlyingType);
+            DefineEnumNumberSerializeToPropertyName(targetType, builderSet.Type, writeNumber);
             GenerateEnumNumberSerializeStatic(builderSet.SerializeStatic, writeNumber);
 
-            var readNumber = GetReadNumber(underlyingType);
+            var readNumber = ReadWritePrimitive.GetReadNumber(underlyingType);
             DefineEnumNumberDeserializeFromPropertyName(targetType, builderSet.Type, readNumber);
             GenerateEnumNumberDeserializeStatic(builderSet.DeserializeStatic, readNumber);
         }
@@ -41,7 +41,7 @@ namespace Utf8Json.Resolvers
         private static void GenerateEnumNumberSerializeStatic(MethodBuilder serializeStatic, MethodInfo writeNumber)
         {
             var processor = serializeStatic.GetILGenerator();
-        
+
             processor.Emit(OpCodes.Ldarg_0);
             processor.Emit(OpCodes.Ldarg_1);
             processor.EmitCall(OpCodes.Call, writeNumber, null);
@@ -51,20 +51,17 @@ namespace Utf8Json.Resolvers
 
         private static void DefineEnumNumberDeserializeFromPropertyName(Type targetType, TypeBuilder typeBuilder, MethodInfo readNumber)
         {
+            var paramTypes = TypeArrayHolder.TypeArrayLength2;
+            paramTypes[0] = typeof(JsonReader).MakeByRefType();
+            paramTypes[1] = typeof(JsonSerializerOptions);
             var deserializeFromPropertyName = typeBuilder.DefineMethod(
                 "DeserializeFromPropertyName",
-                InstanceMethodFlags,
+                DynamicAssemblyBuilderResolver.InstanceMethodFlags,
                 targetType,
-                new[]
-                {
-                    typeof(JsonReader).MakeByRefType(),
-                    typeof(JsonSerializerOptions),
-                }
+                paramTypes
             );
-            var skipWhiteSpace = typeof(JsonReader).GetMethod("SkipWhiteSpace");
-            Debug.Assert(!(skipWhiteSpace is null));
-            var advance = typeof(JsonReader).GetMethod("Advance");
-            Debug.Assert(!(advance is null));
+            var skipWhiteSpace = typeof(JsonReader).GetMethodEmptyParameter("SkipWhiteSpace");
+            var advance = typeof(JsonReader).GetMethodInstance("Advance");
 
             var processor = deserializeFromPropertyName.GetILGenerator();
 
@@ -85,27 +82,19 @@ namespace Utf8Json.Resolvers
             processor.Emit(OpCodes.Ret);
         }
 
-        private static MethodInfo GetReadNumber(Type underlyingType)
+        private static void DefineEnumNumberSerializeToPropertyName(Type targetType, TypeBuilder typeBuilder, MethodInfo writeNumber)
         {
-            var answer = typeof(JsonReaderExtension).GetMethod("Read" + underlyingType.Name);
-            Debug.Assert(!(answer is null));
-            return answer;
-        }
-
-        private static void DefineEnumNumberSerializeToPropertyName(Type targetType, TypeBuilder typeBuilder, Type underlyingType, MethodInfo writeNumber)
-        {
+            var typeHolder = TypeArrayHolder.TypeArrayLength3;
+            typeHolder[0] = typeof(JsonWriter).MakeByRefType();
+            typeHolder[1] = targetType;
+            typeHolder[2] = typeof(JsonSerializerOptions);
             var serializeToPropertyName = typeBuilder.DefineMethod(
                 "SerializeToPropertyName",
-                InstanceMethodFlags,
+                DynamicAssemblyBuilderResolver.InstanceMethodFlags,
                 typeof(void),
-                new[]
-                {
-                    typeof(JsonWriter).MakeByRefType(),
-                    targetType,
-                    typeof(JsonSerializerOptions),
-                });
-            var writeQuotation = typeof(JsonWriter).GetMethod(nameof(JsonWriter.WriteQuotation));
-            Debug.Assert(!(writeQuotation is null));
+                typeHolder);
+
+            var writeQuotation = typeof(JsonWriter).GetMethodEmptyParameter(nameof(JsonWriter.WriteQuotation));
 
             var processor = serializeToPropertyName.GetILGenerator();
             processor.Emit(OpCodes.Ldarg_1);
@@ -119,30 +108,6 @@ namespace Utf8Json.Resolvers
             processor.EmitCall(OpCodes.Call, writeQuotation, null);
 
             processor.Emit(OpCodes.Ret);
-        }
-
-        private static MethodInfo GetWriteNumber(Type underlyingType)
-        {
-#if CSHARP_8_OR_NEWER
-            MethodInfo? writeNumber;
-#else
-            MethodInfo writeNumber;
-#endif
-            if (underlyingType == typeof(ulong))
-            {
-                writeNumber = typeof(JsonWriter).GetMethod("Write", new[] { underlyingType });
-            }
-            else if (underlyingType == typeof(uint))
-            {
-                writeNumber = typeof(JsonWriter).GetMethod("Write", new[] { underlyingType });
-            }
-            else
-            {
-                writeNumber = typeof(JsonWriterExtension).GetMethod("Write", new[] { typeof(JsonWriter).MakeByRefType(), underlyingType });
-            }
-
-            Debug.Assert(!(writeNumber is null));
-            return writeNumber;
         }
     }
 }
