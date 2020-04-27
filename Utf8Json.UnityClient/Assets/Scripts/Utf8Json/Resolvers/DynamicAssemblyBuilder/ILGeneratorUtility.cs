@@ -50,6 +50,13 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             return processor;
         }
 
+        public static ILGenerator StField(this ILGenerator processor, FieldInfo info)
+        {
+            Debug.Assert(!info.IsStatic);
+            processor.Emit(OpCodes.Stfld, info);
+            return processor;
+        }
+
         public static ILGenerator Constrained(this ILGenerator processor, Type type)
         {
             processor.Emit(OpCodes.Constrained, type);
@@ -158,9 +165,29 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             return processor;
         }
 
+        public static void Switch(this ILGenerator processor, Label[] labels)
+        {
+            processor.Emit(OpCodes.Switch, labels);
+        }
+
+        public static void BeqShort(this ILGenerator processor, Label label)
+        {
+            processor.Emit(OpCodes.Beq_S, label);
+        }
+
+        public static void BeqLong(this ILGenerator processor, Label label)
+        {
+            processor.Emit(OpCodes.Beq, label);
+        }
+
         public static void BrShort(this ILGenerator processor, Label label)
         {
             processor.Emit(OpCodes.Br_S, label);
+        }
+
+        public static void BrLong(this ILGenerator processor, Label label)
+        {
+            processor.Emit(OpCodes.Br, label);
         }
 
         public static void BrFalseShort(this ILGenerator processor, Label label)
@@ -168,14 +195,36 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             processor.Emit(OpCodes.Brfalse_S, label);
         }
 
+        public static void BrFalseLong(this ILGenerator processor, Label label)
+        {
+            processor.Emit(OpCodes.Brfalse, label);
+        }
+
         public static void BrTrueShort(this ILGenerator processor, Label label)
         {
             processor.Emit(OpCodes.Brtrue_S, label);
         }
 
+        public static void BrTrueLong(this ILGenerator processor, Label label)
+        {
+            processor.Emit(OpCodes.Brtrue, label);
+        }
+
         public static ILGenerator Call(this ILGenerator processor, MethodInfo method)
         {
             processor.Emit(OpCodes.Call, method);
+            return processor;
+        }
+
+        public static ILGenerator LdIndU1(this ILGenerator processor)
+        {
+            processor.Emit(OpCodes.Ldind_U1);
+            return processor;
+        }
+
+        public static ILGenerator LdIndI8(this ILGenerator processor)
+        {
+            processor.Emit(OpCodes.Ldind_I8);
             return processor;
         }
 
@@ -211,6 +260,22 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             return processor;
         }
 
+        public static ILGenerator LdcI4(this ILGenerator processor, byte number)
+        {
+            switch (number)
+            {
+                case 1: processor.Emit(OpCodes.Ldc_I4_1); return processor;
+                case 2: processor.Emit(OpCodes.Ldc_I4_2); return processor;
+                case 3: processor.Emit(OpCodes.Ldc_I4_3); return processor;
+                case 4: processor.Emit(OpCodes.Ldc_I4_4); return processor;
+                case 5: processor.Emit(OpCodes.Ldc_I4_5); return processor;
+                case 6: processor.Emit(OpCodes.Ldc_I4_6); return processor;
+                case 7: processor.Emit(OpCodes.Ldc_I4_7); return processor;
+                case 8: processor.Emit(OpCodes.Ldc_I4_8); return processor;
+                default: processor.Emit(OpCodes.Ldc_I4_S, number); return processor;
+            }
+        }
+
         public static ILGenerator LdcI4(this ILGenerator processor, int number)
         {
             switch (number)
@@ -230,6 +295,10 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             {
                 processor.Emit(OpCodes.Ldc_I4_S, (sbyte)number);
             }
+            else if (number >= 128 && number < 256)
+            {
+                processor.Emit(OpCodes.Ldc_I4_S, (byte)number);
+            }
             else
             {
                 processor.Emit(OpCodes.Ldc_I4, number);
@@ -237,5 +306,23 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
             return processor;
         }
+
+        public static ILGenerator LdcI8(this ILGenerator processor, long number)
+        {
+            if (int.MinValue <= number && number <= int.MaxValue)
+            {
+                processor
+                    .LdcI4((int)number)
+                    .Emit(OpCodes.Conv_I8);
+            }
+            else
+            {
+                processor.Emit(OpCodes.Ldc_I8, number);
+            }
+
+            return processor;
+        }
+
+        public static ILGenerator LdcI8(this ILGenerator processor, ulong number) => processor.LdcI8((long)number);
     }
 }

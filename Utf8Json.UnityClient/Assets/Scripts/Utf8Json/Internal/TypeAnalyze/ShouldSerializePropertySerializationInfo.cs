@@ -6,9 +6,9 @@ using System.Reflection;
 
 namespace Utf8Json.Internal
 {
-    public readonly struct ShouldSerializePropertySerializationInfo : IShouldSerializeMemberContainer, IComparable<ShouldSerializePropertySerializationInfo>
+    public readonly struct ShouldSerializePropertySerializationInfo : IShouldSerializeMemberContainer, IPropertyMemberContainer, IComparable<ShouldSerializePropertySerializationInfo>
     {
-        public readonly PropertyInfo Info;
+        public PropertyInfo Info { get; }
         public MethodInfo ShouldSerialize { get; }
 
         public Type TargetType => Info.PropertyType;
@@ -17,10 +17,14 @@ namespace Utf8Json.Internal
 
         public string MemberName { get; }
 
+        public bool ShouldIntern => TargetType == typeof(string) && !(Info.GetCustomAttribute<StringInternAttribute>() is null);
+
 #if CSHARP_8_OR_NEWER
         public JsonFormatterAttribute? FormatterInfo { get; }
+        public MethodInfo? AddMethodInfo { get; }
 #else
         public JsonFormatterAttribute FormatterInfo { get; }
+        public MethodInfo AddMethodInfo { get; }
 #endif
 
 #if CSHARP_8_OR_NEWER
@@ -34,6 +38,8 @@ namespace Utf8Json.Internal
             MemberName = name;
             FormatterInfo = formatterInfo;
             IsFormatterDirect = DirectTypeEnumHelper.FromTypeAndFormatter(info.PropertyType, FormatterInfo?.FormatterType);
+            var addAttribute = info.GetCustomAttribute<AddAttribute>();
+            AddMethodInfo = addAttribute?.GetMethod(addAttribute.Type ?? info.PropertyType);
         }
 
         public int CompareTo(ShouldSerializePropertySerializationInfo other)

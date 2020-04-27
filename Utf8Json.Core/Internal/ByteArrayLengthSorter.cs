@@ -2,7 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Buffers.Binary;
+using System.Runtime.InteropServices;
+
+// ReSharper disable UseIndexFromEndExpression
 
 namespace Utf8Json.Internal
 {
@@ -20,149 +22,153 @@ namespace Utf8Json.Internal
                 return 1;
             }
 
-            ulong xRest;
-            ulong yRest;
             switch (x.Length - ((x.Length >> 3) << 3))
             {
-                default: return CompareInternal(x, 0UL, y, 0UL);
+                default: return CompareInternal(MemoryMarshal.Cast<byte, ulong>(x), MemoryMarshal.Cast<byte, ulong>(y));
                 case 1:
-                    xRest = x[x.Length - 1];
-                    yRest = y[y.Length - 1];
-                    return CompareInternal(x.Slice(0, x.Length - 1), xRest, y.Slice(0, y.Length - 1), yRest);
+                    var c1 = CompareInternal(MemoryMarshal.Cast<byte, ulong>(x), MemoryMarshal.Cast<byte, ulong>(y));
+                    return c1 != 0 ? c1 : x[x.Length - 1].CompareTo(y[y.Length - 1]);
                 case 2:
-                    xRest = x[x.Length - 1];
-                    xRest <<= 8;
-                    xRest |= x[x.Length - 2];
-                    yRest = y[y.Length - 1];
-                    yRest <<= 8;
-                    yRest |= y[y.Length - 2];
-                    return CompareInternal(x.Slice(0, x.Length - 2), xRest, y.Slice(0, y.Length - 2), yRest);
+                    var c2 = CompareInternal(MemoryMarshal.Cast<byte, ulong>(x), MemoryMarshal.Cast<byte, ulong>(y));
+                    if (c2 == 0)
+                    {
+                        c2 = x[x.Length - 2].CompareTo(y[y.Length - 2]);
+                    }
+                    return c2 != 0 ? c2 : x[x.Length - 1].CompareTo(y[y.Length - 1]);
                 case 3:
-                    xRest = x[x.Length - 1];
-                    xRest <<= 8;
-                    xRest |= x[x.Length - 2];
-                    xRest <<= 8;
-                    xRest |= x[x.Length - 3];
-                    yRest = y[y.Length - 1];
-                    yRest <<= 8;
-                    yRest |= y[y.Length - 2];
-                    yRest <<= 8;
-                    yRest |= y[y.Length - 3];
-                    return CompareInternal(x.Slice(0, x.Length - 3), xRest, y.Slice(0, y.Length - 3), yRest);
+                    var c3 = CompareInternal(MemoryMarshal.Cast<byte, ulong>(x), MemoryMarshal.Cast<byte, ulong>(y));
+                    if (c3 == 0)
+                    {
+                        c3 = x[x.Length - 3].CompareTo(y[y.Length - 3]);
+                    }
+                    if (c3 == 0)
+                    {
+                        c3 = x[x.Length - 2].CompareTo(y[y.Length - 2]);
+                    }
+                    return c3 != 0 ? c3 : x[x.Length - 1].CompareTo(y[y.Length - 1]);
                 case 4:
-                    xRest = x[x.Length - 1];
-                    xRest <<= 8;
-                    xRest |= x[x.Length - 2];
-                    xRest <<= 8;
-                    xRest |= x[x.Length - 3];
-                    xRest <<= 8;
-                    xRest |= x[x.Length - 4];
-                    yRest = y[y.Length - 1];
-                    yRest <<= 8;
-                    yRest |= y[y.Length - 2];
-                    yRest <<= 8;
-                    yRest |= y[y.Length - 3];
-                    yRest <<= 8;
-                    yRest |= y[y.Length - 4];
-                    return CompareInternal(x.Slice(0, x.Length - 4), xRest, y.Slice(0, y.Length - 4), yRest);
+                    var c4 = CompareInternal(MemoryMarshal.Cast<byte, ulong>(x), MemoryMarshal.Cast<byte, ulong>(y));
+                    if (c4 == 0)
+                    {
+                        const int minus = 4;
+                        c4 = x[x.Length - minus].CompareTo(y[y.Length - minus]);
+                    }
+                    if (c4 == 0)
+                    {
+                        const int minus = 3;
+                        c4 = x[x.Length - minus].CompareTo(y[y.Length - minus]);
+                    }
+                    if (c4 == 0)
+                    {
+                        const int minus = 2;
+                        c4 = x[x.Length - minus].CompareTo(y[y.Length - minus]);
+                    }
+                    return c4 != 0 ? c4 : x[x.Length - 1].CompareTo(y[y.Length - 1]);
                 case 5:
-                    xRest = x[x.Length - 1];
-                    xRest <<= 8;
-                    xRest |= x[x.Length - 2];
-                    xRest <<= 8;
-                    xRest |= x[x.Length - 3];
-                    xRest <<= 8;
-                    xRest |= x[x.Length - 4];
-                    xRest <<= 8;
-                    xRest |= x[x.Length - 5];
-                    yRest = y[y.Length - 1];
-                    yRest <<= 8;
-                    yRest |= y[y.Length - 2];
-                    yRest <<= 8;
-                    yRest |= y[y.Length - 3];
-                    yRest <<= 8;
-                    yRest |= y[y.Length - 4];
-                    yRest <<= 8;
-                    yRest |= y[y.Length - 5];
-                    return CompareInternal(x.Slice(0, x.Length - 5), xRest, y.Slice(0, y.Length - 5), yRest);
+                    var c5 = CompareInternal(MemoryMarshal.Cast<byte, ulong>(x), MemoryMarshal.Cast<byte, ulong>(y));
+                    if (c5 == 0)
+                    {
+                        const int minus = 5;
+                        c5 = x[x.Length - minus].CompareTo(y[y.Length - minus]);
+                    }
+                    if (c5 == 0)
+                    {
+                        const int minus = 4;
+                        c5 = x[x.Length - minus].CompareTo(y[y.Length - minus]);
+                    }
+                    if (c5 == 0)
+                    {
+                        const int minus = 3;
+                        c5 = x[x.Length - minus].CompareTo(y[y.Length - minus]);
+                    }
+                    if (c5 == 0)
+                    {
+                        const int minus = 2;
+                        c5 = x[x.Length - minus].CompareTo(y[y.Length - minus]);
+                    }
+                    return c5 != 0 ? c5 : x[x.Length - 1].CompareTo(y[y.Length - 1]);
                 case 6:
-                    xRest = x[x.Length - 1];
-                    xRest <<= 8;
-                    xRest |= x[x.Length - 2];
-                    xRest <<= 8;
-                    xRest |= x[x.Length - 3];
-                    xRest <<= 8;
-                    xRest |= x[x.Length - 4];
-                    xRest <<= 8;
-                    xRest |= x[x.Length - 5];
-                    xRest <<= 8;
-                    xRest |= x[x.Length - 6];
-                    yRest = y[y.Length - 1];
-                    yRest <<= 8;
-                    yRest |= y[y.Length - 2];
-                    yRest <<= 8;
-                    yRest |= y[y.Length - 3];
-                    yRest <<= 8;
-                    yRest |= y[y.Length - 4];
-                    yRest <<= 8;
-                    yRest |= y[y.Length - 5];
-                    yRest <<= 8;
-                    yRest |= y[y.Length - 6];
-                    return CompareInternal(x.Slice(0, x.Length - 6), xRest, y.Slice(0, y.Length - 6), yRest);
+                    var c6 = CompareInternal(MemoryMarshal.Cast<byte, ulong>(x), MemoryMarshal.Cast<byte, ulong>(y));
+                    if (c6 == 0)
+                    {
+                        const int minus = 6;
+                        c6 = x[x.Length - minus].CompareTo(y[y.Length - minus]);
+                    }
+                    if (c6 == 0)
+                    {
+                        const int minus = 5;
+                        c6 = x[x.Length - minus].CompareTo(y[y.Length - minus]);
+                    }
+                    if (c6 == 0)
+                    {
+                        const int minus = 4;
+                        c6 = x[x.Length - minus].CompareTo(y[y.Length - minus]);
+                    }
+                    if (c6 == 0)
+                    {
+                        const int minus = 3;
+                        c6 = x[x.Length - minus].CompareTo(y[y.Length - minus]);
+                    }
+                    if (c6 == 0)
+                    {
+                        const int minus = 2;
+                        c6 = x[x.Length - minus].CompareTo(y[y.Length - minus]);
+                    }
+                    return c6 != 0 ? c6 : x[x.Length - 1].CompareTo(y[y.Length - 1]);
                 case 7:
-                    xRest = x[x.Length - 1];
-                    xRest <<= 8;
-                    xRest |= x[x.Length - 2];
-                    xRest <<= 8;
-                    xRest |= x[x.Length - 3];
-                    xRest <<= 8;
-                    xRest |= x[x.Length - 4];
-                    xRest <<= 8;
-                    xRest |= x[x.Length - 5];
-                    xRest <<= 8;
-                    xRest |= x[x.Length - 6];
-                    xRest <<= 8;
-                    xRest |= x[x.Length - 7];
-                    yRest = y[y.Length - 1];
-                    yRest <<= 8;
-                    yRest |= y[y.Length - 2];
-                    yRest <<= 8;
-                    yRest |= y[y.Length - 3];
-                    yRest <<= 8;
-                    yRest |= y[y.Length - 4];
-                    yRest <<= 8;
-                    yRest |= y[y.Length - 5];
-                    yRest <<= 8;
-                    yRest |= y[y.Length - 6];
-                    yRest <<= 8;
-                    yRest |= y[y.Length - 7];
-                    return CompareInternal(x.Slice(0, x.Length - 7), xRest, y.Slice(0, y.Length - 7), yRest);
+                    var c7 = CompareInternal(MemoryMarshal.Cast<byte, ulong>(x), MemoryMarshal.Cast<byte, ulong>(y));
+                    if (c7 == 0)
+                    {
+                        const int minus = 7;
+                        c7 = x[x.Length - minus].CompareTo(y[y.Length - minus]);
+                    }
+                    if (c7 == 0)
+                    {
+                        const int minus = 6;
+                        c7 = x[x.Length - minus].CompareTo(y[y.Length - minus]);
+                    }
+                    if (c7 == 0)
+                    {
+                        const int minus = 5;
+                        c7 = x[x.Length - minus].CompareTo(y[y.Length - minus]);
+                    }
+                    if (c7 == 0)
+                    {
+                        const int minus = 4;
+                        c7 = x[x.Length - minus].CompareTo(y[y.Length - minus]);
+                    }
+                    if (c7 == 0)
+                    {
+                        const int minus = 3;
+                        c7 = x[x.Length - minus].CompareTo(y[y.Length - minus]);
+                    }
+                    if (c7 == 0)
+                    {
+                        const int minus = 2;
+                        c7 = x[x.Length - minus].CompareTo(y[y.Length - minus]);
+                    }
+                    return c7 != 0 ? c7 : x[x.Length - 1].CompareTo(y[y.Length - 1]);
             }
         }
 
-        private static int CompareInternal(ReadOnlySpan<byte> x, ulong xRest, ReadOnlySpan<byte> y, ulong yRest)
+        private static int CompareInternal(ReadOnlySpan<ulong> x, ReadOnlySpan<ulong> y)
         {
             while (true)
             {
                 if (x.IsEmpty)
                 {
-                    if (xRest == yRest)
-                    {
-                        return 0;
-                    }
-
-                    return xRest < yRest ? -1 : 1;
+                    return 0;
                 }
 
-                var xValue = BinaryPrimitives.ReadUInt64LittleEndian(x);
-                var yValue = BinaryPrimitives.ReadUInt64LittleEndian(y);
+                var xValue = x[0];
+                var yValue = y[0];
                 if (xValue != yValue)
                 {
                     return xValue > yValue ? 1 : -1;
                 }
 
-                x = x.Slice(8);
-                y = y.Slice(8);
+                x = x.Slice(1);
+                y = y.Slice(1);
             }
         }
     }

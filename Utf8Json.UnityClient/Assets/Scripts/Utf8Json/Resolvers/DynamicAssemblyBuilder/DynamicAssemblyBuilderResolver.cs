@@ -222,7 +222,11 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 TypeAnalyzer.Analyze(targetType, out var analyzeResult);
                 if (targetType.IsValueType)
                 {
-                    ValueEmbedHelper.Factory(targetType, in analyzeResult, in builderSet, dataFieldDictionary);
+                    ValueTypeEmbedTypelessHelper.SerializeTypeless(targetType, builderSet.SerializeStatic, builderSet.SerializeTypeless);
+                    ValueTypeEmbedTypelessHelper.DeserializeTypeless(targetType, builderSet.DeserializeStatic, builderSet.DeserializeTypeless);
+
+                    ValueTypeSerializeStaticHelper.SerializeStatic(builderSet.Type, builderSet.SerializeStatic, in analyzeResult, dataFieldDictionary);
+                    ValueTypeDeserializeStaticHelper.DeserializeStatic(builderSet.DeserializeStatic, in analyzeResult);
                 }
                 else
                 {
@@ -254,8 +258,14 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             writerParams[1] = targetType;
             writerParams[2] = typeof(JsonSerializerOptions);
             var serializeStatic = typeBuilder.DefineMethod("SerializeStatic", StaticMethodFlags, typeof(void), writerParams);
+            serializeStatic.DefineParameter(1, ParameterAttributes.None, "writer");
+            serializeStatic.DefineParameter(2, ParameterAttributes.None, "value");
+            serializeStatic.DefineParameter(3, ParameterAttributes.None, "options");
             {
                 var serialize = typeBuilder.DefineMethod("Serialize", InstanceMethodFlags, typeof(void), writerParams);
+                serialize.DefineParameter(1, ParameterAttributes.None, "writer");
+                serialize.DefineParameter(2, ParameterAttributes.None, "value");
+                serialize.DefineParameter(3, ParameterAttributes.None, "options");
                 GenerateIntermediateLanguageCodesForSerialize(serializeStatic, serialize);
             }
 
@@ -264,17 +274,25 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             writerTypelessParams[1] = typeof(object);
             writerTypelessParams[2] = typeof(JsonSerializerOptions);
             var serializeTypeless = typeBuilder.DefineMethod("SerializeTypeless", InstanceMethodFlags, typeof(void), writerTypelessParams);
-            
+            serializeTypeless.DefineParameter(1, ParameterAttributes.None, "writer");
+            serializeTypeless.DefineParameter(2, ParameterAttributes.None, "value");
+            serializeTypeless.DefineParameter(3, ParameterAttributes.None, "options");
+
             var readerParams = TypeArrayHolder.TypeArrayLength2;
             readerParams[0] = typeof(JsonReader).MakeByRefType();
             readerParams[1] = typeof(JsonSerializerOptions);
             var deserializeStatic = typeBuilder.DefineMethod("DeserializeStatic", StaticMethodFlags, targetType, readerParams);
+            deserializeStatic.DefineParameter(1, ParameterAttributes.None, "reader");
+            deserializeStatic.DefineParameter(2, ParameterAttributes.None, "options");
             {
                 var deserialize = typeBuilder.DefineMethod("Deserialize", InstanceMethodFlags, targetType, readerParams);
+                deserialize.DefineParameter(1, ParameterAttributes.None, "reader");
+                deserialize.DefineParameter(2, ParameterAttributes.None, "options");
                 GenerateIntermediateLanguageCodesForDeserialize(deserializeStatic, deserialize);
             }
             var deserializeTypeless = typeBuilder.DefineMethod("DeserializeTypeless", InstanceMethodFlags, typeof(object), readerParams);
-
+            deserializeTypeless.DefineParameter(1, ParameterAttributes.None, "reader");
+            deserializeTypeless.DefineParameter(2, ParameterAttributes.None, "options");
             var builderSet = new BuilderSet(typeBuilder, serializeStatic, serializeTypeless, deserializeStatic, deserializeTypeless);
             return builderSet;
         }

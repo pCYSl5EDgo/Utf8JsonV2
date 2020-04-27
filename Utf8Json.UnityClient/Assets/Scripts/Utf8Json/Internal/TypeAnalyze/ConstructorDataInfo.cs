@@ -17,11 +17,14 @@ namespace Utf8Json.Internal
         public readonly MethodInfo FactoryMethod;
 #endif
 
+        public readonly bool CanCreateInstanceBeforeDeserialization;
+
         public ConstructorDataInfo(Type targetType)
         {
             TargetType = targetType;
             Constructor = default;
             FactoryMethod = default;
+            CanCreateInstanceBeforeDeserialization = true;
         }
 
         public ConstructorDataInfo(Type targetType, ConstructorInfo constructor)
@@ -29,6 +32,7 @@ namespace Utf8Json.Internal
             TargetType = targetType;
             Constructor = constructor;
             FactoryMethod = default;
+            CanCreateInstanceBeforeDeserialization = constructor.GetParameters().Length == 0;
         }
 
         public ConstructorDataInfo(Type targetType, MethodInfo factoryMethod)
@@ -36,6 +40,7 @@ namespace Utf8Json.Internal
             TargetType = targetType;
             Constructor = default;
             FactoryMethod = factoryMethod;
+            CanCreateInstanceBeforeDeserialization = factoryMethod.GetParameters().Length == 0;
         }
     }
 }

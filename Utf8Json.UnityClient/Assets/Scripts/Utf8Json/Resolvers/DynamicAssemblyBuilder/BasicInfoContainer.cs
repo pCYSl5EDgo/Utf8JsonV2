@@ -14,22 +14,49 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
     public static class BasicInfoContainer
     {
         public static readonly FieldInfo FieldJsonWriterWriter = typeof(JsonWriter).GetField("Writer", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public) ?? throw new NullReferenceException("JsonWriter.Writer");
+        
         public static readonly MethodInfo MethodJsonSerializerOptionsIgnoreNullValues = typeof(JsonSerializerOptions).GetMethodInstance("get_IgnoreNullValues");
+        
         public static readonly MethodInfo MethodJsonWriterWriteEndObject = typeof(JsonWriter).GetMethodInstance("WriteEndObject");
         public static readonly MethodInfo MethodJsonWriterWriteBeginObject = typeof(JsonWriter).GetMethodInstance("WriteBeginObject");
+        
+        public static readonly MethodInfo MethodJsonReaderReadIsBeginObjectWithVerify = typeof(JsonReader).GetMethodInstance("ReadIsBeginObjectWithVerify");
+        public static readonly MethodInfo MethodJsonReaderReadIsEndObjectWithSkipValueSeparator = typeof(JsonReader).GetMethodInstance("ReadIsEndObjectWithSkipValueSeparator");
+        public static readonly MethodInfo MethodJsonReaderReadIsNull = typeof(JsonReader).GetMethodInstance("ReadIsNull");
+        public static readonly MethodInfo MethodJsonReaderReadPropertyNameSegmentRaw = typeof(JsonReader).GetMethodInstance("ReadPropertyNameSegmentRaw");
+        public static readonly MethodInfo MethodJsonReaderReadNextBlock = typeof(JsonReader).GetMethodInstance("ReadNextBlock");
+        public static readonly MethodInfo MethodJsonReaderSkipWhiteSpace = typeof(JsonReader).GetMethodInstance("SkipWhiteSpace");
+        public static readonly MethodInfo MethodJsonReaderReadIsNameSeparatorWithVerify = typeof(JsonReader).GetMethodInstance("ReadIsNameSeparatorWithVerify");
+        
         public static readonly MethodInfo MethodBufferWriterGetSpan = typeof(BufferWriter).GetMethodInstance("GetSpan");
         public static readonly MethodInfo MethodBufferWriterAdvance = typeof(BufferWriter).GetMethodInstance("Advance");
+        
         public static readonly MethodInfo MethodSpanGetItem = typeof(Span<byte>).GetMethodInstance("get_Item");
-        public static readonly MethodInfo MethodSerializeWithVerify = typeof(JsonSerializerOptionsExtensions).GetMethodStatic("SerializeWithVerify");
+        
+        public static readonly MethodInfo MethodReadOnlySpanGetLength = typeof(ReadOnlySpan<byte>).GetMethodInstance("get_Length");
+        public static readonly MethodInfo MethodReadOnlySpanGetItem = typeof(ReadOnlySpan<byte>).GetMethod("get_Item") ?? throw new NullReferenceException("ReadOnlySpan<byte>.get_Item");
+        public static readonly MethodInfo MethodReadOnlySpanSlice = typeof(ReadOnlySpan<byte>).GetMethod("Slice", typeof(int));
+        
+        public static readonly MethodInfo MethodJsonSerializerOptionsExtensionsSerializeWithVerify = typeof(JsonSerializerOptionsExtensions).GetMethodStatic("SerializeWithVerify");
+        public static readonly MethodInfo MethodJsonSerializerOptionsExtensionsDeserializeWithVerify = typeof(JsonSerializerOptionsExtensions).GetMethodStatic("DeserializeWithVerify");
+
         public static readonly MethodInfo MethodSerializeExtensionData = typeof(StringKeyObjectValueDictionaryFormatter).GetMethodStatic("SerializeExtensionDataStaticDetectIsFirst");
-        public static readonly ConstructorInfo ArgumentNullExceptionConstructorInfo = typeof(ArgumentNullException).GetConstructor(Array.Empty<Type>()) ?? throw new InvalidOperationException();
+
+        public static readonly MethodInfo MethodStringKeyObjectValueDictionaryFormatterDeserializeStatic = typeof(StringKeyObjectValueDictionaryFormatter).GetMethodStatic("DeserializeStatic");
+
+        public static readonly MethodInfo MethodStringIntern = typeof(string).GetMethodStatic("Intern");
 
         public static readonly int Null;
         public static readonly int True;
 
         public static MethodInfo SerializeWithVerify(Type targetType)
         {
-            return MethodSerializeWithVerify.MakeGeneric(targetType);
+            return MethodJsonSerializerOptionsExtensionsSerializeWithVerify.MakeGeneric(targetType);
+        }
+
+        public static MethodInfo DeserializeWithVerify(Type targetType)
+        {
+            return MethodJsonSerializerOptionsExtensionsDeserializeWithVerify.MakeGeneric(targetType);
         }
 
         static BasicInfoContainer()

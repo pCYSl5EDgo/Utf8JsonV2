@@ -213,7 +213,7 @@ namespace Utf8Json.Test
                 return B.Length < 14;
             }
 
-            [JsonExtensionData]
+            //[JsonExtensionData]
             private Dictionary<string, object> Dictionary { get; }
 
             public Callback(string b)
@@ -243,6 +243,11 @@ namespace Utf8Json.Test
             var value = new Callback(v);
             var bytes = JsonSerializer.Serialize(value);
             TestContext.WriteLine(Encoding.UTF8.GetString(bytes));
+            var deserialize = JsonSerializer.Deserialize<Callback>(bytes);
+            TestContext.WriteLine(deserialize.A);
+            TestContext.WriteLine(deserialize.D);
+            TestContext.WriteLine(deserialize.C);
+            TestContext.WriteLine(deserialize.ShouldSerializeB());
             Assert.True(false);
         }
 

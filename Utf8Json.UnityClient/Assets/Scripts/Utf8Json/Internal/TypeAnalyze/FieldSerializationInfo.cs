@@ -12,8 +12,10 @@ namespace Utf8Json.Internal
 
 #if CSHARP_8_OR_NEWER
         public JsonFormatterAttribute? FormatterInfo { get; }
+        public MethodInfo? AddMethodInfo { get; }
 #else
         public JsonFormatterAttribute FormatterInfo { get; }
+        public MethodInfo AddMethodInfo { get; }
 #endif
 
         public DirectTypeEnum IsFormatterDirect { get; }
@@ -22,7 +24,9 @@ namespace Utf8Json.Internal
 
         public string MemberName { get; }
 
-#if CSHARP_8_OR_NEWER
+        public bool ShouldIntern => TargetType == typeof(string) && !(Info.GetCustomAttribute<StringInternAttribute>() is null);
+
+        #if CSHARP_8_OR_NEWER
         public FieldSerializationInfo(FieldInfo info, string name, JsonFormatterAttribute? formatterInfo)
 #else
         public FieldSerializationInfo(FieldInfo info, string name, JsonFormatterAttribute formatterInfo)
@@ -32,6 +36,8 @@ namespace Utf8Json.Internal
             MemberName = name;
             FormatterInfo = formatterInfo;
             IsFormatterDirect = DirectTypeEnumHelper.FromTypeAndFormatter(info.FieldType, FormatterInfo?.FormatterType);
+            var addAttribute = info.GetCustomAttribute<AddAttribute>();
+            AddMethodInfo = addAttribute?.GetMethod(addAttribute.Type ?? info.FieldType);
         }
 
         public int CompareTo(FieldSerializationInfo other)

@@ -4,9 +4,9 @@
 using System;
 using System.Buffers;
 using System.Runtime.CompilerServices;
+#if SPAN_BUILTIN
 using System.Runtime.InteropServices;
-using Utf8Json.Formatters;
-
+#endif
 // ReSharper disable UseIndexFromEndExpression
 // ReSharper disable RedundantCaseLabel
 

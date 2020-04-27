@@ -6,21 +6,25 @@ using System.Reflection;
 
 namespace Utf8Json.Internal
 {
-    public readonly struct PropertySerializationInfo : IMemberContainer, IComparable<PropertySerializationInfo>
+    public readonly struct PropertySerializationInfo : IPropertyMemberContainer, IComparable<PropertySerializationInfo>
     {
-        public readonly PropertyInfo Info;
+        public PropertyInfo Info { get; }
 
-        #if CSHARP_8_OR_NEWER
+#if CSHARP_8_OR_NEWER
         public JsonFormatterAttribute? FormatterInfo { get; }
-        #else
+        public MethodInfo? AddMethodInfo { get; }
+#else
         public JsonFormatterAttribute FormatterInfo { get; }
-        #endif
+        public MethodInfo AddMethodInfo { get; }
+#endif
 
         public Type TargetType => Info.PropertyType;
 
         public DirectTypeEnum IsFormatterDirect { get; }
 
         public string MemberName { get; }
+
+        public bool ShouldIntern => TargetType == typeof(string) && !(Info.GetCustomAttribute<StringInternAttribute>() is null);
 
 #if CSHARP_8_OR_NEWER
         public PropertySerializationInfo(PropertyInfo info, string name, JsonFormatterAttribute? formatterInfo)
@@ -32,6 +36,8 @@ namespace Utf8Json.Internal
             MemberName = name;
             FormatterInfo = formatterInfo;
             IsFormatterDirect = DirectTypeEnumHelper.FromTypeAndFormatter(info.PropertyType, FormatterInfo?.FormatterType);
+            var addAttribute = info.GetCustomAttribute<AddAttribute>();
+            AddMethodInfo = addAttribute?.GetMethod(addAttribute.Type ?? info.PropertyType);
         }
 
         public int CompareTo(PropertySerializationInfo other)

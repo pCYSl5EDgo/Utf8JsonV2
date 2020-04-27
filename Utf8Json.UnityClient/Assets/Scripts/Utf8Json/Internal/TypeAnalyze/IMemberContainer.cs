@@ -13,11 +13,20 @@ namespace Utf8Json.Internal
 
         string MemberName { get; }
 
+        bool ShouldIntern { get; }
+
 #if CSHARP_8_OR_NEWER
         JsonFormatterAttribute? FormatterInfo { get; }
+        MethodInfo? AddMethodInfo { get; }
 #else
         JsonFormatterAttribute FormatterInfo { get; }
+        MethodInfo AddMethodInfo { get; }
 #endif
+    }
+
+    public interface IPropertyMemberContainer : IMemberContainer
+    {
+        PropertyInfo Info { get; }
     }
 
     public interface IShouldSerializeMemberContainer : IMemberContainer

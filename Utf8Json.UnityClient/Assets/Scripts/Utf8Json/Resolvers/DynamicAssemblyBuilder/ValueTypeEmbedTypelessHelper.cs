@@ -17,8 +17,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 .LdArg(2)
                 .Emit(OpCodes.Brtrue_S, notNull);
             {
-                processor.Emit(OpCodes.Newobj, BasicInfoContainer.ArgumentNullExceptionConstructorInfo);
-                processor.Emit(OpCodes.Throw);
+                processor.ThrowException(typeof(ArgumentNullException));
             }
 
             processor.MarkLabel(notNull);
