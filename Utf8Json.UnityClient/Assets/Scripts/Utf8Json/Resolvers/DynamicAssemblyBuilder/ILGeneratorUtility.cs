@@ -180,6 +180,11 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             processor.Emit(OpCodes.Beq, label);
         }
 
+        public static void BneUn(this ILGenerator processor, Label label)
+        {
+            processor.Emit(OpCodes.Bne_Un, label);
+        }
+
         public static void BrShort(this ILGenerator processor, Label label)
         {
             processor.Emit(OpCodes.Br_S, label);
