@@ -439,18 +439,21 @@ namespace Utf8Json.Internal
         private static void CollectEachField(FieldInfo info, out SerializeType serializeType, out string encodedName, out bool isValue, Type type)
         {
             isValue = info.FieldType.IsValueType;
-            serializeType = SerializeType.SerializeAlways;
+            serializeType = SerializeType.Ignore;
             encodedName = info.Name;
             if (
                 typeof(Delegate).IsAssignableFrom(info.FieldType)
             )
             {
-                serializeType = SerializeType.Ignore;
                 return;
             }
 
+            if (info.IsPublic)
+            {
+                serializeType = SerializeType.SerializeAlways;
+            }
+
             var attributes = info.GetCustomAttributes();
-            var hasSerializeField = false;
 
             foreach (var attribute in attributes)
             {
@@ -466,19 +469,18 @@ namespace Utf8Json.Internal
                         encodedName = attributeType.GetProperty("Name")?.GetValue(attribute) as string ?? throw new NullReferenceException();
                         break;
                     case "UnityEngine.SerializeField":
-                        hasSerializeField = true;
+                        serializeType = SerializeType.SerializeAlways;
                         break;
                 }
             }
 
-            if (!hasSerializeField && !info.IsPublic)
+            if (serializeType == SerializeType.Ignore)
             {
-                serializeType = SerializeType.Ignore;
                 return;
             }
 
             var shouldSerialize = type.GetMethod("ShouldSerialize" + info.Name);
-            if (shouldSerialize != null && shouldSerialize.ReturnType == typeof(bool) && !shouldSerialize.IsStatic && shouldSerialize.GetParameters().Length == 0)
+            if (!(shouldSerialize is null) && shouldSerialize.ReturnType == typeof(bool) && !shouldSerialize.IsStatic && shouldSerialize.GetParameters().Length == 0)
             {
                 serializeType = SerializeType.SeeShouldSerializeMethod;
             }
@@ -494,11 +496,15 @@ namespace Utf8Json.Internal
                 return;
             }
 
-            serializeType = SerializeType.SerializeAlways;
+            serializeType = SerializeType.Ignore;
+            if (!(info.GetMethod is null) && info.GetMethod.IsPublic || !(info.SetMethod is null) && info.SetMethod.IsPublic)
+            {
+                serializeType = SerializeType.SerializeAlways;
+            }
+
             encodedName = info.Name;
 
             var attributes = info.GetCustomAttributes();
-            var mustReturn = false;
             foreach (var attribute in attributes)
             {
                 var attributeType = attribute.GetType();
@@ -511,11 +517,9 @@ namespace Utf8Json.Internal
                         return;
                     case "System.Text.Json.Serialization.JsonExtensionDataAttribute":
                         if (info.PropertyType == typeof(Dictionary<string, object>))
-                        {
                             serializeType = SerializeType.ExtensionData;
-                            mustReturn = true;
-                        }
                         break;
+                    case "MessagePack.Key":
                     case "System.Runtime.Serialization.DataMember":
                     case "System.Text.Json.Serialization.JsonPropertyNameAttribute":
                         encodedName = attributeType.GetProperty("Name")?.GetValue(attribute) as string ?? throw new NullReferenceException();
@@ -523,7 +527,7 @@ namespace Utf8Json.Internal
                 }
             }
 
-            if (mustReturn)
+            if (serializeType == SerializeType.Ignore || serializeType == SerializeType.ExtensionData)
             {
                 return;
             }
