@@ -34,7 +34,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         public static readonly MethodInfo MethodSpanGetItem = typeof(Span<byte>).GetMethodInstance("get_Item");
         
         public static readonly MethodInfo MethodReadOnlySpanGetLength = typeof(ReadOnlySpan<byte>).GetMethodInstance("get_Length");
-        public static readonly MethodInfo MethodReadOnlySpanGetItem = typeof(ReadOnlySpan<byte>).GetMethod("get_Item") ?? throw new NullReferenceException("ReadOnlySpan<byte>.get_Item");
+        public static readonly MethodInfo MethodReadOnlySpanGetItem = typeof(SpanHelper).GetMethod("get_Item") ?? throw new NullReferenceException("ReadOnlySpan<byte>.get_Item");
         public static readonly MethodInfo MethodReadOnlySpanSlice = typeof(ReadOnlySpan<byte>).GetMethod("Slice", typeof(int));
         
         public static readonly MethodInfo MethodJsonSerializerOptionsExtensionsSerializeWithVerify = typeof(JsonSerializerOptionsExtensions).GetMethodStatic("SerializeWithVerify");
