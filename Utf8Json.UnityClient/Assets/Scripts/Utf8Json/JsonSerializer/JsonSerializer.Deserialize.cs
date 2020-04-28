@@ -28,7 +28,7 @@ namespace Utf8Json
             }
             catch (Exception ex)
             {
-                throw new JsonSerializationException($"Failed to deserialize {typeof(T).FullName} value.", ex);
+                throw new JsonSerializationException("Failed to deserialize " + typeof(T).FullName + " value.", ex);
             }
         }
 
@@ -102,7 +102,7 @@ namespace Utf8Json
             }
             catch (Exception ex)
             {
-                throw new JsonSerializationException($"Failed to deserialize {typeof(T).FullName} value.", ex);
+                throw new JsonSerializationException("Failed to deserialize " + typeof(T).FullName + " value.", ex);
             }
         }
 
@@ -131,7 +131,7 @@ namespace Utf8Json
             }
             catch (Exception ex)
             {
-                throw new JsonSerializationException($"Failed to deserialize {targetType.FullName} value.", ex);
+                throw new JsonSerializationException("Failed to deserialize " + targetType.FullName + " value.", ex);
             }
         }
 
