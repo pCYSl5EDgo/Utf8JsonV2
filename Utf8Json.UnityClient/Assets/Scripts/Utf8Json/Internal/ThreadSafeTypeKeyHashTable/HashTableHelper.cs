@@ -64,19 +64,17 @@ namespace Utf8Json.Internal
             }
             else
             {
-                var newArray = new T[array.Length + 1];
-                for (var i = 0; i < array.Length; i++)
+                Array.Resize(ref array, array.Length + 1);
+                for (var i = array.Length - 2; i >= 0; i--)
                 {
                     var c = array[i].CompareTo(item);
-                    if (c < 0)
+                    if (c > 0)
                     {
-                        newArray[i] = array[i];
+                        array[i + 1] = array[i];
                     }
                     else
                     {
-                        newArray[i] = item;
-                        Array.Copy(array, i, newArray, i + 1, array.Length - i);
-                        array = newArray;
+                        array[i + 1] = item;
                         return;
                     }
                 }
