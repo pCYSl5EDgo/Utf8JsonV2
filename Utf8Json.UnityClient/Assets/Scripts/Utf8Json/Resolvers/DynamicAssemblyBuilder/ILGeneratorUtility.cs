@@ -105,6 +105,12 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             return processor;
         }
 
+        public static ILGenerator Add(this ILGenerator processor)
+        {
+            processor.Emit(OpCodes.Add);
+            return processor;
+        }
+
         public static ILGenerator StLoc(this ILGenerator processor, LocalBuilder info)
         {
             switch (info.LocalIndex)
