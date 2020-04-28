@@ -3,6 +3,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Reflection;
 using System.Reflection.Emit;
 using Utf8Json.Internal;
@@ -13,22 +14,73 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 {
     public static class ValueTypeDeserializeStaticHelper
     {
+        private readonly ref struct ReadOnlyArguments
+        {
+            public readonly ILGenerator Processor;
+            public readonly LocalBuilder AnswerVariable;
+            public readonly LocalBuilder NameVariable;
+            public readonly DeserializeDictionary Dictionary;
+
+            public readonly Label LoopStartLabel;
+            public readonly Label DefaultLabel;
+            public readonly TypeAnalyzeResult AnalyzeResult;
+
+            public ReadOnlyArguments(LocalBuilder answerVariable, in TypeAnalyzeResult analyzeResult, ILGenerator processor)
+            {
+                Processor = processor;
+                AnswerVariable = answerVariable;
+                AnalyzeResult = analyzeResult;
+                Dictionary = new DeserializeDictionary(in analyzeResult);
+                NameVariable = processor.DeclareLocal(typeof(ReadOnlySpan<byte>));
+                LoopStartLabel = processor.DefineLabel();
+                DefaultLabel = processor.DefineLabel();
+            }
+
+            public void Dispose()
+            {
+                Dictionary.Dispose();
+            }
+        }
+
+        private ref struct MutableArguments
+        {
+#if CSHARP_8_OR_NEWER
+            public LocalBuilder? ByteVariable;
+            public LocalBuilder? ULongVariable;
+#else
+            public LocalBuilder ByteVariable;
+            public LocalBuilder ULongVariable;
+#endif
+            public int Length;
+            public int Position;
+            public int Rest;
+
+            public void ClearWithRest(int rest)
+            {
+                Length = Position = 0;
+                Rest = rest;
+            }
+
+            public void ClearWithByteLength(int length)
+            {
+                Length = length >> 3;
+                Rest = length - (Length << 3);
+                Position = 0;
+            }
+        }
+
         public static void DeserializeStatic(MethodBuilder deserializeStatic, in TypeAnalyzeResult analyzeResult)
         {
-            var dictionary = new DeserializeDictionary(in analyzeResult);
+            deserializeStatic.InitLocals = true;
+            ref readonly var extensionDataInfo = ref analyzeResult.ExtensionData;
+            var processor = deserializeStatic.GetILGenerator();
+            var answerVariable = processor.DeclareLocal(deserializeStatic.ReturnType);
+            var arguments = new ReadOnlyArguments(answerVariable, in analyzeResult, processor);
             try
             {
-                deserializeStatic.InitLocals = true;
-                ref readonly var extensionDataInfo = ref analyzeResult.ExtensionData;
-                var processor = deserializeStatic.GetILGenerator();
-                var answerVariable = processor.DeclareLocal(deserializeStatic.ReturnType);
-
-                var lengthVariationCount = dictionary.LengthVariationCount();
-
-                if (lengthVariationCount == 0)
+                if (arguments.Dictionary.LengthVariations.IsEmpty)
                 {
                     NoVariation(processor, answerVariable, extensionDataInfo);
-
                     return;
                 }
 
@@ -36,17 +88,15 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     .LdArg(0)
                     .Call(BasicInfoContainer.MethodJsonReaderReadIsBeginObjectWithVerify);
                 var loopCountVariable = processor.DeclareLocal(typeof(int));
-                var loopStartLabel = processor.DefineLabel();
                 var returnLabel = processor.DefineLabel();
-                var nameVariable = processor.DeclareLocal(typeof(ReadOnlySpan<byte>));
 
-                var addMethodInfo = extensionDataInfo.AddMethodInfo;
+                //var addMethodInfo = extensionDataInfo.AddMethodInfo;
                 if (analyzeResult.ConstructorData.CanCreateInstanceBeforeDeserialization)
                 {
                     CallCallbacks(analyzeResult.OnDeserializing, processor, answerVariable);
 
                     // while(!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
-                    processor.MarkLabel(loopStartLabel);
+                    processor.MarkLabel(arguments.LoopStartLabel);
                     processor
                         .LdArg(0)
                         .LdLocAddress(loopCountVariable)
@@ -55,42 +105,20 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     processor
                         .LdArg(0)
                         .Call(BasicInfoContainer.MethodJsonReaderReadPropertyNameSegmentRaw)
-                        .StLoc(nameVariable) // var name = reader.ReadPropertyNameSegmentRaw();
-                        .LdLocAddress(nameVariable)
+                        .StLoc(arguments.NameVariable) // var name = reader.ReadPropertyNameSegmentRaw();
+                        .LdLocAddress(arguments.NameVariable)
                         .Call(BasicInfoContainer.MethodReadOnlySpanGetLength); // nameVariable.Length
 
                     if (extensionDataInfo.Info is null)
                     {
-                        DeserializeStatic_CreateInstanceBeforeDeserialization_NoExtensionData(processor, in analyzeResult, answerVariable, loopStartLabel, nameVariable, ref dictionary, lengthVariationCount);
-                    }
-                    else if (addMethodInfo is null)
-                    {
-                        DeserializeStatic_CreateInstanceBeforeDeserialization_WithExtensionData(processor, in analyzeResult, extensionDataInfo.Info, answerVariable, loopStartLabel, loopCountVariable, returnLabel, nameVariable, ref dictionary, lengthVariationCount);
-                    }
-                    else
-                    {
-                        AssertValidExtensionDataAddMethod(addMethodInfo);
-                        DeserializeStatic_CreateInstanceBeforeDeserialization_WithExtensionData_Add(processor, in analyzeResult, extensionDataInfo.Info, addMethodInfo, answerVariable, loopStartLabel, loopCountVariable, returnLabel, nameVariable, ref dictionary, lengthVariationCount);
+                        DeserializeStatic_CreateInstanceBeforeDeserialization_NoExtensionData(in arguments);
                     }
 
-                    processor.BrLong(loopStartLabel); // goto while(!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
+                    processor.BrLong(arguments.LoopStartLabel); // goto while(!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
                 }
                 else
                 {
                     throw new NotSupportedException("Serialization Constructor is not supported.");
-                    /*if (extensionDataInfo.Info is null)
-                    {
-                        DeserializeStatic_CreateInstanceAfterDeserialization_NoExtensionData(processor, in analyzeResult, answerVariable, loopStartLabel, loopCountVariable, returnLabel, nameVariable, ref dictionary, lengthVariationCount);
-                    }
-                    else if (addMethodInfo is null)
-                    {
-                        DeserializeStatic_CreateInstanceAfterDeserialization_WithExtensionData(processor, in analyzeResult, extensionDataInfo.Info, answerVariable, loopStartLabel, loopCountVariable, returnLabel, nameVariable, ref dictionary, lengthVariationCount);
-                    }
-                    else
-                    {
-                        AssertValidExtensionDataAddMethod(addMethodInfo);
-                        DeserializeStatic_CreateInstanceAfterDeserialization_WithExtensionData_Add(processor, in analyzeResult, extensionDataInfo.Info, addMethodInfo, answerVariable, loopStartLabel, loopCountVariable, returnLabel, nameVariable, ref dictionary, lengthVariationCount);
-                    }*/
                 }
 
                 processor.MarkLabel(returnLabel);
@@ -103,7 +131,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
             finally
             {
-                dictionary.Dispose();
+                arguments.Dispose();
             }
         }
 
@@ -139,37 +167,6 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
         }
 
-        [Conditional("DEBUG")]
-        private static void AssertValidExtensionDataAddMethod(MethodInfo addMethodInfo)
-        {
-            var parameters = addMethodInfo.GetParameters();
-            if (
-                parameters[parameters.Length - 2].ParameterType != typeof(string)
-                || parameters[parameters.Length - 1].ParameterType != typeof(object)
-            )
-            {
-                throw new ArgumentException(addMethodInfo.Name);
-            }
-
-            if (addMethodInfo.IsStatic)
-            {
-                if (
-                    parameters.Length != 3
-                    || parameters[0].ParameterType != typeof(System.Collections.Generic.Dictionary<string, object>)
-                )
-                {
-                    throw new ArgumentException(addMethodInfo.Name);
-                }
-            }
-            else if (
-                parameters.Length != 2
-                || addMethodInfo.DeclaringType != typeof(System.Collections.Generic.Dictionary<string, object>)
-            )
-            {
-                throw new ArgumentException(addMethodInfo.Name);
-            }
-        }
-
         private static void CallCallbacks(ReadOnlySpan<MethodInfo> methods, ILGenerator processor, LocalBuilder answerVariable)
         {
             foreach (var methodInfo in methods)
@@ -187,41 +184,20 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
         }
 
-        /*private static void DeserializeStatic_CreateInstanceAfterDeserialization_WithExtensionData_Add(ILGenerator processor, in TypeAnalyzeResult analyzeResult, PropertyInfo info, MethodInfo addMethodInfo, LocalBuilder answerVariable, Label loopStartLabel, LocalBuilder loopCountVariable, Label returnLabel, LocalBuilder nameVariable, ref DeserializeDictionary dictionary, int lengthVariationCount)
+        private static void DeserializeStatic_CreateInstanceBeforeDeserialization_NoExtensionData(in ReadOnlyArguments readOnlyArguments)
         {
-            throw new NotImplementedException();
-        }
-
-        private static void DeserializeStatic_CreateInstanceAfterDeserialization_WithExtensionData(ILGenerator processor, in TypeAnalyzeResult analyzeResult, PropertyInfo extensionDataInfo, LocalBuilder answerVariable, Label loopStartLabel, LocalBuilder loopCountVariable, Label returnLabel, LocalBuilder nameVariable, ref DeserializeDictionary dictionary, int lengthVariationCount)
-        {
-            throw new NotImplementedException();
-        }
-
-        private static void DeserializeStatic_CreateInstanceAfterDeserialization_NoExtensionData(ILGenerator processor, in TypeAnalyzeResult analyzeResult, LocalBuilder answerVariable, Label loopStartLabel, LocalBuilder loopCountVariable, Label returnLabel, LocalBuilder nameVariable, ref DeserializeDictionary dictionary, int lengthVariationCount)
-        {
-            throw new NotImplementedException();
-        }*/
-
-        private static void DeserializeStatic_CreateInstanceBeforeDeserialization_WithExtensionData_Add(ILGenerator processor, in TypeAnalyzeResult analyzeResult, PropertyInfo info, MethodInfo addMethodInfo, LocalBuilder answerVariable, Label loopStartLabel, LocalBuilder loopCountVariable, Label returnLabel, LocalBuilder nameVariable, ref DeserializeDictionary dictionary, int lengthVariationCount)
-        {
-            throw new NotImplementedException();
-        }
-
-        private static void DeserializeStatic_CreateInstanceBeforeDeserialization_WithExtensionData(ILGenerator processor, in TypeAnalyzeResult analyzeResult, PropertyInfo extensionDataInfo, LocalBuilder answerVariable, Label loopStartLabel, LocalBuilder loopCountVariable, Label returnLabel, LocalBuilder nameVariable, ref DeserializeDictionary dictionary, int lengthVariationCount)
-        {
-            throw new NotImplementedException();
-        }
-
-        private static void DeserializeStatic_CreateInstanceBeforeDeserialization_NoExtensionData(ILGenerator processor, in TypeAnalyzeResult analyzeResult, LocalBuilder answerVariable, Label loopStartLabel, LocalBuilder nameVariable, ref DeserializeDictionary dictionary, int lengthVariationCount)
-        {
-            Span<Label> destinations = stackalloc Label[lengthVariationCount];
-            for (var i = 0; i < lengthVariationCount; i++)
+            var lengthVariations = readOnlyArguments.Dictionary.LengthVariations;
+            Span<Label> destinations = stackalloc Label[lengthVariations.Length];
+            var processor = readOnlyArguments.Processor;
+            for (var i = 0; i < destinations.Length; i++)
             {
                 destinations[i] = processor.DefineLabel();
             }
 
-            var defaultLabel = processor.DefineLabel();
-            EmbedSwitchLengthVariation(processor, dictionary, lengthVariationCount, destinations, defaultLabel);
+            var possibleLengthCount = readOnlyArguments.Dictionary.Table.Length;
+            EmbedSwitchLength(processor, lengthVariations, destinations, possibleLengthCount, readOnlyArguments.DefaultLabel);
+
+            processor.MarkLabel(readOnlyArguments.DefaultLabel); // default:
 
             // default case
             processor
@@ -229,340 +205,356 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 .Call(BasicInfoContainer.MethodJsonReaderSkipWhiteSpace) // reader.ReadSkipWhiteSpace();
                 .LdArg(0)
                 .Call(BasicInfoContainer.MethodJsonReaderReadNextBlock) // reader.ReadNextBlock();
-                .BrShort(loopStartLabel); // continue;
+                .BrShort(readOnlyArguments.LoopStartLabel); // continue;
 
             int length = 0, labelIndex = 0;
-            var entryArray = dictionary[length++];
+            var entryArray = readOnlyArguments.Dictionary[length++];
             if (!entryArray.IsEmpty)
             {
                 processor.MarkLabel(destinations[labelIndex++]); // case (LENGTH):
-                EmbedMatch(processor, answerVariable, entryArray[0].Type, entryArray[0].Index, analyzeResult);
+                if (entryArray.Length != 1)
+                {
+                    throw new ArgumentOutOfRangeException(entryArray.Length.ToString(CultureInfo.InvariantCulture));
+                }
+
+                EmbedMatch(in entryArray[0], in readOnlyArguments);
             }
 
-            var byteVariable = default(LocalBuilder);
-
+            MutableArguments mutableArguments = default;
             for (; length < 8; length++)
             {
-                if (length >= dictionary.Table.Length)
+                if (length >= possibleLengthCount)
                 {
                     return;
                 }
 
-                entryArray = dictionary[length];
+                entryArray = readOnlyArguments.Dictionary[length];
                 if (entryArray.IsEmpty)
                 {
                     continue;
                 }
 
                 processor.MarkLabel(destinations[labelIndex++]); // case (LENGTH):
-                SwitchRestBytes(processor, answerVariable, nameVariable, entryArray, defaultLabel, length, 0, analyzeResult, ref byteVariable);
+                mutableArguments.ClearWithRest(length);
+                SwitchRestBytes(in readOnlyArguments, entryArray, ref mutableArguments);
             }
 
-            var ulongVariable = default(LocalBuilder);
-            for (; length < dictionary.Table.Length; length++)
+            for (; length < possibleLengthCount; length++)
             {
-                entryArray = dictionary[length];
+                entryArray = readOnlyArguments.Dictionary[length];
                 if (entryArray.IsEmpty)
                 {
                     continue;
                 }
 
                 processor.MarkLabel(destinations[labelIndex++]); // case (LENGTH):
-                var rest = length - ((length >> 3) << 3);
-                if (rest == 0)
+                mutableArguments.ClearWithByteLength(length);
+                if (mutableArguments.Rest == 0)
                 {
-                    SwitchULongPartMultiple8(processor, nameVariable, entryArray, defaultLabel, length >> 3, 0, answerVariable, analyzeResult, ref ulongVariable);
+                    SwitchULongPartMultiple8(in readOnlyArguments, entryArray, ref mutableArguments);
                 }
                 else
                 {
-                    SwitchULongPartWithRest(processor, nameVariable, entryArray, defaultLabel, length >> 3, 0, rest, answerVariable, analyzeResult, ref ulongVariable, ref byteVariable);
+                    SwitchULongPartWithRest(in readOnlyArguments, entryArray, ref mutableArguments);
                 }
+            }
+        }
+
+        private static void EmbedSwitchLength(ILGenerator processor, ReadOnlySpan<int> lengthVariations, Span<Label> destinations, int possibleLengthCount, Label defaultLabel)
+        {
+            switch (lengthVariations.Length)
+            {
+                case 1:
+                    processor
+                        .LdcI4(lengthVariations[0])
+                        .BeqShort(destinations[0]); // if (nameLength == maxLength)
+                    break;
+                case 2:
+                    var nameLengthVariable = processor.DeclareLocal(typeof(int));
+                    processor
+                        .StLoc(nameLengthVariable)
+                        .LdLoc(nameLengthVariable)
+                        .LdcI4(lengthVariations[0])
+                        .BeqShort(destinations[0]); // if (nameLength == minLength) goto MIN;
+                    processor
+                        .LdLoc(nameLengthVariable)
+                        .LdcI4(lengthVariations[1])
+                        .BeqShort(destinations[1]); // if (nameLength == maxLength) goto MAX;
+                    break;
+                default:
+                    var cases = new Label[possibleLengthCount];
+                    for (var j = 0; j < cases.Length; j++)
+                    {
+                        cases[j] = defaultLabel;
+                    }
+
+                    for (var index = 0; index < lengthVariations.Length; index++)
+                    {
+                        var lengthVariation = lengthVariations[index];
+                        cases[lengthVariation] = destinations[index];
+                    }
+
+                    processor.Switch(cases); // switch (nameLength)
+                    break;
             }
         }
 
         private static void SwitchULongPartWithRest(
-            ILGenerator processor,
-            LocalBuilder nameVariable,
-            ReadOnlySpan<DeserializeDictionary.Entry> entryArray,
-            Label defaultLabel,
-            int length,
-            int position,
-            int rest,
-            LocalBuilder answerVariable,
-            in TypeAnalyzeResult analyzeResult,
-#if CSHARP_8_OR_NEWER
-            ref LocalBuilder? ulongVariable,
-            ref LocalBuilder? byteVariable)
-#else
-            ref LocalBuilder ulongVariable,
-            ref LocalBuilder byteVariable)
-#endif
+                in ReadOnlyArguments readOnlyArguments,
+                ReadOnlySpan<DeserializeDictionary.Entry> entryArray,
+                ref MutableArguments mutableArguments)
         {
-            var firstValue = SwitchULongPartSetUp(processor, ref entryArray, defaultLabel, position, out var firstEntryArray, out var notMatch);
+            var (firstValue, notMatch) = SwitchULongPartSetUp(in readOnlyArguments, entryArray, mutableArguments.Position, out var firstEntryArray);
+            var processor = readOnlyArguments.Processor;
             processor
-                .LdLocAddress(nameVariable)
+                .LdLocAddress(readOnlyArguments.NameVariable)
                 .LdcI4(0)
                 .Call(BasicInfoContainer.MethodReadOnlySpanGetItem)
                 .LdIndI8();
             if (!entryArray.IsEmpty)
             {
-                if (ulongVariable is null)
+                if (mutableArguments.ULongVariable is null)
                 {
-                    ulongVariable = processor.DeclareLocal(typeof(ulong));
+                    mutableArguments.ULongVariable = processor.DeclareLocal(typeof(ulong));
                 }
 
-                processor.StLoc(ulongVariable).LdLoc(ulongVariable);
+                processor.StLoc(mutableArguments.ULongVariable).LdLoc(mutableArguments.ULongVariable);
             }
 
-            SwitchULongPartWithRestTryMatchByteAndWhenMatchAction(processor, answerVariable, nameVariable, defaultLabel, length, position, rest, firstValue, notMatch, firstEntryArray, analyzeResult, ref ulongVariable, ref byteVariable);
+            SwitchULongPartWithRestTryMatchByteAndWhenMatchAction(in readOnlyArguments, firstValue, notMatch, firstEntryArray, ref mutableArguments);
             while (!entryArray.IsEmpty)
             {
                 processor.MarkLabel(notMatch);
-                firstValue = SwitchULongPartSetUp(processor, ref entryArray, defaultLabel, position, out firstEntryArray, out notMatch);
+                (firstValue, notMatch) = SwitchULongPartSetUp(in readOnlyArguments, entryArray, mutableArguments.Position, out firstEntryArray);
 #if CSHARP_8_OR_NEWER
-                processor.LdLoc(ulongVariable!);
+                processor.LdLoc(mutableArguments.ULongVariable!);
 #else
-                processor.LdLoc(ulongVariable);
+                processor.LdLoc(mutableArguments.ULongVariable);
 #endif
-                SwitchULongPartWithRestTryMatchByteAndWhenMatchAction(processor, answerVariable, nameVariable, defaultLabel, length, position, rest, firstValue, notMatch, firstEntryArray, analyzeResult, ref ulongVariable, ref byteVariable);
+                SwitchULongPartWithRestTryMatchByteAndWhenMatchAction(in readOnlyArguments, firstValue, notMatch, firstEntryArray, ref mutableArguments);
             }
         }
 
         private static void SwitchULongPartWithRestTryMatchByteAndWhenMatchAction(
-            ILGenerator processor,
-            LocalBuilder answerVariable,
-            LocalBuilder nameVariable,
-            Label defaultLabel,
-            int length,
-            int position,
-            int rest,
+            in ReadOnlyArguments readOnlyArguments,
             ulong firstValue,
             Label notMatch,
             ReadOnlySpan<DeserializeDictionary.Entry> firstEntryArray,
-            in TypeAnalyzeResult analyzeResult,
-#if CSHARP_8_OR_NEWER
-            ref LocalBuilder? ulongVariable,
-            ref LocalBuilder? byteVariable)
-#else
-            ref LocalBuilder ulongVariable,
-            ref LocalBuilder byteVariable)
-#endif
+            ref MutableArguments mutableArguments
+        )
         {
+            var processor = readOnlyArguments.Processor;
             processor
                 .LdcI8(firstValue)
-                .BrFalseLong(notMatch);
+                .BneUn(notMatch);
 
             processor
-                .LdLocAddress(nameVariable)
+                .LdLocAddress(readOnlyArguments.NameVariable)
                 .LdcI4(8)
                 .Call(BasicInfoContainer.MethodReadOnlySpanSlice)
-                .StLoc(nameVariable);
+                .StLoc(readOnlyArguments.NameVariable);
 
-            if (position + 1 == length)
+            var position = mutableArguments.Position;
+            if (mutableArguments.Position + 1 == mutableArguments.Length)
             {
-                SwitchRestBytes(processor, answerVariable, nameVariable, firstEntryArray, defaultLabel, rest, 0, analyzeResult, ref byteVariable);
+                mutableArguments.Position = 0;
+                SwitchRestBytes(in readOnlyArguments, firstEntryArray, ref mutableArguments);
             }
             else
             {
-                SwitchULongPartMultiple8(processor, nameVariable, firstEntryArray, defaultLabel, length, position + 1, answerVariable, analyzeResult, ref ulongVariable);
+                mutableArguments.Position++;
+                SwitchULongPartMultiple8(in readOnlyArguments, firstEntryArray, ref mutableArguments);
             }
+
+            mutableArguments.Position = position;
         }
 
         private static void SwitchULongPartMultiple8(
-            ILGenerator processor,
-            LocalBuilder nameVariable,
+            in ReadOnlyArguments readOnlyArguments,
             ReadOnlySpan<DeserializeDictionary.Entry> entryArray,
-            Label defaultLabel,
-            int length,
-            int position,
-            LocalBuilder answerVariable,
-            in TypeAnalyzeResult analyzeResult,
-#if CSHARP_8_OR_NEWER
-            ref LocalBuilder? ulongVariable)
-#else
-            ref LocalBuilder ulongVariable)
-#endif
+            ref MutableArguments mutableArguments
+        )
         {
-            var firstValue = SwitchULongPartSetUp(processor, ref entryArray, defaultLabel, position, out var firstEntryArray, out var notMatch);
+            var processor = readOnlyArguments.Processor;
+            var pair = SwitchULongPartSetUp(in readOnlyArguments, entryArray, mutableArguments.Position, out var firstEntryArray);
             processor
-                .LdLocAddress(nameVariable)
+                .LdLocAddress(readOnlyArguments.NameVariable)
                 .LdcI4(0)
                 .Call(BasicInfoContainer.MethodReadOnlySpanGetItem)
                 .LdIndI8();
             if (!entryArray.IsEmpty)
             {
-                if (ulongVariable is null)
+                if (mutableArguments.ULongVariable is null)
                 {
-                    ulongVariable = processor.DeclareLocal(typeof(ulong));
+                    mutableArguments.ULongVariable = processor.DeclareLocal(typeof(ulong));
                 }
 
-                processor.StLoc(ulongVariable).LdLoc(ulongVariable);
+                processor.StLoc(mutableArguments.ULongVariable).LdLoc(mutableArguments.ULongVariable);
             }
 
-            SwitchULongPartMultiple8TryMatchByteAndWhenMatchAction(processor, answerVariable, nameVariable, defaultLabel, length, position, firstValue, notMatch, firstEntryArray, analyzeResult, ref ulongVariable);
+            SwitchULongPartMultiple8TryMatchByteAndWhenMatchAction(in readOnlyArguments, pair, firstEntryArray, ref mutableArguments);
             while (!entryArray.IsEmpty)
             {
-                processor.MarkLabel(notMatch);
-                firstValue = SwitchULongPartSetUp(processor, ref entryArray, defaultLabel, position, out firstEntryArray, out notMatch);
+                processor.MarkLabel(pair.Item2);
+                pair = SwitchULongPartSetUp(in readOnlyArguments, entryArray, mutableArguments.Position, out firstEntryArray);
 #if CSHARP_8_OR_NEWER
-                processor.LdLoc(ulongVariable!);
+                processor.LdLoc(mutableArguments.ULongVariable!);
 #else
-                processor.LdLoc(ulongVariable);
+                processor.LdLoc(mutableArguments.ULongVariable);
 #endif
-                SwitchULongPartMultiple8TryMatchByteAndWhenMatchAction(processor, answerVariable, nameVariable, defaultLabel, length, position, firstValue, notMatch, firstEntryArray, analyzeResult, ref ulongVariable);
+                SwitchULongPartMultiple8TryMatchByteAndWhenMatchAction(in readOnlyArguments, pair, firstEntryArray, ref mutableArguments);
             }
         }
 
         private static void SwitchULongPartMultiple8TryMatchByteAndWhenMatchAction(
-            ILGenerator processor,
-            LocalBuilder answerVariable,
-            LocalBuilder nameVariable,
-            Label defaultLabel,
-            int length,
-            int position,
-            ulong firstValue,
-            Label notMatch,
+            in ReadOnlyArguments readOnlyArguments,
+            (ulong firstValue, Label notMatch) pair,
             ReadOnlySpan<DeserializeDictionary.Entry> firstEntryArray,
-            in TypeAnalyzeResult analyzeResult,
-#if CSHARP_8_OR_NEWER
-            ref LocalBuilder? ulongVariable)
-#else
-            ref LocalBuilder ulongVariable)
-#endif
+            ref MutableArguments mutableArguments
+        )
         {
+            var processor = readOnlyArguments.Processor;
             processor
-                .LdcI8(firstValue)
-                .BrFalseLong(notMatch);
+                .LdcI8(pair.firstValue)
+                .BneUn(pair.notMatch);
 
-            if (position + 1 == length)
+            var position = mutableArguments.Position;
+            if (position + 1 == mutableArguments.Length)
             {
-                EmbedMatch(processor, answerVariable, firstEntryArray[0].Type, firstEntryArray[0].Index, analyzeResult);
+                if (firstEntryArray.Length != 1)
+                {
+                    throw new ArgumentOutOfRangeException(firstEntryArray.Length.ToString(CultureInfo.InvariantCulture));
+                }
+
+                EmbedMatch(in firstEntryArray[0], in readOnlyArguments);
             }
             else
             {
+                mutableArguments.Position++;
                 processor
-                    .LdLocAddress(nameVariable)
+                    .LdLocAddress(readOnlyArguments.NameVariable)
                     .LdcI4(8)
                     .Call(BasicInfoContainer.MethodReadOnlySpanSlice)
-                    .StLoc(nameVariable);
-                SwitchULongPartMultiple8(processor, nameVariable, firstEntryArray, defaultLabel, length, position + 1, answerVariable, analyzeResult, ref ulongVariable);
+                    .StLoc(readOnlyArguments.NameVariable);
+                SwitchULongPartMultiple8(in readOnlyArguments, firstEntryArray, ref mutableArguments);
             }
+
+            mutableArguments.Position = position;
         }
 
-        private static ulong SwitchULongPartSetUp(ILGenerator processor, ref ReadOnlySpan<DeserializeDictionary.Entry> entryArray, Label defaultLabel, int position, out ReadOnlySpan<DeserializeDictionary.Entry> firstEntryArray, out Label notMatch)
+        private static (ulong, Label) SwitchULongPartSetUp(
+            in ReadOnlyArguments readOnlyArguments,
+            ReadOnlySpan<DeserializeDictionary.Entry> entryArray,
+            int position,
+            out ReadOnlySpan<DeserializeDictionary.Entry> firstEntryArray
+        )
         {
             var (firstValue, count) = entryArray.Classify(position);
             firstEntryArray = entryArray.Slice(0, count);
             entryArray = entryArray.Slice(count);
-            notMatch = entryArray.IsEmpty ? defaultLabel : processor.DefineLabel();
-            return firstValue;
+            var notMatch = entryArray.IsEmpty ? readOnlyArguments.DefaultLabel : readOnlyArguments.Processor.DefineLabel();
+            return (firstValue, notMatch);
         }
 
         private static void SwitchRestBytes(
-            ILGenerator processor,
-            LocalBuilder answerVariable,
-            LocalBuilder nameVariable,
+            in ReadOnlyArguments readOnlyArguments,
             ReadOnlySpan<DeserializeDictionary.Entry> entryArray,
-            Label defaultLabel,
-            int restLength,
-            int index,
-            in TypeAnalyzeResult analyzeResult,
-#if CSHARP_8_OR_NEWER
-            ref LocalBuilder? byteVariable)
-#else
-            ref LocalBuilder byteVariable)
-#endif
+            ref MutableArguments mutableArguments
+        )
         {
-            var firstRestByte = SwitchRestBytesSetUp(processor, ref entryArray, defaultLabel, index, out var firstEntryArray, out var notMatch);
+            var processor = readOnlyArguments.Processor;
+            var (firstRestByte, notMatch) = SwitchRestBytesSetUp(processor, ref entryArray, readOnlyArguments.DefaultLabel, mutableArguments.Position, out var firstEntryArray);
             processor
-                .LdLocAddress(nameVariable)
-                .LdcI4(index)
+                .LdLocAddress(readOnlyArguments.NameVariable)
+                .LdcI4(mutableArguments.Position)
                 .Call(BasicInfoContainer.MethodReadOnlySpanGetItem)
                 .LdIndU1();
-            if (!entryArray.IsEmpty)
-            {
-                if (byteVariable is null)
-                {
-                    byteVariable = processor.DeclareLocal(typeof(bool));
-                }
 
-                processor
-                    .StLoc(byteVariable)
-                    .LdLoc(byteVariable);
+            // 他の候補がないならば
+            if (entryArray.IsEmpty)
+            {
+                SwitchRestBytesTryMatchByteAndWhenMatchAction(in readOnlyArguments, firstRestByte, firstEntryArray, notMatch, ref mutableArguments);
+                return;
             }
 
-            SwitchRestBytesTryMatchByteAndWhenMatchAction(processor, answerVariable, nameVariable, defaultLabel, restLength, index, firstRestByte, notMatch, firstEntryArray, analyzeResult, ref byteVariable);
+            ref var byteVariable = ref mutableArguments.ByteVariable;
+            if (byteVariable is null)
+            {
+                byteVariable = processor.DeclareLocal(typeof(byte));
+            }
 
-            while (!entryArray.IsEmpty)
+            processor
+                .StLoc(byteVariable)
+                .LdLoc(byteVariable);
+
+            // マッチしている場合の処理を記述
+            SwitchRestBytesTryMatchByteAndWhenMatchAction(in readOnlyArguments, firstRestByte, firstEntryArray, notMatch, ref mutableArguments);
+
+            // 他の候補を記述
+            do
             {
                 processor.MarkLabel(notMatch);
-                firstRestByte = SwitchRestBytesSetUp(processor, ref entryArray, defaultLabel, index, out firstEntryArray, out notMatch);
-#if CSHARP_8_OR_NEWER
-                processor.LdLoc(byteVariable!);
-#else
+                (firstRestByte, notMatch) = SwitchRestBytesSetUp(processor, ref entryArray, readOnlyArguments.DefaultLabel, mutableArguments.Position, out firstEntryArray);
                 processor.LdLoc(byteVariable);
-#endif
-                SwitchRestBytesTryMatchByteAndWhenMatchAction(processor, answerVariable, nameVariable, defaultLabel, restLength, index, firstRestByte, notMatch, firstEntryArray, analyzeResult, ref byteVariable);
-            }
+                SwitchRestBytesTryMatchByteAndWhenMatchAction(in readOnlyArguments, firstRestByte, firstEntryArray, notMatch, ref mutableArguments);
+            } while (!entryArray.IsEmpty);
         }
 
-        private static byte SwitchRestBytesSetUp(ILGenerator processor, ref ReadOnlySpan<DeserializeDictionary.Entry> entryArray, Label defaultLabel, int index, out ReadOnlySpan<DeserializeDictionary.Entry> firstEntryArray, out Label notMatch)
+        private static (byte, Label) SwitchRestBytesSetUp(ILGenerator processor, ref ReadOnlySpan<DeserializeDictionary.Entry> entryArray, Label defaultLabel, int index, out ReadOnlySpan<DeserializeDictionary.Entry> firstEntryArray)
         {
-            byte firstRestByte;
-            int firstRestSetCount;
-            (firstRestByte, firstRestSetCount) = entryArray.ClassifyByRest(index);
+            var (firstRestByte, firstRestSetCount) = entryArray.ClassifyByRest(index);
             firstEntryArray = entryArray.Slice(0, firstRestSetCount);
             entryArray = entryArray.Slice(firstRestSetCount);
-            notMatch = entryArray.IsEmpty ? defaultLabel : processor.DefineLabel();
-            return firstRestByte;
+            var notMatch = entryArray.IsEmpty ? defaultLabel : processor.DefineLabel();
+            return (firstRestByte, notMatch);
         }
 
-        private static void SwitchRestBytesTryMatchByteAndWhenMatchAction(
-                ILGenerator processor,
-                LocalBuilder answerVariable,
-                LocalBuilder nameVariable,
-                Label defaultLabel,
-                int restLength,
-                int index,
-                byte firstRestByte,
-                Label notMatch,
-                ReadOnlySpan<DeserializeDictionary.Entry> firstEntryArray,
-                in TypeAnalyzeResult analyzeResult,
-#if CSHARP_8_OR_NEWER
-            ref LocalBuilder? byteVariable)
-#else
-            ref LocalBuilder byteVariable)
-#endif
+        private static void SwitchRestBytesTryMatchByteAndWhenMatchAction(in ReadOnlyArguments readOnlyArguments,
+            byte firstRestByte,
+            ReadOnlySpan<DeserializeDictionary.Entry> firstEntryArray,
+            Label notMatch,
+            ref MutableArguments mutableArguments)
         {
-            processor
+            readOnlyArguments.Processor
                 .LdcI4(firstRestByte)
-                .BrFalseLong(notMatch);
+                .BneUn(notMatch);
 
-            if (index + 1 == restLength)
+            var position = mutableArguments.Position;
+
+            if (position + 1 == mutableArguments.Rest)
             {
-                EmbedMatch(processor, answerVariable, firstEntryArray[0].Type, firstEntryArray[0].Index, analyzeResult);
+                if (firstEntryArray.Length != 1)
+                {
+                    throw new ArgumentOutOfRangeException(firstEntryArray.Length.ToString(CultureInfo.InvariantCulture));
+                }
+
+                EmbedMatch(in firstEntryArray[0], in readOnlyArguments);
             }
             else
             {
-                SwitchRestBytes(processor, answerVariable, nameVariable, firstEntryArray, defaultLabel, restLength, index + 1, analyzeResult, ref byteVariable);
+                mutableArguments.Position++;
+                SwitchRestBytes(in readOnlyArguments, firstEntryArray, ref mutableArguments);
             }
+
+            mutableArguments.Position = position;
         }
 
-        private static void EmbedMatch(ILGenerator processor, LocalBuilder answerVariable, DeserializeDictionary.Type type, int index, in TypeAnalyzeResult analyzeResult)
+        private static void EmbedMatch(in DeserializeDictionary.Entry entry, in ReadOnlyArguments readOnlyArguments)
         {
-            processor.LdLocAddress(answerVariable);
-            switch (type)
+            var processor = readOnlyArguments.Processor;
+            processor.LdLocAddress(readOnlyArguments.AnswerVariable);
+            switch (entry.Type)
             {
                 case DeserializeDictionary.Type.FieldValueType:
                     {
-                        ref readonly var info = ref analyzeResult.FieldValueTypeArray[index];
+                        ref readonly var info = ref readOnlyArguments.AnalyzeResult.FieldValueTypeArray[entry.Index];
                         ReadValueType(processor, info);
                         processor.StField(info.Info);
                     }
                     break;
                 case DeserializeDictionary.Type.PropertyValueType:
                     {
-                        ref readonly var info = ref analyzeResult.PropertyValueTypeArray[index];
+                        ref readonly var info = ref readOnlyArguments.AnalyzeResult.PropertyValueTypeArray[entry.Index];
                         ReadValueType(processor, info);
                         var setMethod = info.Info.SetMethod;
                         Debug.Assert(!(setMethod is null));
@@ -571,14 +563,14 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     break;
                 case DeserializeDictionary.Type.FieldValueTypeShouldSerialize:
                     {
-                        ref readonly var info = ref analyzeResult.FieldValueTypeShouldSerializeArray[index];
+                        ref readonly var info = ref readOnlyArguments.AnalyzeResult.FieldValueTypeShouldSerializeArray[entry.Index];
                         ReadValueType(processor, info);
                         processor.StField(info.Info);
                     }
                     break;
                 case DeserializeDictionary.Type.PropertyValueTypeShouldSerialize:
                     {
-                        ref readonly var info = ref analyzeResult.PropertyValueTypeShouldSerializeArray[index];
+                        ref readonly var info = ref readOnlyArguments.AnalyzeResult.PropertyValueTypeShouldSerializeArray[entry.Index];
                         ReadValueType(processor, info);
                         var setMethod = info.Info.SetMethod;
                         Debug.Assert(!(setMethod is null));
@@ -587,14 +579,14 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     break;
                 case DeserializeDictionary.Type.FieldReferenceType:
                     {
-                        ref readonly var info = ref analyzeResult.FieldReferenceTypeArray[index];
+                        ref readonly var info = ref readOnlyArguments.AnalyzeResult.FieldReferenceTypeArray[entry.Index];
                         ReadReferenceType(processor, info);
                         processor.StField(info.Info);
                     }
                     break;
                 case DeserializeDictionary.Type.PropertyReferenceType:
                     {
-                        ref readonly var info = ref analyzeResult.PropertyReferenceTypeArray[index];
+                        ref readonly var info = ref readOnlyArguments.AnalyzeResult.PropertyReferenceTypeArray[entry.Index];
                         ReadReferenceType(processor, info);
                         var setMethod = info.Info.SetMethod;
                         Debug.Assert(!(setMethod is null));
@@ -603,14 +595,14 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     break;
                 case DeserializeDictionary.Type.FieldReferenceTypeShouldSerialize:
                     {
-                        ref readonly var info = ref analyzeResult.FieldReferenceTypeShouldSerializeArray[index];
+                        ref readonly var info = ref readOnlyArguments.AnalyzeResult.FieldReferenceTypeShouldSerializeArray[entry.Index];
                         ReadReferenceType(processor, info);
                         processor.StField(info.Info);
                     }
                     break;
                 case DeserializeDictionary.Type.PropertyReferenceTypeShouldSerialize:
                     {
-                        ref readonly var info = ref analyzeResult.PropertyReferenceTypeShouldSerializeArray[index];
+                        ref readonly var info = ref readOnlyArguments.AnalyzeResult.PropertyReferenceTypeShouldSerializeArray[entry.Index];
                         ReadReferenceType(processor, info);
                         var setMethod = info.Info.SetMethod;
                         Debug.Assert(!(setMethod is null));
@@ -618,8 +610,10 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     }
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(type), type, null);
+                    throw new ArgumentOutOfRangeException(nameof(DeserializeDictionary.Type), entry.Type, null);
             }
+
+            processor.BrLong(readOnlyArguments.LoopStartLabel);
         }
 
         private static void ReadReferenceType<T>(ILGenerator processor, T info)
@@ -674,48 +668,6 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         break;
                     }
             }
-        }
-
-        private static void EmbedSwitchLengthVariation(ILGenerator processor, DeserializeDictionary dictionary, int lengthVariationCount, ReadOnlySpan<Label> destinations, Label defaultLabel)
-        {
-            switch (lengthVariationCount)
-            {
-                case 1:
-                    processor
-                        .LdcI4(dictionary.MaxLength)
-                        .BeqShort(destinations[0]); // if (nameLength == maxLength)
-                    break;
-                case 2:
-                    var nameLengthVariable = processor.DeclareLocal(typeof(int));
-                    processor
-                        .StLoc(nameLengthVariable)
-                        .LdLoc(nameLengthVariable)
-                        .LdcI4(dictionary.MinLength)
-                        .BeqShort(destinations[0]); // if (nameLength == minLength) goto MIN;
-                    processor
-                        .LdLoc(nameLengthVariable)
-                        .LdcI4(dictionary.MaxLength)
-                        .BeqShort(destinations[1]); // if (nameLength == maxLength) goto MAX;
-                    break;
-                default:
-                    var cases = new Label[dictionary.Table.Length];
-                    for (int i = 0, j = 0; i < cases.Length; i++)
-                    {
-                        if (dictionary[i].IsEmpty)
-                        {
-                            cases[i] = defaultLabel;
-                        }
-                        else
-                        {
-                            cases[i] = destinations[j++];
-                        }
-                    }
-
-                    processor.Switch(cases); // switch (nameLength)
-                    break;
-            }
-
-            processor.MarkLabel(defaultLabel); // default:
         }
     }
 }

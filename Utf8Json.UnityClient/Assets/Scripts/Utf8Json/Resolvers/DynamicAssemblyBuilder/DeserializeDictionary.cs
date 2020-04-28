@@ -10,152 +10,245 @@ using Utf8Json.Internal;
 
 namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 {
-#if CSHARP_8_OR_NEWER
-    public ref struct DeserializeDictionary
-#else
-    public struct DeserializeDictionary : IDisposable
-#endif
-
+    public readonly ref struct DeserializeDictionary
     {
         private readonly List<byte[]> disposeArray;
 
 #if CSHARP_8_OR_NEWER
-        private Entry[]?[] table;
-        public Entry[]?[] Table => table;
+        public readonly Entry[]?[] Table;
 #else
-        private Entry[][] table;
-        public Entry[][] Table => table;
+        public readonly Entry[][] Table;
 #endif
 
-        public int LengthVariationCount()
-        {
-            var answer = 0;
-            foreach (var array in Table)
-            {
-                if (!(array is null)) ++answer;
-            }
+        private readonly ReadOnlyMemory<byte> lengthVariations;
 
-            return answer;
-        }
-
-        public int MaxLength => Table.Length - 1;
-
-        public int MinLength
-        {
-            get
-            {
-                for (var answer = 0; answer < Table.Length; answer++)
-                {
-                    if (!(Table[answer] is null))
-                    {
-                        return answer;
-                    }
-                }
-
-                return -1;
-            }
-        }
+        public ReadOnlySpan<int> LengthVariations => MemoryMarshal.Cast<byte, int>(lengthVariations.Span);
+        public readonly int MaxLength;
+        public readonly int MinLength;
 
         public ReadOnlySpan<Entry> this[int length] => Table[length];
 
         public DeserializeDictionary(in TypeAnalyzeResult result)
         {
             disposeArray = new List<byte[]>();
-            var pool = ArrayPool<byte>.Shared;
-            table = Array.Empty<Entry[]>();
-            var array = pool.Rent(1024);
+            Table = Array.Empty<Entry[]>();
+            var array = ArrayPool<byte>.Shared.Rent(1024);
             disposeArray.Add(array);
             var used = 0;
 
+#if CSHARP_8_OR_NEWER
+            static
+#endif
+            (byte[], int) EnsureArray(byte[] array1, int nameLength, int used1, List<byte[]> dispose)
+            {
+                if (array1.Length - used1 >= nameLength)
+                {
+                    return (array1, used1);
+                }
+
+                array1 = ArrayPool<byte>.Shared.Rent(nameLength);
+                dispose.Add(array1);
+                return (array1, 0);
+            }
+
+            #region Initialize Table
             for (var index = 0; index < result.FieldValueTypeArray.Length; index++)
             {
-                array = InsertEntity(result.FieldValueTypeArray, index, array, pool, Type.FieldValueType, ref used);
+                var name = result.FieldValueTypeArray[index].MemberName;
+                var nameLength = NullableStringFormatter.CalcByteLength(name) - 2;
+                if (Table.Length <= nameLength)
+                {
+                    Array.Resize(ref Table, nameLength + 1);
+                }
+
+                (array, used) = EnsureArray(array, nameLength, used, disposeArray);
+                var memory = array.AsMemory(used, nameLength);
+                NullableStringFormatter.SerializeSpanNotNullNoQuotation(name, memory.Span);
+                ref var entryArray = ref Table[nameLength];
+                var entry = new Entry(memory, Type.FieldValueType, index);
+                HashTableHelper.SortInsert(ref entryArray, entry);
+                used += nameLength;
             }
             for (var index = 0; index < result.FieldReferenceTypeArray.Length; index++)
             {
-                array = InsertEntity(result.FieldReferenceTypeArray, index, array, pool, Type.FieldReferenceType, ref used);
+                var name = result.FieldReferenceTypeArray[index].MemberName;
+                var nameLength = NullableStringFormatter.CalcByteLength(name) - 2;
+                if (Table.Length <= nameLength)
+                {
+                    Array.Resize(ref Table, nameLength + 1);
+                }
+
+                (array, used) = EnsureArray(array, nameLength, used, disposeArray);
+                var memory = array.AsMemory(used, nameLength);
+                NullableStringFormatter.SerializeSpanNotNullNoQuotation(name, memory.Span);
+                ref var entryArray = ref Table[nameLength];
+                var entry = new Entry(memory, Type.FieldReferenceType, index);
+                HashTableHelper.SortInsert(ref entryArray, entry);
+                used += nameLength;
             }
             for (var index = 0; index < result.FieldValueTypeShouldSerializeArray.Length; index++)
             {
-                array = InsertEntity(result.FieldValueTypeShouldSerializeArray, index, array, pool, Type.FieldValueTypeShouldSerialize, ref used);
+                var name = result.FieldValueTypeShouldSerializeArray[index].MemberName;
+                var nameLength = NullableStringFormatter.CalcByteLength(name) - 2;
+                if (Table.Length <= nameLength)
+                {
+                    Array.Resize(ref Table, nameLength + 1);
+                }
+
+                (array, used) = EnsureArray(array, nameLength, used, disposeArray);
+                var memory = array.AsMemory(used, nameLength);
+                NullableStringFormatter.SerializeSpanNotNullNoQuotation(name, memory.Span);
+                ref var entryArray = ref Table[nameLength];
+                var entry = new Entry(memory, Type.FieldValueTypeShouldSerialize, index);
+                HashTableHelper.SortInsert(ref entryArray, entry);
+                used += nameLength;
             }
             for (var index = 0; index < result.FieldReferenceTypeShouldSerializeArray.Length; index++)
             {
-                array = InsertEntity(result.FieldReferenceTypeShouldSerializeArray, index, array, pool, Type.FieldReferenceTypeShouldSerialize, ref used);
+                var name = result.FieldReferenceTypeShouldSerializeArray[index].MemberName;
+                var nameLength = NullableStringFormatter.CalcByteLength(name) - 2;
+                if (Table.Length <= nameLength)
+                {
+                    Array.Resize(ref Table, nameLength + 1);
+                }
+
+                (array, used) = EnsureArray(array, nameLength, used, disposeArray);
+                var memory = array.AsMemory(used, nameLength);
+                NullableStringFormatter.SerializeSpanNotNullNoQuotation(name, memory.Span);
+                ref var entryArray = ref Table[nameLength];
+                var entry = new Entry(memory, Type.FieldReferenceTypeShouldSerialize, index);
+                HashTableHelper.SortInsert(ref entryArray, entry);
+                used += nameLength;
             }
             for (var index = 0; index < result.PropertyValueTypeArray.Length; index++)
             {
-                array = InsertPropertyEntity(result.PropertyValueTypeArray, index, array, pool, Type.PropertyValueType, ref used);
+                ref var member = ref result.PropertyValueTypeArray[index];
+                if (member.Info.SetMethod is null && member.AddMethodInfo is null)
+                {
+                    continue;
+                }
+
+                var name = member.MemberName;
+                var nameLength = NullableStringFormatter.CalcByteLength(name) - 2;
+                if (Table.Length <= nameLength)
+                {
+                    Array.Resize(ref Table, nameLength + 1);
+                }
+
+                (array, used) = EnsureArray(array, nameLength, used, disposeArray);
+                var memory = array.AsMemory(used, nameLength);
+                NullableStringFormatter.SerializeSpanNotNullNoQuotation(name, memory.Span);
+                ref var entryArray = ref Table[nameLength];
+                var entry = new Entry(memory, Type.PropertyValueType, index);
+                HashTableHelper.SortInsert(ref entryArray, entry);
+                used += nameLength;
             }
             for (var index = 0; index < result.PropertyReferenceTypeArray.Length; index++)
             {
-                array = InsertPropertyEntity(result.PropertyReferenceTypeArray, index, array, pool, Type.PropertyReferenceType, ref used);
+                ref var member = ref result.PropertyReferenceTypeArray[index];
+                if (member.Info.SetMethod is null && member.AddMethodInfo is null)
+                {
+                    continue;
+                }
+
+                var name = member.MemberName;
+                var nameLength = NullableStringFormatter.CalcByteLength(name) - 2;
+                if (Table.Length <= nameLength)
+                {
+                    Array.Resize(ref Table, nameLength + 1);
+                }
+
+                (array, used) = EnsureArray(array, nameLength, used, disposeArray);
+                var memory = array.AsMemory(used, nameLength);
+                NullableStringFormatter.SerializeSpanNotNullNoQuotation(name, memory.Span);
+                ref var entryArray = ref Table[nameLength];
+                var entry = new Entry(memory, Type.PropertyReferenceType, index);
+                HashTableHelper.SortInsert(ref entryArray, entry);
+                used += nameLength;
             }
             for (var index = 0; index < result.PropertyValueTypeShouldSerializeArray.Length; index++)
             {
-                array = InsertPropertyEntity(result.PropertyValueTypeShouldSerializeArray, index, array, pool, Type.PropertyValueTypeShouldSerialize, ref used);
+                ref var member = ref result.PropertyValueTypeShouldSerializeArray[index];
+                if (member.Info.SetMethod is null && member.AddMethodInfo is null)
+                {
+                    continue;
+                }
+
+                var name = member.MemberName;
+                var nameLength = NullableStringFormatter.CalcByteLength(name) - 2;
+                if (Table.Length <= nameLength)
+                {
+                    Array.Resize(ref Table, nameLength + 1);
+                }
+
+                (array, used) = EnsureArray(array, nameLength, used, disposeArray);
+                var memory = array.AsMemory(used, nameLength);
+                NullableStringFormatter.SerializeSpanNotNullNoQuotation(name, memory.Span);
+                ref var entryArray = ref Table[nameLength];
+                var entry = new Entry(memory, Type.PropertyValueTypeShouldSerialize, index);
+                HashTableHelper.SortInsert(ref entryArray, entry);
+                used += nameLength;
             }
             for (var index = 0; index < result.PropertyReferenceTypeShouldSerializeArray.Length; index++)
             {
-                array = InsertPropertyEntity(result.PropertyReferenceTypeShouldSerializeArray, index, array, pool, Type.PropertyReferenceTypeShouldSerialize, ref used);
+                ref var member = ref result.PropertyReferenceTypeShouldSerializeArray[index];
+                if (member.Info.SetMethod is null && member.AddMethodInfo is null)
+                {
+                    continue;
+                }
+
+                var name = member.MemberName;
+                var nameLength = NullableStringFormatter.CalcByteLength(name) - 2;
+                if (Table.Length <= nameLength)
+                {
+                    Array.Resize(ref Table, nameLength + 1);
+                }
+
+                (array, used) = EnsureArray(array, nameLength, used, disposeArray);
+                var memory = array.AsMemory(used, nameLength);
+                NullableStringFormatter.SerializeSpanNotNullNoQuotation(name, memory.Span);
+                ref var entryArray = ref Table[nameLength];
+                var entry = new Entry(memory, Type.PropertyReferenceTypeShouldSerialize, index);
+                HashTableHelper.SortInsert(ref entryArray, entry);
+                used += nameLength;
             }
-        }
+            #endregion
 
-        private byte[] InsertEntity<T>(T[] members, int index, byte[] array, ArrayPool<byte> pool, Type type, ref int used)
-            where T : struct, IMemberContainer
-        {
-            var name = members[index].MemberName;
-            var nameLength = NullableStringFormatter.CalcByteLength(name) - 2;
-            ResizeTable(nameLength);
-            array = EnsureArray(array, nameLength, pool, ref used);
-            var memory = array.AsMemory(used, nameLength);
-            NullableStringFormatter.SerializeSpanNotNullNoQuotation(name, memory.Span);
-            var entry = new Entry(memory, type, index);
-            ref var entryArray = ref Table[nameLength];
-            HashTableHelper.SortInsert(ref entryArray, entry);
-            used += nameLength;
-            return array;
-        }
-
-        private byte[] InsertPropertyEntity<T>(T[] members, int index, byte[] array, ArrayPool<byte> pool, Type type, ref int used)
-            where T : struct, IPropertyMemberContainer
-        {
-            ref var member = ref members[index];
-            if (member.Info.SetMethod is null && member.AddMethodInfo is null)
             {
-                return array;
+                MinLength = -1;
+                MaxLength = Table.Length - 1;
+                var lengthVariationCount = 0;
+                for (var i = 0; i < Table.Length; i++)
+                {
+                    if (Table[i] is null)
+                    {
+                        continue;
+                    }
+                    lengthVariationCount++;
+                    if (MinLength == -1)
+                    {
+                        MinLength = i;
+                    }
+                }
+
+                if (MinLength == -1)
+                {
+                    lengthVariations = ReadOnlyMemory<byte>.Empty;
+                    return;
+                }
+
+                (array, used) = EnsureArray(array, lengthVariationCount << 2, used, disposeArray);
+                var memory = array.AsMemory(used, lengthVariationCount << 2);
+                lengthVariations = memory;
+                var span = MemoryMarshal.Cast<byte, int>(memory.Span);
+                for (int i = MinLength, j = 0; i < Table.Length; i++)
+                {
+                    if (!(Table[i] is null))
+                    {
+                        span[j++] = i;
+                    }
+                }
             }
-
-            var name = member.MemberName;
-            var nameLength = NullableStringFormatter.CalcByteLength(name) - 2;
-            ResizeTable(nameLength);
-            array = EnsureArray(array, nameLength, pool, ref used);
-            var memory = array.AsMemory(used, nameLength);
-            NullableStringFormatter.SerializeSpanNotNullNoQuotation(name, memory.Span);
-            var entry = new Entry(memory, type, index);
-            ref var entryArray = ref Table[nameLength];
-            HashTableHelper.SortInsert(ref entryArray, entry);
-            used += nameLength;
-            return array;
-        }
-
-        private void ResizeTable(int index)
-        {
-            if (Table.Length > index) return;
-            Array.Resize(ref table, index + 1);
-        }
-
-        private byte[] EnsureArray(byte[] array, int nameLength, ArrayPool<byte> pool, ref int used)
-        {
-            if (array.Length - used >= nameLength)
-            {
-                return array;
-            }
-
-            used = 0;
-            array = pool.Rent(nameLength);
-            disposeArray.Add(array);
-            return array;
         }
 
         public readonly struct Entry : IComparable<Entry>
@@ -181,8 +274,13 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             public byte Rest(int restIndex)
             {
                 var span = Key.Span;
-                var restLength = span.Length - ((span.Length >> 3) << 3);
-                if (restIndex >= restLength || restIndex < 0) throw new ArgumentOutOfRangeException();
+                var restLength = span.Length % 8;
+
+                if (restIndex >= restLength || restIndex < 0)
+                {
+                    throw new ArgumentOutOfRangeException("Span : " + span.Length + restIndex + " in " + restLength + " of " + Type + " index - " + Index);
+                }
+
                 var answer = span[span.Length - restLength + restIndex];
                 return answer;
             }
@@ -214,9 +312,11 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         public static (byte restByte, int sameRestByteEntryArrayCount) ClassifyByRest(this ReadOnlySpan<DeserializeDictionary.Entry> entryArray, int restIndex)
         {
             var restByte = entryArray[0].Rest(restIndex);
+
             for (var i = 1; i < entryArray.Length; i++)
             {
-                if (entryArray[i].Rest(restIndex) != restByte)
+                var restByteOther = entryArray[i].Rest(restIndex);
+                if (restByteOther != restByte)
                 {
                     return (restByte, i);
                 }
