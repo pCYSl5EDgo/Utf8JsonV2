@@ -6,6 +6,16 @@ using Utf8Json.Internal.Reflection;
 
 namespace Utf8Json.Internal
 {
+    // 大変腹立たしいことに普通にtypeof(ReadOnlySpan<byte>).GetMethod("get_Item")で得たMethodInfo（非null確認済み）を
+    // DynamicAssemblyからCallするとMissingMethodExceptionで死ぬ
+    public static class SpanHelper
+    {
+        public static ref readonly byte get_Item(ref ReadOnlySpan<byte> span, int index)
+        {
+            return ref span[index];
+        }
+    }
+
     public static class StaticHelper
     {
         public static IntPtr GetSerializeStatic(Type formatterType)
