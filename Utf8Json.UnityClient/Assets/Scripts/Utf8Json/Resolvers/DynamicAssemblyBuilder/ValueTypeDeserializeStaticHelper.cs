@@ -19,6 +19,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             public readonly ILGenerator Processor;
             public readonly LocalBuilder AnswerVariable;
             public readonly LocalBuilder NameVariable;
+            public readonly LocalBuilder ReferenceVariable;
             public readonly DeserializeDictionary Dictionary;
 
             public readonly Label LoopStartLabel;
@@ -32,6 +33,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 AnalyzeResult = analyzeResult;
                 Dictionary = new DeserializeDictionary(in analyzeResult);
                 NameVariable = processor.DeclareLocal(typeof(ReadOnlySpan<byte>));
+                ReferenceVariable = processor.DeclareLocal(typeof(byte).MakeByRefType());
                 LoopStartLabel = processor.DefineLabel();
                 DefaultLabel = processor.DefineLabel();
             }
@@ -106,6 +108,10 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         .LdArg(0)
                         .Call(BasicInfoContainer.MethodJsonReaderReadPropertyNameSegmentRaw)
                         .StLoc(arguments.NameVariable) // var name = reader.ReadPropertyNameSegmentRaw();
+                        .LdLocAddress(arguments.NameVariable)
+                        .LdcI4(0)
+                        .Call(BasicInfoContainer.MethodReadOnlySpanGetItem)
+                        .StLoc(arguments.ReferenceVariable)
                         .LdLocAddress(arguments.NameVariable)
                         .Call(BasicInfoContainer.MethodReadOnlySpanGetLength); // nameVariable.Length
 
@@ -307,9 +313,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             var (firstValue, notMatch) = SwitchULongPartSetUp(in readOnlyArguments, entryArray, mutableArguments.Position, out var firstEntryArray);
             var processor = readOnlyArguments.Processor;
             processor
-                .LdLocAddress(readOnlyArguments.NameVariable)
-                .LdcI4(0)
-                .Call(BasicInfoContainer.MethodReadOnlySpanGetItem)
+                .LdLoc(readOnlyArguments.ReferenceVariable)
                 .LdIndI8();
             if (!entryArray.IsEmpty)
             {
@@ -349,10 +353,10 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 .BneUn(notMatch);
 
             processor
-                .LdLocAddress(readOnlyArguments.NameVariable)
+                .LdLoc(readOnlyArguments.ReferenceVariable)
                 .LdcI4(8)
-                .Call(BasicInfoContainer.MethodReadOnlySpanSlice)
-                .StLoc(readOnlyArguments.NameVariable);
+                .Add()
+                .StLoc(readOnlyArguments.ReferenceVariable);
 
             var position = mutableArguments.Position;
             if (mutableArguments.Position + 1 == mutableArguments.Length)
@@ -378,10 +382,9 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             var processor = readOnlyArguments.Processor;
             var pair = SwitchULongPartSetUp(in readOnlyArguments, entryArray, mutableArguments.Position, out var firstEntryArray);
             processor
-                .LdLocAddress(readOnlyArguments.NameVariable)
-                .LdcI4(0)
-                .Call(BasicInfoContainer.MethodReadOnlySpanGetItem)
+                .LdLoc(readOnlyArguments.ReferenceVariable)
                 .LdIndI8();
+
             if (!entryArray.IsEmpty)
             {
                 if (mutableArguments.ULongVariable is null)
@@ -432,10 +435,11 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             {
                 mutableArguments.Position++;
                 processor
-                    .LdLocAddress(readOnlyArguments.NameVariable)
+                    .LdLoc(readOnlyArguments.ReferenceVariable)
                     .LdcI4(8)
-                    .Call(BasicInfoContainer.MethodReadOnlySpanSlice)
-                    .StLoc(readOnlyArguments.NameVariable);
+                    .Add()
+                    .StLoc(readOnlyArguments.ReferenceVariable);
+
                 SwitchULongPartMultiple8(in readOnlyArguments, firstEntryArray, ref mutableArguments);
             }
 
@@ -464,11 +468,15 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         {
             var processor = readOnlyArguments.Processor;
             var (firstRestByte, notMatch) = SwitchRestBytesSetUp(processor, ref entryArray, readOnlyArguments.DefaultLabel, mutableArguments.Position, out var firstEntryArray);
-            processor
-                .LdLocAddress(readOnlyArguments.NameVariable)
-                .LdcI4(mutableArguments.Position)
-                .Call(BasicInfoContainer.MethodReadOnlySpanGetItem)
-                .LdIndU1();
+            processor.LdLoc(readOnlyArguments.ReferenceVariable);
+            if(mutableArguments.Position != 0)
+            {
+                processor
+                    .LdcI4(mutableArguments.Position)
+                    .Add();
+            }
+
+            processor.LdIndU1();
 
             // 他の候補がないならば
             if (entryArray.IsEmpty)
