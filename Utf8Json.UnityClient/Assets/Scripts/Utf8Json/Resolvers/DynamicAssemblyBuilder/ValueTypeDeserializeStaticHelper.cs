@@ -2,10 +2,12 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Buffers;
 using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.InteropServices;
 using Utf8Json.Internal;
 // ReSharper disable UseIndexFromEndExpression
 // ReSharper disable ConvertIfStatementToNullCoalescingAssignment
@@ -56,6 +58,50 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             public int Length;
             public int Position;
             public int Rest;
+            private byte[] deserializeDictionaryEntrySegments;
+            private int used;
+            private readonly ArrayPool<byte> pool;
+
+            public unsafe MutableArguments(ArrayPool<byte> pool)
+            {
+                this.pool = pool;
+                deserializeDictionaryEntrySegments = pool.Rent(sizeof(DeserializeDictionary.EntrySegment) * 64);
+                used = default;
+                ByteVariable = default;
+                ULongVariable = default;
+                Length = default;
+                Position = default;
+                Rest = default;
+            }
+
+            public unsafe ReadOnlySpan<DeserializeDictionary.EntrySegment> Rent(ReadOnlySpan<DeserializeDictionary.Entry> entryArray, int classCount, int position)
+            {
+                var span = MemoryMarshal.Cast<byte, DeserializeDictionary.EntrySegment>(deserializeDictionaryEntrySegments).Slice(used);
+                if (span.Length < classCount)
+                {
+                    var length = sizeof(DeserializeDictionary.EntrySegment) * (used + classCount);
+                    var newBytes = pool.Rent(length);
+                    fixed (void* dst = &newBytes[0])
+                    fixed (void* src = &deserializeDictionaryEntrySegments[0])
+                    {
+                        Buffer.MemoryCopy(src, dst, length, deserializeDictionaryEntrySegments.LongLength);
+                    }
+
+                    pool.Return(deserializeDictionaryEntrySegments);
+                    deserializeDictionaryEntrySegments = newBytes;
+                    span = MemoryMarshal.Cast<byte, DeserializeDictionary.EntrySegment>(deserializeDictionaryEntrySegments).Slice(used);
+                }
+
+                span = span.Slice(0, classCount);
+                entryArray.WriteVariation(position, span);
+                used += classCount;
+                return span;
+            }
+
+            public void Return(int classCount)
+            {
+                used -= classCount;
+            }
 
             public void ClearWithRest(int rest)
             {
@@ -68,6 +114,11 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 Length = length >> 3;
                 Rest = length - (Length << 3);
                 Position = 0;
+            }
+
+            public void Dispose()
+            {
+                pool.Return(deserializeDictionaryEntrySegments);
             }
         }
 
@@ -104,6 +155,10 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         .LdLocAddress(loopCountVariable)
                         .Call(BasicInfoContainer.MethodJsonReaderReadIsEndObjectWithSkipValueSeparator)
                         .BrTrueLong(returnLabel); // if true goto return statement.
+
+                    // ReadOnlySpan<byte> name = reader.ReadPropertyNameSegmentRaw();
+                    // ref readonly byte b = ref name[0];
+                    // nameVariable.Length
                     processor
                         .LdArg(0)
                         .Call(BasicInfoContainer.MethodJsonReaderReadPropertyNameSegmentRaw)
@@ -120,7 +175,8 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         DeserializeStatic_CreateInstanceBeforeDeserialization_NoExtensionData(in arguments);
                     }
 
-                    processor.BrLong(arguments.LoopStartLabel); // goto while(!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
+                    // goto while(!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
+                    processor.BrLong(arguments.LoopStartLabel);
                 }
                 else
                 {
@@ -226,12 +282,12 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 EmbedMatch(in entryArray[0], in readOnlyArguments);
             }
 
-            MutableArguments mutableArguments = default;
+            var mutableArguments = new MutableArguments(ArrayPool<byte>.Shared);
             for (; length < 8; length++)
             {
                 if (length >= possibleLengthCount)
                 {
-                    return;
+                    break;
                 }
 
                 entryArray = readOnlyArguments.Dictionary[length];
@@ -255,15 +311,9 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
                 processor.MarkLabel(destinations[labelIndex++]); // case (LENGTH):
                 mutableArguments.ClearWithByteLength(length);
-                if (mutableArguments.Rest == 0)
-                {
-                    SwitchULongPartMultiple8(in readOnlyArguments, entryArray, ref mutableArguments);
-                }
-                else
-                {
-                    SwitchULongPartWithRest(in readOnlyArguments, entryArray, ref mutableArguments);
-                }
+                長さ8以上に対する探索開始(in readOnlyArguments, entryArray, ref mutableArguments);
             }
+            mutableArguments.Dispose();
         }
 
         private static void EmbedSwitchLength(ILGenerator processor, ReadOnlySpan<int> lengthVariations, Span<Label> destinations, int possibleLengthCount, Label defaultLabel)
@@ -305,159 +355,153 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
         }
 
-        private static void SwitchULongPartWithRest(
-                in ReadOnlyArguments readOnlyArguments,
-                ReadOnlySpan<DeserializeDictionary.Entry> entryArray,
-                ref MutableArguments mutableArguments)
-        {
-            var (firstValue, notMatch) = SwitchULongPartSetUp(in readOnlyArguments, entryArray, mutableArguments.Position, out var firstEntryArray);
-            var processor = readOnlyArguments.Processor;
-            processor
-                .LdLoc(readOnlyArguments.ReferenceVariable)
-                .LdIndI8();
-            if (!entryArray.IsEmpty)
-            {
-                if (mutableArguments.ULongVariable is null)
-                {
-                    mutableArguments.ULongVariable = processor.DeclareLocal(typeof(ulong));
-                }
-
-                processor.StLoc(mutableArguments.ULongVariable).LdLoc(mutableArguments.ULongVariable);
-            }
-
-            SwitchULongPartWithRestTryMatchByteAndWhenMatchAction(in readOnlyArguments, firstValue, notMatch, firstEntryArray, ref mutableArguments);
-            while (!entryArray.IsEmpty)
-            {
-                processor.MarkLabel(notMatch);
-                (firstValue, notMatch) = SwitchULongPartSetUp(in readOnlyArguments, entryArray, mutableArguments.Position, out firstEntryArray);
-#if CSHARP_8_OR_NEWER
-                processor.LdLoc(mutableArguments.ULongVariable!);
-#else
-                processor.LdLoc(mutableArguments.ULongVariable);
-#endif
-                SwitchULongPartWithRestTryMatchByteAndWhenMatchAction(in readOnlyArguments, firstValue, notMatch, firstEntryArray, ref mutableArguments);
-            }
-        }
-
-        private static void SwitchULongPartWithRestTryMatchByteAndWhenMatchAction(
-            in ReadOnlyArguments readOnlyArguments,
-            ulong firstValue,
-            Label notMatch,
-            ReadOnlySpan<DeserializeDictionary.Entry> firstEntryArray,
-            ref MutableArguments mutableArguments
-        )
-        {
-            var processor = readOnlyArguments.Processor;
-            processor
-                .LdcI8(firstValue)
-                .BneUn(notMatch);
-
-            processor
-                .LdLoc(readOnlyArguments.ReferenceVariable)
-                .LdcI4(8)
-                .Add()
-                .StLoc(readOnlyArguments.ReferenceVariable);
-
-            var position = mutableArguments.Position;
-            if (mutableArguments.Position + 1 == mutableArguments.Length)
-            {
-                mutableArguments.Position = 0;
-                SwitchRestBytes(in readOnlyArguments, firstEntryArray, ref mutableArguments);
-            }
-            else
-            {
-                mutableArguments.Position++;
-                SwitchULongPartMultiple8(in readOnlyArguments, firstEntryArray, ref mutableArguments);
-            }
-
-            mutableArguments.Position = position;
-        }
-
-        private static void SwitchULongPartMultiple8(
+        private static void 長さ8以上に対する探索開始(
             in ReadOnlyArguments readOnlyArguments,
             ReadOnlySpan<DeserializeDictionary.Entry> entryArray,
             ref MutableArguments mutableArguments
         )
         {
             var processor = readOnlyArguments.Processor;
-            var pair = SwitchULongPartSetUp(in readOnlyArguments, entryArray, mutableArguments.Position, out var firstEntryArray);
             processor
                 .LdLoc(readOnlyArguments.ReferenceVariable)
                 .LdIndI8();
-
-            if (!entryArray.IsEmpty)
-            {
-                if (mutableArguments.ULongVariable is null)
-                {
-                    mutableArguments.ULongVariable = processor.DeclareLocal(typeof(ulong));
-                }
-
-                processor.StLoc(mutableArguments.ULongVariable).LdLoc(mutableArguments.ULongVariable);
-            }
-
-            SwitchULongPartMultiple8TryMatchByteAndWhenMatchAction(in readOnlyArguments, pair, firstEntryArray, ref mutableArguments);
-            while (!entryArray.IsEmpty)
-            {
-                processor.MarkLabel(pair.Item2);
-                pair = SwitchULongPartSetUp(in readOnlyArguments, entryArray, mutableArguments.Position, out firstEntryArray);
-#if CSHARP_8_OR_NEWER
-                processor.LdLoc(mutableArguments.ULongVariable!);
-#else
-                processor.LdLoc(mutableArguments.ULongVariable);
-#endif
-                SwitchULongPartMultiple8TryMatchByteAndWhenMatchAction(in readOnlyArguments, pair, firstEntryArray, ref mutableArguments);
-            }
-        }
-
-        private static void SwitchULongPartMultiple8TryMatchByteAndWhenMatchAction(
-            in ReadOnlyArguments readOnlyArguments,
-            (ulong firstValue, Label notMatch) pair,
-            ReadOnlySpan<DeserializeDictionary.Entry> firstEntryArray,
-            ref MutableArguments mutableArguments
-        )
-        {
-            var processor = readOnlyArguments.Processor;
-            processor
-                .LdcI8(pair.firstValue)
-                .BneUn(pair.notMatch);
-
             var position = mutableArguments.Position;
-            if (position + 1 == mutableArguments.Length)
-            {
-                if (firstEntryArray.Length != 1)
-                {
-                    throw new ArgumentOutOfRangeException(firstEntryArray.Length.ToString(CultureInfo.InvariantCulture));
-                }
+            var classCount = entryArray.CountUpVariation(position);
 
-                EmbedMatch(in firstEntryArray[0], in readOnlyArguments);
+            if (classCount == 1)
+            {
+                var key = entryArray[0][position];
+                processor.LdcI8(key).BneUn(readOnlyArguments.DefaultLabel);
+                成功時の探索(in readOnlyArguments, entryArray, ref mutableArguments, new DeserializeDictionary.EntrySegment(key, 0, entryArray.Length));
+                return;
+            }
+
+            ref var ulongVariable = ref mutableArguments.ULongVariable;
+            if (ulongVariable is null)
+            {
+                ulongVariable = processor.DeclareLocal(typeof(ulong));
+            }
+
+            processor.StLoc(ulongVariable);
+
+            var entrySegments = mutableArguments.Rent(entryArray, classCount, position);
+
+            var middleIndex = entrySegments.Length >> 1;
+            ref readonly var middleSegment = ref entrySegments[middleIndex];
+            var notMiddleLabel = processor.DefineLabel();
+            processor
+                .LdLoc(ulongVariable)
+                .LdcI8(middleSegment.Key)
+                .BneUn(notMiddleLabel);
+
+            成功時の探索(readOnlyArguments, entryArray, ref mutableArguments, middleSegment);
+
+            processor.MarkLabel(notMiddleLabel);
+            processor
+                .LdLoc(ulongVariable);
+
+            if (classCount == 2)
+            {
+                middleSegment = ref entrySegments[0];
+                processor
+                    .LdcI8(middleSegment.Key)
+                    .BneUn(readOnlyArguments.DefaultLabel);
+                成功時の探索(in readOnlyArguments, entryArray, ref mutableArguments, middleSegment);
             }
             else
             {
-                mutableArguments.Position++;
+                var lesserLabel = processor.DefineLabel();
                 processor
+                    .LdcI8(middleSegment.Key)
+                    .BltUn(lesserLabel);
+                二分探索(in readOnlyArguments, ref mutableArguments, entryArray, entrySegments.Slice(middleIndex + 1), ulongVariable);
+                processor.MarkLabel(lesserLabel);
+                二分探索(in readOnlyArguments, ref mutableArguments, entryArray, entrySegments.Slice(0, middleIndex), ulongVariable);
+            }
+            mutableArguments.Return(classCount);
+        }
+
+        private static void 二分探索(in ReadOnlyArguments readOnlyArguments, ref MutableArguments mutableArguments, ReadOnlySpan<DeserializeDictionary.Entry> entryArray, ReadOnlySpan<DeserializeDictionary.EntrySegment> segments, LocalBuilder ulongVariable)
+        {
+            while (true)
+            {
+                var processor = readOnlyArguments.Processor;
+                processor.LdLoc(ulongVariable);
+
+                if (segments.Length == 1)
+                {
+                    processor
+                        .LdcI8(segments[0].Key)
+                        .BneUn(readOnlyArguments.DefaultLabel);
+                    成功時の探索(in readOnlyArguments, entryArray, ref mutableArguments, segments[0]);
+                    return;
+                }
+
+                var middleIndex = segments.Length >> 1;
+                ref readonly var middleSegment = ref segments[middleIndex];
+                var notMiddleLabel = processor.DefineLabel();
+                processor
+                    .LdcI8(middleSegment.Key)
+                    .BneUn(notMiddleLabel);
+
+                成功時の探索(in readOnlyArguments, entryArray, ref mutableArguments, middleSegment);
+                processor.MarkLabel(notMiddleLabel);
+                processor.LdLoc(ulongVariable);
+
+                if (segments.Length == 2)
+                {
+                    processor.LdcI8(segments[0].Key)
+                        .BneUn(readOnlyArguments.DefaultLabel);
+
+                    成功時の探索(in readOnlyArguments, entryArray, ref mutableArguments, segments[0]);
+                    return;
+                }
+
+                var lesserLabel = processor.DefineLabel();
+                processor.LdcI8(middleSegment.Key)
+                    .BltUn(lesserLabel);
+                二分探索(in readOnlyArguments, ref mutableArguments, entryArray, segments.Slice(middleIndex + 1), ulongVariable);
+                processor.MarkLabel(lesserLabel);
+                segments = segments.Slice(0, middleIndex);
+            }
+        }
+
+        private static void 成功時の探索(in ReadOnlyArguments readOnlyArguments, ReadOnlySpan<DeserializeDictionary.Entry> entryArray, ref MutableArguments mutableArguments, in DeserializeDictionary.EntrySegment middleSegment)
+        {
+            var position = mutableArguments.Position;
+            if (position + 1 == mutableArguments.Length)
+            {
+                if (mutableArguments.Rest == 0)
+                {
+                    if (middleSegment.Length != 1)
+                    {
+                        throw new ArgumentOutOfRangeException(middleSegment.Length.ToString(CultureInfo.InvariantCulture));
+                    }
+
+                    EmbedMatch(entryArray[middleSegment.Offset], in readOnlyArguments);
+                }
+                else
+                {
+                    mutableArguments.Position = 0;
+                    readOnlyArguments.Processor
+                        .LdLoc(readOnlyArguments.ReferenceVariable)
+                        .LdcI4(8)
+                        .Add()
+                        .StLoc(readOnlyArguments.ReferenceVariable);
+                    SwitchRestBytes(in readOnlyArguments, entryArray.Slice(middleSegment.Offset, middleSegment.Length), ref mutableArguments);
+                }
+            }
+            else
+            {
+                mutableArguments.Position = position + 1;
+                readOnlyArguments.Processor
                     .LdLoc(readOnlyArguments.ReferenceVariable)
                     .LdcI4(8)
                     .Add()
                     .StLoc(readOnlyArguments.ReferenceVariable);
-
-                SwitchULongPartMultiple8(in readOnlyArguments, firstEntryArray, ref mutableArguments);
+                長さ8以上に対する探索開始(in readOnlyArguments, entryArray.Slice(middleSegment.Offset, middleSegment.Length), ref mutableArguments);
             }
-
             mutableArguments.Position = position;
-        }
-
-        private static (ulong, Label) SwitchULongPartSetUp(
-            in ReadOnlyArguments readOnlyArguments,
-            ReadOnlySpan<DeserializeDictionary.Entry> entryArray,
-            int position,
-            out ReadOnlySpan<DeserializeDictionary.Entry> firstEntryArray
-        )
-        {
-            var (firstValue, count) = entryArray.Classify(position);
-            firstEntryArray = entryArray.Slice(0, count);
-            entryArray = entryArray.Slice(count);
-            var notMatch = entryArray.IsEmpty ? readOnlyArguments.DefaultLabel : readOnlyArguments.Processor.DefineLabel();
-            return (firstValue, notMatch);
         }
 
         private static void SwitchRestBytes(
@@ -469,7 +513,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             var processor = readOnlyArguments.Processor;
             var (firstRestByte, notMatch) = SwitchRestBytesSetUp(processor, ref entryArray, readOnlyArguments.DefaultLabel, mutableArguments.Position, out var firstEntryArray);
             processor.LdLoc(readOnlyArguments.ReferenceVariable);
-            if(mutableArguments.Position != 0)
+            if (mutableArguments.Position != 0)
             {
                 processor
                     .LdcI4(mutableArguments.Position)
@@ -556,14 +600,56 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 case DeserializeDictionary.Type.FieldValueType:
                     {
                         ref readonly var info = ref readOnlyArguments.AnalyzeResult.FieldValueTypeArray[entry.Index];
-                        ReadValueType(processor, info);
+                        switch (info.IsFormatterDirect)
+                        {
+                            case DirectTypeEnum.None:
+                                {
+                                    var deserialize = BasicInfoContainer.DeserializeWithVerify(info.TargetType);
+                                    processor
+                                        .LdArg(1)
+                                        .LdArg(0)
+                                        .Call(deserialize);
+                                    break;
+                                }
+                            case DirectTypeEnum.String:
+                                throw new ArgumentOutOfRangeException();
+                            default:
+                                {
+                                    var method = ReadWritePrimitive.MethodReadPrimitives[(int)info.IsFormatterDirect];
+                                    processor
+                                        .LdArg(0)
+                                        .Call(method);
+                                    break;
+                                }
+                        }
                         processor.StField(info.Info);
                     }
                     break;
                 case DeserializeDictionary.Type.PropertyValueType:
                     {
                         ref readonly var info = ref readOnlyArguments.AnalyzeResult.PropertyValueTypeArray[entry.Index];
-                        ReadValueType(processor, info);
+                        switch (info.IsFormatterDirect)
+                        {
+                            case DirectTypeEnum.None:
+                                {
+                                    var deserialize = BasicInfoContainer.DeserializeWithVerify(info.TargetType);
+                                    processor
+                                        .LdArg(1)
+                                        .LdArg(0)
+                                        .Call(deserialize);
+                                    break;
+                                }
+                            case DirectTypeEnum.String:
+                                throw new ArgumentOutOfRangeException();
+                            default:
+                                {
+                                    var method = ReadWritePrimitive.MethodReadPrimitives[(int)info.IsFormatterDirect];
+                                    processor
+                                        .LdArg(0)
+                                        .Call(method);
+                                    break;
+                                }
+                        }
                         var setMethod = info.Info.SetMethod;
                         Debug.Assert(!(setMethod is null));
                         processor.Call(setMethod);
@@ -572,14 +658,56 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 case DeserializeDictionary.Type.FieldValueTypeShouldSerialize:
                     {
                         ref readonly var info = ref readOnlyArguments.AnalyzeResult.FieldValueTypeShouldSerializeArray[entry.Index];
-                        ReadValueType(processor, info);
+                        switch (info.IsFormatterDirect)
+                        {
+                            case DirectTypeEnum.None:
+                                {
+                                    var deserialize = BasicInfoContainer.DeserializeWithVerify(info.TargetType);
+                                    processor
+                                        .LdArg(1)
+                                        .LdArg(0)
+                                        .Call(deserialize);
+                                    break;
+                                }
+                            case DirectTypeEnum.String:
+                                throw new ArgumentOutOfRangeException();
+                            default:
+                                {
+                                    var method = ReadWritePrimitive.MethodReadPrimitives[(int)info.IsFormatterDirect];
+                                    processor
+                                        .LdArg(0)
+                                        .Call(method);
+                                    break;
+                                }
+                        }
                         processor.StField(info.Info);
                     }
                     break;
                 case DeserializeDictionary.Type.PropertyValueTypeShouldSerialize:
                     {
                         ref readonly var info = ref readOnlyArguments.AnalyzeResult.PropertyValueTypeShouldSerializeArray[entry.Index];
-                        ReadValueType(processor, info);
+                        switch (info.IsFormatterDirect)
+                        {
+                            case DirectTypeEnum.None:
+                                {
+                                    var deserialize = BasicInfoContainer.DeserializeWithVerify(info.TargetType);
+                                    processor
+                                        .LdArg(1)
+                                        .LdArg(0)
+                                        .Call(deserialize);
+                                    break;
+                                }
+                            case DirectTypeEnum.String:
+                                throw new ArgumentOutOfRangeException();
+                            default:
+                                {
+                                    var method = ReadWritePrimitive.MethodReadPrimitives[(int)info.IsFormatterDirect];
+                                    processor
+                                        .LdArg(0)
+                                        .Call(method);
+                                    break;
+                                }
+                        }
                         var setMethod = info.Info.SetMethod;
                         Debug.Assert(!(setMethod is null));
                         processor.Call(setMethod);
@@ -588,14 +716,56 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 case DeserializeDictionary.Type.FieldReferenceType:
                     {
                         ref readonly var info = ref readOnlyArguments.AnalyzeResult.FieldReferenceTypeArray[entry.Index];
-                        ReadReferenceType(processor, info);
+                        switch (info.IsFormatterDirect)
+                        {
+                            case DirectTypeEnum.None:
+                                var deserialize = BasicInfoContainer.DeserializeWithVerify(info.TargetType);
+                                processor
+                                    .LdArg(1)
+                                    .LdArg(0)
+                                    .Call(deserialize);
+                                break;
+                            case DirectTypeEnum.String:
+                                var method = ReadWritePrimitive.MethodReadPrimitives[(int)info.IsFormatterDirect];
+                                processor
+                                    .LdArg(0)
+                                    .Call(method);
+                                if (info.ShouldIntern)
+                                {
+                                    processor.Call(BasicInfoContainer.MethodStringIntern);
+                                }
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException();
+                        }
                         processor.StField(info.Info);
                     }
                     break;
                 case DeserializeDictionary.Type.PropertyReferenceType:
                     {
                         ref readonly var info = ref readOnlyArguments.AnalyzeResult.PropertyReferenceTypeArray[entry.Index];
-                        ReadReferenceType(processor, info);
+                        switch (info.IsFormatterDirect)
+                        {
+                            case DirectTypeEnum.None:
+                                var deserialize = BasicInfoContainer.DeserializeWithVerify(info.TargetType);
+                                processor
+                                    .LdArg(1)
+                                    .LdArg(0)
+                                    .Call(deserialize);
+                                break;
+                            case DirectTypeEnum.String:
+                                var method = ReadWritePrimitive.MethodReadPrimitives[(int)info.IsFormatterDirect];
+                                processor
+                                    .LdArg(0)
+                                    .Call(method);
+                                if (info.ShouldIntern)
+                                {
+                                    processor.Call(BasicInfoContainer.MethodStringIntern);
+                                }
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException();
+                        }
                         var setMethod = info.Info.SetMethod;
                         Debug.Assert(!(setMethod is null));
                         processor.Call(setMethod);
@@ -604,14 +774,56 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 case DeserializeDictionary.Type.FieldReferenceTypeShouldSerialize:
                     {
                         ref readonly var info = ref readOnlyArguments.AnalyzeResult.FieldReferenceTypeShouldSerializeArray[entry.Index];
-                        ReadReferenceType(processor, info);
+                        switch (info.IsFormatterDirect)
+                        {
+                            case DirectTypeEnum.None:
+                                var deserialize = BasicInfoContainer.DeserializeWithVerify(info.TargetType);
+                                processor
+                                    .LdArg(1)
+                                    .LdArg(0)
+                                    .Call(deserialize);
+                                break;
+                            case DirectTypeEnum.String:
+                                var method = ReadWritePrimitive.MethodReadPrimitives[(int)info.IsFormatterDirect];
+                                processor
+                                    .LdArg(0)
+                                    .Call(method);
+                                if (info.ShouldIntern)
+                                {
+                                    processor.Call(BasicInfoContainer.MethodStringIntern);
+                                }
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException();
+                        }
                         processor.StField(info.Info);
                     }
                     break;
                 case DeserializeDictionary.Type.PropertyReferenceTypeShouldSerialize:
                     {
                         ref readonly var info = ref readOnlyArguments.AnalyzeResult.PropertyReferenceTypeShouldSerializeArray[entry.Index];
-                        ReadReferenceType(processor, info);
+                        switch (info.IsFormatterDirect)
+                        {
+                            case DirectTypeEnum.None:
+                                var deserialize = BasicInfoContainer.DeserializeWithVerify(info.TargetType);
+                                processor
+                                    .LdArg(1)
+                                    .LdArg(0)
+                                    .Call(deserialize);
+                                break;
+                            case DirectTypeEnum.String:
+                                var method = ReadWritePrimitive.MethodReadPrimitives[(int)info.IsFormatterDirect];
+                                processor
+                                    .LdArg(0)
+                                    .Call(method);
+                                if (info.ShouldIntern)
+                                {
+                                    processor.Call(BasicInfoContainer.MethodStringIntern);
+                                }
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException();
+                        }
                         var setMethod = info.Info.SetMethod;
                         Debug.Assert(!(setMethod is null));
                         processor.Call(setMethod);
@@ -622,60 +834,6 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
 
             processor.BrLong(readOnlyArguments.LoopStartLabel);
-        }
-
-        private static void ReadReferenceType<T>(ILGenerator processor, T info)
-            where T : struct, IMemberContainer
-        {
-            switch (info.IsFormatterDirect)
-            {
-                case DirectTypeEnum.None:
-                    var deserialize = BasicInfoContainer.DeserializeWithVerify(info.TargetType);
-                    processor
-                        .LdArg(1)
-                        .LdArg(0)
-                        .Call(deserialize);
-                    break;
-                case DirectTypeEnum.String:
-                    var method = ReadWritePrimitive.MethodReadPrimitives[(int)info.IsFormatterDirect];
-                    processor
-                        .LdArg(0)
-                        .Call(method);
-                    if (info.ShouldIntern)
-                    {
-                        processor.Call(BasicInfoContainer.MethodStringIntern);
-                    }
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-        }
-
-        private static void ReadValueType<T>(ILGenerator processor, T info)
-            where T : struct, IMemberContainer
-        {
-            switch (info.IsFormatterDirect)
-            {
-                case DirectTypeEnum.None:
-                    {
-                        var deserialize = BasicInfoContainer.DeserializeWithVerify(info.TargetType);
-                        processor
-                            .LdArg(1)
-                            .LdArg(0)
-                            .Call(deserialize);
-                        break;
-                    }
-                case DirectTypeEnum.String:
-                    throw new ArgumentOutOfRangeException();
-                default:
-                    {
-                        var method = ReadWritePrimitive.MethodReadPrimitives[(int)info.IsFormatterDirect];
-                        processor
-                            .LdArg(0)
-                            .Call(method);
-                        break;
-                    }
-            }
         }
     }
 }

@@ -224,6 +224,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     {
                         continue;
                     }
+
                     lengthVariationCount++;
                     if (MinLength == -1)
                     {
@@ -286,6 +287,24 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
         }
 
+        [StructLayout(LayoutKind.Explicit, CharSet = CharSet.Auto, Pack = 1, Size = 16)]
+        public readonly struct EntrySegment
+        {
+            [FieldOffset(0)]
+            public readonly ulong Key;
+            [FieldOffset(8)]
+            public readonly int Offset;
+            [FieldOffset(12)]
+            public readonly int Length;
+
+            public EntrySegment(ulong key, int offset, int length)
+            {
+                Key = key;
+                Offset = offset;
+                Length = length;
+            }
+        }
+
         public enum Type
         {
             FieldValueType,
@@ -337,6 +356,58 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
 
             return (value, entryArray.Length);
+        }
+
+        public static int CountUpVariation(this ReadOnlySpan<DeserializeDictionary.Entry> entryArray, int position)
+        {
+            if (entryArray.IsEmpty)
+            {
+                return 0;
+            }
+
+            var answer = 1;
+            var value = entryArray[0][position];
+            for (var i = 1; i < entryArray.Length; i++)
+            {
+                var another = entryArray[i][position];
+                if (another == value)
+                {
+                    continue;
+                }
+
+                answer++;
+                value = another;
+            }
+
+            return answer;
+        }
+
+        public static void WriteVariation(this ReadOnlySpan<DeserializeDictionary.Entry> entryArray, int position, Span<DeserializeDictionary.EntrySegment> span)
+        {
+            if (entryArray.IsEmpty)
+            {
+                return;
+            }
+
+            var value = entryArray[0][position];
+            var offset = 0;
+            var length = 1;
+            for (var i = 1; i < entryArray.Length; i++, length++)
+            {
+                var nextValue = entryArray[i][position];
+                if (nextValue == value)
+                {
+                    continue;
+                }
+
+                span[0] = new DeserializeDictionary.EntrySegment(value, offset, length);
+                offset += length;
+                length = 0;
+                value = nextValue;
+                span = span.Slice(1);
+            }
+
+            span[0] = new DeserializeDictionary.EntrySegment(value, offset, length);
         }
     }
 }
