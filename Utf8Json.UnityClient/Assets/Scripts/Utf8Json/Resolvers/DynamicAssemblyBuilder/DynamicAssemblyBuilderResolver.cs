@@ -54,11 +54,32 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             const string assemblyName = "Utf8Json.IL.Emit";
             assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(assemblyName), AssemblyBuilderAccess.Run);
             moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName);
+            AddUnverifiable();
             dataFieldDictionary = new BinaryDictionary();
             constructorIgnoresAccessChecksToAttribute = CreateIgnoresAccessChecksToAttribute();
             assemblyDictionary = new ConcurrentDictionary<Assembly, object>();
             assemblyDictionary.GetOrAdd(assemblyBuilder, FactoryOfIgnoresAccess);
-            EnsurePrivateAccess(typeof(JsonSerializerOptions));
+            assemblyDictionary.GetOrAdd(typeof(JsonSerializerOptions).Assembly, FactoryOfIgnoresAccess);
+            assemblyDictionary.GetOrAdd(typeof(JsonSerializerOptionsExtensions).Assembly, FactoryOfIgnoresAccess);
+        }
+
+        // Unityというか多分Mono環境ではUnverifiableCodeAttributeを追加せず非publicメンバにアクセスすると死ぬ
+        private static void AddUnverifiable()
+        {
+            var unverifiableCodeAttribute = moduleBuilder.GetCustomAttribute<System.Security.UnverifiableCodeAttribute>();
+            if (!(unverifiableCodeAttribute is null))
+            {
+                return;
+            }
+
+            var attribute = typeof(System.Security.UnverifiableCodeAttribute);
+            var ctor = attribute.GetConstructor(Array.Empty<Type>());
+            if (ctor is null)
+            {
+                throw new NullReferenceException();
+            }
+
+            moduleBuilder.SetCustomAttribute(new CustomAttributeBuilder(ctor, Array.Empty<object>()));
         }
 
         private static void EnsurePrivateAccess(Type targetType)
@@ -68,6 +89,11 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
         private static object FactoryOfIgnoresAccess(Assembly assembly)
         {
+#if UNITY_2018_4_OR_NEWER
+            UnityEngine.Debug.Log(assembly.FullName);
+#else
+            Console.WriteLine(assembly.FullName);
+#endif
             // InternalsVisibleTo declarations cannot have a version, culture, public key token, or processor architecture specified.
             var name = assembly.GetName().Name ?? throw new NullReferenceException();
             assemblyBuilder?.SetCustomAttribute(new CustomAttributeBuilder(constructorIgnoresAccessChecksToAttribute, new object[]
