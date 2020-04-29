@@ -186,6 +186,11 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             processor.Emit(OpCodes.Beq, label);
         }
 
+        public static void BltUn(this ILGenerator processor, Label label)
+        {
+            processor.Emit(OpCodes.Blt_Un, label);
+        }
+
         public static void BneUn(this ILGenerator processor, Label label)
         {
             processor.Emit(OpCodes.Bne_Un, label);
