@@ -269,6 +269,11 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 .Call(BasicInfoContainer.MethodJsonReaderReadNextBlock) // reader.ReadNextBlock();
                 .BrShort(readOnlyArguments.LoopStartLabel); // continue;
 
+            非default(readOnlyArguments, processor, destinations, possibleLengthCount);
+        }
+
+        private static void 非default(in ReadOnlyArguments readOnlyArguments, ILGenerator processor, Span<Label> destinations, int possibleLengthCount)
+        {
             int length = 0, labelIndex = 0;
             var entryArray = readOnlyArguments.Dictionary[length++];
             if (!entryArray.IsEmpty)
