@@ -65,7 +65,7 @@ namespace Utf8Json.Internal
             else
             {
                 Array.Resize(ref array, array.Length + 1);
-                for (var i = array.Length - 2; i >= 0; i--)
+                for (var i = array.Length - 1; --i >= 0;)
                 {
                     var c = array[i].CompareTo(item);
                     if (c > 0)
@@ -78,6 +78,8 @@ namespace Utf8Json.Internal
                         return;
                     }
                 }
+
+                array[0] = item;
             }
         }
     }
