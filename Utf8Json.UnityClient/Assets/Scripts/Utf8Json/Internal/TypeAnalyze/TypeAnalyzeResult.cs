@@ -1,6 +1,7 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using System.Reflection;
 
 namespace Utf8Json.Internal
@@ -22,33 +23,166 @@ namespace Utf8Json.Internal
         public readonly ExtensionDataInfo ExtensionData;
         public readonly ConstructorDataInfo ConstructorData;
 
-        public bool HasReferenceTypeWhenSerialize
+        public bool AreAllPublic()
         {
-            get
+            for (var i = 0; i < FieldValueTypeArray.Length; i++)
             {
-                if (FieldReferenceTypeArray.Length != 0 || FieldReferenceTypeShouldSerializeArray.Length != 0)
+                if (!FieldValueTypeArray[i].Info.IsPublic)
                 {
-                    return true;
+                    return false;
                 }
-
-                for (var i = 0; i < PropertyReferenceTypeArray.Length; i++)
-                {
-                    if(!(PropertyReferenceTypeArray[i].Info.GetMethod is null))
-                    {
-                        return true;
-                    }
-                }
-
-                for (var i = 0; i < PropertyReferenceTypeShouldSerializeArray.Length; i++)
-                {
-                    if (!(PropertyReferenceTypeShouldSerializeArray[i].Info.GetMethod is null))
-                    {
-                        return true;
-                    }
-                }
-
-                return false;
             }
+
+            for (var i = 0; i < FieldReferenceTypeArray.Length; i++)
+            {
+                if (!FieldReferenceTypeArray[i].Info.IsPublic)
+                {
+                    return false;
+                }
+            }
+
+            for (var i = 0; i < FieldValueTypeShouldSerializeArray.Length; i++)
+            {
+                if (!FieldValueTypeShouldSerializeArray[i].Info.IsPublic)
+                {
+                    return false;
+                }
+            }
+
+            for (var i = 0; i < FieldReferenceTypeShouldSerializeArray.Length; i++)
+            {
+                if (!FieldReferenceTypeShouldSerializeArray[i].Info.IsPublic)
+                {
+                    return false;
+                }
+            }
+
+            for (var i = 0; i < PropertyValueTypeArray.Length; i++)
+            {
+                var info = PropertyValueTypeArray[i].Info;
+                Debug.Assert(!(info.GetMethod is null));
+                if (!info.GetMethod.IsPublic)
+                {
+                    return false;
+                }
+
+                if (info.SetMethod is null) continue;
+                if (!info.SetMethod.IsPublic)
+                {
+                    return false;
+                }
+            }
+
+            for (var i = 0; i < PropertyReferenceTypeArray.Length; i++)
+            {
+                var info = PropertyReferenceTypeArray[i].Info;
+                Debug.Assert(!(info.GetMethod is null));
+                if (!info.GetMethod.IsPublic)
+                {
+                    return false;
+                }
+
+                if (info.SetMethod is null) continue;
+                if (!info.SetMethod.IsPublic)
+                {
+                    return false;
+                }
+            }
+
+            for (var i = 0; i < PropertyValueTypeShouldSerializeArray.Length; i++)
+            {
+                var info = PropertyValueTypeShouldSerializeArray[i].Info;
+                Debug.Assert(!(info.GetMethod is null));
+                if (!info.GetMethod.IsPublic)
+                {
+                    return false;
+                }
+
+                if (info.SetMethod is null) continue;
+                if (!info.SetMethod.IsPublic)
+                {
+                    return false;
+                }
+            }
+
+            for (var i = 0; i < PropertyReferenceTypeShouldSerializeArray.Length; i++)
+            {
+                var info = PropertyReferenceTypeShouldSerializeArray[i].Info;
+                Debug.Assert(!(info.GetMethod is null));
+                if (!info.GetMethod.IsPublic)
+                {
+                    return false;
+                }
+
+                if (info.SetMethod is null) continue;
+                if (!info.SetMethod.IsPublic)
+                {
+                    return false;
+                }
+            }
+
+            for (var i = 0; i < OnSerializing.Length; i++)
+            {
+                if (!OnSerializing[i].IsPublic)
+                {
+                    return false;
+                }
+            }
+
+            for (var i = 0; i < OnSerialized.Length; i++)
+            {
+                if (!OnSerialized[i].IsPublic)
+                {
+                    return false;
+                }
+            }
+
+            for (var i = 0; i < OnDeserializing.Length; i++)
+            {
+                if (!OnDeserializing[i].IsPublic)
+                {
+                    return false;
+                }
+            }
+
+            for (var i = 0; i < OnDeserialized.Length; i++)
+            {
+                if (!OnDeserialized[i].IsPublic)
+                {
+                    return false;
+                }
+            }
+
+            if (!(ExtensionData.Info is null))
+            {
+                Debug.Assert(!(ExtensionData.Info.GetMethod is null));
+                if (!ExtensionData.Info.GetMethod.IsPublic)
+                {
+                    return false;
+                }
+
+                if (!(ExtensionData.Info.SetMethod is null) && !ExtensionData.Info.SetMethod.IsPublic)
+                {
+                    return false;
+                }
+            }
+
+            if (!(ConstructorData.Constructor is null))
+            {
+                if (!ConstructorData.Constructor.IsPublic)
+                {
+                    return false;
+                }
+            }
+            else if (!(ConstructorData.FactoryMethod is null))
+            {
+                if (!ConstructorData.FactoryMethod.IsPublic)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         public TypeAnalyzeResult(FieldSerializationInfo[] fieldValueTypeArray, FieldSerializationInfo[] fieldReferenceTypeArray, PropertySerializationInfo[] propertyValueTypeArray, PropertySerializationInfo[] propertyReferenceTypeArray, ShouldSerializeFieldSerializationInfo[] fieldValueTypeShouldSerializeArray, ShouldSerializeFieldSerializationInfo[] fieldReferenceTypeShouldSerializeArray, ShouldSerializePropertySerializationInfo[] propertyValueTypeShouldSerializeArray, ShouldSerializePropertySerializationInfo[] propertyReferenceTypeShouldSerializeArray, MethodInfo[] onSerializing, MethodInfo[] onSerialized, MethodInfo[] onDeserializing, MethodInfo[] onDeserialized, ExtensionDataInfo extensionData, ConstructorDataInfo constructorData)

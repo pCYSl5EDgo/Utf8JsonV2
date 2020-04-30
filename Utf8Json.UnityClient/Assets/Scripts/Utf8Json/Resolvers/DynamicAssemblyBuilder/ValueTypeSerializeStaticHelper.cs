@@ -8,6 +8,7 @@ using System.Reflection.Emit;
 using Utf8Json.Formatters;
 using Utf8Json.Internal;
 using Utf8Json.Internal.Reflection;
+// ReSharper disable RedundantCaseLabel
 
 namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 {

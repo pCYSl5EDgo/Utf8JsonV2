@@ -16,9 +16,7 @@ namespace Utf8Json.Internal
 {
     public static class TypeAnalyzer
     {
-        public static void Analyze(Type type,
-            out TypeAnalyzeResult result
-        )
+        public static void Analyze(Type type, out TypeAnalyzeResult result)
         {
             CollectFieldAndProperty(type, out var fieldValueTypes, out var fieldReferenceTypes, out var fieldValueTypeShouldSerializes, out var fieldReferenceTypeShouldSerializes, out var propertyValueTypes, out var propertyReferenceTypes, out var propertyValueTypeShouldSerializes, out var propertyReferenceTypeShouldSerializes, out var extensionDataProperty);
 

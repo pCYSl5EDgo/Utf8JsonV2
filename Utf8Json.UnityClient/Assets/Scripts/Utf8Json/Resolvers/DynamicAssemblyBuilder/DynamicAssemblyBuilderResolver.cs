@@ -249,7 +249,6 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 {
                     ValueTypeEmbedTypelessHelper.SerializeTypeless(targetType, builderSet.SerializeStatic, builderSet.SerializeTypeless);
                     ValueTypeEmbedTypelessHelper.DeserializeTypeless(targetType, builderSet.DeserializeStatic, builderSet.DeserializeTypeless);
-
                     ValueTypeSerializeStaticHelper.SerializeStatic(builderSet.Type, builderSet.SerializeStatic, in analyzeResult, dataFieldDictionary);
                     ValueTypeDeserializeStaticHelper.DeserializeStatic(builderSet.DeserializeStatic, in analyzeResult);
                 }
