@@ -1,6 +1,7 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Reflection;
 
 namespace Utf8Json.Internal
@@ -9,11 +10,11 @@ namespace Utf8Json.Internal
     {
 #if CSHARP_8_OR_NEWER
         public readonly PropertyInfo? Info;
-        public readonly MethodInfo? AddMethodInfo;
 #else
         public readonly PropertyInfo Info;
-        public readonly MethodInfo AddMethodInfo;
 #endif
+
+        public readonly bool Add;
 
 #if CSHARP_8_OR_NEWER
         public ExtensionDataInfo(PropertyInfo? info)
@@ -24,12 +25,17 @@ namespace Utf8Json.Internal
             Info = info;
             if (info is null)
             {
-                AddMethodInfo = default;
+                Add = false;
             }
             else
             {
-                var addAttribute = info.GetCustomAttribute<AddAttribute>();
-                AddMethodInfo = addAttribute?.GetMethod(addAttribute.Type ?? info.PropertyType);
+                if (info.GetMethod is null)
+                {
+                    throw new InvalidOperationException();
+                }
+
+                var attribute = info.GetCustomAttribute<AddAttribute>();
+                Add = !(attribute is null);
             }
         }
     }

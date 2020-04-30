@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
@@ -45,6 +46,11 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         public static readonly MethodInfo MethodStringKeyObjectValueDictionaryFormatterDeserializeStatic = typeof(StringKeyObjectValueDictionaryFormatter).GetMethodStatic("DeserializeStatic");
 
         public static readonly MethodInfo MethodStringIntern = typeof(string).GetMethodStatic("Intern");
+        
+        public static readonly ConstructorInfo ConstructorInfoStringKeyObjectValueDictionary = typeof(Dictionary<string, object>).GetConstructor(Array.Empty<Type>()) ?? throw new NullReferenceException();
+        public static readonly MethodInfo MethodNullableStringDeserializeStaticInnerQuotation = typeof(NullableStringFormatter).GetMethodStatic("DeserializeStaticInnerQuotation");
+        public static readonly MethodInfo MethodObjectFormatterDeserializeStatic = typeof(ObjectFormatter).GetMethodStatic("DeserializeStatic");
+        public static readonly MethodInfo MethodStringKeyObjectValueDictionaryAdd = typeof(Dictionary<string, object>).GetMethodInstance("set_Item");
 
         public static readonly int Null;
         public static readonly int True;

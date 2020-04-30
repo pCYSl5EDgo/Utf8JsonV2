@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Buffers;
+using System.Runtime.CompilerServices;
 using Utf8Json.Internal;
 // ReSharper disable RedundantCaseLabel
 
@@ -70,6 +72,298 @@ namespace Utf8Json.Formatters
 #endif
         {
             return reader.ReadString();
+        }
+
+        public static unsafe string DeserializeStaticInnerQuotation(ReadOnlySpan<byte> sourceSpan)
+        {
+            if (sourceSpan.IsEmpty)
+            {
+                return string.Empty;
+            }
+
+            var array = ArrayPool<byte>.Shared.Rent(sourceSpan.Length << 1);
+            try
+            {
+                fixed (byte* sourceSpanPointer = &sourceSpan[0])
+                fixed (void* arrayPointer = &array[0])
+                {
+                    var answerLength = 0;
+                    var srcPtr = sourceSpanPointer;
+                    var srcEndPtr = sourceSpanPointer + sourceSpan.Length;
+                    var dstPtr = (char*)arrayPointer;
+                    var dstCapacity = array.Length >> 1;
+                    var length = 0;
+                    while (srcPtr != srcEndPtr)
+                    {
+                        if (*srcPtr != '\\')
+                        {
+                            length++;
+                            srcPtr++;
+                            continue;
+                        }
+
+                        if (length != 0)
+                        {
+                            var consumed = StringEncoding.Utf8.GetChars(srcPtr - length, length, dstPtr, dstCapacity);
+                            dstCapacity -= consumed;
+                            dstPtr += consumed;
+                            answerLength += consumed;
+                            length = 0;
+                        }
+
+                        if (++srcPtr == srcEndPtr)
+                        {
+                            goto ERROR;
+                        }
+
+                        switch (*srcPtr++)
+                        {
+                            case (byte)'u':
+                                if (srcPtr == srcEndPtr)
+                                {
+                                    goto ERROR;
+                                }
+
+                                var codePoint = ToNumber(*srcPtr++) << 4;
+                                if (srcPtr == srcEndPtr)
+                                {
+                                    goto ERROR;
+                                }
+
+                                codePoint |= ToNumber(*srcPtr++);
+                                codePoint <<= 4;
+                                if (srcPtr == srcEndPtr)
+                                {
+                                    goto ERROR;
+                                }
+
+                                codePoint |= ToNumber(*srcPtr++);
+                                codePoint <<= 4;
+                                if (srcPtr == srcEndPtr)
+                                {
+                                    goto ERROR;
+                                }
+
+                                codePoint |= ToNumber(*srcPtr++);
+                                *dstPtr++ = (char)(ushort)codePoint;
+                                goto INCREMENT;
+                            case (byte)'\\':// 0x5c
+                                *dstPtr++ = '\\';
+                                goto INCREMENT;
+                            case (byte)'/': // 0x2f
+                                *dstPtr++ = '/';
+                                goto INCREMENT;
+                            case (byte)'"': // 0x22
+                                *dstPtr++ = '"';
+                                goto INCREMENT;
+                            case (byte)'b':
+                                *dstPtr++ = '\b';
+                                goto INCREMENT;
+                            case (byte)'r':
+                                *dstPtr++ = '\r';
+                                goto INCREMENT;
+                            case (byte)'n':
+                                *dstPtr++ = '\n';
+                                goto INCREMENT;
+                            case (byte)'f':
+                                *dstPtr++ = '\f';
+                                goto INCREMENT;
+                            case (byte)'t':
+                                *dstPtr++ = '\t';
+                                goto INCREMENT;
+                            #region OTHER
+                            case 0x23:
+                            case 0x24:
+                            case 0x25:
+                            case 0x26:
+                            case 0x27:
+                            case 0x28:
+                            case 0x29:
+                            case 0x2a:
+                            case 0x2b:
+                            case 0x2c:
+                            case 0x2d:
+                            case 0x2e:
+                            case 0x30:
+                            case 0x31:
+                            case 0x32:
+                            case 0x33:
+                            case 0x34:
+                            case 0x35:
+                            case 0x36:
+                            case 0x37:
+                            case 0x38:
+                            case 0x39:
+                            case 0x3a:
+                            case 0x3b:
+                            case 0x3c:
+                            case 0x3d:
+                            case 0x3e:
+                            case 0x3f:
+                            case 0x40:
+                            case 0x41:
+                            case 0x42:
+                            case 0x43:
+                            case 0x44:
+                            case 0x45:
+                            case 0x46:
+                            case 0x47:
+                            case 0x48:
+                            case 0x49:
+                            case 0x4a:
+                            case 0x4b:
+                            case 0x4c:
+                            case 0x4d:
+                            case 0x4e:
+                            case 0x4f:
+                            case 0x50:
+                            case 0x51:
+                            case 0x52:
+                            case 0x53:
+                            case 0x54:
+                            case 0x55:
+                            case 0x56:
+                            case 0x57:
+                            case 0x58:
+                            case 0x59:
+                            case 0x5a:
+                            case 0x5b:
+                            case 0x5d:
+                            case 0x5e:
+                            case 0x5f:
+                            case 0x60:
+                            case 0x61:
+                            case 0x63:
+                            case 0x64:
+                            case 0x65:
+                            case 0x67:
+                            case 0x68:
+                            case 0x69:
+                            case 0x6a:
+                            case 0x6b:
+                            case 0x6c:
+                            case 0x6d:
+                            case 0x6f:
+                            case 0x70:
+                            case 0x71:
+                            case 0x73:
+                            default:
+                                #endregion
+                                goto ERROR;
+                        }
+
+                    INCREMENT:
+                        dstCapacity--;
+                        answerLength++;
+                        continue;
+
+                    ERROR:
+                        throw new JsonParsingException("Invalid Json String Literal.");
+                    }
+
+                    if (length != 0)
+                    {
+                        answerLength += StringEncoding.Utf8.GetChars(srcPtr - length, length, dstPtr, dstCapacity);
+                    }
+
+                    return new string((char*)arrayPointer, 0, answerLength);
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(array);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static uint ToNumber(byte value)
+        {
+            // 0x30 ~ 0x7a
+            switch (value)
+            {
+                case 0x30:
+                    return 0;
+                case 0x31:
+                    return 1;
+                case 0x32:
+                    return 2;
+                case 0x33:
+                    return 3;
+                case 0x34:
+                    return 4;
+                case 0x35:
+                    return 5;
+                case 0x36:
+                    return 6;
+                case 0x37:
+                    return 7;
+                case 0x38:
+                    return 8;
+                case 0x39:
+                    return 9;
+                case 0x41:
+                    return 10;
+                case 0x42:
+                    return 11;
+                case 0x43:
+                    return 12;
+                case 0x44:
+                    return 13;
+                case 0x45:
+                    return 14;
+                case 0x46:
+                    return 15;
+                case 0x61:
+                    return 10;
+                case 0x62:
+                    return 11;
+                case 0x63:
+                    return 12;
+                case 0x64:
+                    return 13;
+                case 0x65:
+                    return 14;
+                case 0x66:
+                    return 15;
+
+                #region Other
+                case 0x3a:
+                case 0x3b:
+                case 0x3c:
+                case 0x3d:
+                case 0x3e:
+                case 0x3f:
+                case 0x40:
+                case 0x47:
+                case 0x48:
+                case 0x49:
+                case 0x4a:
+                case 0x4b:
+                case 0x4c:
+                case 0x4d:
+                case 0x4e:
+                case 0x4f:
+                case 0x50:
+                case 0x51:
+                case 0x52:
+                case 0x53:
+                case 0x54:
+                case 0x55:
+                case 0x56:
+                case 0x57:
+                case 0x58:
+                case 0x59:
+                case 0x5a:
+                case 0x5b:
+                case 0x5c:
+                case 0x5d:
+                case 0x5e:
+                case 0x5f:
+                case 0x60:
+                default:
+                    #endregion
+                    throw new ArgumentOutOfRangeException(nameof(value));
+            }
         }
 
 #if CSHARP_8_OR_NEWER
@@ -623,17 +917,9 @@ namespace Utf8Json.Formatters
         }
 
 #if CSHARP_8_OR_NEWER
-        public static
-#if !SPAN_BUILTIN
-            unsafe
-#endif
-            void SerializeSpan(JsonSerializerOptions options, string? value, Span<byte> span)
+        public static void SerializeSpan(JsonSerializerOptions options, string? value, Span<byte> span)
 #else
-        public static
-#if !SPAN_BUILTIN
-            unsafe
-# endif
-            void SerializeSpan(JsonSerializerOptions options, string value, Span<byte> span)
+        public static void SerializeSpan(JsonSerializerOptions options, string value, Span<byte> span)
 #endif
         {
             if (value == null)

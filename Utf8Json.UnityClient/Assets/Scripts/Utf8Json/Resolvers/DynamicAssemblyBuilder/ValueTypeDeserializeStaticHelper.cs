@@ -3,6 +3,7 @@
 
 using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
@@ -128,12 +129,12 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             ref readonly var extensionDataInfo = ref analyzeResult.ExtensionData;
             var processor = deserializeStatic.GetILGenerator();
             var answerVariable = processor.DeclareLocal(deserializeStatic.ReturnType);
-            var arguments = new ReadOnlyArguments(answerVariable, in analyzeResult, processor);
+            var readOnlyArguments = new ReadOnlyArguments(answerVariable, in analyzeResult, processor);
             try
             {
-                if (arguments.Dictionary.LengthVariations.IsEmpty)
+                if (readOnlyArguments.Dictionary.LengthVariations.IsEmpty)
                 {
-                    NoVariation(processor, answerVariable, extensionDataInfo);
+                    NoVariation(in readOnlyArguments);
                     return;
                 }
 
@@ -146,37 +147,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 //var addMethodInfo = extensionDataInfo.AddMethodInfo;
                 if (analyzeResult.ConstructorData.CanCreateInstanceBeforeDeserialization)
                 {
-                    CallCallbacks(analyzeResult.OnDeserializing, processor, answerVariable);
-
-                    // while(!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
-                    processor.MarkLabel(arguments.LoopStartLabel);
-                    processor
-                        .LdArg(0)
-                        .LdLocAddress(loopCountVariable)
-                        .Call(BasicInfoContainer.MethodJsonReaderReadIsEndObjectWithSkipValueSeparator)
-                        .BrTrueLong(returnLabel); // if true goto return statement.
-
-                    // ReadOnlySpan<byte> name = reader.ReadPropertyNameSegmentRaw();
-                    // ref readonly byte b = ref name[0];
-                    // nameVariable.Length
-                    processor
-                        .LdArg(0)
-                        .Call(BasicInfoContainer.MethodJsonReaderReadPropertyNameSegmentRaw)
-                        .StLoc(arguments.NameVariable) // var name = reader.ReadPropertyNameSegmentRaw();
-                        .LdLocAddress(arguments.NameVariable)
-                        .LdcI4(0)
-                        .Call(BasicInfoContainer.MethodReadOnlySpanGetItem)
-                        .StLoc(arguments.ReferenceVariable)
-                        .LdLocAddress(arguments.NameVariable)
-                        .Call(BasicInfoContainer.MethodReadOnlySpanGetLength); // nameVariable.Length
-
-                    if (extensionDataInfo.Info is null)
-                    {
-                        DeserializeStatic_CreateInstanceBeforeDeserialization_NoExtensionData(in arguments);
-                    }
-
-                    // goto while(!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
-                    processor.BrLong(arguments.LoopStartLabel);
+                    NoConstructor(in readOnlyArguments, in extensionDataInfo, loopCountVariable, returnLabel);
                 }
                 else
                 {
@@ -193,13 +164,80 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
             finally
             {
-                arguments.Dispose();
+                readOnlyArguments.Dispose();
             }
         }
 
-        private static void NoVariation(ILGenerator processor, LocalBuilder answerVariable, in ExtensionDataInfo extensionDataInfo)
+        private static void NoConstructor(in ReadOnlyArguments readOnlyArguments, in ExtensionDataInfo extensionDataInfo, LocalBuilder loopCountVariable, Label returnLabel)
         {
-            if (extensionDataInfo.Info is null)
+            var processKind = extensionDataInfo.Info is null
+                ? 0
+                : extensionDataInfo.Add
+                    ? 1
+                    : 2;
+            var processor = readOnlyArguments.Processor;
+            CallCallbacks(readOnlyArguments.AnalyzeResult.OnDeserializing, processor, readOnlyArguments.AnswerVariable);
+
+            switch (processKind)
+            {
+                case 0:
+                    LoopStartProcedure(processor, readOnlyArguments, loopCountVariable, returnLabel);
+                    DeserializeStatic_CreateInstanceBeforeDeserialization_NoExtensionData(in readOnlyArguments);
+                    break;
+                case 1: throw new NotImplementedException();
+                case 2:
+                    {
+                        var extensionVariable = processor.DeclareLocal(typeof(Dictionary<string, object>));
+                        processor
+                            .LdLocAddress(readOnlyArguments.AnswerVariable)
+                            .NewObj(BasicInfoContainer.ConstructorInfoStringKeyObjectValueDictionary)
+                            .Dup()
+                            .StLoc(extensionVariable)
+#if CSHARP_8_OR_NEWER
+                            .Call(extensionDataInfo.Info!.SetMethod!);
+#else
+                            .Call(extensionDataInfo.Info.SetMethod);
+#endif
+
+                        LoopStartProcedure(processor, readOnlyArguments, loopCountVariable, returnLabel);
+                        DeserializeStatic_CreateInstanceBeforeDeserialization_WithExtensionData(in readOnlyArguments, extensionVariable);
+                    }
+                    break;
+            }
+
+            // goto while(!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
+            processor.BrLong(readOnlyArguments.LoopStartLabel);
+        }
+
+        private static void LoopStartProcedure(ILGenerator processor, in ReadOnlyArguments readOnlyArguments, LocalBuilder loopCountVariable, Label returnLabel)
+        {
+            // while(!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
+            processor.MarkLabel(readOnlyArguments.LoopStartLabel);
+            processor
+                .LdArg(0)
+                .LdLocAddress(loopCountVariable)
+                .Call(BasicInfoContainer.MethodJsonReaderReadIsEndObjectWithSkipValueSeparator)
+                .BrTrueLong(returnLabel); // if true goto return statement.
+
+            // ReadOnlySpan<byte> name = reader.ReadPropertyNameSegmentRaw();
+            // ref readonly byte b = ref name[0];
+            // nameVariable.Length
+            processor
+                .LdArg(0)
+                .Call(BasicInfoContainer.MethodJsonReaderReadPropertyNameSegmentRaw)
+                .StLoc(readOnlyArguments.NameVariable) // var name = reader.ReadPropertyNameSegmentRaw();
+                .LdLocAddress(readOnlyArguments.NameVariable)
+                .LdcI4(0)
+                .Call(BasicInfoContainer.MethodReadOnlySpanGetItem)
+                .StLoc(readOnlyArguments.ReferenceVariable)
+                .LdLocAddress(readOnlyArguments.NameVariable)
+                .Call(BasicInfoContainer.MethodReadOnlySpanGetLength); // nameVariable.Length
+        }
+
+        private static void NoVariation(in ReadOnlyArguments readOnlyArguments)
+        {
+            var processor = readOnlyArguments.Processor;
+            if (readOnlyArguments.AnalyzeResult.ExtensionData.Info is null)
             {
                 var notNull = processor.DefineLabel();
                 processor
@@ -212,19 +250,19 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 processor
                     .LdArg(0)
                     .Call(BasicInfoContainer.MethodJsonReaderReadNextBlock)
-                    .LdLoc(answerVariable)
+                    .LdLoc(readOnlyArguments.AnswerVariable)
                     .Emit(OpCodes.Ret);
             }
             else
             {
-                var setMethod = extensionDataInfo.Info.SetMethod ?? throw new NullReferenceException();
+                var setMethod = readOnlyArguments.AnalyzeResult.ExtensionData.Info.SetMethod ?? throw new NullReferenceException();
                 processor
-                    .LdLocAddress(answerVariable)
+                    .LdLocAddress(readOnlyArguments.AnswerVariable)
                     .LdArg(0)
                     .LdArg(1)
                     .Call(BasicInfoContainer.MethodStringKeyObjectValueDictionaryFormatterDeserializeStatic)
                     .Call(setMethod)
-                    .LdLoc(answerVariable)
+                    .LdLoc(readOnlyArguments.AnswerVariable)
                     .Emit(OpCodes.Ret);
             }
         }
@@ -246,6 +284,37 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
         }
 
+        private static void DeserializeStatic_CreateInstanceBeforeDeserialization_WithExtensionData(in ReadOnlyArguments readOnlyArguments, LocalBuilder extensionDataVariable)
+        {
+            var processor = readOnlyArguments.Processor;
+
+            var lengthVariations = readOnlyArguments.Dictionary.LengthVariations;
+            Span<Label> destinations = stackalloc Label[lengthVariations.Length];
+            for (var i = 0; i < destinations.Length; i++)
+            {
+                destinations[i] = processor.DefineLabel();
+            }
+
+            var possibleLengthCount = readOnlyArguments.Dictionary.Table.Length;
+            EmbedSwitchLength(processor, lengthVariations, destinations, possibleLengthCount, readOnlyArguments.DefaultLabel);
+
+            // default case
+            processor.MarkLabel(readOnlyArguments.DefaultLabel);
+            processor
+                .LdArg(0)
+                .Call(BasicInfoContainer.MethodJsonReaderSkipWhiteSpace) // reader.ReadSkipWhiteSpace();
+                .LdLoc(extensionDataVariable)
+                .LdLoc(readOnlyArguments.NameVariable)
+                .Call(BasicInfoContainer.MethodNullableStringDeserializeStaticInnerQuotation)
+                .LdArg(0)
+                .LdArg(1)
+                .Call(BasicInfoContainer.MethodObjectFormatterDeserializeStatic)
+                .Call(BasicInfoContainer.MethodStringKeyObjectValueDictionaryAdd)
+                .BrShort(readOnlyArguments.LoopStartLabel); // continue;
+
+            非default(readOnlyArguments, processor, destinations, possibleLengthCount);
+        }
+
         private static void DeserializeStatic_CreateInstanceBeforeDeserialization_NoExtensionData(in ReadOnlyArguments readOnlyArguments)
         {
             var lengthVariations = readOnlyArguments.Dictionary.LengthVariations;
@@ -259,9 +328,8 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             var possibleLengthCount = readOnlyArguments.Dictionary.Table.Length;
             EmbedSwitchLength(processor, lengthVariations, destinations, possibleLengthCount, readOnlyArguments.DefaultLabel);
 
-            processor.MarkLabel(readOnlyArguments.DefaultLabel); // default:
-
             // default case
+            processor.MarkLabel(readOnlyArguments.DefaultLabel);
             processor
                 .LdArg(0)
                 .Call(BasicInfoContainer.MethodJsonReaderSkipWhiteSpace) // reader.ReadSkipWhiteSpace();

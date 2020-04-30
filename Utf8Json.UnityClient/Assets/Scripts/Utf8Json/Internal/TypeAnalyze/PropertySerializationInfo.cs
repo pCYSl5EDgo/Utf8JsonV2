@@ -12,10 +12,8 @@ namespace Utf8Json.Internal
 
 #if CSHARP_8_OR_NEWER
         public JsonFormatterAttribute? FormatterInfo { get; }
-        public MethodInfo? AddMethodInfo { get; }
 #else
         public JsonFormatterAttribute FormatterInfo { get; }
-        public MethodInfo AddMethodInfo { get; }
 #endif
 
         public Type TargetType => Info.PropertyType;
@@ -36,8 +34,6 @@ namespace Utf8Json.Internal
             MemberName = name;
             FormatterInfo = formatterInfo;
             IsFormatterDirect = DirectTypeEnumHelper.FromTypeAndFormatter(info.PropertyType, FormatterInfo?.FormatterType);
-            var addAttribute = info.GetCustomAttribute<AddAttribute>();
-            AddMethodInfo = addAttribute?.GetMethod(addAttribute.Type ?? info.PropertyType);
         }
 
         public int CompareTo(PropertySerializationInfo other)

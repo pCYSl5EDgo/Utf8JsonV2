@@ -17,10 +17,8 @@ namespace Utf8Json.Internal
 
 #if CSHARP_8_OR_NEWER
         JsonFormatterAttribute? FormatterInfo { get; }
-        MethodInfo? AddMethodInfo { get; }
 #else
         JsonFormatterAttribute FormatterInfo { get; }
-        MethodInfo AddMethodInfo { get; }
 #endif
     }
 

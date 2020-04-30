@@ -123,7 +123,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             for (var index = 0; index < result.PropertyValueTypeArray.Length; index++)
             {
                 ref var member = ref result.PropertyValueTypeArray[index];
-                if (member.Info.SetMethod is null && member.AddMethodInfo is null)
+                if (member.Info.SetMethod is null)
                 {
                     continue;
                 }
@@ -146,7 +146,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             for (var index = 0; index < result.PropertyReferenceTypeArray.Length; index++)
             {
                 ref var member = ref result.PropertyReferenceTypeArray[index];
-                if (member.Info.SetMethod is null && member.AddMethodInfo is null)
+                if (member.Info.SetMethod is null)
                 {
                     continue;
                 }
@@ -169,7 +169,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             for (var index = 0; index < result.PropertyValueTypeShouldSerializeArray.Length; index++)
             {
                 ref var member = ref result.PropertyValueTypeShouldSerializeArray[index];
-                if (member.Info.SetMethod is null && member.AddMethodInfo is null)
+                if (member.Info.SetMethod is null)
                 {
                     continue;
                 }
@@ -192,7 +192,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             for (var index = 0; index < result.PropertyReferenceTypeShouldSerializeArray.Length; index++)
             {
                 ref var member = ref result.PropertyReferenceTypeShouldSerializeArray[index];
-                if (member.Info.SetMethod is null && member.AddMethodInfo is null)
+                if (member.Info.SetMethod is null)
                 {
                     continue;
                 }
