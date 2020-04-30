@@ -204,17 +204,18 @@ namespace Utf8Json.Test
 
             [SerializeField] private string B;
 
-            public string C { get; }
+            public string C { get; private set; }
 
             [NonSerialized] public int D;
 
             public bool ShouldSerializeB()
             {
+                if (B is null) return false;
                 return B.Length < 14;
             }
 
-            //[JsonExtensionData]
-            private Dictionary<string, object> Dictionary { get; }
+            [JsonExtensionData]
+            public Dictionary<string, object> Dictionary { get; private set; }
 
             public Callback(string b)
             {
@@ -242,13 +243,11 @@ namespace Utf8Json.Test
         {
             var value = new Callback(v);
             var bytes = JsonSerializer.Serialize(value);
-            TestContext.WriteLine(Encoding.UTF8.GetString(bytes));
             var deserialize = JsonSerializer.Deserialize<Callback>(bytes);
-            TestContext.WriteLine(deserialize.A);
-            TestContext.WriteLine(deserialize.D);
-            TestContext.WriteLine(deserialize.C);
-            TestContext.WriteLine(deserialize.ShouldSerializeB());
-            Assert.True(false);
+            Assert.AreEqual(value.C, deserialize.C);
+            Assert.AreEqual(value.A, deserialize.A);
+            Assert.AreEqual(0, deserialize.D);
+            Assert.AreEqual(value.Dictionary.Count, deserialize.Dictionary.Count);
         }
 
         //[Test]
