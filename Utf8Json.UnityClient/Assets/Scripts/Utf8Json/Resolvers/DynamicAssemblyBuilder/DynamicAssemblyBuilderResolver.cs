@@ -66,11 +66,13 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         // Unityというか多分Mono環境ではUnverifiableCodeAttributeを追加せず非publicメンバにアクセスすると死ぬ
         private static void AddUnverifiable()
         {
+            /*
+            えるしっているか、Mono環境ではAssemblyBuilderないしModuleBuilderに対して未定義な属性をGetCustomAttributeで求めると即死する
             var unverifiableCodeAttribute = moduleBuilder.GetCustomAttribute<System.Security.UnverifiableCodeAttribute>();
             if (!(unverifiableCodeAttribute is null))
             {
                 return;
-            }
+            }*/
 
             var attribute = typeof(System.Security.UnverifiableCodeAttribute);
             var ctor = attribute.GetConstructor(Array.Empty<Type>());
@@ -82,6 +84,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             moduleBuilder.SetCustomAttribute(new CustomAttributeBuilder(ctor, Array.Empty<object>()));
         }
 
+        #region IgnoresAccessChecksTo
         private static void EnsurePrivateAccess(Type targetType)
         {
             assemblyDictionary.GetOrAdd(targetType.Assembly, FactoryOfIgnoresAccess);
@@ -89,12 +92,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
         private static object FactoryOfIgnoresAccess(Assembly assembly)
         {
-#if UNITY_2018_4_OR_NEWER
-            UnityEngine.Debug.Log(assembly.FullName);
-#else
-            Console.WriteLine(assembly.FullName);
-#endif
-            // InternalsVisibleTo declarations cannot have a version, culture, public key token, or processor architecture specified.
+            // IgnoresAccessChecksTo declarations cannot have a version, culture, public key token, or processor architecture specified.
             var name = assembly.GetName().Name ?? throw new NullReferenceException();
             assemblyBuilder?.SetCustomAttribute(new CustomAttributeBuilder(constructorIgnoresAccessChecksToAttribute, new object[]
             {
@@ -177,6 +175,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
             return constructor;
         }
+        #endregion
 
         public IJsonFormatter[] CollectCurrentRegisteredFormatters()
         {
