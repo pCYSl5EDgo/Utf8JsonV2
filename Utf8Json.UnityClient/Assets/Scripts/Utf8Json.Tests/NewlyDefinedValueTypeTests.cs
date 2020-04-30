@@ -82,10 +82,9 @@ namespace Utf8Json.Test
 
         public struct X
         {
-            public int C { get; }
+            public int C { get; private set; }
             [SerializeField] private readonly int b;
 
-            [SerializationConstructor]
             public X(int c, int b)
             {
                 this.C = c;
@@ -250,7 +249,7 @@ namespace Utf8Json.Test
             Assert.AreEqual(value.Dictionary.Count, deserialize.Dictionary.Count);
         }
 
-        //[Test]
+        [Test]
         public void EmptyStructTest()
         {
             var value = new EmptyStruct();
@@ -258,9 +257,9 @@ namespace Utf8Json.Test
             JsonSerializer.Deserialize<EmptyStruct>(bytes);
         }
 
-        //[TestCase(0, 0)]
-        //[TestCase(1, 2)]
-        //[TestCase(33, -4)]
+        [TestCase(0, 0)]
+        [TestCase(1, 2)]
+        [TestCase(33, -4)]
         public void XTest(int a, int b)
         {
             var value = new X(a, b);
@@ -270,14 +269,13 @@ namespace Utf8Json.Test
             Assert.IsTrue(deserialize.SameB(b));
         }
 
-        //[TestCase("")]
-        //[TestCase("null")]
-        //[TestCase(default(string))]
-        //[TestCase("大好きなのはあなた")]
+        [TestCase("")]
+        [TestCase("null")]
+        [TestCase(default(string))]
+        [TestCase("大好きなのはあなた")]
         public void YTest(string value)
         {
             var bytes = JsonSerializer.Serialize(new Y { A = value });
-            TestContext.WriteLine(Encoding.UTF8.GetString(bytes));
             var deserialize = JsonSerializer.Deserialize<Y>(bytes);
             Assert.AreEqual(value, deserialize.A);
         }
