@@ -123,23 +123,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
         }
 
-        public static void DeserializeStatic(MethodBuilder deserializeStatic, in TypeAnalyzeResult analyzeResult)
-        {
-            deserializeStatic.InitLocals = true;
-            var processor = deserializeStatic.GetILGenerator();
-            var returnType = deserializeStatic.ReturnType;
-            DeserializeStaticImpl(analyzeResult, processor, returnType);
-        }
-
-        public static void DeserializeStatic(DynamicMethod deserializeStatic, in TypeAnalyzeResult analyzeResult)
-        {
-            deserializeStatic.InitLocals = true;
-            var processor = deserializeStatic.GetILGenerator();
-            var returnType = deserializeStatic.ReturnType;
-            DeserializeStaticImpl(analyzeResult, processor, returnType);
-        }
-
-        private static void DeserializeStaticImpl(in TypeAnalyzeResult analyzeResult, ILGenerator processor, Type returnType)
+        public static void DeserializeStatic(in TypeAnalyzeResult analyzeResult, ILGenerator processor, Type returnType)
         {
             ref readonly var extensionDataInfo = ref analyzeResult.ExtensionData;
             var answerVariable = processor.DeclareLocal(returnType);

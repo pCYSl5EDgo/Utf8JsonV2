@@ -252,8 +252,8 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 GenerateIntermediateLanguageCodesForSerialize(serializeStatic, builderSet.Serialize);
                 GenerateIntermediateLanguageCodesForDeserialize(deserializeStatic, builderSet.Deserialize);
 
-                ValueTypeSerializeStaticHelper.SerializeStatic(builderSet.Type, serializeStatic, in analyzeResult, dataFieldDictionary);
-                ValueTypeDeserializeStaticHelper.DeserializeStatic(deserializeStatic, in analyzeResult);
+                ValueTypeSerializeStaticHelper.SerializeStatic(builderSet.Type, analyzeResult, dataFieldDictionary, serializeStatic.GetILGenerator());
+                ValueTypeDeserializeStaticHelper.DeserializeStatic(analyzeResult, deserializeStatic.GetILGenerator(), targetType);
                 return Closing(builderSet.Type);
 #endif
             }
@@ -310,6 +310,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             serializeStatic.DefineParameter(1, ParameterAttributes.None, "writer");
             serializeStatic.DefineParameter(2, ParameterAttributes.None, "value");
             serializeStatic.DefineParameter(3, ParameterAttributes.None, "options");
+            serializeStatic.InitLocals = false;
             return serializeStatic;
         }
 
@@ -322,6 +323,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             var deserializeStatic = typeBuilder.DefineMethod("DeserializeStatic", StaticMethodFlags, targetType, readerParams);
             deserializeStatic.DefineParameter(1, ParameterAttributes.None, "reader");
             deserializeStatic.DefineParameter(2, ParameterAttributes.None, "options");
+            deserializeStatic.InitLocals = true;
             return deserializeStatic;
         }
 

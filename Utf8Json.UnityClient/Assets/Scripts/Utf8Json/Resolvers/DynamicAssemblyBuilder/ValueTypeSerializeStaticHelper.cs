@@ -14,10 +14,8 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 {
     public static class ValueTypeSerializeStaticHelper
     {
-        public static void SerializeStatic(TypeBuilder typeBuilder, MethodBuilder serializeStatic, in TypeAnalyzeResult analyzeResult, BinaryDictionary dataFieldDictionary)
+        public static void SerializeStatic(TypeBuilder typeBuilder, in TypeAnalyzeResult analyzeResult, BinaryDictionary dataFieldDictionary, ILGenerator processor)
         {
-            serializeStatic.InitLocals = false;
-            var processor = serializeStatic.GetILGenerator();
             var spanVariable = processor.DeclareLocal(typeof(Span<byte>));
 
             if (analyzeResult.OnSerializing.Length != 0)
