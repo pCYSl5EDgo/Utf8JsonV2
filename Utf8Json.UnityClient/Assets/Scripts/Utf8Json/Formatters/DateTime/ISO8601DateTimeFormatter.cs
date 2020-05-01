@@ -27,18 +27,22 @@ namespace Utf8Json.Formatters
             const int baseLength = 19 + 2; // {YEAR}-{MONTH}-{DAY}T{Hour}:{Minute}:{Second} + quotation
 
             Span<byte> span;
+            int sizeHint;
             switch (value.Kind)
             {
                 case DateTimeKind.Local:
-                    span = writer.Writer.GetSpan(baseLength + 6 + (nanoSec == 0 ? 0 : 8));
+                    sizeHint = baseLength + 6 + (nanoSec == 0 ? 0 : 8);
+                    span = writer.Writer.GetSpan(sizeHint);
                     break;
                 case DateTimeKind.Utc:
-                    span = writer.Writer.GetSpan(baseLength + 1 + (nanoSec == 0 ? 0 : 8));
+                    sizeHint = baseLength + 1 + (nanoSec == 0 ? 0 : 8);
+                    span = writer.Writer.GetSpan(sizeHint);
                     break;
                 // ReSharper disable once RedundantCaseLabel
                 case DateTimeKind.Unspecified:
                 default:
-                    span = writer.Writer.GetSpan(baseLength + (nanoSec == 0 ? 0 : 8));
+                    sizeHint = baseLength + (nanoSec == 0 ? 0 : 8);
+                    span = writer.Writer.GetSpan(sizeHint);
                     break;
             }
 
@@ -323,6 +327,8 @@ namespace Utf8Json.Formatters
             }
 
             span[0] = ((byte)'\"');
+
+            writer.Writer.Advance(sizeHint);
         }
 
         public DateTime Deserialize(ref JsonReader reader, JsonSerializerOptions options)
