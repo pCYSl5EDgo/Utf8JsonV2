@@ -2,14 +2,26 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 using System;
+using System.Text;
+using V2::Utf8Json;
 
 namespace Utf8JsonBenchmark
 {
+    public struct Y
+    {
+        public string A { get; set; }
+    }
+
     internal class Program
     {
         private static void Main()
         {
-            BenchmarkRunner.Run<JsonBooleanTester>();
+            var value = new Y {A = "ほげほげほげほげ"};
+            var bytes = JsonSerializer.Serialize(value);
+            Console.WriteLine(Encoding.UTF8.GetString(bytes));
+            var deserialize = JsonSerializer.Deserialize<Y>(bytes);
+            Console.WriteLine(deserialize.A);
+            /*BenchmarkRunner.Run<JsonBooleanTester>();
             BenchmarkRunner.Run<JsonUInt32ArrayTester>();
             BenchmarkRunner.Run<JsonInt32Tester>();
             BenchmarkRunner.Run<JsonInt32DeserializeTester>();
@@ -22,10 +34,11 @@ namespace Utf8JsonBenchmark
             BenchmarkRunner.Run<JsonEnumByteTester>();
             BenchmarkRunner.Run<JsonEnumUInt64Tester>();
             BenchmarkRunner.Run<JsonEnumUInt16Tester>();
-            BenchmarkRunner.Run<Json8IntegerFieldObjectSerializeTester>();
+            BenchmarkRunner.Run<Json8IntegerFieldObjectSerializeTester>();*/
         }
     }
 
+    /*
     [MemoryDiagnoser]
     public class Json8IntegerFieldObjectSerializeTester
     {
@@ -521,5 +534,5 @@ namespace Utf8JsonBenchmark
         {
             return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes('\r');
         }
-    }
+    }*/
 }

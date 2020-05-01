@@ -89,9 +89,9 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
         }
 
-        public static void WriteLiteral(this ILGenerator processor, LocalBuilder spanVariable, int literal)
+        public static ILGenerator WriteLiteral(this ILGenerator processor, LocalBuilder spanVariable, int literal)
         {
-            processor
+            return processor
                 .LdArg(0)
                 .LdFieldAddress(FieldJsonWriterWriter)
                 .Dup()

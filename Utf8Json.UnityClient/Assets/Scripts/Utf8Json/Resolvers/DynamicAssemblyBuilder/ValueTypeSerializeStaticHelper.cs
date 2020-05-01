@@ -9,12 +9,13 @@ using Utf8Json.Formatters;
 using Utf8Json.Internal;
 using Utf8Json.Internal.Reflection;
 // ReSharper disable RedundantCaseLabel
+// ReSharper disable UseIndexFromEndExpression
 
 namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 {
     public static class ValueTypeSerializeStaticHelper
     {
-        public static void SerializeStatic(TypeBuilder typeBuilder, in TypeAnalyzeResult analyzeResult, BinaryDictionary dataFieldDictionary, ILGenerator processor)
+        public static void SerializeStatic(in TypeAnalyzeResult analyzeResult, ILGenerator processor)
         {
             var spanVariable = processor.DeclareLocal(typeof(Span<byte>));
 
@@ -23,33 +24,27 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 CallCallbacks(analyzeResult.OnSerializing, processor);
             }
 
-            var didNotBeginObjectDuringValueTypePeriod = TrySerializeStaticOfValueTypeFieldAndProperty(typeBuilder, analyzeResult, dataFieldDictionary, processor, spanVariable);
+            var didNotBeginObjectDuringValueTypePeriod = TrySerializeStaticOfValueTypeFieldAndProperty(analyzeResult, processor, spanVariable);
 
             var detectIsFirstVariable = default(LocalBuilder);
             if (analyzeResult.FieldValueTypeShouldSerializeArray.Length != 0)
             {
                 if (didNotBeginObjectDuringValueTypePeriod)
                 {
-                    SerializeStatic_ValueType_ShouldSerialize_DetectIsFirst(
-                        typeBuilder,
-                        analyzeResult.FieldValueTypeShouldSerializeArray,
+                    SerializeStatic_ValueType_ShouldSerialize_DetectIsFirst(analyzeResult.FieldValueTypeShouldSerializeArray,
                         GetShouldSerializeFieldInfo,
                         processor,
                         spanVariable,
-                        dataFieldDictionary,
                         IntermediateLanguageGeneratorUtility.LdField,
                         ref detectIsFirstVariable
                     );
                 }
                 else
                 {
-                    SerializeStatic_ValueType_ShouldSerialize_NotFirst(
-                        typeBuilder,
-                        analyzeResult.FieldValueTypeShouldSerializeArray,
+                    SerializeStatic_ValueType_ShouldSerialize_NotFirst(analyzeResult.FieldValueTypeShouldSerializeArray,
                         GetShouldSerializeFieldInfo,
                         processor,
                         spanVariable,
-                        dataFieldDictionary,
                         IntermediateLanguageGeneratorUtility.LdField
                     );
                 }
@@ -59,26 +54,20 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             {
                 if (didNotBeginObjectDuringValueTypePeriod)
                 {
-                    SerializeStatic_ValueType_ShouldSerialize_DetectIsFirst(
-                        typeBuilder,
-                        analyzeResult.PropertyValueTypeShouldSerializeArray,
+                    SerializeStatic_ValueType_ShouldSerialize_DetectIsFirst(analyzeResult.PropertyValueTypeShouldSerializeArray,
                         GetShouldSerializeGetMethod,
                         processor,
                         spanVariable,
-                        dataFieldDictionary,
                         IntermediateLanguageGeneratorUtility.Call,
                         ref detectIsFirstVariable
                     );
                 }
                 else
                 {
-                    SerializeStatic_ValueType_ShouldSerialize_NotFirst(
-                        typeBuilder,
-                        analyzeResult.PropertyValueTypeShouldSerializeArray,
+                    SerializeStatic_ValueType_ShouldSerialize_NotFirst(analyzeResult.PropertyValueTypeShouldSerializeArray,
                         GetShouldSerializeGetMethod,
                         processor,
                         spanVariable,
-                        dataFieldDictionary,
                         IntermediateLanguageGeneratorUtility.Call
                     );
                 }
@@ -90,13 +79,10 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             {
                 if (didNotBeginObjectDuringValueTypePeriod)
                 {
-                    SerializeStatic_ReferenceType_DetectIsFirst(
-                        typeBuilder,
-                        analyzeResult.FieldReferenceTypeArray,
+                    SerializeStatic_ReferenceType_DetectIsFirst(analyzeResult.FieldReferenceTypeArray,
                         GetFieldInfo,
                         processor,
                         spanVariable,
-                        dataFieldDictionary,
                         IntermediateLanguageGeneratorUtility.LdField,
                         ref ignoreNullValuesVariable,
                         ref referenceVariable,
@@ -105,13 +91,10 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 }
                 else
                 {
-                    SerializeStatic_ReferenceType_NotFirst(
-                        typeBuilder,
-                        analyzeResult.FieldReferenceTypeArray,
+                    SerializeStatic_ReferenceType_NotFirst(analyzeResult.FieldReferenceTypeArray,
                         GetFieldInfo,
                         processor,
                         spanVariable,
-                        dataFieldDictionary,
                         IntermediateLanguageGeneratorUtility.LdField,
                         ref ignoreNullValuesVariable,
                         ref referenceVariable
@@ -123,13 +106,10 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             {
                 if (didNotBeginObjectDuringValueTypePeriod)
                 {
-                    SerializeStatic_ReferenceType_DetectIsFirst(
-                        typeBuilder,
-                        analyzeResult.PropertyReferenceTypeArray,
+                    SerializeStatic_ReferenceType_DetectIsFirst(analyzeResult.PropertyReferenceTypeArray,
                         GetGetMethod,
                         processor,
                         spanVariable,
-                        dataFieldDictionary,
                         IntermediateLanguageGeneratorUtility.Call,
                         ref ignoreNullValuesVariable,
                         ref referenceVariable,
@@ -138,13 +118,10 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 }
                 else
                 {
-                    SerializeStatic_ReferenceType_NotFirst(
-                        typeBuilder,
-                        analyzeResult.PropertyReferenceTypeArray,
+                    SerializeStatic_ReferenceType_NotFirst(analyzeResult.PropertyReferenceTypeArray,
                         GetGetMethod,
                         processor,
                         spanVariable,
-                        dataFieldDictionary,
                         IntermediateLanguageGeneratorUtility.Call,
                         ref ignoreNullValuesVariable,
                         ref referenceVariable
@@ -156,13 +133,10 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             {
                 if (didNotBeginObjectDuringValueTypePeriod)
                 {
-                    SerializeStatic_ReferenceType_ShouldSerialize_DetectIsFirst(
-                        typeBuilder,
-                        analyzeResult.FieldReferenceTypeShouldSerializeArray,
+                    SerializeStatic_ReferenceType_ShouldSerialize_DetectIsFirst(analyzeResult.FieldReferenceTypeShouldSerializeArray,
                         GetShouldSerializeFieldInfo,
                         processor,
                         spanVariable,
-                        dataFieldDictionary,
                         IntermediateLanguageGeneratorUtility.LdField,
                         ref ignoreNullValuesVariable,
                         ref referenceVariable,
@@ -171,13 +145,10 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 }
                 else
                 {
-                    SerializeStatic_ReferenceType_ShouldSerialize_NotFirst(
-                        typeBuilder,
-                        analyzeResult.FieldReferenceTypeShouldSerializeArray,
+                    SerializeStatic_ReferenceType_ShouldSerialize_NotFirst(analyzeResult.FieldReferenceTypeShouldSerializeArray,
                         GetShouldSerializeFieldInfo,
                         processor,
                         spanVariable,
-                        dataFieldDictionary,
                         IntermediateLanguageGeneratorUtility.LdField,
                         ref ignoreNullValuesVariable,
                         ref referenceVariable
@@ -189,13 +160,10 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             {
                 if (didNotBeginObjectDuringValueTypePeriod)
                 {
-                    SerializeStatic_ReferenceType_ShouldSerialize_DetectIsFirst(
-                        typeBuilder,
-                        analyzeResult.PropertyReferenceTypeShouldSerializeArray,
+                    SerializeStatic_ReferenceType_ShouldSerialize_DetectIsFirst(analyzeResult.PropertyReferenceTypeShouldSerializeArray,
                         GetShouldSerializeGetMethod,
                         processor,
                         spanVariable,
-                        dataFieldDictionary,
                         IntermediateLanguageGeneratorUtility.Call,
                         ref ignoreNullValuesVariable,
                         ref referenceVariable,
@@ -204,13 +172,10 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 }
                 else
                 {
-                    SerializeStatic_ReferenceType_ShouldSerialize_NotFirst(
-                        typeBuilder,
-                        analyzeResult.PropertyReferenceTypeShouldSerializeArray,
+                    SerializeStatic_ReferenceType_ShouldSerialize_NotFirst(analyzeResult.PropertyReferenceTypeShouldSerializeArray,
                         GetShouldSerializeGetMethod,
                         processor,
                         spanVariable,
-                        dataFieldDictionary,
                         IntermediateLanguageGeneratorUtility.Call,
                         ref ignoreNullValuesVariable,
                         ref referenceVariable
@@ -334,12 +299,10 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         }
 
         private static void SerializeStatic_ReferenceType_ShouldSerialize_NotFirst<TContainer, T>(
-            TypeBuilder typeBuilder,
             TContainer[] members,
             Function<TContainer, T> func,
             ILGenerator processor,
             LocalBuilder spanVariable,
-            BinaryDictionary dataFieldDictionary,
             Func<ILGenerator, T, ILGenerator> loadTargetByFunc,
 #if CSHARP_8_OR_NEWER
             ref LocalBuilder? ignoreNullValuesVariable,
@@ -384,16 +347,21 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
                 processor.MarkLabel(doNotIgnoreNull);
 
-                EmbedReferenceTypeNotFirst(typeBuilder, processor, spanVariable, dataFieldDictionary, referenceVariable, ref info, objHelp);
+                EmbedReferenceTypeNotFirst(processor, spanVariable, referenceVariable, ref info, objHelp);
 
                 processor.MarkLabel(skipLabel);
             }
         }
 
-        private static void EmbedReferenceTypeNotFirst<TContainer>(TypeBuilder typeBuilder, ILGenerator processor, LocalBuilder spanVariable, BinaryDictionary dataFieldDictionary, LocalBuilder referenceVariable, ref TContainer info, object objHelp)
+        private static void EmbedReferenceTypeNotFirst<TContainer>(
+            ILGenerator processor,
+            LocalBuilder spanVariable,
+            LocalBuilder referenceVariable,
+            ref TContainer info,
+            object objHelp)
             where TContainer : struct, IMemberContainer
         {
-            EmbedPropertyNameNotBoolean(processor, info.MemberName, spanVariable, typeBuilder, false, dataFieldDictionary);
+            EmbedPropertyNameNotBoolean(processor, info.MemberName, spanVariable, false);
             switch (info.IsFormatterDirect)
             {
                 case DirectTypeEnum.String:
@@ -409,12 +377,10 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         }
 
         private static void SerializeStatic_ReferenceType_ShouldSerialize_DetectIsFirst<TContainer, T>(
-            TypeBuilder typeBuilder,
             TContainer[] members,
             Function<TContainer, T> func,
             ILGenerator processor,
             LocalBuilder spanVariable,
-            BinaryDictionary dataFieldDictionary,
             Func<ILGenerator, T, ILGenerator> loadTargetByFunc,
 #if CSHARP_8_OR_NEWER
             ref LocalBuilder? ignoreNullValuesVariable,
@@ -467,39 +433,36 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
                 processor.MarkLabel(doNotIgnoreNull);
 
-                EmbedReferenceTypeDetectFirst(typeBuilder, processor, spanVariable, dataFieldDictionary, referenceVariable, detectIsFirstVariable, ref info, objHelp);
+                EmbedReferenceTypeDetectFirst(processor, spanVariable, referenceVariable, detectIsFirstVariable, ref info, objHelp);
 
                 processor.MarkLabel(skipLabel);
             }
         }
 
-        private static bool TrySerializeStaticOfValueTypeFieldAndProperty(TypeBuilder typeBuilder, in TypeAnalyzeResult analyzeResult, BinaryDictionary dataFieldDictionary, ILGenerator processor, LocalBuilder spanVariable)
+        private static bool TrySerializeStaticOfValueTypeFieldAndProperty(
+            in TypeAnalyzeResult analyzeResult,
+            ILGenerator processor,
+            LocalBuilder spanVariable)
         {
             var didNotWriteBeginObject = analyzeResult.FieldValueTypeArray.Length == 0;
             if (analyzeResult.FieldValueTypeArray.Length != 0)
             {
-                SerializeStatic_ValueType(
-                    typeBuilder,
-                    analyzeResult.FieldValueTypeArray,
+                SerializeStatic_ValueType(analyzeResult.FieldValueTypeArray,
                     GetFieldInfo,
                     processor,
                     spanVariable,
                     true,
-                    dataFieldDictionary,
                     IntermediateLanguageGeneratorUtility.LdField
                 );
             }
 
             if (analyzeResult.PropertyValueTypeArray.Length != 0)
             {
-                didNotWriteBeginObject = SerializeStatic_ValueType(
-                    typeBuilder,
-                    analyzeResult.PropertyValueTypeArray,
+                didNotWriteBeginObject = SerializeStatic_ValueType(analyzeResult.PropertyValueTypeArray,
                     GetGetMethod,
                     processor,
                     spanVariable,
                     didNotWriteBeginObject,
-                    dataFieldDictionary,
                     IntermediateLanguageGeneratorUtility.Call
                 );
             }
@@ -522,12 +485,11 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             return answer;
         }
 
-        private static void SerializeStatic_ReferenceType_DetectIsFirst<TContainer, T>(TypeBuilder typeBuilder,
+        private static void SerializeStatic_ReferenceType_DetectIsFirst<TContainer, T>(
             TContainer[] members,
             Function<TContainer, T> func,
             ILGenerator processor,
             LocalBuilder spanVariable,
-            BinaryDictionary dataFieldDictionary,
             Func<ILGenerator, T, ILGenerator> loadTargetByFunc,
 #if CSHARP_8_OR_NEWER
             ref LocalBuilder? ignoreNullValuesVariable,
@@ -575,16 +537,22 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
                 processor.MarkLabel(doNotIgnoreNull);
 
-                EmbedReferenceTypeDetectFirst(typeBuilder, processor, spanVariable, dataFieldDictionary, referenceVariable, detectIsFirstVariable, ref info, objHelp);
+                EmbedReferenceTypeDetectFirst(processor, spanVariable, referenceVariable, detectIsFirstVariable, ref info, objHelp);
 
                 processor.MarkLabel(skipLabel);
             }
         }
 
-        private static void EmbedReferenceTypeDetectFirst<TContainer>(TypeBuilder typeBuilder, ILGenerator processor, LocalBuilder spanVariable, BinaryDictionary dataFieldDictionary, LocalBuilder referenceVariable, LocalBuilder detectIsFirstVariable, ref TContainer info, object objHelp)
+        private static void EmbedReferenceTypeDetectFirst<TContainer>(
+            ILGenerator processor,
+            LocalBuilder spanVariable,
+            LocalBuilder referenceVariable,
+            LocalBuilder detectIsFirstVariable,
+            ref TContainer info,
+            object objHelp)
             where TContainer : struct, IMemberContainer
         {
-            EmbedPropertyNameNotBoolean_DetectIsFirst(processor, info.MemberName, spanVariable, typeBuilder, dataFieldDictionary, detectIsFirstVariable);
+            EmbedPropertyNameNotBoolean_DetectIsFirst(processor, info.MemberName, spanVariable, detectIsFirstVariable);
             switch (info.IsFormatterDirect)
             {
                 case DirectTypeEnum.String:
@@ -599,12 +567,11 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
         }
 
-        private static void SerializeStatic_ReferenceType_NotFirst<TContainer, T>(TypeBuilder typeBuilder,
+        private static void SerializeStatic_ReferenceType_NotFirst<TContainer, T>(
             TContainer[] members,
             Function<TContainer, T> func,
             ILGenerator processor,
             LocalBuilder spanVariable,
-            BinaryDictionary dataFieldDictionary,
             Func<ILGenerator, T, ILGenerator> loadTargetByFunc,
 #if CSHARP_8_OR_NEWER
             ref LocalBuilder? ignoreNullValuesVariable,
@@ -645,19 +612,17 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
                 processor.MarkLabel(doNotIgnoreNull);
 
-                EmbedReferenceTypeNotFirst(typeBuilder, processor, spanVariable, dataFieldDictionary, referenceVariable, ref info, objHelp);
+                EmbedReferenceTypeNotFirst(processor, spanVariable, referenceVariable, ref info, objHelp);
 
                 processor.MarkLabel(skipLabel);
             }
         }
 
         private static void SerializeStatic_ValueType_ShouldSerialize_NotFirst<TContainer, T>(
-            TypeBuilder typeBuilder,
             TContainer[] members,
             Function<TContainer, T> func,
             ILGenerator processor,
             LocalBuilder spanVariable,
-            BinaryDictionary dataFieldDictionary,
             Func<ILGenerator, T, ILGenerator> loadTargetByFunc)
             where TContainer : struct, IShouldSerializeMemberContainer
             where T : class
@@ -677,17 +642,15 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     .Call(info.ShouldSerialize)
                     .BrFalseShort(skipLabel);
 
-                EmbedEachInfo_ValueType(typeBuilder, processor, spanVariable, dataFieldDictionary, loadTargetByFunc, ref info, false, t);
+                EmbedEachInfo_ValueType(processor, spanVariable, loadTargetByFunc, ref info, false, t);
 
                 processor.MarkLabel(skipLabel);
             }
         }
 
         private static void EmbedEachInfo_ValueType<TContainer, T>(
-            TypeBuilder typeBuilder,
             ILGenerator processor,
             LocalBuilder spanVariable,
-            BinaryDictionary dataFieldDictionary,
             Func<ILGenerator, T, ILGenerator> loadTargetByFunc,
             ref TContainer info,
             bool isFirst,
@@ -708,15 +671,15 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 case DirectTypeEnum.Single:
                 case DirectTypeEnum.Double:
                 case DirectTypeEnum.Char:
-                    EmbedPropertyNameNotBoolean(processor, info.MemberName, spanVariable, typeBuilder, isFirst, dataFieldDictionary);
+                    EmbedPropertyNameNotBoolean(processor, info.MemberName, spanVariable, isFirst);
                     LoadTargetValueType(processor.LdArg(0), loadTargetByFunc, t)
                         .Call(ReadWritePrimitive.MethodWritePrimitives[(int)info.IsFormatterDirect]);
                     break;
                 case DirectTypeEnum.Boolean:
-                    EmbedBoolean(processor, info.MemberName, t, spanVariable, typeBuilder, isFirst, dataFieldDictionary, loadTargetByFunc);
+                    EmbedBoolean(processor, info.MemberName, t, spanVariable, isFirst, loadTargetByFunc);
                     break;
                 case DirectTypeEnum.None:
-                    EmbedPropertyNameNotBoolean(processor, info.MemberName, spanVariable, typeBuilder, isFirst, dataFieldDictionary);
+                    EmbedPropertyNameNotBoolean(processor, info.MemberName, spanVariable, isFirst);
                     Embed_None(processor, ref info, loadTargetByFunc, t, LoadTargetValueType);
                     break;
                 case DirectTypeEnum.String:
@@ -726,12 +689,10 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         }
 
         private static void SerializeStatic_ValueType_ShouldSerialize_DetectIsFirst<TMemberContainer, T>(
-            TypeBuilder typeBuilder,
             TMemberContainer[] members,
             Function<TMemberContainer, T> func,
             ILGenerator processor,
             LocalBuilder spanVariable,
-            BinaryDictionary dataFieldDictionary,
             Func<ILGenerator, T, ILGenerator> loadTargetByFunc,
 #if CSHARP_8_OR_NEWER
             ref LocalBuilder? detectIsFirstVariable)
@@ -774,17 +735,17 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     case DirectTypeEnum.Single:
                     case DirectTypeEnum.Double:
                     case DirectTypeEnum.Char:
-                        EmbedPropertyNameNotBoolean_DetectIsFirst(processor, info.MemberName, spanVariable, typeBuilder, dataFieldDictionary, detectIsFirstVariable);
+                        EmbedPropertyNameNotBoolean_DetectIsFirst(processor, info.MemberName, spanVariable, detectIsFirstVariable);
                         loadTargetByFunc(processor
                             .LdArg(0)
                             .LdArgAddress(1), t)
                             .Call(ReadWritePrimitive.MethodWritePrimitives[(int)info.IsFormatterDirect]);
                         break;
                     case DirectTypeEnum.Boolean:
-                        EmbedBoolean_DetectIsFirst(processor, info.MemberName, t, spanVariable, typeBuilder, dataFieldDictionary, loadTargetByFunc, detectIsFirstVariable, skipLabel);
+                        EmbedBoolean_DetectIsFirst(processor, info.MemberName, t, spanVariable, loadTargetByFunc, detectIsFirstVariable, skipLabel);
                         break;
                     case DirectTypeEnum.None:
-                        EmbedPropertyNameNotBoolean_DetectIsFirst(processor, info.MemberName, spanVariable, typeBuilder, dataFieldDictionary, detectIsFirstVariable);
+                        EmbedPropertyNameNotBoolean_DetectIsFirst(processor, info.MemberName, spanVariable, detectIsFirstVariable);
                         // ReSharper disable once RedundantTypeArgumentsOfMethod
                         Embed_None(processor, ref info, loadTargetByFunc, t, LoadTargetValueType<T>);
                         break;
@@ -802,8 +763,6 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             string memberName,
             T t,
             LocalBuilder spanVariable,
-            TypeBuilder typeBuilder,
-            BinaryDictionary dataFieldDictionary,
             Func<ILGenerator, T, ILGenerator> process,
             LocalBuilder detectIsFirstVariable,
             Label endLabel)
@@ -825,19 +784,15 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             processor
                 .LdLoc(detectIsFirstVariable)
                 .BrTrueShort(whenFirstTime);
-            FieldInfo wantsToEmbed;
-            int offset;
+
             {
                 var trueLabel = processor.DefineLabel();
                 process(processor.LdArgAddress(1), t).Emit(OpCodes.Brtrue_S, trueLabel);
 
-                (wantsToEmbed, offset) = processor.Copy(name, typeBuilder, spanVariable, dataFieldDictionary);
-                processor.Emit(OpCodes.Br_S, endLabel);
+                processor.Copy(name, spanVariable).Emit(OpCodes.Br_S, endLabel);
 
                 processor.MarkLabel(trueLabel);
-                processor.Copy(spanVariable, offset, memberNameLength + 2, wantsToEmbed);
-
-                processor.Emit(OpCodes.Br_S, writeTrueLabel);
+                processor.Copy(name.Slice(0, memberNameLength + 2), spanVariable).Emit(OpCodes.Br_S, writeTrueLabel);
             }
 
             processor.MarkLabel(whenFirstTime);
@@ -849,12 +804,10 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     .Call(BasicInfoContainer.MethodJsonWriterWriteBeginObject);
                 var trueLabel = processor.DefineLabel();
                 process(processor.LdArgAddress(1), t).BrTrueShort(trueLabel);
-
-                processor.Copy(spanVariable, offset + 1, memberNameLength + 8, wantsToEmbed);
-                processor.Emit(OpCodes.Br_S, endLabel);
+                processor.Copy(name.Slice(1), spanVariable).Emit(OpCodes.Br_S, endLabel);
 
                 processor.MarkLabel(trueLabel);
-                processor.Copy(spanVariable, offset + 1, memberNameLength + 3, wantsToEmbed);
+                processor.Copy(name.Slice(1, memberNameLength + 1), spanVariable);
             }
 
             processor.MarkLabel(writeTrueLabel);
@@ -865,34 +818,29 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             ILGenerator processor,
             string memberName,
             LocalBuilder spanVariable,
-            TypeBuilder typeBuilder,
-            BinaryDictionary dataFieldDictionary,
             LocalBuilder detectIsFirstVariable)
         {
             var memberNameLength = NullableStringFormatter.CalcByteLength(memberName);
-            Span<byte> propertyName = stackalloc byte[memberNameLength + 2];
-            propertyName[0] = (byte)',';
-            propertyName[propertyName.Length - 1] = (byte)':';
-            NullableStringFormatter.SerializeSpanNotNull(memberName, propertyName.Slice(1, memberNameLength));
+            Span<byte> name = stackalloc byte[memberNameLength + 2];
+            name[0] = (byte)',';
+            name[name.Length - 1] = (byte)':';
+            NullableStringFormatter.SerializeSpanNotNull(memberName, name.Slice(1, memberNameLength));
 
             var whenFirstTime = processor.DefineLabel();
             processor
                 .LdLoc(detectIsFirstVariable)
                 .BrTrueShort(whenFirstTime);
 
-            var (wantsToEmbed, offset) = processor.Copy(propertyName, typeBuilder, spanVariable, dataFieldDictionary);
             var endLabel = processor.DefineLabel();
-            processor.BrShort(endLabel);
+            processor.Copy(name, spanVariable).BrShort(endLabel);
             processor.MarkLabel(whenFirstTime);
-            {
-                processor
-                    .LdcI4(0)
-                    .StLoc(detectIsFirstVariable)
-                    .LdArg(0)
-                    .Call(BasicInfoContainer.MethodJsonWriterWriteBeginObject)
-                    .Copy(spanVariable, offset + 1, memberNameLength + 1, wantsToEmbed);
-            }
-            processor.MarkLabel(endLabel);
+            processor
+                .LdcI4(0)
+                .StLoc(detectIsFirstVariable)
+                .LdArg(0)
+                .Call(BasicInfoContainer.MethodJsonWriterWriteBeginObject)
+                .Copy(name.Slice(1, memberNameLength + 1), spanVariable)
+                .MarkLabel(endLabel);
         }
 
         private static void CallCallbacks(ReadOnlySpan<MethodInfo> methods, ILGenerator processor)
@@ -925,14 +873,11 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         private static FieldInfo GetFieldInfo(in FieldSerializationInfo info) => info.Info;
         private static FieldInfo GetShouldSerializeFieldInfo(in ShouldSerializeFieldSerializationInfo info) => info.Info;
 
-        private static bool SerializeStatic_ValueType<TContainer, T>(
-            TypeBuilder typeBuilder,
-            TContainer[] members,
+        private static bool SerializeStatic_ValueType<TContainer, T>(TContainer[] members,
             Function<TContainer, T> func,
             ILGenerator processor,
             LocalBuilder spanVariable,
             bool isFirst,
-            BinaryDictionary dataFieldDictionary,
             Func<ILGenerator, T, ILGenerator> process)
             where TContainer : struct, IMemberContainer
             where T : class
@@ -945,7 +890,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     continue;
                 }
 
-                EmbedEachInfo_ValueType(typeBuilder, processor, spanVariable, dataFieldDictionary, process, ref info, isFirst, t);
+                EmbedEachInfo_ValueType(processor, spanVariable, process, ref info, isFirst, t);
 
                 isFirst = false;
             }
@@ -1043,7 +988,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             return true;
         }
 
-        private static void EmbedBoolean<T>(ILGenerator processor, string memberName, T t, LocalBuilder spanVariable, TypeBuilder typeBuilder, bool isFirst, BinaryDictionary dataFieldDictionary, Func<ILGenerator, T, ILGenerator> process)
+        private static void EmbedBoolean<T>(ILGenerator processor, string memberName, T t, LocalBuilder spanVariable, bool isFirst, Func<ILGenerator, T, ILGenerator> process)
             where T : class
         {
             var memberNameLength = NullableStringFormatter.CalcByteLength(memberName);
@@ -1062,24 +1007,22 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
             process(processor.LdArgAddress(1), t).Emit(OpCodes.Brtrue_S, trueLabel);
 
-            var (wantsToEmbed, offset) = processor.Copy(name, typeBuilder, spanVariable, dataFieldDictionary);
-            processor.Emit(OpCodes.Br_S, endLabel);
+            processor.Copy(name, spanVariable).Emit(OpCodes.Br_S, endLabel);
             processor.MarkLabel(trueLabel);
-            processor.Copy(spanVariable, offset, memberNameLength + 4, wantsToEmbed);
-
-            processor.WriteLiteral(spanVariable, BasicInfoContainer.True);
-            processor.MarkLabel(endLabel);
+            processor
+                .Copy(name.Slice(0, memberNameLength + 2), spanVariable)
+                .WriteLiteral(spanVariable, BasicInfoContainer.True)
+                .MarkLabel(endLabel);
         }
 
-        private static void EmbedPropertyNameNotBoolean(ILGenerator processor, string memberName, LocalBuilder spanVariable, TypeBuilder typeBuilder, bool isFirst, BinaryDictionary dataFieldDictionary)
+        private static void EmbedPropertyNameNotBoolean(ILGenerator processor, string memberName, LocalBuilder spanVariable, bool isFirst)
         {
             var memberNameLength = NullableStringFormatter.CalcByteLength(memberName);
-            Span<byte> propertyName = stackalloc byte[memberNameLength + 2];
-            propertyName[0] = (byte)(isFirst ? '{' : ',');
-            propertyName[propertyName.Length - 1] = (byte)':';
-            NullableStringFormatter.SerializeSpanNotNull(memberName, propertyName.Slice(1, memberNameLength));
-
-            processor.Copy(propertyName, typeBuilder, spanVariable, dataFieldDictionary);
+            Span<byte> name = stackalloc byte[memberNameLength + 2];
+            name[0] = (byte)(isFirst ? '{' : ',');
+            name[name.Length - 1] = (byte)':';
+            NullableStringFormatter.SerializeSpanNotNull(memberName, name.Slice(1, memberNameLength));
+            processor.Copy(name, spanVariable);
         }
 
 #if CSHARP_8_OR_NEWER

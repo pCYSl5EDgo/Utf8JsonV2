@@ -27,7 +27,6 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         private static readonly ConcurrentDictionary<Assembly, object> assemblyDictionary;
         private static readonly ModuleBuilder moduleBuilder;
         private static readonly ConstructorInfo constructorIgnoresAccessChecksToAttribute;
-        private static readonly BinaryDictionary dataFieldDictionary;
 
         static DynamicAssemblyBuilderResolver()
         {
@@ -39,12 +38,10 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 #if CSHARP_8_OR_NEWER
                 moduleBuilder = default!;
                 constructorIgnoresAccessChecksToAttribute = default!;
-                dataFieldDictionary = default!;
                 assemblyDictionary = default!;
 #else
                 moduleBuilder = default;
                 constructorIgnoresAccessChecksToAttribute = default;
-                dataFieldDictionary = default;
                 assemblyDictionary = default;
 #endif
                 return;
@@ -55,7 +52,6 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(assemblyName), AssemblyBuilderAccess.Run);
             moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName);
             AddUnverifiable();
-            dataFieldDictionary = new BinaryDictionary();
             constructorIgnoresAccessChecksToAttribute = CreateIgnoresAccessChecksToAttribute();
             assemblyDictionary = new ConcurrentDictionary<Assembly, object>();
             assemblyDictionary.GetOrAdd(assemblyBuilder, FactoryOfIgnoresAccess);
@@ -252,7 +248,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 GenerateIntermediateLanguageCodesForSerialize(serializeStatic, builderSet.Serialize);
                 GenerateIntermediateLanguageCodesForDeserialize(deserializeStatic, builderSet.Deserialize);
 
-                ValueTypeSerializeStaticHelper.SerializeStatic(builderSet.Type, analyzeResult, dataFieldDictionary, serializeStatic.GetILGenerator());
+                ValueTypeSerializeStaticHelper.SerializeStatic(analyzeResult, serializeStatic.GetILGenerator());
                 ValueTypeDeserializeStaticHelper.DeserializeStatic(analyzeResult, deserializeStatic.GetILGenerator(), targetType);
                 return Closing(builderSet.Type);
 #endif
