@@ -159,9 +159,27 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             return processor;
         }
 
+        public static ILGenerator StIndI1(this ILGenerator processor)
+        {
+            processor.Emit(OpCodes.Stind_I1);
+            return processor;
+        }
+
+        public static ILGenerator StIndI2(this ILGenerator processor)
+        {
+            processor.Emit(OpCodes.Stind_I2);
+            return processor;
+        }
+
         public static ILGenerator StIndI4(this ILGenerator processor)
         {
             processor.Emit(OpCodes.Stind_I4);
+            return processor;
+        }
+
+        public static ILGenerator StIndI8(this ILGenerator processor)
+        {
+            processor.Emit(OpCodes.Stind_I8);
             return processor;
         }
 
