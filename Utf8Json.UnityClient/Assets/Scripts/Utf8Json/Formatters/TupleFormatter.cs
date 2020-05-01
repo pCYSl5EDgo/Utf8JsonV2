@@ -109,7 +109,7 @@ namespace Utf8Json.Formatters
                             continue;
                     }
                 }
-                
+
                 reader.ReadNextBlock();
             }
 
@@ -120,7 +120,7 @@ namespace Utf8Json.Formatters
 #endif
             return answer;
         }
-        
+
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -265,7 +265,7 @@ namespace Utf8Json.Formatters
                             continue;
                     }
                 }
-                
+
                 reader.ReadNextBlock();
             }
 
@@ -276,7 +276,7 @@ namespace Utf8Json.Formatters
 #endif
             return answer;
         }
-        
+
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -442,7 +442,7 @@ namespace Utf8Json.Formatters
                             continue;
                     }
                 }
-                
+
                 reader.ReadNextBlock();
             }
 
@@ -453,7 +453,7 @@ namespace Utf8Json.Formatters
 #endif
             return answer;
         }
-        
+
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -640,7 +640,7 @@ namespace Utf8Json.Formatters
                             continue;
                     }
                 }
-                
+
                 reader.ReadNextBlock();
             }
 
@@ -651,7 +651,7 @@ namespace Utf8Json.Formatters
 #endif
             return answer;
         }
-        
+
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -859,7 +859,7 @@ namespace Utf8Json.Formatters
                             continue;
                     }
                 }
-                
+
                 reader.ReadNextBlock();
             }
 
@@ -870,7 +870,7 @@ namespace Utf8Json.Formatters
 #endif
             return answer;
         }
-        
+
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -1099,7 +1099,7 @@ namespace Utf8Json.Formatters
                             continue;
                     }
                 }
-                
+
                 reader.ReadNextBlock();
             }
 
@@ -1110,7 +1110,7 @@ namespace Utf8Json.Formatters
 #endif
             return answer;
         }
-        
+
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else

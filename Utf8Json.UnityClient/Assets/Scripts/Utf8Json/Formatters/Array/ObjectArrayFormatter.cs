@@ -22,7 +22,7 @@ namespace Utf8Json.Formatters
 #if CSHARP_8_OR_NEWER
             if (value is object?[] innerValue)
 #else
-            if(value is object[] innerValue)
+            if (value is object[] innerValue)
 #endif
             {
                 SerializeStatic(ref writer, innerValue, options);

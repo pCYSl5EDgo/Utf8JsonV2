@@ -48,7 +48,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
         private static void DefineEnumNumberDeserializeFromPropertyName(Type targetType, TypeBuilder typeBuilder, MethodInfo readNumber)
         {
-            var paramTypes = TypeArrayHolder.TypeArrayLength2;
+            var paramTypes = TypeArrayHolder.Length2;
             paramTypes[0] = typeof(JsonReader).MakeByRefType();
             paramTypes[1] = typeof(JsonSerializerOptions);
             var deserializeFromPropertyName = typeBuilder.DefineMethod(
@@ -81,7 +81,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
         private static void DefineEnumNumberSerializeToPropertyName(Type targetType, TypeBuilder typeBuilder, MethodInfo writeNumber)
         {
-            var typeHolder = TypeArrayHolder.TypeArrayLength3;
+            var typeHolder = TypeArrayHolder.Length3;
             typeHolder[0] = typeof(JsonWriter).MakeByRefType();
             typeHolder[1] = targetType;
             typeHolder[2] = typeof(JsonSerializerOptions);

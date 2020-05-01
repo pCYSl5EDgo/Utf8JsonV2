@@ -8,6 +8,6 @@ namespace Utf8Json.Test
     [TestFixture]
     public class AttributeFormatterTests
     {
-        
+
     }
 }

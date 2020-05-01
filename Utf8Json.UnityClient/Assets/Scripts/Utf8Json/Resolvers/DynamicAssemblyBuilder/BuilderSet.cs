@@ -38,7 +38,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 }
             );
 
-            var writerParams = TypeArrayHolder.TypeArrayLength3;
+            var writerParams = TypeArrayHolder.Length3;
             writerParams[0] = typeof(JsonWriter).MakeByRefType();
             writerParams[1] = targetType;
             writerParams[2] = typeof(JsonSerializerOptions);
@@ -50,7 +50,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             serialize.DefineParameter(2, ParameterAttributes.None, "value");
             serialize.DefineParameter(3, ParameterAttributes.None, "options");
 
-            var writerTypelessParams = TypeArrayHolder.TypeArrayLength3;
+            var writerTypelessParams = TypeArrayHolder.Length3;
             writerTypelessParams[0] = typeof(JsonWriter).MakeByRefType();
             writerTypelessParams[1] = typeof(object);
             writerTypelessParams[2] = typeof(JsonSerializerOptions);
@@ -60,7 +60,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             serializeTypeless.DefineParameter(2, ParameterAttributes.None, "value");
             serializeTypeless.DefineParameter(3, ParameterAttributes.None, "options");
 
-            var readerParams = TypeArrayHolder.TypeArrayLength2;
+            var readerParams = TypeArrayHolder.Length2;
             readerParams[0] = typeof(JsonReader).MakeByRefType();
             readerParams[1] = typeof(JsonSerializerOptions);
 

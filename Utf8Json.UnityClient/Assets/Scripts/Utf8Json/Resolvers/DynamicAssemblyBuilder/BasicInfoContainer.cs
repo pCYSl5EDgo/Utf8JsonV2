@@ -15,12 +15,12 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
     public static class BasicInfoContainer
     {
         public static readonly FieldInfo FieldJsonWriterWriter = typeof(JsonWriter).GetField("Writer", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public) ?? throw new NullReferenceException("JsonWriter.Writer");
-        
+
         public static readonly MethodInfo MethodJsonSerializerOptionsIgnoreNullValues = typeof(JsonSerializerOptions).GetMethodInstance("get_IgnoreNullValues");
-        
+
         public static readonly MethodInfo MethodJsonWriterWriteEndObject = typeof(JsonWriter).GetMethodInstance("WriteEndObject");
         public static readonly MethodInfo MethodJsonWriterWriteBeginObject = typeof(JsonWriter).GetMethodInstance("WriteBeginObject");
-        
+
         public static readonly MethodInfo MethodJsonReaderReadIsBeginObjectWithVerify = typeof(JsonReader).GetMethodInstance("ReadIsBeginObjectWithVerify");
         public static readonly MethodInfo MethodJsonReaderReadIsEndObjectWithSkipValueSeparator = typeof(JsonReader).GetMethodInstance("ReadIsEndObjectWithSkipValueSeparator");
         public static readonly MethodInfo MethodJsonReaderReadIsNull = typeof(JsonReader).GetMethodInstance("ReadIsNull");
@@ -28,16 +28,16 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         public static readonly MethodInfo MethodJsonReaderReadNextBlock = typeof(JsonReader).GetMethodInstance("ReadNextBlock");
         public static readonly MethodInfo MethodJsonReaderSkipWhiteSpace = typeof(JsonReader).GetMethodInstance("SkipWhiteSpace");
         public static readonly MethodInfo MethodJsonReaderReadIsNameSeparatorWithVerify = typeof(JsonReader).GetMethodInstance("ReadIsNameSeparatorWithVerify");
-        
+
         public static readonly MethodInfo MethodBufferWriterGetSpan = typeof(BufferWriter).GetMethodInstance("GetSpan");
         public static readonly MethodInfo MethodBufferWriterAdvance = typeof(BufferWriter).GetMethodInstance("Advance");
-        
+
         public static readonly MethodInfo MethodSpanGetItem = typeof(Span<byte>).GetMethodInstance("get_Item");
-        
+
         public static readonly MethodInfo MethodReadOnlySpanGetLength = typeof(ReadOnlySpan<byte>).GetMethodInstance("get_Length");
         public static readonly MethodInfo MethodReadOnlySpanGetItem = typeof(SpanHelper).GetMethod("get_Item") ?? throw new NullReferenceException("ReadOnlySpan<byte>.get_Item");
         public static readonly MethodInfo MethodReadOnlySpanSlice = typeof(ReadOnlySpan<byte>).GetMethod("Slice", typeof(int));
-        
+
         public static readonly MethodInfo MethodJsonSerializerOptionsExtensionsSerializeWithVerify = typeof(JsonSerializerOptionsExtensions).GetMethodStatic("SerializeWithVerify");
         public static readonly MethodInfo MethodJsonSerializerOptionsExtensionsDeserializeWithVerify = typeof(JsonSerializerOptionsExtensions).GetMethodStatic("DeserializeWithVerify");
 
@@ -46,7 +46,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         public static readonly MethodInfo MethodStringKeyObjectValueDictionaryFormatterDeserializeStatic = typeof(StringKeyObjectValueDictionaryFormatter).GetMethodStatic("DeserializeStatic");
 
         public static readonly MethodInfo MethodStringIntern = typeof(string).GetMethodStatic("Intern");
-        
+
         public static readonly ConstructorInfo ConstructorInfoStringKeyObjectValueDictionary = typeof(Dictionary<string, object>).GetConstructor(Array.Empty<Type>()) ?? throw new NullReferenceException();
         public static readonly MethodInfo MethodNullableStringDeserializeStaticInnerQuotation = typeof(NullableStringFormatter).GetMethodStatic("DeserializeStaticInnerQuotation");
         public static readonly MethodInfo MethodObjectFormatterDeserializeStatic = typeof(ObjectFormatter).GetMethodStatic("DeserializeStatic");

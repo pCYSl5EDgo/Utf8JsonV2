@@ -110,7 +110,7 @@ namespace Utf8Json
 #if CSHARP_8_OR_NEWER
             object?
 #else
-            object 
+            object
 #endif
             DeserializeTypeless(Type targetType, ReadOnlySpan<byte> span, JsonSerializerOptions options)
         {

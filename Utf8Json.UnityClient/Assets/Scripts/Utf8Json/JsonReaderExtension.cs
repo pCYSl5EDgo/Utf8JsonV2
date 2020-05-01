@@ -4,9 +4,12 @@
 using System;
 using System.Buffers;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using Utf8Json.Internal;
 using Utf8Json.Internal.DoubleConversion;
+
+#if SPAN_BUILTIN
+using System.Runtime.InteropServices;
+#endif
 // ReSharper disable RedundantCaseLabel
 
 namespace Utf8Json

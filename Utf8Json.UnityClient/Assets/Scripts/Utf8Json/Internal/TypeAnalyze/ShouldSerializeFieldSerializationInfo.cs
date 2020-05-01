@@ -22,7 +22,7 @@ namespace Utf8Json.Internal
         public DirectTypeEnum IsFormatterDirect { get; }
 
         public string MemberName { get; }
-        
+
         public bool ShouldIntern => TargetType == typeof(string) && !(Info.GetCustomAttribute<StringInternAttribute>() is null);
 
 #if CSHARP_8_OR_NEWER

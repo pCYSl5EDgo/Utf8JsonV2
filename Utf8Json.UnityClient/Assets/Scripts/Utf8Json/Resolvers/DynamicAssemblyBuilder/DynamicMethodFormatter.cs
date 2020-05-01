@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Reflection.Emit;
+using Utf8Json.Internal.Reflection;
 
 namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 {
@@ -13,8 +15,40 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
     public delegate T JsonDeserializeReferenceTypeFunc<T>(ref JsonReader reader, JsonSerializerOptions options) where T : class;
 #endif
 
-    public delegate void JsonSerializeValueTypeAction<T>(ref JsonWriter writer, ref T value, JsonSerializerOptions options) where T : struct;
+    public delegate void JsonSerializeValueTypeAction<T>(ref JsonWriter writer, T value, JsonSerializerOptions options) where T : struct;
     public delegate T JsonDeserializeValueTypeFunc<T>(ref JsonReader reader, JsonSerializerOptions options) where T : struct;
+
+    public static class DynamicMethodFormatterGenerator
+    {
+        public static IJsonFormatter CreateFromDynamicMethods(DynamicMethod serialize, DynamicMethod deserialize)
+        {
+            var targetType = deserialize.ReturnType;
+            var length1 = TypeArrayHolder.Length1;
+            length1[0] = targetType;
+            if (targetType.IsValueType)
+            {
+                var serializeType = typeof(JsonSerializeValueTypeAction<>).MakeGenericType(length1);
+                var deserializeType = typeof(JsonDeserializeValueTypeFunc<>).MakeGenericType(length1);
+                var formatterType = typeof(DynamicMethodValueTypeFormatter<>).MakeGenericType(length1);
+                var serializeDelegate = serialize.CreateDelegate(serializeType);
+                var deserializeDelegate = deserialize.CreateDelegate(deserializeType);
+                var answer = ActivatorUtility.CreateInstance(formatterType, serializeDelegate, deserializeDelegate) as IJsonFormatter;
+                if (answer is null) throw new NullReferenceException(targetType.FullName);
+                return answer;
+            }
+            else
+            {
+                var serializeType = typeof(JsonSerializeReferenceTypeAction<>).MakeGenericType(length1);
+                var deserializeType = typeof(JsonDeserializeReferenceTypeFunc<>).MakeGenericType(length1);
+                var formatterType = typeof(DynamicMethodReferenceTypeFormatter<>).MakeGenericType(length1);
+                var serializeDelegate = serialize.CreateDelegate(serializeType);
+                var deserializeDelegate = deserialize.CreateDelegate(deserializeType);
+                var answer = ActivatorUtility.CreateInstance(formatterType, serializeDelegate, deserializeDelegate) as IJsonFormatter;
+                if (answer is null) throw new NullReferenceException(targetType.FullName);
+                return answer;
+            }
+        }
+    }
 
     public sealed class DynamicMethodValueTypeFormatter<T>
         : IJsonFormatter<T>
@@ -41,7 +75,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
 
             var innerValue = (T)value;
-            serialize(ref writer, ref innerValue, options);
+            serialize(ref writer, innerValue, options);
         }
 
         public object DeserializeTypeless(ref JsonReader reader, JsonSerializerOptions options)
@@ -51,7 +85,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
         public void Serialize(ref JsonWriter writer, T value, JsonSerializerOptions options)
         {
-            serialize(ref writer, ref value, options);
+            serialize(ref writer, value, options);
         }
 
         public T Deserialize(ref JsonReader reader, JsonSerializerOptions options)

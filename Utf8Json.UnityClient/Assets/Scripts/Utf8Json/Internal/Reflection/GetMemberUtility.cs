@@ -34,7 +34,7 @@ namespace Utf8Json.Internal.Reflection
 
         public static MethodInfo GetMethod(this Type type, string name, Type parameterType0)
         {
-            var types = TypeArrayHolder.TypeArrayLength1;
+            var types = TypeArrayHolder.Length1;
             types[0] = parameterType0;
             var answer = type.GetMethod(name, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance, null, types, null);
             Debug.Assert(!(answer is null));
@@ -43,7 +43,7 @@ namespace Utf8Json.Internal.Reflection
 
         public static MethodInfo GetMethod(this Type type, string name, Type parameterType0, Type parameterType1)
         {
-            var types = TypeArrayHolder.TypeArrayLength2;
+            var types = TypeArrayHolder.Length2;
             types[0] = parameterType0;
             types[1] = parameterType1;
             var answer = type.GetMethod(name, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance, null, types, null);
@@ -53,7 +53,7 @@ namespace Utf8Json.Internal.Reflection
 
         public static MethodInfo GetMethod(this Type type, string name, Type parameterType0, Type parameterType1, Type parameterType2)
         {
-            var types = TypeArrayHolder.TypeArrayLength3;
+            var types = TypeArrayHolder.Length3;
             types[0] = parameterType0;
             types[1] = parameterType1;
             types[2] = parameterType2;

@@ -11,19 +11,19 @@ namespace Utf8Json.Internal.Reflection
     internal static class TypeArrayHolder
     {
 #if CSHARP_8_OR_NEWER
-        [ThreadStatic] private static Type[]? typeArrayLength1;
-        [ThreadStatic] private static Type[]? typeArrayLength2;
-        [ThreadStatic] private static Type[]? typeArrayLength3;
+        [ThreadStatic] private static Type[]? length1;
+        [ThreadStatic] private static Type[]? length2;
+        [ThreadStatic] private static Type[]? length3;
 #else
-        [ThreadStatic] private static Type[] typeArrayLength1;
-        [ThreadStatic] private static Type[] typeArrayLength2;
-        [ThreadStatic] private static Type[] typeArrayLength3;
+        [ThreadStatic] private static Type[] length1;
+        [ThreadStatic] private static Type[] length2;
+        [ThreadStatic] private static Type[] length3;
 #endif
 
-        public static Type[] TypeArrayLength1 => typeArrayLength1 ?? (typeArrayLength1 = new Type[1]);
+        public static Type[] Length1 => length1 ?? (length1 = new Type[1]);
 
-        public static Type[] TypeArrayLength2 => typeArrayLength2 ?? (typeArrayLength2 = new Type[2]);
+        public static Type[] Length2 => length2 ?? (length2 = new Type[2]);
 
-        public static Type[] TypeArrayLength3 => typeArrayLength3 ?? (typeArrayLength3 = new Type[3]);
+        public static Type[] Length3 => length3 ?? (length3 = new Type[3]);
     }
 }

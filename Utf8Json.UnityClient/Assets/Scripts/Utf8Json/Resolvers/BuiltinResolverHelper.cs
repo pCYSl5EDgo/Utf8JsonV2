@@ -11,7 +11,7 @@ namespace Utf8Json.Resolvers
         internal static class BuiltinResolverGetFormatterHelper
         {
             private static readonly ThreadSafeTypeKeyFormatterHashTable formatterHashTable
-#region table
+            #region table
             = new ThreadSafeTypeKeyFormatterHashTable(new[]
             {
                 FromTypeToMethodHandles.GetEntry<  byte, ByteFormatter>(),
@@ -76,14 +76,14 @@ namespace Utf8Json.Resolvers
                 FromTypeToMethodHandles.GetEntry<System.Dynamic.ExpandoObject, ExpandoObjectFormatter>(),
 #endif
             }, 0.5d);
-#endregion
+            #endregion
 
             internal static ThreadSafeTypeKeyFormatterHashTable.FunctionPair GetFunctionPointers(System.Type t)
             {
                 return formatterHashTable[t];
             }
 
-            private static readonly ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter> formatters =  new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>(new[]
+            private static readonly ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter> formatters = new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>(new[]
             {
                 new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(  byte), new ByteFormatter()),
                 new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(  char), new CharFormatter()),
@@ -147,7 +147,7 @@ namespace Utf8Json.Resolvers
                 new ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter>.Entry(typeof(System.Dynamic.ExpandoObject), new ExpandoObjectFormatter()),
 #endif
             }, 0.5d);
-            
+
             internal static ThreadSafeTypeKeyReferenceHashTable<IJsonFormatter> GetFormatterCache() => formatters;
         }
     }
