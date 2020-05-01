@@ -2,26 +2,14 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 using System;
-using System.Text;
-using V2::Utf8Json;
 
 namespace Utf8JsonBenchmark
 {
-    public struct Y
-    {
-        public string A { get; set; }
-    }
-
     internal class Program
     {
         private static void Main()
         {
-            var value = new Y {A = "ほげほげほげほげ"};
-            var bytes = JsonSerializer.Serialize(value);
-            Console.WriteLine(Encoding.UTF8.GetString(bytes));
-            var deserialize = JsonSerializer.Deserialize<Y>(bytes);
-            Console.WriteLine(deserialize.A);
-            /*BenchmarkRunner.Run<JsonBooleanTester>();
+            BenchmarkRunner.Run<JsonBooleanTester>();
             BenchmarkRunner.Run<JsonUInt32ArrayTester>();
             BenchmarkRunner.Run<JsonInt32Tester>();
             BenchmarkRunner.Run<JsonInt32DeserializeTester>();
@@ -34,15 +22,14 @@ namespace Utf8JsonBenchmark
             BenchmarkRunner.Run<JsonEnumByteTester>();
             BenchmarkRunner.Run<JsonEnumUInt64Tester>();
             BenchmarkRunner.Run<JsonEnumUInt16Tester>();
-            BenchmarkRunner.Run<Json8IntegerFieldObjectSerializeTester>();*/
+            BenchmarkRunner.Run<Json8IntegerFieldObjectSerializeTester>();
         }
     }
 
-    /*
     [MemoryDiagnoser]
     public class Json8IntegerFieldObjectSerializeTester
     {
-        public class MyClass
+        public struct EightMemberStruct
         {
             public int FirstInt32 { get; set; }
             public int Second { get; set; }
@@ -54,12 +41,12 @@ namespace Utf8JsonBenchmark
             public int EighthNumber { get; set; }
         }
 
-        public MyClass Value;
+        public EightMemberStruct Value;
 
         [GlobalSetup]
         public void GlobalSetup()
         {
-            Value = new MyClass
+            Value = new EightMemberStruct
             {
                 FirstInt32 = int.MinValue,
                 Second = int.MaxValue,
@@ -72,23 +59,9 @@ namespace Utf8JsonBenchmark
             };
         }
 
-        [Benchmark]
-        public byte[] SerializeUtf8JsonV1()
-        {
-            return global::Utf8Json.JsonSerializer.Serialize(Value);
-        }
-
-        [Benchmark]
-        public byte[] SerializeUtf8JsonV2()
-        {
-            return V2::Utf8Json.JsonSerializer.Serialize(Value);
-        }
-
-        [Benchmark]
-        public byte[] SerializeSystemTextJson()
-        {
-            return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(Value);
-        }
+        [Benchmark] public byte[] SerializeUtf8JsonV1() => global::Utf8Json.JsonSerializer.Serialize(Value);
+        [Benchmark] public byte[] SerializeUtf8JsonV2() => V2::Utf8Json.JsonSerializer.Serialize(Value);
+        [Benchmark] public byte[] SerializeSystemTextJson() => System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(Value);
     }
 
     [MemoryDiagnoser]
@@ -534,5 +507,5 @@ namespace Utf8JsonBenchmark
         {
             return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes('\r');
         }
-    }*/
+    }
 }
