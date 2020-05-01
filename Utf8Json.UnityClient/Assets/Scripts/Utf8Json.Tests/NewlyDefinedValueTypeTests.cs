@@ -16,6 +16,20 @@ namespace Utf8Json.Test
 {
     public class NewlyDefinedValueTypeTests
     {
+        private readonly struct わたしはてきとうかつてきせつにいいかんじにながいなまえのかたをていぎしてみんとするものなりこれはながすぎるとまともにあつかえないのではないかというふあんからくるてすとようのこうぞうたいであるなりなりねりけし
+        {
+            [SerializeField] private readonly int これはだいいちのすうちがたのぷらいべーとふぃーるどであるなりだがしりあらいずふぃーるどぞくせいがふよされているためしりあらいずたいしょうにふくまれているものなり;
+            public readonly DateTime これはだいにのぱぶりっくふぃーるどであるなりしごくまっとうなでいとたいむがたであるゆえとくにかいせつのひつようをみとめないものであるなりなりねりけしくわがたむし;
+
+            public bool SameA(int a) => a == これはだいいちのすうちがたのぷらいべーとふぃーるどであるなりだがしりあらいずふぃーるどぞくせいがふよされているためしりあらいずたいしょうにふくまれているものなり;
+
+            public わたしはてきとうかつてきせつにいいかんじにながいなまえのかたをていぎしてみんとするものなりこれはながすぎるとまともにあつかえないのではないかというふあんからくるてすとようのこうぞうたいであるなりなりねりけし(int a, DateTime b)
+            {
+                これはだいいちのすうちがたのぷらいべーとふぃーるどであるなりだがしりあらいずふぃーるどぞくせいがふよされているためしりあらいずたいしょうにふくまれているものなり = a;
+                これはだいにのぱぶりっくふぃーるどであるなりしごくまっとうなでいとたいむがたであるゆえとくにかいせつのひつようをみとめないものであるなりなりねりけしくわがたむし = b;
+            }
+        }
+
         private enum ByteEnum : byte
         {
             None,
@@ -116,6 +130,19 @@ namespace Utf8Json.Test
 
             [JsonFormatter(typeof(DateTimeFormatter))]
             public DateTime DateTimeNow { get; set; } = DateTime.Now;
+        }
+
+        [Test]
+        public void LongNameStructTest()
+        {
+            var now = DateTime.Now;
+            var a = 114514;
+            var value = new わたしはてきとうかつてきせつにいいかんじにながいなまえのかたをていぎしてみんとするものなりこれはながすぎるとまともにあつかえないのではないかというふあんからくるてすとようのこうぞうたいであるなりなりねりけし(a, now);
+            var bytes = JsonSerializer.Serialize(value);
+            TestContext.WriteLine(Encoding.UTF8.GetString(bytes));
+            var deserialize = JsonSerializer.Deserialize<わたしはてきとうかつてきせつにいいかんじにながいなまえのかたをていぎしてみんとするものなりこれはながすぎるとまともにあつかえないのではないかというふあんからくるてすとようのこうぞうたいであるなりなりねりけし>(bytes);
+            Assert.IsTrue(now.Equals(deserialize.これはだいにのぱぶりっくふぃーるどであるなりしごくまっとうなでいとたいむがたであるゆえとくにかいせつのひつようをみとめないものであるなりなりねりけしくわがたむし));
+            Assert.IsTrue(deserialize.SameA(a));
         }
 
         [Test]
