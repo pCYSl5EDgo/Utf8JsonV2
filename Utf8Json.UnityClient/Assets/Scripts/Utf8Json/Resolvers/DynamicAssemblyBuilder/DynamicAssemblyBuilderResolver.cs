@@ -189,7 +189,11 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
         public IntPtr GetDeserializeStatic<T>()
         {
+#if ENABLE_MONO
             return default;
+#else
+            return FormatterCache<T>.DeserializeStatic;
+#endif
         }
 
 #if CSHARP_8_OR_NEWER
@@ -368,7 +372,11 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
         public IntPtr GetSerializeStatic<T>()
         {
+#if ENABLE_MONO
             return default;
+#else
+            return FormatterCache<T>.SerializeStatic;
+#endif
         }
 
         private struct FormatterCache<T>
@@ -378,9 +386,27 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 #else
             public static readonly IJsonFormatter<T> Formatter;
 #endif
+
+#if !ENABLE_MONO
+            public static readonly IntPtr SerializeStatic;
+            public static readonly IntPtr DeserializeStatic;
+#endif
+
             static FormatterCache()
             {
                 Formatter = formatterTable?.GetOrAdd(typeof(T), Factory) as IJsonFormatter<T>;
+#if !ENABLE_MONO
+                if (Formatter is null)
+                {
+                    SerializeStatic = default;
+                    DeserializeStatic = default;
+                    return;
+                }
+
+                var type = Formatter.GetType();
+                SerializeStatic = StaticHelper.GetSerializeStatic(type);
+                DeserializeStatic = StaticHelper.GetDeserializeStatic(type);
+#endif
             }
         }
     }
