@@ -329,10 +329,6 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             {
                 processor.Emit(OpCodes.Ldc_I4_S, (sbyte)number);
             }
-            else if (number >= 128 && number < 256)
-            {
-                processor.Emit(OpCodes.Ldc_I4_S, (byte)number);
-            }
             else
             {
                 processor.Emit(OpCodes.Ldc_I4, number);
