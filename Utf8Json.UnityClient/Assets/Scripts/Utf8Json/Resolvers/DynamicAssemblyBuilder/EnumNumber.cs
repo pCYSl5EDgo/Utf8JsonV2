@@ -10,22 +10,19 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 {
     public static class EnumNumberEmbedHelper
     {
-        public static void Factory(Type targetType, in BuilderSet builderSet)
+        public static void Factory(Type targetType, TypeBuilder typeBuilder, MethodBuilder serialize, MethodBuilder deserialize)
         {
-            builderSet.Type.AddInterfaceImplementation(typeof(IObjectPropertyNameFormatter<>).MakeGeneric(targetType));
-
-            ValueTypeEmbedTypelessHelper.SerializeTypeless(targetType, builderSet.SerializeStatic, builderSet.SerializeTypeless);
-            ValueTypeEmbedTypelessHelper.DeserializeTypeless(targetType, builderSet.DeserializeStatic, builderSet.DeserializeTypeless);
+            typeBuilder.AddInterfaceImplementation(typeof(IObjectPropertyNameFormatter<>).MakeGeneric(targetType));
 
             var underlyingType = targetType.GetEnumUnderlyingType();
 
             var writeNumber = ReadWritePrimitive.GetWriteNumber(underlyingType);
-            DefineEnumNumberSerializeToPropertyName(targetType, builderSet.Type, writeNumber);
-            GenerateEnumNumberSerializeStatic(builderSet.SerializeStatic, writeNumber);
+            DefineEnumNumberSerializeToPropertyName(targetType, typeBuilder, writeNumber);
+            GenerateEnumNumberSerializeStatic(serialize, writeNumber);
 
             var readNumber = ReadWritePrimitive.GetReadNumber(underlyingType);
-            DefineEnumNumberDeserializeFromPropertyName(targetType, builderSet.Type, readNumber);
-            GenerateEnumNumberDeserializeStatic(builderSet.DeserializeStatic, readNumber);
+            DefineEnumNumberDeserializeFromPropertyName(targetType, typeBuilder, readNumber);
+            GenerateEnumNumberDeserializeStatic(deserialize, readNumber);
         }
 
         private static void GenerateEnumNumberDeserializeStatic(MethodBuilder deserializeStatic, MethodInfo readNumber)

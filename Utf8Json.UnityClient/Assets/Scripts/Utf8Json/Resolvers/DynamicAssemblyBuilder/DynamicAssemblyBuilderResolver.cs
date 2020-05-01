@@ -230,99 +230,99 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 return default;
             }
 
-            EnsurePrivateAccess(targetType);
-
-            var builderSet = PrepareBuilderSet(targetType);
-
             if (targetType.IsEnum)
             {
-                var flags = targetType.GetCustomAttribute<FlagsAttribute>();
-                if (flags is null)
-                {
-                    EnumNumberEmbedHelper.Factory(targetType, in builderSet);
-                }
-                else
-                {
-                    EnumNumberEmbedHelper.Factory(targetType, in builderSet);
-                }
+                return EnumFactory(targetType);
+            }
+
+            if (targetType.IsValueType)
+            {
+                TypeAnalyzer.Analyze(targetType, out var analyzeResult);
+#if ENABLE_MONO
+                
+#else
+                EnsurePrivateAccess(targetType);
+                var builderSet = BuilderSet.PrepareBuilderSet(targetType, moduleBuilder);
+                var serializeStatic = DefineSerializeStatic(targetType, builderSet.Type);
+                var deserializeStatic = DefineDeserializeStatic(targetType, builderSet.Type);
+
+                ValueTypeEmbedTypelessHelper.SerializeTypeless(targetType, serializeStatic, builderSet.SerializeTypeless);
+                ValueTypeEmbedTypelessHelper.DeserializeTypeless(targetType, deserializeStatic, builderSet.DeserializeTypeless);
+                
+                GenerateIntermediateLanguageCodesForSerialize(serializeStatic, builderSet.Serialize);
+                GenerateIntermediateLanguageCodesForDeserialize(deserializeStatic, builderSet.Deserialize);
+
+                ValueTypeSerializeStaticHelper.SerializeStatic(builderSet.Type, serializeStatic, in analyzeResult, dataFieldDictionary);
+                ValueTypeDeserializeStaticHelper.DeserializeStatic(deserializeStatic, in analyzeResult);
+                return Closing(builderSet.Type);
+#endif
             }
             else
             {
+                EnsurePrivateAccess(targetType);
                 TypeAnalyzer.Analyze(targetType, out var analyzeResult);
-                if (targetType.IsValueType)
-                {
-                    ValueTypeEmbedTypelessHelper.SerializeTypeless(targetType, builderSet.SerializeStatic, builderSet.SerializeTypeless);
-                    ValueTypeEmbedTypelessHelper.DeserializeTypeless(targetType, builderSet.DeserializeStatic, builderSet.DeserializeTypeless);
-                    ValueTypeSerializeStaticHelper.SerializeStatic(builderSet.Type, builderSet.SerializeStatic, in analyzeResult, dataFieldDictionary);
-                    ValueTypeDeserializeStaticHelper.DeserializeStatic(builderSet.DeserializeStatic, in analyzeResult);
-                }
-                else
-                {
-                    ReferenceEmbedHelper.Factory(targetType, in analyzeResult, in builderSet);
-                }
+                var builderSet = BuilderSet.PrepareBuilderSet(targetType, moduleBuilder);
+                ReferenceEmbedHelper.Factory(targetType, in analyzeResult, in builderSet);
+                return Closing(builderSet.Type);
+            }
+        }
+
+#if CSHARP_8_OR_NEWER
+        private static IJsonFormatter? EnumFactory(Type targetType)
+#else
+        private static IJsonFormatter EnumFactory(Type targetType)
+#endif
+        {
+            EnsurePrivateAccess(targetType);
+            var builderSet = BuilderSet.PrepareBuilderSet(targetType, moduleBuilder);
+            var serializeStatic = DefineSerializeStatic(targetType, builderSet.Type);
+            var deserializeStatic = DefineDeserializeStatic(targetType, builderSet.Type);
+
+            ValueTypeEmbedTypelessHelper.SerializeTypeless(targetType, serializeStatic, builderSet.SerializeTypeless);
+            ValueTypeEmbedTypelessHelper.DeserializeTypeless(targetType, deserializeStatic, builderSet.DeserializeTypeless);
+            GenerateIntermediateLanguageCodesForSerialize(serializeStatic, builderSet.Serialize);
+            GenerateIntermediateLanguageCodesForDeserialize(deserializeStatic, builderSet.Deserialize);
+
+            var flags = targetType.GetCustomAttribute<FlagsAttribute>();
+            if (flags is null)
+            {
+                EnumNumberEmbedHelper.Factory(targetType, builderSet.Type, serializeStatic, deserializeStatic);
+            }
+            else
+            {
+                EnumNumberEmbedHelper.Factory(targetType, builderSet.Type, serializeStatic, deserializeStatic);
             }
 
-            var answer = Closing(builderSet.Type);
-            return answer;
+            return Closing(builderSet.Type);
         }
 
         public const MethodAttributes StaticMethodFlags = MethodAttributes.Public | MethodAttributes.Static | MethodAttributes.HideBySig;
         public const MethodAttributes InstanceMethodFlags = MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual;
 
-        private static BuilderSet PrepareBuilderSet(Type targetType)
+        private static MethodBuilder DefineSerializeStatic(Type targetType, TypeBuilder typeBuilder)
         {
-            var typeBuilder = moduleBuilder.DefineType(
-                "Utf8Json.IL.Emit.Formatters." + targetType.FullName + "<>Formatter",
-                TypeAttributes.AutoLayout | TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.Class,
-                typeof(object),
-                new[]
-                {
-                    typeof(IJsonFormatter),
-                    typeof(IJsonFormatter<>).MakeGeneric(targetType),
-                });
-
             var writerParams = TypeArrayHolder.TypeArrayLength3;
             writerParams[0] = typeof(JsonWriter).MakeByRefType();
             writerParams[1] = targetType;
             writerParams[2] = typeof(JsonSerializerOptions);
+
             var serializeStatic = typeBuilder.DefineMethod("SerializeStatic", StaticMethodFlags, typeof(void), writerParams);
             serializeStatic.DefineParameter(1, ParameterAttributes.None, "writer");
             serializeStatic.DefineParameter(2, ParameterAttributes.None, "value");
             serializeStatic.DefineParameter(3, ParameterAttributes.None, "options");
-            {
-                var serialize = typeBuilder.DefineMethod("Serialize", InstanceMethodFlags, typeof(void), writerParams);
-                serialize.DefineParameter(1, ParameterAttributes.None, "writer");
-                serialize.DefineParameter(2, ParameterAttributes.None, "value");
-                serialize.DefineParameter(3, ParameterAttributes.None, "options");
-                GenerateIntermediateLanguageCodesForSerialize(serializeStatic, serialize);
-            }
+            return serializeStatic;
+        }
 
-            var writerTypelessParams = TypeArrayHolder.TypeArrayLength3;
-            writerTypelessParams[0] = typeof(JsonWriter).MakeByRefType();
-            writerTypelessParams[1] = typeof(object);
-            writerTypelessParams[2] = typeof(JsonSerializerOptions);
-            var serializeTypeless = typeBuilder.DefineMethod("SerializeTypeless", InstanceMethodFlags, typeof(void), writerTypelessParams);
-            serializeTypeless.DefineParameter(1, ParameterAttributes.None, "writer");
-            serializeTypeless.DefineParameter(2, ParameterAttributes.None, "value");
-            serializeTypeless.DefineParameter(3, ParameterAttributes.None, "options");
-
+        private static MethodBuilder DefineDeserializeStatic(Type targetType, TypeBuilder typeBuilder)
+        {
             var readerParams = TypeArrayHolder.TypeArrayLength2;
             readerParams[0] = typeof(JsonReader).MakeByRefType();
             readerParams[1] = typeof(JsonSerializerOptions);
+
             var deserializeStatic = typeBuilder.DefineMethod("DeserializeStatic", StaticMethodFlags, targetType, readerParams);
             deserializeStatic.DefineParameter(1, ParameterAttributes.None, "reader");
             deserializeStatic.DefineParameter(2, ParameterAttributes.None, "options");
-            {
-                var deserialize = typeBuilder.DefineMethod("Deserialize", InstanceMethodFlags, targetType, readerParams);
-                deserialize.DefineParameter(1, ParameterAttributes.None, "reader");
-                deserialize.DefineParameter(2, ParameterAttributes.None, "options");
-                GenerateIntermediateLanguageCodesForDeserialize(deserializeStatic, deserialize);
-            }
-            var deserializeTypeless = typeBuilder.DefineMethod("DeserializeTypeless", InstanceMethodFlags, typeof(object), readerParams);
-            deserializeTypeless.DefineParameter(1, ParameterAttributes.None, "reader");
-            deserializeTypeless.DefineParameter(2, ParameterAttributes.None, "options");
-            var builderSet = new BuilderSet(typeBuilder, serializeStatic, serializeTypeless, deserializeStatic, deserializeTypeless);
-            return builderSet;
+            return deserializeStatic;
         }
 
         private static void GenerateIntermediateLanguageCodesForDeserialize(MethodInfo deserializeStatic, MethodBuilder deserialize)
