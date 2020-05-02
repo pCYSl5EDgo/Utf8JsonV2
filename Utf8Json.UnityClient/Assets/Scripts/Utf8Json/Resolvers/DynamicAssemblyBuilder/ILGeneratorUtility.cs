@@ -284,22 +284,6 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             return processor;
         }
 
-        public static ILGenerator LdcI4(this ILGenerator processor, byte number)
-        {
-            switch (number)
-            {
-                case 1: processor.Emit(OpCodes.Ldc_I4_1); return processor;
-                case 2: processor.Emit(OpCodes.Ldc_I4_2); return processor;
-                case 3: processor.Emit(OpCodes.Ldc_I4_3); return processor;
-                case 4: processor.Emit(OpCodes.Ldc_I4_4); return processor;
-                case 5: processor.Emit(OpCodes.Ldc_I4_5); return processor;
-                case 6: processor.Emit(OpCodes.Ldc_I4_6); return processor;
-                case 7: processor.Emit(OpCodes.Ldc_I4_7); return processor;
-                case 8: processor.Emit(OpCodes.Ldc_I4_8); return processor;
-                default: processor.Emit(OpCodes.Ldc_I4_S, number); return processor;
-            }
-        }
-
         public static ILGenerator LdcI4(this ILGenerator processor, int number)
         {
             switch (number)
