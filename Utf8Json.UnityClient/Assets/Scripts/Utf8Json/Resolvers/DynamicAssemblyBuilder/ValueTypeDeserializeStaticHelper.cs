@@ -138,7 +138,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
                 processor
                     .LdArg(0)
-                    .Call(BasicInfoContainer.MethodJsonReaderReadIsBeginObjectWithVerify);
+                    .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderReadIsBeginObjectWithVerify);
                 var loopCountVariable = processor.DeclareLocal(typeof(int));
                 var returnLabel = processor.DefineLabel();
 
@@ -192,9 +192,9 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                             .Dup()
                             .StLoc(extensionVariable)
 #if CSHARP_8_OR_NEWER
-                            .Call(extensionDataInfo.Info!.SetMethod!);
+                            .TryCallIfNotPossibleCallVirtual(extensionDataInfo.Info!.SetMethod!);
 #else
-                            .Call(extensionDataInfo.Info.SetMethod);
+                            .TryCallIfNotPossibleCallVirtual(extensionDataInfo.Info.SetMethod);
 #endif
 
                         LoopStartProcedure(processor, readOnlyArguments, loopCountVariable, returnLabel);
@@ -214,7 +214,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             processor
                 .LdArg(0)
                 .LdLocAddress(loopCountVariable)
-                .Call(BasicInfoContainer.MethodJsonReaderReadIsEndObjectWithSkipValueSeparator)
+                .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderReadIsEndObjectWithSkipValueSeparator)
                 .BrTrueLong(returnLabel); // if true goto return statement.
 
             // ReadOnlySpan<byte> name = reader.ReadPropertyNameSegmentRaw();
@@ -222,14 +222,14 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             // nameVariable.Length
             processor
                 .LdArg(0)
-                .Call(BasicInfoContainer.MethodJsonReaderReadPropertyNameSegmentRaw)
+                .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderReadPropertyNameSegmentRaw)
                 .StLoc(readOnlyArguments.NameVariable) // var name = reader.ReadPropertyNameSegmentRaw();
                 .LdLocAddress(readOnlyArguments.NameVariable)
                 .LdcI4(0)
-                .Call(BasicInfoContainer.MethodReadOnlySpanGetItem)
+                .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodReadOnlySpanGetItem)
                 .StLoc(readOnlyArguments.ReferenceVariable)
                 .LdLocAddress(readOnlyArguments.NameVariable)
-                .Call(BasicInfoContainer.MethodReadOnlySpanGetLength); // nameVariable.Length
+                .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodReadOnlySpanGetLength); // nameVariable.Length
         }
 
         private static void NoVariation(in ReadOnlyArguments readOnlyArguments)
@@ -240,14 +240,14 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 var notNull = processor.DefineLabel();
                 processor
                     .LdArg(0)
-                    .Call(BasicInfoContainer.MethodJsonReaderReadIsNull)
+                    .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderReadIsNull)
                     .BrFalseShort(notNull);
                 processor
                     .ThrowException(typeof(NullReferenceException));
                 processor.MarkLabel(notNull);
                 processor
                     .LdArg(0)
-                    .Call(BasicInfoContainer.MethodJsonReaderReadNextBlock)
+                    .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderReadNextBlock)
                     .LdLoc(readOnlyArguments.AnswerVariable)
                     .Emit(OpCodes.Ret);
             }
@@ -258,8 +258,8 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     .LdLocAddress(readOnlyArguments.AnswerVariable)
                     .LdArg(0)
                     .LdArg(1)
-                    .Call(BasicInfoContainer.MethodStringKeyObjectValueDictionaryFormatterDeserializeStatic)
-                    .Call(setMethod)
+                    .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodStringKeyObjectValueDictionaryFormatterDeserializeStatic)
+                    .TryCallIfNotPossibleCallVirtual(setMethod)
                     .LdLoc(readOnlyArguments.AnswerVariable)
                     .Emit(OpCodes.Ret);
             }
@@ -271,13 +271,13 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             {
                 if (methodInfo.IsStatic)
                 {
-                    processor.Call(methodInfo);
+                    processor.TryCallIfNotPossibleCallVirtual(methodInfo);
                 }
                 else
                 {
                     processor
                         .LdLocAddress(answerVariable)
-                        .Call(methodInfo);
+                        .TryCallIfNotPossibleCallVirtual(methodInfo);
                 }
             }
         }
@@ -300,14 +300,14 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             processor.MarkLabel(readOnlyArguments.DefaultLabel);
             processor
                 .LdArg(0)
-                .Call(BasicInfoContainer.MethodJsonReaderSkipWhiteSpace) // reader.ReadSkipWhiteSpace();
+                .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderSkipWhiteSpace) // reader.ReadSkipWhiteSpace();
                 .LdLoc(extensionDataVariable)
                 .LdLoc(readOnlyArguments.NameVariable)
-                .Call(BasicInfoContainer.MethodNullableStringDeserializeStaticInnerQuotation)
+                .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodNullableStringDeserializeStaticInnerQuotation)
                 .LdArg(0)
                 .LdArg(1)
-                .Call(BasicInfoContainer.MethodObjectFormatterDeserializeStatic)
-                .Call(BasicInfoContainer.MethodStringKeyObjectValueDictionaryAdd)
+                .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodObjectFormatterDeserializeStatic)
+                .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodStringKeyObjectValueDictionaryAdd)
                 .BrShort(readOnlyArguments.LoopStartLabel); // continue;
 
             非default(readOnlyArguments, processor, destinations, possibleLengthCount);
@@ -330,9 +330,9 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             processor.MarkLabel(readOnlyArguments.DefaultLabel);
             processor
                 .LdArg(0)
-                .Call(BasicInfoContainer.MethodJsonReaderSkipWhiteSpace) // reader.ReadSkipWhiteSpace();
+                .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderSkipWhiteSpace) // reader.ReadSkipWhiteSpace();
                 .LdArg(0)
-                .Call(BasicInfoContainer.MethodJsonReaderReadNextBlock) // reader.ReadNextBlock();
+                .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderReadNextBlock) // reader.ReadNextBlock();
                 .BrShort(readOnlyArguments.LoopStartLabel); // continue;
 
             非default(readOnlyArguments, processor, destinations, possibleLengthCount);
@@ -679,7 +679,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                                     processor
                                         .LdArg(1)
                                         .LdArg(0)
-                                        .Call(deserialize);
+                                        .TryCallIfNotPossibleCallVirtual(deserialize);
                                     break;
                                 }
                             case DirectTypeEnum.String:
@@ -689,7 +689,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                                     var method = ReadWritePrimitive.MethodReadPrimitives[(int)info.IsFormatterDirect];
                                     processor
                                         .LdArg(0)
-                                        .Call(method);
+                                        .TryCallIfNotPossibleCallVirtual(method);
                                     break;
                                 }
                         }
@@ -707,7 +707,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                                     processor
                                         .LdArg(1)
                                         .LdArg(0)
-                                        .Call(deserialize);
+                                        .TryCallIfNotPossibleCallVirtual(deserialize);
                                     break;
                                 }
                             case DirectTypeEnum.String:
@@ -717,13 +717,13 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                                     var method = ReadWritePrimitive.MethodReadPrimitives[(int)info.IsFormatterDirect];
                                     processor
                                         .LdArg(0)
-                                        .Call(method);
+                                        .TryCallIfNotPossibleCallVirtual(method);
                                     break;
                                 }
                         }
                         var setMethod = info.Info.SetMethod;
                         Debug.Assert(!(setMethod is null));
-                        processor.Call(setMethod);
+                        processor.TryCallIfNotPossibleCallVirtual(setMethod);
                     }
                     break;
                 case DeserializeDictionary.Type.FieldValueTypeShouldSerialize:
@@ -737,7 +737,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                                     processor
                                         .LdArg(1)
                                         .LdArg(0)
-                                        .Call(deserialize);
+                                        .TryCallIfNotPossibleCallVirtual(deserialize);
                                     break;
                                 }
                             case DirectTypeEnum.String:
@@ -747,7 +747,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                                     var method = ReadWritePrimitive.MethodReadPrimitives[(int)info.IsFormatterDirect];
                                     processor
                                         .LdArg(0)
-                                        .Call(method);
+                                        .TryCallIfNotPossibleCallVirtual(method);
                                     break;
                                 }
                         }
@@ -765,7 +765,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                                     processor
                                         .LdArg(1)
                                         .LdArg(0)
-                                        .Call(deserialize);
+                                        .TryCallIfNotPossibleCallVirtual(deserialize);
                                     break;
                                 }
                             case DirectTypeEnum.String:
@@ -775,13 +775,13 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                                     var method = ReadWritePrimitive.MethodReadPrimitives[(int)info.IsFormatterDirect];
                                     processor
                                         .LdArg(0)
-                                        .Call(method);
+                                        .TryCallIfNotPossibleCallVirtual(method);
                                     break;
                                 }
                         }
                         var setMethod = info.Info.SetMethod;
                         Debug.Assert(!(setMethod is null));
-                        processor.Call(setMethod);
+                        processor.TryCallIfNotPossibleCallVirtual(setMethod);
                     }
                     break;
                 case DeserializeDictionary.Type.FieldReferenceType:
@@ -794,16 +794,16 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                                 processor
                                     .LdArg(1)
                                     .LdArg(0)
-                                    .Call(deserialize);
+                                    .TryCallIfNotPossibleCallVirtual(deserialize);
                                 break;
                             case DirectTypeEnum.String:
                                 var method = ReadWritePrimitive.MethodReadPrimitives[(int)info.IsFormatterDirect];
                                 processor
                                     .LdArg(0)
-                                    .Call(method);
+                                    .TryCallIfNotPossibleCallVirtual(method);
                                 if (info.ShouldIntern)
                                 {
-                                    processor.Call(BasicInfoContainer.MethodStringIntern);
+                                    processor.TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodStringIntern);
                                 }
                                 break;
                             default:
@@ -822,16 +822,16 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                                 processor
                                     .LdArg(1)
                                     .LdArg(0)
-                                    .Call(deserialize);
+                                    .TryCallIfNotPossibleCallVirtual(deserialize);
                                 break;
                             case DirectTypeEnum.String:
                                 var method = ReadWritePrimitive.MethodReadPrimitives[(int)info.IsFormatterDirect];
                                 processor
                                     .LdArg(0)
-                                    .Call(method);
+                                    .TryCallIfNotPossibleCallVirtual(method);
                                 if (info.ShouldIntern)
                                 {
-                                    processor.Call(BasicInfoContainer.MethodStringIntern);
+                                    processor.TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodStringIntern);
                                 }
                                 break;
                             default:
@@ -839,7 +839,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         }
                         var setMethod = info.Info.SetMethod;
                         Debug.Assert(!(setMethod is null));
-                        processor.Call(setMethod);
+                        processor.TryCallIfNotPossibleCallVirtual(setMethod);
                     }
                     break;
                 case DeserializeDictionary.Type.FieldReferenceTypeShouldSerialize:
@@ -852,16 +852,16 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                                 processor
                                     .LdArg(1)
                                     .LdArg(0)
-                                    .Call(deserialize);
+                                    .TryCallIfNotPossibleCallVirtual(deserialize);
                                 break;
                             case DirectTypeEnum.String:
                                 var method = ReadWritePrimitive.MethodReadPrimitives[(int)info.IsFormatterDirect];
                                 processor
                                     .LdArg(0)
-                                    .Call(method);
+                                    .TryCallIfNotPossibleCallVirtual(method);
                                 if (info.ShouldIntern)
                                 {
-                                    processor.Call(BasicInfoContainer.MethodStringIntern);
+                                    processor.TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodStringIntern);
                                 }
                                 break;
                             default:
@@ -880,16 +880,16 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                                 processor
                                     .LdArg(1)
                                     .LdArg(0)
-                                    .Call(deserialize);
+                                    .TryCallIfNotPossibleCallVirtual(deserialize);
                                 break;
                             case DirectTypeEnum.String:
                                 var method = ReadWritePrimitive.MethodReadPrimitives[(int)info.IsFormatterDirect];
                                 processor
                                     .LdArg(0)
-                                    .Call(method);
+                                    .TryCallIfNotPossibleCallVirtual(method);
                                 if (info.ShouldIntern)
                                 {
-                                    processor.Call(BasicInfoContainer.MethodStringIntern);
+                                    processor.TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodStringIntern);
                                 }
                                 break;
                             default:
@@ -897,7 +897,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         }
                         var setMethod = info.Info.SetMethod;
                         Debug.Assert(!(setMethod is null));
-                        processor.Call(setMethod);
+                        processor.TryCallIfNotPossibleCallVirtual(setMethod);
                     }
                     break;
                 default:

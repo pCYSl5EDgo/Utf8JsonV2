@@ -7,24 +7,15 @@ using System.Reflection.Emit;
 
 namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 {
-    public static class ValueTypeEmbedTypelessHelper
+    public static class ReferenceTypeEmbedTypelessHelper
     {
         public static void SerializeTypeless(Type targetType, MethodInfo serializeStatic, MethodBuilder serializeTypeless)
         {
             var processor = serializeTypeless.GetILGenerator();
-            var notNull = processor.DefineLabel();
-            processor
-                .LdArg(2)
-                .Emit(OpCodes.Brtrue_S, notNull);
-            {
-                processor.ThrowException(typeof(ArgumentNullException));
-            }
-
-            processor.MarkLabel(notNull);
             processor
                 .LdArg(1)
                 .LdArg(2)
-                .Emit(OpCodes.Unbox_Any, targetType);
+                .Emit(OpCodes.Isinst, targetType);
             processor
                 .LdArg(3)
                 .TryCallIfNotPossibleCallVirtual(serializeStatic)
@@ -38,8 +29,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 .LdArg(1)
                 .LdArg(2)
                 .TryCallIfNotPossibleCallVirtual(deserializeStatic)
-                .Emit(OpCodes.Box, targetType);
-            processor.Emit(OpCodes.Ret);
+                .Emit(OpCodes.Ret);
         }
     }
 }

@@ -244,8 +244,18 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             processor.Emit(OpCodes.Brtrue, label);
         }
 
-        public static ILGenerator Call(this ILGenerator processor, MethodInfo method)
+        public static ILGenerator TryCallIfNotPossibleCallVirtual(this ILGenerator processor, MethodInfo method)
         {
+            if (!method.IsStatic && method.IsVirtual && !method.IsFinal)
+            {
+                var declaringType = method.DeclaringType;
+                if (!(declaringType is null) && !declaringType.IsValueType && !declaringType.IsSealed)
+                {
+                    processor.Emit(OpCodes.Callvirt, method);
+                    return processor;
+                }
+            }
+
             processor.Emit(OpCodes.Call, method);
             return processor;
         }
@@ -284,7 +294,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         public static ILGenerator LdType(this ILGenerator processor, Type type)
         {
             processor.Emit(OpCodes.Ldtoken, type);
-            processor.Call(SystemTypeGetTypeFromHandle);
+            processor.TryCallIfNotPossibleCallVirtual(SystemTypeGetTypeFromHandle);
             return processor;
         }
 

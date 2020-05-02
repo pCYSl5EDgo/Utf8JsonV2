@@ -96,15 +96,15 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 .LdFieldAddress(FieldJsonWriterWriter)
                 .Dup()
                 .LdcI4(4)
-                .Call(MethodBufferWriterGetSpan)
+                .TryCallIfNotPossibleCallVirtual(MethodBufferWriterGetSpan)
                 .StLoc(spanVariable)
                 .LdLocAddress(spanVariable)
                 .LdcI4(0)
-                .Call(MethodSpanGetItem)
+                .TryCallIfNotPossibleCallVirtual(MethodSpanGetItem)
                 .LdcI4(literal)
                 .StIndI4()
                 .LdcI4(4)
-                .Call(MethodBufferWriterAdvance);
+                .TryCallIfNotPossibleCallVirtual(MethodBufferWriterAdvance);
         }
     }
 }
