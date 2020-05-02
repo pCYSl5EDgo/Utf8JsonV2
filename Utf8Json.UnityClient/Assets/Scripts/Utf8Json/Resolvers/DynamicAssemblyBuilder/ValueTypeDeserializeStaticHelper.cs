@@ -8,7 +8,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Runtime.InteropServices;
 using Utf8Json.Internal;
 // ReSharper disable UseIndexFromEndExpression
 // ReSharper disable ConvertIfStatementToNullCoalescingAssignment
@@ -17,117 +16,11 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 {
     public static class ValueTypeDeserializeStaticHelper
     {
-        private readonly ref struct ReadOnlyArguments
-        {
-            public readonly ILGenerator Processor;
-            public readonly LocalBuilder AnswerVariable;
-            public readonly LocalBuilder NameVariable;
-            public readonly LocalBuilder ReferenceVariable;
-            public readonly DeserializeDictionary Dictionary;
-
-            public readonly Label LoopStartLabel;
-            public readonly Label DefaultLabel;
-            public readonly TypeAnalyzeResult AnalyzeResult;
-
-            public ReadOnlyArguments(LocalBuilder answerVariable, in TypeAnalyzeResult analyzeResult, ILGenerator processor)
-            {
-                Processor = processor;
-                AnswerVariable = answerVariable;
-                AnalyzeResult = analyzeResult;
-                Dictionary = new DeserializeDictionary(in analyzeResult);
-                NameVariable = processor.DeclareLocal(typeof(ReadOnlySpan<byte>));
-                ReferenceVariable = processor.DeclareLocal(typeof(byte).MakeByRefType());
-                LoopStartLabel = processor.DefineLabel();
-                DefaultLabel = processor.DefineLabel();
-            }
-
-            public void Dispose()
-            {
-                Dictionary.Dispose();
-            }
-        }
-
-        private ref struct MutableArguments
-        {
-#if CSHARP_8_OR_NEWER
-            public LocalBuilder? ByteVariable;
-            public LocalBuilder? ULongVariable;
-#else
-            public LocalBuilder ByteVariable;
-            public LocalBuilder ULongVariable;
-#endif
-            public int Length;
-            public int Position;
-            public int Rest;
-            private byte[] deserializeDictionaryEntrySegments;
-            private int used;
-            private readonly ArrayPool<byte> pool;
-
-            public unsafe MutableArguments(ArrayPool<byte> pool)
-            {
-                this.pool = pool;
-                deserializeDictionaryEntrySegments = pool.Rent(sizeof(DeserializeDictionary.EntrySegment) * 64);
-                used = default;
-                ByteVariable = default;
-                ULongVariable = default;
-                Length = default;
-                Position = default;
-                Rest = default;
-            }
-
-            public unsafe ReadOnlySpan<DeserializeDictionary.EntrySegment> Rent(ReadOnlySpan<DeserializeDictionary.Entry> entryArray, int classCount, int position)
-            {
-                var span = MemoryMarshal.Cast<byte, DeserializeDictionary.EntrySegment>(deserializeDictionaryEntrySegments).Slice(used);
-                if (span.Length < classCount)
-                {
-                    var length = sizeof(DeserializeDictionary.EntrySegment) * (used + classCount);
-                    var newBytes = pool.Rent(length);
-                    fixed (void* dst = &newBytes[0])
-                    fixed (void* src = &deserializeDictionaryEntrySegments[0])
-                    {
-                        Buffer.MemoryCopy(src, dst, length, deserializeDictionaryEntrySegments.LongLength);
-                    }
-
-                    pool.Return(deserializeDictionaryEntrySegments);
-                    deserializeDictionaryEntrySegments = newBytes;
-                    span = MemoryMarshal.Cast<byte, DeserializeDictionary.EntrySegment>(deserializeDictionaryEntrySegments).Slice(used);
-                }
-
-                span = span.Slice(0, classCount);
-                entryArray.WriteVariation(position, span);
-                used += classCount;
-                return span;
-            }
-
-            public void Return(int classCount)
-            {
-                used -= classCount;
-            }
-
-            public void ClearWithRest(int rest)
-            {
-                Length = Position = 0;
-                Rest = rest;
-            }
-
-            public void ClearWithByteLength(int length)
-            {
-                Length = length >> 3;
-                Rest = length - (Length << 3);
-                Position = 0;
-            }
-
-            public void Dispose()
-            {
-                pool.Return(deserializeDictionaryEntrySegments);
-            }
-        }
-
         public static void DeserializeStatic(in TypeAnalyzeResult analyzeResult, ILGenerator processor, Type returnType)
         {
             ref readonly var extensionDataInfo = ref analyzeResult.ExtensionData;
             var answerVariable = processor.DeclareLocal(returnType);
-            var readOnlyArguments = new ReadOnlyArguments(answerVariable, in analyzeResult, processor);
+            var readOnlyArguments = new DeserializeStaticReadOnlyArguments(answerVariable, in analyzeResult, processor);
             try
             {
                 if (readOnlyArguments.Dictionary.LengthVariations.IsEmpty)
@@ -149,7 +42,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 }
                 else
                 {
-                    throw new NotSupportedException("Serialization Constructor is not supported.");
+                    throw new NotImplementedException();
                 }
 
                 processor.MarkLabel(returnLabel);
@@ -166,51 +59,48 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
         }
 
-        private static void NoConstructor(in ReadOnlyArguments readOnlyArguments, in ExtensionDataInfo extensionDataInfo, LocalBuilder loopCountVariable, Label returnLabel)
+        private static void NoConstructor(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, in ExtensionDataInfo extensionDataInfo, LocalBuilder loopCountVariable, Label returnLabel)
         {
             var processKind = extensionDataInfo.Info is null
                 ? 0
                 : extensionDataInfo.Add
                     ? 1
                     : 2;
-            var processor = readOnlyArguments.Processor;
-            CallCallbacks(readOnlyArguments.AnalyzeResult.OnDeserializing, processor, readOnlyArguments.AnswerVariable);
+            var processor = deserializeStaticReadOnlyArguments.Processor;
+            CallCallbacks(deserializeStaticReadOnlyArguments.AnalyzeResult.OnDeserializing, processor, deserializeStaticReadOnlyArguments.AnswerVariable);
 
             switch (processKind)
             {
                 case 0:
-                    LoopStartProcedure(processor, readOnlyArguments, loopCountVariable, returnLabel);
-                    DeserializeStatic_CreateInstanceBeforeDeserialization_NoExtensionData(in readOnlyArguments);
+                    LoopStartProcedure(processor, deserializeStaticReadOnlyArguments, loopCountVariable, returnLabel);
+                    DeserializeStatic_CreateInstanceBeforeDeserialization_NoExtensionData(in deserializeStaticReadOnlyArguments);
                     break;
                 case 1: throw new NotImplementedException();
                 case 2:
                     {
                         var extensionVariable = processor.DeclareLocal(typeof(Dictionary<string, object>));
+                        Debug.Assert(!(extensionDataInfo.Info?.SetMethod is null), "extensionDataInfo.Info != null");
                         processor
-                            .LdLocAddress(readOnlyArguments.AnswerVariable)
+                            .LdLocAddress(deserializeStaticReadOnlyArguments.AnswerVariable)
                             .NewObj(BasicInfoContainer.ConstructorInfoStringKeyObjectValueDictionary)
                             .Dup()
                             .StLoc(extensionVariable)
-#if CSHARP_8_OR_NEWER
-                            .TryCallIfNotPossibleCallVirtual(extensionDataInfo.Info!.SetMethod!);
-#else
                             .TryCallIfNotPossibleCallVirtual(extensionDataInfo.Info.SetMethod);
-#endif
 
-                        LoopStartProcedure(processor, readOnlyArguments, loopCountVariable, returnLabel);
-                        DeserializeStatic_CreateInstanceBeforeDeserialization_WithExtensionData(in readOnlyArguments, extensionVariable);
+                        LoopStartProcedure(processor, deserializeStaticReadOnlyArguments, loopCountVariable, returnLabel);
+                        DeserializeStatic_CreateInstanceBeforeDeserialization_WithExtensionData(in deserializeStaticReadOnlyArguments, extensionVariable);
                     }
                     break;
             }
 
             // goto while(!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
-            processor.Br(readOnlyArguments.LoopStartLabel);
+            processor.Br(deserializeStaticReadOnlyArguments.LoopStartLabel);
         }
 
-        private static void LoopStartProcedure(ILGenerator processor, in ReadOnlyArguments readOnlyArguments, LocalBuilder loopCountVariable, Label returnLabel)
+        private static void LoopStartProcedure(ILGenerator processor, in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, LocalBuilder loopCountVariable, Label returnLabel)
         {
             // while(!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
-            processor.MarkLabel(readOnlyArguments.LoopStartLabel);
+            processor.MarkLabel(deserializeStaticReadOnlyArguments.LoopStartLabel);
             processor
                 .LdArg(0)
                 .LdLocAddress(loopCountVariable)
@@ -223,19 +113,19 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             processor
                 .LdArg(0)
                 .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderReadPropertyNameSegmentRaw)
-                .StLoc(readOnlyArguments.NameVariable) // var name = reader.ReadPropertyNameSegmentRaw();
-                .LdLocAddress(readOnlyArguments.NameVariable)
+                .StLoc(deserializeStaticReadOnlyArguments.NameVariable) // var name = reader.ReadPropertyNameSegmentRaw();
+                .LdLocAddress(deserializeStaticReadOnlyArguments.NameVariable)
                 .LdcI4(0)
                 .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodReadOnlySpanGetItem)
-                .StLoc(readOnlyArguments.ReferenceVariable)
-                .LdLocAddress(readOnlyArguments.NameVariable)
+                .StLoc(deserializeStaticReadOnlyArguments.ReferenceVariable)
+                .LdLocAddress(deserializeStaticReadOnlyArguments.NameVariable)
                 .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodReadOnlySpanGetLength); // nameVariable.Length
         }
 
-        private static void NoVariation(in ReadOnlyArguments readOnlyArguments)
+        private static void NoVariation(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments)
         {
-            var processor = readOnlyArguments.Processor;
-            if (readOnlyArguments.AnalyzeResult.ExtensionData.Info is null)
+            var processor = deserializeStaticReadOnlyArguments.Processor;
+            if (deserializeStaticReadOnlyArguments.AnalyzeResult.ExtensionData.Info is null)
             {
                 var notNull = processor.DefineLabel();
                 processor
@@ -248,19 +138,19 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 processor
                     .LdArg(0)
                     .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderReadNextBlock)
-                    .LdLoc(readOnlyArguments.AnswerVariable)
+                    .LdLoc(deserializeStaticReadOnlyArguments.AnswerVariable)
                     .Emit(OpCodes.Ret);
             }
             else
             {
-                var setMethod = readOnlyArguments.AnalyzeResult.ExtensionData.Info.SetMethod ?? throw new NullReferenceException();
+                var setMethod = deserializeStaticReadOnlyArguments.AnalyzeResult.ExtensionData.Info.SetMethod ?? throw new NullReferenceException();
                 processor
-                    .LdLocAddress(readOnlyArguments.AnswerVariable)
+                    .LdLocAddress(deserializeStaticReadOnlyArguments.AnswerVariable)
                     .LdArg(0)
                     .LdArg(1)
                     .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodStringKeyObjectValueDictionaryFormatterDeserializeStatic)
                     .TryCallIfNotPossibleCallVirtual(setMethod)
-                    .LdLoc(readOnlyArguments.AnswerVariable)
+                    .LdLoc(deserializeStaticReadOnlyArguments.AnswerVariable)
                     .Emit(OpCodes.Ret);
             }
         }
@@ -282,66 +172,66 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
         }
 
-        private static void DeserializeStatic_CreateInstanceBeforeDeserialization_WithExtensionData(in ReadOnlyArguments readOnlyArguments, LocalBuilder extensionDataVariable)
+        private static void DeserializeStatic_CreateInstanceBeforeDeserialization_WithExtensionData(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, LocalBuilder extensionDataVariable)
         {
-            var processor = readOnlyArguments.Processor;
+            var processor = deserializeStaticReadOnlyArguments.Processor;
 
-            var lengthVariations = readOnlyArguments.Dictionary.LengthVariations;
+            var lengthVariations = deserializeStaticReadOnlyArguments.Dictionary.LengthVariations;
             Span<Label> destinations = stackalloc Label[lengthVariations.Length];
             for (var i = 0; i < destinations.Length; i++)
             {
                 destinations[i] = processor.DefineLabel();
             }
 
-            var possibleLengthCount = readOnlyArguments.Dictionary.Table.Length;
-            EmbedSwitchLength(processor, lengthVariations, destinations, possibleLengthCount, readOnlyArguments.DefaultLabel);
+            var possibleLengthCount = deserializeStaticReadOnlyArguments.Dictionary.Table.Length;
+            EmbedSwitchLength(processor, lengthVariations, destinations, possibleLengthCount, deserializeStaticReadOnlyArguments.DefaultLabel);
 
             // default case
-            processor.MarkLabel(readOnlyArguments.DefaultLabel);
+            processor.MarkLabel(deserializeStaticReadOnlyArguments.DefaultLabel);
             processor
                 .LdArg(0)
                 .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderSkipWhiteSpace) // reader.ReadSkipWhiteSpace();
                 .LdLoc(extensionDataVariable)
-                .LdLoc(readOnlyArguments.NameVariable)
+                .LdLoc(deserializeStaticReadOnlyArguments.NameVariable)
                 .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodNullableStringDeserializeStaticInnerQuotation)
                 .LdArg(0)
                 .LdArg(1)
                 .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodObjectFormatterDeserializeStatic)
                 .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodStringKeyObjectValueDictionaryAdd)
-                .Br(readOnlyArguments.LoopStartLabel); // continue;
+                .Br(deserializeStaticReadOnlyArguments.LoopStartLabel); // continue;
 
-            非default(readOnlyArguments, processor, destinations, possibleLengthCount);
+            非default(deserializeStaticReadOnlyArguments, processor, destinations, possibleLengthCount);
         }
 
-        private static void DeserializeStatic_CreateInstanceBeforeDeserialization_NoExtensionData(in ReadOnlyArguments readOnlyArguments)
+        private static void DeserializeStatic_CreateInstanceBeforeDeserialization_NoExtensionData(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments)
         {
-            var lengthVariations = readOnlyArguments.Dictionary.LengthVariations;
+            var lengthVariations = deserializeStaticReadOnlyArguments.Dictionary.LengthVariations;
             Span<Label> destinations = stackalloc Label[lengthVariations.Length];
-            var processor = readOnlyArguments.Processor;
+            var processor = deserializeStaticReadOnlyArguments.Processor;
             for (var i = 0; i < destinations.Length; i++)
             {
                 destinations[i] = processor.DefineLabel();
             }
 
-            var possibleLengthCount = readOnlyArguments.Dictionary.Table.Length;
-            EmbedSwitchLength(processor, lengthVariations, destinations, possibleLengthCount, readOnlyArguments.DefaultLabel);
+            var possibleLengthCount = deserializeStaticReadOnlyArguments.Dictionary.Table.Length;
+            EmbedSwitchLength(processor, lengthVariations, destinations, possibleLengthCount, deserializeStaticReadOnlyArguments.DefaultLabel);
 
             // default case
-            processor.MarkLabel(readOnlyArguments.DefaultLabel);
+            processor.MarkLabel(deserializeStaticReadOnlyArguments.DefaultLabel);
             processor
                 .LdArg(0)
                 .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderSkipWhiteSpace) // reader.ReadSkipWhiteSpace();
                 .LdArg(0)
                 .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderReadNextBlock) // reader.ReadNextBlock();
-                .Br(readOnlyArguments.LoopStartLabel); // continue;
+                .Br(deserializeStaticReadOnlyArguments.LoopStartLabel); // continue;
 
-            非default(readOnlyArguments, processor, destinations, possibleLengthCount);
+            非default(deserializeStaticReadOnlyArguments, processor, destinations, possibleLengthCount);
         }
 
-        private static void 非default(in ReadOnlyArguments readOnlyArguments, ILGenerator processor, Span<Label> destinations, int possibleLengthCount)
+        private static void 非default(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, ILGenerator processor, Span<Label> destinations, int possibleLengthCount)
         {
             int length = 0, labelIndex = 0;
-            var entryArray = readOnlyArguments.Dictionary[length++];
+            var entryArray = deserializeStaticReadOnlyArguments.Dictionary[length++];
             if (!entryArray.IsEmpty)
             {
                 processor.MarkLabel(destinations[labelIndex++]); // case (LENGTH):
@@ -350,10 +240,10 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     throw new ArgumentOutOfRangeException(entryArray.Length.ToString(CultureInfo.InvariantCulture));
                 }
 
-                EmbedMatch(in entryArray[0], in readOnlyArguments);
+                EmbedMatch(in entryArray[0], in deserializeStaticReadOnlyArguments);
             }
 
-            var mutableArguments = new MutableArguments(ArrayPool<byte>.Shared);
+            var mutableArguments = new DeserializeStaticMutableArguments(ArrayPool<byte>.Shared);
             for (; length < 8; length++)
             {
                 if (length >= possibleLengthCount)
@@ -361,7 +251,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     break;
                 }
 
-                entryArray = readOnlyArguments.Dictionary[length];
+                entryArray = deserializeStaticReadOnlyArguments.Dictionary[length];
                 if (entryArray.IsEmpty)
                 {
                     continue;
@@ -369,12 +259,12 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
                 processor.MarkLabel(destinations[labelIndex++]); // case (LENGTH):
                 mutableArguments.ClearWithRest(length);
-                SwitchRestBytes(in readOnlyArguments, entryArray, ref mutableArguments);
+                SwitchRestBytes(in deserializeStaticReadOnlyArguments, entryArray, ref mutableArguments);
             }
 
             for (; length < possibleLengthCount; length++)
             {
-                entryArray = readOnlyArguments.Dictionary[length];
+                entryArray = deserializeStaticReadOnlyArguments.Dictionary[length];
                 if (entryArray.IsEmpty)
                 {
                     continue;
@@ -382,7 +272,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
                 processor.MarkLabel(destinations[labelIndex++]); // case (LENGTH):
                 mutableArguments.ClearWithByteLength(length);
-                長さ8以上に対する探索開始(in readOnlyArguments, entryArray, ref mutableArguments);
+                長さ8以上に対する探索開始(in deserializeStaticReadOnlyArguments, entryArray, ref mutableArguments);
             }
             mutableArguments.Dispose();
         }
@@ -427,14 +317,14 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         }
 
         private static void 長さ8以上に対する探索開始(
-            in ReadOnlyArguments readOnlyArguments,
+            in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments,
             ReadOnlySpan<DeserializeDictionary.Entry> entryArray,
-            ref MutableArguments mutableArguments
+            ref DeserializeStaticMutableArguments mutableArguments
         )
         {
-            var processor = readOnlyArguments.Processor;
+            var processor = deserializeStaticReadOnlyArguments.Processor;
             processor
-                .LdLoc(readOnlyArguments.ReferenceVariable)
+                .LdLoc(deserializeStaticReadOnlyArguments.ReferenceVariable)
                 .LdIndI8();
             var position = mutableArguments.Position;
             var classCount = entryArray.CountUpVariation(position);
@@ -442,8 +332,8 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             if (classCount == 1)
             {
                 var key = entryArray[0][position];
-                processor.LdcI8(key).BneUn(readOnlyArguments.DefaultLabel);
-                成功時の探索(in readOnlyArguments, entryArray, ref mutableArguments, new DeserializeDictionary.EntrySegment(key, 0, entryArray.Length));
+                processor.LdcI8(key).BneUn(deserializeStaticReadOnlyArguments.DefaultLabel);
+                成功時の探索(in deserializeStaticReadOnlyArguments, entryArray, ref mutableArguments, new DeserializeDictionary.EntrySegment(key, 0, entryArray.Length));
                 return;
             }
 
@@ -465,7 +355,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 .LdcI8(middleSegment.Key)
                 .BneUn(notMiddleLabel);
 
-            成功時の探索(readOnlyArguments, entryArray, ref mutableArguments, middleSegment);
+            成功時の探索(deserializeStaticReadOnlyArguments, entryArray, ref mutableArguments, middleSegment);
 
             processor.MarkLabel(notMiddleLabel);
             processor
@@ -476,8 +366,8 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 middleSegment = ref entrySegments[0];
                 processor
                     .LdcI8(middleSegment.Key)
-                    .BneUn(readOnlyArguments.DefaultLabel);
-                成功時の探索(in readOnlyArguments, entryArray, ref mutableArguments, middleSegment);
+                    .BneUn(deserializeStaticReadOnlyArguments.DefaultLabel);
+                成功時の探索(in deserializeStaticReadOnlyArguments, entryArray, ref mutableArguments, middleSegment);
             }
             else
             {
@@ -485,26 +375,26 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 processor
                     .LdcI8(middleSegment.Key)
                     .BltUn(lesserLabel);
-                二分探索(in readOnlyArguments, ref mutableArguments, entryArray, entrySegments.Slice(middleIndex + 1), ulongVariable);
+                二分探索(in deserializeStaticReadOnlyArguments, ref mutableArguments, entryArray, entrySegments.Slice(middleIndex + 1), ulongVariable);
                 processor.MarkLabel(lesserLabel);
-                二分探索(in readOnlyArguments, ref mutableArguments, entryArray, entrySegments.Slice(0, middleIndex), ulongVariable);
+                二分探索(in deserializeStaticReadOnlyArguments, ref mutableArguments, entryArray, entrySegments.Slice(0, middleIndex), ulongVariable);
             }
             mutableArguments.Return(classCount);
         }
 
-        private static void 二分探索(in ReadOnlyArguments readOnlyArguments, ref MutableArguments mutableArguments, ReadOnlySpan<DeserializeDictionary.Entry> entryArray, ReadOnlySpan<DeserializeDictionary.EntrySegment> segments, LocalBuilder ulongVariable)
+        private static void 二分探索(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, ref DeserializeStaticMutableArguments mutableArguments, ReadOnlySpan<DeserializeDictionary.Entry> entryArray, ReadOnlySpan<DeserializeDictionary.EntrySegment> segments, LocalBuilder ulongVariable)
         {
             while (true)
             {
-                var processor = readOnlyArguments.Processor;
+                var processor = deserializeStaticReadOnlyArguments.Processor;
                 processor.LdLoc(ulongVariable);
 
                 if (segments.Length == 1)
                 {
                     processor
                         .LdcI8(segments[0].Key)
-                        .BneUn(readOnlyArguments.DefaultLabel);
-                    成功時の探索(in readOnlyArguments, entryArray, ref mutableArguments, segments[0]);
+                        .BneUn(deserializeStaticReadOnlyArguments.DefaultLabel);
+                    成功時の探索(in deserializeStaticReadOnlyArguments, entryArray, ref mutableArguments, segments[0]);
                     return;
                 }
 
@@ -515,29 +405,29 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     .LdcI8(middleSegment.Key)
                     .BneUn(notMiddleLabel);
 
-                成功時の探索(in readOnlyArguments, entryArray, ref mutableArguments, middleSegment);
+                成功時の探索(in deserializeStaticReadOnlyArguments, entryArray, ref mutableArguments, middleSegment);
                 processor.MarkLabel(notMiddleLabel);
                 processor.LdLoc(ulongVariable);
 
                 if (segments.Length == 2)
                 {
                     processor.LdcI8(segments[0].Key)
-                        .BneUn(readOnlyArguments.DefaultLabel);
+                        .BneUn(deserializeStaticReadOnlyArguments.DefaultLabel);
 
-                    成功時の探索(in readOnlyArguments, entryArray, ref mutableArguments, segments[0]);
+                    成功時の探索(in deserializeStaticReadOnlyArguments, entryArray, ref mutableArguments, segments[0]);
                     return;
                 }
 
                 var lesserLabel = processor.DefineLabel();
                 processor.LdcI8(middleSegment.Key)
                     .BltUn(lesserLabel);
-                二分探索(in readOnlyArguments, ref mutableArguments, entryArray, segments.Slice(middleIndex + 1), ulongVariable);
+                二分探索(in deserializeStaticReadOnlyArguments, ref mutableArguments, entryArray, segments.Slice(middleIndex + 1), ulongVariable);
                 processor.MarkLabel(lesserLabel);
                 segments = segments.Slice(0, middleIndex);
             }
         }
 
-        private static void 成功時の探索(in ReadOnlyArguments readOnlyArguments, ReadOnlySpan<DeserializeDictionary.Entry> entryArray, ref MutableArguments mutableArguments, in DeserializeDictionary.EntrySegment middleSegment)
+        private static void 成功時の探索(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, ReadOnlySpan<DeserializeDictionary.Entry> entryArray, ref DeserializeStaticMutableArguments mutableArguments, in DeserializeDictionary.EntrySegment middleSegment)
         {
             var position = mutableArguments.Position;
             if (position + 1 == mutableArguments.Length)
@@ -549,41 +439,41 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         throw new ArgumentOutOfRangeException(middleSegment.Length.ToString(CultureInfo.InvariantCulture));
                     }
 
-                    EmbedMatch(entryArray[middleSegment.Offset], in readOnlyArguments);
+                    EmbedMatch(entryArray[middleSegment.Offset], in deserializeStaticReadOnlyArguments);
                 }
                 else
                 {
                     mutableArguments.Position = 0;
-                    readOnlyArguments.Processor
-                        .LdLoc(readOnlyArguments.ReferenceVariable)
+                    deserializeStaticReadOnlyArguments.Processor
+                        .LdLoc(deserializeStaticReadOnlyArguments.ReferenceVariable)
                         .LdcI4(8)
                         .Add()
-                        .StLoc(readOnlyArguments.ReferenceVariable);
-                    SwitchRestBytes(in readOnlyArguments, entryArray.Slice(middleSegment.Offset, middleSegment.Length), ref mutableArguments);
+                        .StLoc(deserializeStaticReadOnlyArguments.ReferenceVariable);
+                    SwitchRestBytes(in deserializeStaticReadOnlyArguments, entryArray.Slice(middleSegment.Offset, middleSegment.Length), ref mutableArguments);
                 }
             }
             else
             {
                 mutableArguments.Position = position + 1;
-                readOnlyArguments.Processor
-                    .LdLoc(readOnlyArguments.ReferenceVariable)
+                deserializeStaticReadOnlyArguments.Processor
+                    .LdLoc(deserializeStaticReadOnlyArguments.ReferenceVariable)
                     .LdcI4(8)
                     .Add()
-                    .StLoc(readOnlyArguments.ReferenceVariable);
-                長さ8以上に対する探索開始(in readOnlyArguments, entryArray.Slice(middleSegment.Offset, middleSegment.Length), ref mutableArguments);
+                    .StLoc(deserializeStaticReadOnlyArguments.ReferenceVariable);
+                長さ8以上に対する探索開始(in deserializeStaticReadOnlyArguments, entryArray.Slice(middleSegment.Offset, middleSegment.Length), ref mutableArguments);
             }
             mutableArguments.Position = position;
         }
 
         private static void SwitchRestBytes(
-            in ReadOnlyArguments readOnlyArguments,
+            in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments,
             ReadOnlySpan<DeserializeDictionary.Entry> entryArray,
-            ref MutableArguments mutableArguments
+            ref DeserializeStaticMutableArguments mutableArguments
         )
         {
-            var processor = readOnlyArguments.Processor;
-            var (firstRestByte, notMatch) = SwitchRestBytesSetUp(processor, ref entryArray, readOnlyArguments.DefaultLabel, mutableArguments.Position, out var firstEntryArray);
-            processor.LdLoc(readOnlyArguments.ReferenceVariable);
+            var processor = deserializeStaticReadOnlyArguments.Processor;
+            var (firstRestByte, notMatch) = SwitchRestBytesSetUp(processor, ref entryArray, deserializeStaticReadOnlyArguments.DefaultLabel, mutableArguments.Position, out var firstEntryArray);
+            processor.LdLoc(deserializeStaticReadOnlyArguments.ReferenceVariable);
             if (mutableArguments.Position != 0)
             {
                 processor
@@ -596,7 +486,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             // 他の候補がないならば
             if (entryArray.IsEmpty)
             {
-                SwitchRestBytesTryMatchByteAndWhenMatchAction(in readOnlyArguments, firstRestByte, firstEntryArray, notMatch, ref mutableArguments);
+                SwitchRestBytesTryMatchByteAndWhenMatchAction(in deserializeStaticReadOnlyArguments, firstRestByte, firstEntryArray, notMatch, ref mutableArguments);
                 return;
             }
 
@@ -611,15 +501,15 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 .LdLoc(byteVariable);
 
             // マッチしている場合の処理を記述
-            SwitchRestBytesTryMatchByteAndWhenMatchAction(in readOnlyArguments, firstRestByte, firstEntryArray, notMatch, ref mutableArguments);
+            SwitchRestBytesTryMatchByteAndWhenMatchAction(in deserializeStaticReadOnlyArguments, firstRestByte, firstEntryArray, notMatch, ref mutableArguments);
 
             // 他の候補を記述
             do
             {
                 processor.MarkLabel(notMatch);
-                (firstRestByte, notMatch) = SwitchRestBytesSetUp(processor, ref entryArray, readOnlyArguments.DefaultLabel, mutableArguments.Position, out firstEntryArray);
+                (firstRestByte, notMatch) = SwitchRestBytesSetUp(processor, ref entryArray, deserializeStaticReadOnlyArguments.DefaultLabel, mutableArguments.Position, out firstEntryArray);
                 processor.LdLoc(byteVariable);
-                SwitchRestBytesTryMatchByteAndWhenMatchAction(in readOnlyArguments, firstRestByte, firstEntryArray, notMatch, ref mutableArguments);
+                SwitchRestBytesTryMatchByteAndWhenMatchAction(in deserializeStaticReadOnlyArguments, firstRestByte, firstEntryArray, notMatch, ref mutableArguments);
             } while (!entryArray.IsEmpty);
         }
 
@@ -632,13 +522,13 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             return (firstRestByte, notMatch);
         }
 
-        private static void SwitchRestBytesTryMatchByteAndWhenMatchAction(in ReadOnlyArguments readOnlyArguments,
+        private static void SwitchRestBytesTryMatchByteAndWhenMatchAction(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments,
             byte firstRestByte,
             ReadOnlySpan<DeserializeDictionary.Entry> firstEntryArray,
             Label notMatch,
-            ref MutableArguments mutableArguments)
+            ref DeserializeStaticMutableArguments mutableArguments)
         {
-            readOnlyArguments.Processor
+            deserializeStaticReadOnlyArguments.Processor
                 .LdcI4(firstRestByte)
                 .BneUn(notMatch);
 
@@ -651,26 +541,26 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     throw new ArgumentOutOfRangeException(firstEntryArray.Length.ToString(CultureInfo.InvariantCulture));
                 }
 
-                EmbedMatch(in firstEntryArray[0], in readOnlyArguments);
+                EmbedMatch(in firstEntryArray[0], in deserializeStaticReadOnlyArguments);
             }
             else
             {
                 mutableArguments.Position++;
-                SwitchRestBytes(in readOnlyArguments, firstEntryArray, ref mutableArguments);
+                SwitchRestBytes(in deserializeStaticReadOnlyArguments, firstEntryArray, ref mutableArguments);
             }
 
             mutableArguments.Position = position;
         }
 
-        private static void EmbedMatch(in DeserializeDictionary.Entry entry, in ReadOnlyArguments readOnlyArguments)
+        private static void EmbedMatch(in DeserializeDictionary.Entry entry, in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments)
         {
-            var processor = readOnlyArguments.Processor;
-            processor.LdLocAddress(readOnlyArguments.AnswerVariable);
+            var processor = deserializeStaticReadOnlyArguments.Processor;
+            processor.LdLocAddress(deserializeStaticReadOnlyArguments.AnswerVariable);
             switch (entry.Type)
             {
                 case DeserializeDictionary.Type.FieldValueType:
                     {
-                        ref readonly var info = ref readOnlyArguments.AnalyzeResult.FieldValueTypeArray[entry.Index];
+                        ref readonly var info = ref deserializeStaticReadOnlyArguments.AnalyzeResult.FieldValueTypeArray[entry.Index];
                         switch (info.IsFormatterDirect)
                         {
                             case DirectTypeEnum.None:
@@ -698,7 +588,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     break;
                 case DeserializeDictionary.Type.PropertyValueType:
                     {
-                        ref readonly var info = ref readOnlyArguments.AnalyzeResult.PropertyValueTypeArray[entry.Index];
+                        ref readonly var info = ref deserializeStaticReadOnlyArguments.AnalyzeResult.PropertyValueTypeArray[entry.Index];
                         switch (info.IsFormatterDirect)
                         {
                             case DirectTypeEnum.None:
@@ -728,7 +618,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     break;
                 case DeserializeDictionary.Type.FieldValueTypeShouldSerialize:
                     {
-                        ref readonly var info = ref readOnlyArguments.AnalyzeResult.FieldValueTypeShouldSerializeArray[entry.Index];
+                        ref readonly var info = ref deserializeStaticReadOnlyArguments.AnalyzeResult.FieldValueTypeShouldSerializeArray[entry.Index];
                         switch (info.IsFormatterDirect)
                         {
                             case DirectTypeEnum.None:
@@ -756,7 +646,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     break;
                 case DeserializeDictionary.Type.PropertyValueTypeShouldSerialize:
                     {
-                        ref readonly var info = ref readOnlyArguments.AnalyzeResult.PropertyValueTypeShouldSerializeArray[entry.Index];
+                        ref readonly var info = ref deserializeStaticReadOnlyArguments.AnalyzeResult.PropertyValueTypeShouldSerializeArray[entry.Index];
                         switch (info.IsFormatterDirect)
                         {
                             case DirectTypeEnum.None:
@@ -786,7 +676,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     break;
                 case DeserializeDictionary.Type.FieldReferenceType:
                     {
-                        ref readonly var info = ref readOnlyArguments.AnalyzeResult.FieldReferenceTypeArray[entry.Index];
+                        ref readonly var info = ref deserializeStaticReadOnlyArguments.AnalyzeResult.FieldReferenceTypeArray[entry.Index];
                         switch (info.IsFormatterDirect)
                         {
                             case DirectTypeEnum.None:
@@ -814,7 +704,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     break;
                 case DeserializeDictionary.Type.PropertyReferenceType:
                     {
-                        ref readonly var info = ref readOnlyArguments.AnalyzeResult.PropertyReferenceTypeArray[entry.Index];
+                        ref readonly var info = ref deserializeStaticReadOnlyArguments.AnalyzeResult.PropertyReferenceTypeArray[entry.Index];
                         switch (info.IsFormatterDirect)
                         {
                             case DirectTypeEnum.None:
@@ -844,7 +734,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     break;
                 case DeserializeDictionary.Type.FieldReferenceTypeShouldSerialize:
                     {
-                        ref readonly var info = ref readOnlyArguments.AnalyzeResult.FieldReferenceTypeShouldSerializeArray[entry.Index];
+                        ref readonly var info = ref deserializeStaticReadOnlyArguments.AnalyzeResult.FieldReferenceTypeShouldSerializeArray[entry.Index];
                         switch (info.IsFormatterDirect)
                         {
                             case DirectTypeEnum.None:
@@ -872,7 +762,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     break;
                 case DeserializeDictionary.Type.PropertyReferenceTypeShouldSerialize:
                     {
-                        ref readonly var info = ref readOnlyArguments.AnalyzeResult.PropertyReferenceTypeShouldSerializeArray[entry.Index];
+                        ref readonly var info = ref deserializeStaticReadOnlyArguments.AnalyzeResult.PropertyReferenceTypeShouldSerializeArray[entry.Index];
                         switch (info.IsFormatterDirect)
                         {
                             case DirectTypeEnum.None:
@@ -904,7 +794,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     throw new ArgumentOutOfRangeException(nameof(DeserializeDictionary.Type), entry.Type, null);
             }
 
-            processor.Br(readOnlyArguments.LoopStartLabel);
+            processor.Br(deserializeStaticReadOnlyArguments.LoopStartLabel);
         }
     }
 }
