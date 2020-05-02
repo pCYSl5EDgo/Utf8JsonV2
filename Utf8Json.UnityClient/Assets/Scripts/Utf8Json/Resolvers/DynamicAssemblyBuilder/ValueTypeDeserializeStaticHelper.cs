@@ -40,9 +40,17 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 {
                     NoConstructor(in readOnlyArguments, in extensionDataInfo, loopCountVariable, returnLabel);
                 }
+                else if (!(analyzeResult.ConstructorData.Constructor is null))
+                {
+                    WithConstructor(in readOnlyArguments, in extensionDataInfo, loopCountVariable, returnLabel, analyzeResult.ConstructorData.Constructor);
+                }
+                else if (!(analyzeResult.ConstructorData.FactoryMethod is null))
+                {
+                    WithFactoryMethod(in readOnlyArguments, in extensionDataInfo, loopCountVariable, returnLabel, analyzeResult.ConstructorData.FactoryMethod);
+                }
                 else
                 {
-                    throw new NotImplementedException();
+                    throw new InvalidOperationException();
                 }
 
                 processor.MarkLabel(returnLabel);
@@ -57,6 +65,16 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             {
                 readOnlyArguments.Dispose();
             }
+        }
+
+        private static void WithFactoryMethod(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, in ExtensionDataInfo extensionDataInfo, LocalBuilder loopCountVariable, Label returnLabel, MethodInfo constructorDataFactoryMethod)
+        {
+            throw new NotImplementedException();
+        }
+
+        private static void WithConstructor(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, in ExtensionDataInfo extensionDataInfo, LocalBuilder loopCountVariable, Label returnLabel, ConstructorInfo constructorDataConstructor)
+        {
+            throw new NotImplementedException();
         }
 
         private static void NoConstructor(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, in ExtensionDataInfo extensionDataInfo, LocalBuilder loopCountVariable, Label returnLabel)
