@@ -724,7 +724,6 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     EmbedBoolean(processor, info.MemberName, t, spanVariable, bufferWriterAddressVariable, isFirst, loadTargetByFunc);
                     break;
                 case DirectTypeEnum.None:
-                    Console.WriteLine(info.MemberName + "\r\n" + info.MemberNameByteLengthWithQuotation);
                     EmbedPropertyNameNotBoolean(processor, info.MemberName, info.MemberNameByteLengthWithQuotation, spanVariable, bufferWriterAddressVariable, isFirst);
                     Embed_None(processor, ref info, loadTargetByFunc, t, LoadTargetValueType);
                     break;
