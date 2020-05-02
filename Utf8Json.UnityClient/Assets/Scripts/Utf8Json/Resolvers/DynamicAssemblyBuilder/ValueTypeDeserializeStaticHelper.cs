@@ -75,7 +75,19 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     LoopStartProcedure(processor, deserializeStaticReadOnlyArguments, loopCountVariable, returnLabel);
                     DeserializeStatic_CreateInstanceBeforeDeserialization_NoExtensionData(in deserializeStaticReadOnlyArguments);
                     break;
-                case 1: throw new NotImplementedException();
+                case 1:
+                    {
+                        var extensionVariable = processor.DeclareLocal(typeof(Dictionary<string, object>));
+                        Debug.Assert(!(extensionDataInfo.Info?.GetMethod is null), "extensionDataInfo.Info != null");
+                        processor
+                            .LdLocAddress(deserializeStaticReadOnlyArguments.AnswerVariable)
+                            .TryCallIfNotPossibleCallVirtual(extensionDataInfo.Info.GetMethod)
+                            .StLoc(extensionVariable);
+
+                        LoopStartProcedure(processor, deserializeStaticReadOnlyArguments, loopCountVariable, returnLabel);
+                        DeserializeStatic_CreateInstanceBeforeDeserialization_WithExtensionData(in deserializeStaticReadOnlyArguments, extensionVariable);
+                    }
+                    break;
                 case 2:
                     {
                         var extensionVariable = processor.DeclareLocal(typeof(Dictionary<string, object>));
