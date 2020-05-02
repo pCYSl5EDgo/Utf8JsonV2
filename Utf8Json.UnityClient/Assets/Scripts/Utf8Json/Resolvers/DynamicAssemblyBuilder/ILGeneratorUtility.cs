@@ -194,12 +194,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             processor.Emit(OpCodes.Switch, labels);
         }
 
-        public static void BeqShort(this ILGenerator processor, Label label)
-        {
-            processor.Emit(OpCodes.Beq_S, label);
-        }
-
-        public static void BeqLong(this ILGenerator processor, Label label)
+        public static void Beq(this ILGenerator processor, Label label)
         {
             processor.Emit(OpCodes.Beq, label);
         }
@@ -214,32 +209,17 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             processor.Emit(OpCodes.Bne_Un, label);
         }
 
-        public static void BrShort(this ILGenerator processor, Label label)
-        {
-            processor.Emit(OpCodes.Br_S, label);
-        }
-
-        public static void BrLong(this ILGenerator processor, Label label)
+        public static void Br(this ILGenerator processor, Label label)
         {
             processor.Emit(OpCodes.Br, label);
         }
 
-        public static void BrFalseShort(this ILGenerator processor, Label label)
-        {
-            processor.Emit(OpCodes.Brfalse_S, label);
-        }
-
-        public static void BrFalseLong(this ILGenerator processor, Label label)
+        public static void BrFalse(this ILGenerator processor, Label label)
         {
             processor.Emit(OpCodes.Brfalse, label);
         }
 
-        public static void BrTrueShort(this ILGenerator processor, Label label)
-        {
-            processor.Emit(OpCodes.Brtrue_S, label);
-        }
-
-        public static void BrTrueLong(this ILGenerator processor, Label label)
+        public static void BrTrue(this ILGenerator processor, Label label)
         {
             processor.Emit(OpCodes.Brtrue, label);
         }

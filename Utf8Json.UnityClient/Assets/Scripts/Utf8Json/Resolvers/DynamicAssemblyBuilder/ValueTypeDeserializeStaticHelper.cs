@@ -204,7 +204,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
 
             // goto while(!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
-            processor.BrLong(readOnlyArguments.LoopStartLabel);
+            processor.Br(readOnlyArguments.LoopStartLabel);
         }
 
         private static void LoopStartProcedure(ILGenerator processor, in ReadOnlyArguments readOnlyArguments, LocalBuilder loopCountVariable, Label returnLabel)
@@ -215,7 +215,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 .LdArg(0)
                 .LdLocAddress(loopCountVariable)
                 .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderReadIsEndObjectWithSkipValueSeparator)
-                .BrTrueLong(returnLabel); // if true goto return statement.
+                .BrTrue(returnLabel); // if true goto return statement.
 
             // ReadOnlySpan<byte> name = reader.ReadPropertyNameSegmentRaw();
             // ref readonly byte b = ref name[0];
@@ -241,7 +241,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 processor
                     .LdArg(0)
                     .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderReadIsNull)
-                    .BrFalseShort(notNull);
+                    .BrFalse(notNull);
                 processor
                     .ThrowException(typeof(NullReferenceException));
                 processor.MarkLabel(notNull);
@@ -308,7 +308,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 .LdArg(1)
                 .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodObjectFormatterDeserializeStatic)
                 .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodStringKeyObjectValueDictionaryAdd)
-                .BrShort(readOnlyArguments.LoopStartLabel); // continue;
+                .Br(readOnlyArguments.LoopStartLabel); // continue;
 
             非default(readOnlyArguments, processor, destinations, possibleLengthCount);
         }
@@ -333,7 +333,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderSkipWhiteSpace) // reader.ReadSkipWhiteSpace();
                 .LdArg(0)
                 .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderReadNextBlock) // reader.ReadNextBlock();
-                .BrShort(readOnlyArguments.LoopStartLabel); // continue;
+                .Br(readOnlyArguments.LoopStartLabel); // continue;
 
             非default(readOnlyArguments, processor, destinations, possibleLengthCount);
         }
@@ -394,7 +394,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 case 1:
                     processor
                         .LdcI4(lengthVariations[0])
-                        .BeqShort(destinations[0]); // if (nameLength == maxLength)
+                        .Beq(destinations[0]); // if (nameLength == maxLength)
                     break;
                 case 2:
                     var nameLengthVariable = processor.DeclareLocal(typeof(int));
@@ -402,11 +402,11 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         .StLoc(nameLengthVariable)
                         .LdLoc(nameLengthVariable)
                         .LdcI4(lengthVariations[0])
-                        .BeqShort(destinations[0]); // if (nameLength == minLength) goto MIN;
+                        .Beq(destinations[0]); // if (nameLength == minLength) goto MIN;
                     processor
                         .LdLoc(nameLengthVariable)
                         .LdcI4(lengthVariations[1])
-                        .BeqShort(destinations[1]); // if (nameLength == maxLength) goto MAX;
+                        .Beq(destinations[1]); // if (nameLength == maxLength) goto MAX;
                     break;
                 default:
                     var cases = new Label[possibleLengthCount];
@@ -904,7 +904,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     throw new ArgumentOutOfRangeException(nameof(DeserializeDictionary.Type), entry.Type, null);
             }
 
-            processor.BrLong(readOnlyArguments.LoopStartLabel);
+            processor.Br(readOnlyArguments.LoopStartLabel);
         }
     }
 }

@@ -246,7 +246,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 .TryCallIfNotPossibleCallVirtual(getMethod)
                 .Dup()
                 .StLoc(referenceVariable)
-                .BrFalseShort(skipLabel);
+                .BrFalse(skipLabel);
 
             processor
                 .LdLoc(referenceVariable)
@@ -307,7 +307,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             var returnLabel = processor.DefineLabel();
             processor
                 .LdLoc(detectIsFirstVariable)
-                .BrFalseShort(returnLabel);
+                .BrFalse(returnLabel);
 
             processor
                 .LdArg(0)
@@ -350,18 +350,18 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 processor
                     .LdArgAddress(1)
                     .TryCallIfNotPossibleCallVirtual(info.ShouldSerialize)
-                    .BrFalseShort(skipLabel);
+                    .BrFalse(skipLabel);
 
                 var doNotIgnoreNull = processor.DefineLabel();
                 loadTargetByFunc(processor.LdArgAddress(1), t)
                     .StLoc(referenceVariable)
                     .LdLoc(ignoreNullValuesVariable)
-                    .BrFalseShort(doNotIgnoreNull);
+                    .BrFalse(doNotIgnoreNull);
 
                 // ignore null values
                 processor
                     .LdLoc(referenceVariable)
-                    .BrFalseShort(skipLabel);
+                    .BrFalse(skipLabel);
 
                 processor.MarkLabel(doNotIgnoreNull);
 
@@ -444,18 +444,18 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 processor
                     .LdArgAddress(1)
                     .TryCallIfNotPossibleCallVirtual(info.ShouldSerialize)
-                    .BrFalseShort(skipLabel);
+                    .BrFalse(skipLabel);
 
                 var doNotIgnoreNull = processor.DefineLabel();
                 loadTargetByFunc(processor.LdArgAddress(1), t)
                     .StLoc(referenceVariable)
                     .LdLoc(ignoreNullValuesVariable)
-                    .BrFalseShort(doNotIgnoreNull);
+                    .BrFalse(doNotIgnoreNull);
 
                 // ignore null values
                 processor
                     .LdLoc(referenceVariable)
-                    .BrFalseShort(skipLabel);
+                    .BrFalse(skipLabel);
 
                 processor.MarkLabel(doNotIgnoreNull);
 
@@ -478,17 +478,15 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             LocalBuilder spanVariable,
             LocalBuilder bufferWriterAddressVariable)
         {
-            var didNotWriteBeginObject = analyzeResult.FieldValueTypeArray.Length == 0;
+            var didNotWriteBeginObject = true;
             if (analyzeResult.FieldValueTypeArray.Length != 0)
             {
-                SerializeStatic_ValueType(analyzeResult.FieldValueTypeArray,
-                    GetFieldInfo,
-                    processor,
-                    spanVariable,
-                    bufferWriterAddressVariable,
-                    true,
-                    IntermediateLanguageGeneratorUtility.LdField
-                );
+                Func<ILGenerator, FieldInfo, ILGenerator> process = IntermediateLanguageGeneratorUtility.LdField;
+                foreach (ref var info in analyzeResult.FieldValueTypeArray.AsSpan())
+                {
+                    EmbedEachInfo_ValueType(processor, spanVariable, bufferWriterAddressVariable, process, ref info, didNotWriteBeginObject, info.Info);
+                    didNotWriteBeginObject = false;
+                }
             }
 
             if (analyzeResult.PropertyValueTypeArray.Length != 0)
@@ -565,12 +563,12 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 loadTargetByFunc(processor.LdArgAddress(1), t)
                     .StLoc(referenceVariable)
                     .LdLoc(ignoreNullValuesVariable)
-                    .BrFalseShort(doNotIgnoreNull);
+                    .BrFalse(doNotIgnoreNull);
 
                 // ignore null values
                 processor
                     .LdLoc(referenceVariable)
-                    .BrFalseShort(skipLabel);
+                    .BrFalse(skipLabel);
 
                 processor.MarkLabel(doNotIgnoreNull);
 
@@ -642,12 +640,12 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 loadTargetByFunc(processor.LdArgAddress(1), t)
                     .StLoc(referenceVariable)
                     .LdLoc(ignoreNullValuesVariable)
-                    .BrFalseShort(doNotIgnoreNull);
+                    .BrFalse(doNotIgnoreNull);
 
                 // ignore null values
                 processor
                     .LdLoc(referenceVariable)
-                    .BrFalseShort(skipLabel);
+                    .BrFalse(skipLabel);
 
                 processor.MarkLabel(doNotIgnoreNull);
 
@@ -686,7 +684,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 processor
                     .LdArgAddress(1)
                     .TryCallIfNotPossibleCallVirtual(info.ShouldSerialize)
-                    .BrFalseShort(skipLabel);
+                    .BrFalse(skipLabel);
 
                 EmbedEachInfo_ValueType(processor, spanVariable, bufferWriterAddressVariable, loadTargetByFunc, ref info, false, t);
 
@@ -726,6 +724,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     EmbedBoolean(processor, info.MemberName, t, spanVariable, bufferWriterAddressVariable, isFirst, loadTargetByFunc);
                     break;
                 case DirectTypeEnum.None:
+                    Console.WriteLine(info.MemberName + "\r\n" + info.MemberNameByteLengthWithQuotation);
                     EmbedPropertyNameNotBoolean(processor, info.MemberName, info.MemberNameByteLengthWithQuotation, spanVariable, bufferWriterAddressVariable, isFirst);
                     Embed_None(processor, ref info, loadTargetByFunc, t, LoadTargetValueType);
                     break;
@@ -768,7 +767,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 processor
                     .LdArgAddress(1)
                     .TryCallIfNotPossibleCallVirtual(info.ShouldSerialize)
-                    .BrFalseShort(skipLabel);
+                    .BrFalse(skipLabel);
 
                 switch (info.IsFormatterDirect)
                 {
@@ -832,16 +831,16 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             var whenFirstTime = processor.DefineLabel();
             processor
                 .LdLoc(detectIsFirstVariable)
-                .BrTrueShort(whenFirstTime);
+                .BrTrue(whenFirstTime);
 
             {
                 var trueLabel = processor.DefineLabel();
-                process(processor.LdArgAddress(1), t).BrTrueShort(trueLabel);
+                process(processor.LdArgAddress(1), t).BrTrue(trueLabel);
 
-                processor.Copy(name, spanVariable, bufferWriterAddressVariable).BrShort(endLabel);
+                processor.Copy(name, spanVariable, bufferWriterAddressVariable).Br(endLabel);
 
                 processor.MarkLabel(trueLabel);
-                processor.Copy(name.Slice(0, memberNameByteLengthWithQuotation + 2), spanVariable, bufferWriterAddressVariable).BrShort(writeTrueLabel);
+                processor.Copy(name.Slice(0, memberNameByteLengthWithQuotation + 2), spanVariable, bufferWriterAddressVariable).Br(writeTrueLabel);
             }
 
             processor.MarkLabel(whenFirstTime);
@@ -852,8 +851,8 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     .LdArg(0)
                     .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonWriterWriteBeginObject);
                 var trueLabel = processor.DefineLabel();
-                process(processor.LdArgAddress(1), t).BrTrueShort(trueLabel);
-                processor.Copy(name.Slice(1), spanVariable, bufferWriterAddressVariable).BrShort(endLabel);
+                process(processor.LdArgAddress(1), t).BrTrue(trueLabel);
+                processor.Copy(name.Slice(1), spanVariable, bufferWriterAddressVariable).Br(endLabel);
 
                 processor.MarkLabel(trueLabel);
                 processor.Copy(name.Slice(1, memberNameByteLengthWithQuotation + 1), spanVariable, bufferWriterAddressVariable);
@@ -879,12 +878,12 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             var whenFirstTime = processor.DefineLabel();
             processor
                 .LdLoc(detectIsFirstVariable)
-                .BrTrueShort(whenFirstTime);
+                .BrTrue(whenFirstTime);
 
             var endLabel = processor.DefineLabel();
             processor
                 .Copy(name, spanVariable, bufferWriterAddressVariable)
-                .BrShort(endLabel);
+                .Br(endLabel);
 
             processor.MarkLabel(whenFirstTime);
             processor
@@ -1070,7 +1069,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
             processor
                 .Copy(name, spanVariable, bufferWriterAddressVariable)
-                .BrShort(endLabel);
+                .Br(endLabel);
             processor.MarkLabel(trueLabel);
             processor
                 .Copy(name.Slice(0, memberNameLength + 2), spanVariable, bufferWriterAddressVariable)
