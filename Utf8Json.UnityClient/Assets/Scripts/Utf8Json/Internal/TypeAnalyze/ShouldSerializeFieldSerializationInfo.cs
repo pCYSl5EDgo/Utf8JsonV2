@@ -3,6 +3,7 @@
 
 using System;
 using System.Reflection;
+using Utf8Json.Formatters;
 
 namespace Utf8Json.Internal
 {
@@ -23,6 +24,8 @@ namespace Utf8Json.Internal
 
         public string MemberName { get; }
 
+        public int MemberNameByteLengthWithQuotation { get; }
+
         public bool ShouldIntern => TargetType == typeof(string) && !(Info.GetCustomAttribute<StringInternAttribute>() is null);
 
 #if CSHARP_8_OR_NEWER
@@ -34,6 +37,7 @@ namespace Utf8Json.Internal
             Info = info;
             ShouldSerialize = shouldSerialize;
             MemberName = name;
+            MemberNameByteLengthWithQuotation = NullableStringFormatter.CalcByteLength(name);
             FormatterInfo = formatterInfo;
             IsFormatterDirect = DirectTypeEnumHelper.FromTypeAndFormatter(info.FieldType, FormatterInfo?.FormatterType);
         }

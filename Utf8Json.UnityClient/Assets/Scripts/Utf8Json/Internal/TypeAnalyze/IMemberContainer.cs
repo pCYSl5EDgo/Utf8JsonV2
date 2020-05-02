@@ -13,6 +13,8 @@ namespace Utf8Json.Internal
 
         string MemberName { get; }
 
+        int MemberNameByteLengthWithQuotation { get; }
+
         bool ShouldIntern { get; }
 
 #if CSHARP_8_OR_NEWER
