@@ -25,6 +25,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         public ReadOnlySpan<int> LengthVariations => MemoryMarshal.Cast<byte, int>(lengthVariations.Span);
         public readonly int MaxLength;
         public readonly int MinLength;
+        public readonly int TotalCount;
 
         public ReadOnlySpan<Entry> this[int length] => Table[length];
 
@@ -52,6 +53,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
 
             #region Initialize Table
+            var uniqueIndex = 0;
             for (var index = 0; index < result.FieldValueTypeArray.Length; index++)
             {
                 ref var info = ref result.FieldValueTypeArray[index];
@@ -66,7 +68,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 var memory = array.AsMemory(used, nameLength);
                 NullableStringFormatter.SerializeSpanNotNullNoQuotation(name, memory.Span);
                 ref var entryArray = ref Table[nameLength];
-                var entry = new Entry(memory, Type.FieldValueType, index);
+                var entry = new Entry(memory, Type.FieldValueType, index, uniqueIndex++);
                 HashTableHelper.SortInsert(ref entryArray, entry);
                 used += nameLength;
             }
@@ -84,7 +86,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 var memory = array.AsMemory(used, nameLength);
                 NullableStringFormatter.SerializeSpanNotNullNoQuotation(name, memory.Span);
                 ref var entryArray = ref Table[nameLength];
-                var entry = new Entry(memory, Type.FieldReferenceType, index);
+                var entry = new Entry(memory, Type.FieldReferenceType, index, uniqueIndex++);
                 HashTableHelper.SortInsert(ref entryArray, entry);
                 used += nameLength;
             }
@@ -102,7 +104,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 var memory = array.AsMemory(used, nameLength);
                 NullableStringFormatter.SerializeSpanNotNullNoQuotation(name, memory.Span);
                 ref var entryArray = ref Table[nameLength];
-                var entry = new Entry(memory, Type.FieldValueTypeShouldSerialize, index);
+                var entry = new Entry(memory, Type.FieldValueTypeShouldSerialize, index, uniqueIndex++);
                 HashTableHelper.SortInsert(ref entryArray, entry);
                 used += nameLength;
             }
@@ -120,7 +122,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 var memory = array.AsMemory(used, nameLength);
                 NullableStringFormatter.SerializeSpanNotNullNoQuotation(name, memory.Span);
                 ref var entryArray = ref Table[nameLength];
-                var entry = new Entry(memory, Type.FieldReferenceTypeShouldSerialize, index);
+                var entry = new Entry(memory, Type.FieldReferenceTypeShouldSerialize, index, uniqueIndex++);
                 HashTableHelper.SortInsert(ref entryArray, entry);
                 used += nameLength;
             }
@@ -143,7 +145,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 var memory = array.AsMemory(used, nameLength);
                 NullableStringFormatter.SerializeSpanNotNullNoQuotation(name, memory.Span);
                 ref var entryArray = ref Table[nameLength];
-                var entry = new Entry(memory, Type.PropertyValueType, index);
+                var entry = new Entry(memory, Type.PropertyValueType, index, uniqueIndex++);
                 HashTableHelper.SortInsert(ref entryArray, entry);
                 used += nameLength;
             }
@@ -166,7 +168,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 var memory = array.AsMemory(used, nameLength);
                 NullableStringFormatter.SerializeSpanNotNullNoQuotation(name, memory.Span);
                 ref var entryArray = ref Table[nameLength];
-                var entry = new Entry(memory, Type.PropertyReferenceType, index);
+                var entry = new Entry(memory, Type.PropertyReferenceType, index, uniqueIndex++);
                 HashTableHelper.SortInsert(ref entryArray, entry);
                 used += nameLength;
             }
@@ -189,7 +191,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 var memory = array.AsMemory(used, nameLength);
                 NullableStringFormatter.SerializeSpanNotNullNoQuotation(name, memory.Span);
                 ref var entryArray = ref Table[nameLength];
-                var entry = new Entry(memory, Type.PropertyValueTypeShouldSerialize, index);
+                var entry = new Entry(memory, Type.PropertyValueTypeShouldSerialize, index, uniqueIndex++);
                 HashTableHelper.SortInsert(ref entryArray, entry);
                 used += nameLength;
             }
@@ -212,10 +214,11 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 var memory = array.AsMemory(used, nameLength);
                 NullableStringFormatter.SerializeSpanNotNullNoQuotation(name, memory.Span);
                 ref var entryArray = ref Table[nameLength];
-                var entry = new Entry(memory, Type.PropertyReferenceTypeShouldSerialize, index);
+                var entry = new Entry(memory, Type.PropertyReferenceTypeShouldSerialize, index, uniqueIndex++);
                 HashTableHelper.SortInsert(ref entryArray, entry);
                 used += nameLength;
             }
+            TotalCount = uniqueIndex + 1;
             #endregion
 
             {
@@ -261,12 +264,14 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             public readonly ReadOnlyMemory<byte> Key;
             public readonly Type Type;
             public readonly int Index;
+            public readonly int UniqueIndex;
 
-            public Entry(ReadOnlyMemory<byte> key, Type type, int index)
+            public Entry(ReadOnlyMemory<byte> key, Type type, int index, int uniqueIndex)
             {
                 Key = key;
                 Type = type;
                 Index = index;
+                UniqueIndex = uniqueIndex;
             }
 
             public int CompareTo(Entry other)
