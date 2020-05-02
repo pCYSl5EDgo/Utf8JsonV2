@@ -54,8 +54,9 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             #region Initialize Table
             for (var index = 0; index < result.FieldValueTypeArray.Length; index++)
             {
-                var name = result.FieldValueTypeArray[index].MemberName;
-                var nameLength = NullableStringFormatter.CalcByteLength(name) - 2;
+                ref var info = ref result.FieldValueTypeArray[index];
+                var name = info.MemberName;
+                var nameLength = info.MemberNameByteLengthWithQuotation - 2;
                 if (Table.Length <= nameLength)
                 {
                     Array.Resize(ref Table, nameLength + 1);
@@ -71,8 +72,9 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
             for (var index = 0; index < result.FieldReferenceTypeArray.Length; index++)
             {
-                var name = result.FieldReferenceTypeArray[index].MemberName;
-                var nameLength = NullableStringFormatter.CalcByteLength(name) - 2;
+                ref var info = ref result.FieldReferenceTypeArray[index];
+                var name = info.MemberName;
+                var nameLength = info.MemberNameByteLengthWithQuotation - 2;
                 if (Table.Length <= nameLength)
                 {
                     Array.Resize(ref Table, nameLength + 1);
@@ -88,8 +90,9 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
             for (var index = 0; index < result.FieldValueTypeShouldSerializeArray.Length; index++)
             {
-                var name = result.FieldValueTypeShouldSerializeArray[index].MemberName;
-                var nameLength = NullableStringFormatter.CalcByteLength(name) - 2;
+                ref var info = ref result.FieldValueTypeShouldSerializeArray[index];
+                var name = info.MemberName;
+                var nameLength = info.MemberNameByteLengthWithQuotation - 2;
                 if (Table.Length <= nameLength)
                 {
                     Array.Resize(ref Table, nameLength + 1);
@@ -105,8 +108,9 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
             for (var index = 0; index < result.FieldReferenceTypeShouldSerializeArray.Length; index++)
             {
-                var name = result.FieldReferenceTypeShouldSerializeArray[index].MemberName;
-                var nameLength = NullableStringFormatter.CalcByteLength(name) - 2;
+                ref var info = ref result.FieldReferenceTypeShouldSerializeArray[index];
+                var name = info.MemberName;
+                var nameLength = info.MemberNameByteLengthWithQuotation - 2;
                 if (Table.Length <= nameLength)
                 {
                     Array.Resize(ref Table, nameLength + 1);
@@ -122,14 +126,14 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
             for (var index = 0; index < result.PropertyValueTypeArray.Length; index++)
             {
-                ref var member = ref result.PropertyValueTypeArray[index];
-                if (member.Info.SetMethod is null)
+                ref var info = ref result.PropertyValueTypeArray[index];
+                if (info.Info.SetMethod is null)
                 {
                     continue;
                 }
 
-                var name = member.MemberName;
-                var nameLength = NullableStringFormatter.CalcByteLength(name) - 2;
+                var name = info.MemberName;
+                var nameLength = info.MemberNameByteLengthWithQuotation - 2;
                 if (Table.Length <= nameLength)
                 {
                     Array.Resize(ref Table, nameLength + 1);
@@ -145,14 +149,14 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
             for (var index = 0; index < result.PropertyReferenceTypeArray.Length; index++)
             {
-                ref var member = ref result.PropertyReferenceTypeArray[index];
-                if (member.Info.SetMethod is null)
+                ref var info = ref result.PropertyReferenceTypeArray[index];
+                if (info.Info.SetMethod is null)
                 {
                     continue;
                 }
 
-                var name = member.MemberName;
-                var nameLength = NullableStringFormatter.CalcByteLength(name) - 2;
+                var name = info.MemberName;
+                var nameLength = info.MemberNameByteLengthWithQuotation - 2;
                 if (Table.Length <= nameLength)
                 {
                     Array.Resize(ref Table, nameLength + 1);
@@ -168,14 +172,14 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
             for (var index = 0; index < result.PropertyValueTypeShouldSerializeArray.Length; index++)
             {
-                ref var member = ref result.PropertyValueTypeShouldSerializeArray[index];
-                if (member.Info.SetMethod is null)
+                ref var info = ref result.PropertyValueTypeShouldSerializeArray[index];
+                if (info.Info.SetMethod is null)
                 {
                     continue;
                 }
 
-                var name = member.MemberName;
-                var nameLength = NullableStringFormatter.CalcByteLength(name) - 2;
+                var name = info.MemberName;
+                var nameLength = info.MemberNameByteLengthWithQuotation - 2;
                 if (Table.Length <= nameLength)
                 {
                     Array.Resize(ref Table, nameLength + 1);
@@ -191,14 +195,14 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
             for (var index = 0; index < result.PropertyReferenceTypeShouldSerializeArray.Length; index++)
             {
-                ref var member = ref result.PropertyReferenceTypeShouldSerializeArray[index];
-                if (member.Info.SetMethod is null)
+                ref var info = ref result.PropertyReferenceTypeShouldSerializeArray[index];
+                if (info.Info.SetMethod is null)
                 {
                     continue;
                 }
 
-                var name = member.MemberName;
-                var nameLength = NullableStringFormatter.CalcByteLength(name) - 2;
+                var name = info.MemberName;
+                var nameLength = info.MemberNameByteLengthWithQuotation - 2;
                 if (Table.Length <= nameLength)
                 {
                     Array.Resize(ref Table, nameLength + 1);
