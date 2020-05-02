@@ -9,20 +9,28 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 {
     internal static class StaticBinaryDataHelper
     {
-        public static ILGenerator Copy(this ILGenerator processor, ReadOnlySpan<byte> wantsToEmbed, LocalBuilder spanVariable)
+        public static ILGenerator Copy(this ILGenerator processor, ReadOnlySpan<byte> wantsToEmbed, LocalBuilder spanVariable, LocalBuilder bufferWriterAddressVariable)
         {
             processor
-                .LdArg(0)
-                .LdFieldAddress(BasicInfoContainer.FieldJsonWriterWriter)
-                .Dup()
+                .LdLoc(bufferWriterAddressVariable)
                 .LdcI4(wantsToEmbed.Length)
-                .Call(BasicInfoContainer.MethodBufferWriterGetSpan)
+                .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodBufferWriterGetSpan)
                 .StLoc(spanVariable)
                 .LdLocAddress(spanVariable)
                 .LdcI4(0)
-                .Call(BasicInfoContainer.MethodSpanGetItem);
+                .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodSpanGetItem);
 
             var advance = wantsToEmbed.Length;
+            BinaryCopy(processor, wantsToEmbed);
+            
+            return processor
+                .LdLoc(bufferWriterAddressVariable)
+                .LdcI4(advance)
+                .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodBufferWriterAdvance);
+        }
+
+        private static void BinaryCopy(ILGenerator processor, ReadOnlySpan<byte> wantsToEmbed)
+        {
             while (!wantsToEmbed.IsEmpty)
             {
                 switch (wantsToEmbed.Length)
@@ -56,7 +64,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         break;
                     case 7:
                         var number7 = MemoryMarshal.Cast<byte, ushort>(wantsToEmbed.Slice(4))[0];
-                        processor.Dup().LdcI4(MemoryMarshal.Cast<byte, int>(wantsToEmbed)[0]).StIndI4().LdcI4(4).Add().Dup().LdcI4(number7).StIndI2().LdcI4(1).Add().LdcI4(wantsToEmbed[6]).StIndI1();
+                        processor.Dup().LdcI4(MemoryMarshal.Cast<byte, int>(wantsToEmbed)[0]).StIndI4().LdcI4(4).Add().Dup().LdcI4(number7).StIndI2().LdcI4(2).Add().LdcI4(wantsToEmbed[6]).StIndI1();
                         wantsToEmbed = wantsToEmbed.Slice(7);
                         break;
                     case 8:
@@ -69,10 +77,6 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         break;
                 }
             }
-
-            return processor
-                .LdcI4(advance)
-                .Call(BasicInfoContainer.MethodBufferWriterAdvance);
         }
     }
 }
