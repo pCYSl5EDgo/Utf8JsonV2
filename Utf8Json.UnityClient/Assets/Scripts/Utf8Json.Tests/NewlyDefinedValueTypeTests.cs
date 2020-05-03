@@ -186,7 +186,7 @@ namespace Utf8Json.Test
             }
         }
 
-        //[Test]
+        [Test]
         public void ExtensionDataTest()
         {
             var value = new W

@@ -1010,77 +1010,54 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
 
             var jsonFormatterType = jsonFormatterAttribute.FormatterType;
-            var interfaceMethodSerialize = typeof(IJsonFormatter<>).MakeGeneric(info.TargetType).GetMethodInstance("Serialize");
-
-#if CSHARP_8_OR_NEWER
-            ConstructorInfo? jsonFormatterDefaultConstructor;
-#else
-            ConstructorInfo jsonFormatterDefaultConstructor;
-#endif
             var arguments = jsonFormatterAttribute.Arguments;
+            var interfaceMethodSerialize = typeof(IJsonFormatter<>).MakeGeneric(info.TargetType).GetMethodInstance("Serialize");
             if (arguments is null)
             {
-                if (Try_Embed_None_With_Static_Formatter(processor, info.TargetType, jsonFormatterType, interfaceMethodSerialize, loadTarget, t0, t1))
+                var length3 = TypeArrayHolder.Length3;
+                length3[0] = typeof(JsonWriter).MakeByRefType();
+                length3[1] = info.TargetType;
+                length3[2] = typeof(JsonSerializerOptions);
+                var serialize = jsonFormatterType.GetMethod("SerializeStatic", BindingFlags.Public | BindingFlags.Static, null, length3, null);
+                if (!(serialize is null))
                 {
+                    loadTarget(processor.LdArg(0), t0, t1).LdArg(2).TryCallIfNotPossibleCallVirtual(serialize);
                     return;
                 }
 
-                jsonFormatterDefaultConstructor = jsonFormatterType.GetConstructor(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance, null, Array.Empty<Type>(), null);
-            }
-            else
-            {
-                var constructorTypes = new Type[arguments.Length];
-                FillConstructorTypesAndEmbedValues(processor, arguments, constructorTypes);
+                var field = jsonFormatterType.GetField("Instance", BindingFlags.Static | BindingFlags.Public)
+                    ?? jsonFormatterType.GetField("Default", BindingFlags.Static | BindingFlags.Public);
 
-                jsonFormatterDefaultConstructor = jsonFormatterType.GetConstructor(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance, null, constructorTypes, null);
+                if (!(field is null))
+                {
+                    loadTarget(processor.LdStaticField(field).LdArg(0), t0, t1).LdArg(2).ConstrainedCallVirtual(jsonFormatterType, interfaceMethodSerialize);
+                    return;
+                }
+
+                var propertyGetMethod = jsonFormatterType.GetMethod("get_Instance", BindingFlags.Static | BindingFlags.Public, null, Array.Empty<Type>(), null)
+                    ?? jsonFormatterType.GetMethod("get_Default", BindingFlags.Static | BindingFlags.Public, null, Array.Empty<Type>(), null);
+
+                if (!(propertyGetMethod is null))
+                {
+                    loadTarget(processor.TryCallIfNotPossibleCallVirtual(propertyGetMethod).LdArg(0), t0, t1).LdArg(2).ConstrainedCallVirtual(jsonFormatterType, interfaceMethodSerialize);
+                    return;
+                }
             }
 
+            var constructorTypes = arguments is null ? Array.Empty<Type>() : arguments.Length == 1 ? TypeArrayHolder.Length1 : arguments.Length == 2 ? TypeArrayHolder.Length2 : arguments.Length == 3 ? TypeArrayHolder.Length3 : new Type[arguments.Length];
+            FillConstructorTypesAndEmbedValues(processor, arguments ?? Array.Empty<object>(), constructorTypes);
+
+            var jsonFormatterDefaultConstructor = jsonFormatterType.GetConstructor(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance, null, constructorTypes, null);
             Debug.Assert(!(jsonFormatterDefaultConstructor is null));
             loadTarget(processor.NewObj(jsonFormatterDefaultConstructor).LdArg(0), t0, t1)
                 .LdArg(2)
-                .ConstrainedCallVirtual(info.TargetType, interfaceMethodSerialize);
+                .ConstrainedCallVirtual(jsonFormatterType, interfaceMethodSerialize);
         }
 
         private static ILGenerator LoadTargetValueType<T>(ILGenerator generator, Func<ILGenerator, T, ILGenerator> func, T t, Func<ILGenerator, ILGenerator> loadValueArgumentAsCallableFunc)
             where T : class
         {
             return func(loadValueArgumentAsCallableFunc(generator), t);
-        }
-
-        private static bool Try_Embed_None_With_Static_Formatter<T0, T1>(
-            ILGenerator processor,
-            Type targetType,
-            Type jsonFormatterType,
-            MethodInfo interfaceMethodSerialize,
-            Func<ILGenerator, T0, T1, ILGenerator> loadTargetByFunc,
-            T0 t0,
-            T1 t1)
-            where T0 : class
-            where T1 : class
-        {
-            var targetJsonFormattersSerializeStatic = jsonFormatterType.GetMethod("SerializeStatic", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static);
-            if (!(targetJsonFormattersSerializeStatic is null))
-            {
-                loadTargetByFunc(processor.LdArg(0), t0, t1)
-                    .LdArg(2)
-                    .TryCallIfNotPossibleCallVirtual(targetJsonFormattersSerializeStatic);
-                return true;
-            }
-
-            var fieldInstance = jsonFormatterType.GetField("Instance", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
-            if (fieldInstance is null)
-            {
-                fieldInstance = jsonFormatterType.GetField("Default", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
-                if (fieldInstance is null)
-                {
-                    return false;
-                }
-            }
-
-            loadTargetByFunc(processor.LdStaticFieldAddress(fieldInstance).LdArg(0), t0, t1)
-                .LdArg(2)
-                .ConstrainedCallVirtual(targetType, interfaceMethodSerialize);
-            return true;
         }
 
         private static void EmbedBoolean<T>(ILGenerator processor,
