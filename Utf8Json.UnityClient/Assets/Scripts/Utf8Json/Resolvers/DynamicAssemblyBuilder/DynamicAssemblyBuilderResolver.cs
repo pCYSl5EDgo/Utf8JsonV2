@@ -253,7 +253,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     GenerateIntermediateLanguageCodesForDeserialize(deserializeStatic, builderSet.Deserialize);
 
                     SerializeStaticHelper.SerializeStatic(analyzeResult, serializeStatic.GetILGenerator(), processor => processor.LdArgAddress(1));
-                    ValueTypeDeserializeStaticHelper.DeserializeStatic(analyzeResult, deserializeStatic.GetILGenerator(), targetType);
+                    DeserializeStaticHelper.DeserializeStatic(analyzeResult, deserializeStatic.GetILGenerator(), targetType);
                     var formatter = Closing(builderSet.Type);
                     return formatter;
 #if ENABLE_MONO
@@ -280,7 +280,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     deserializeStatic.DefineParameter(1, ParameterAttributes.None, "reader");
                     deserializeStatic.DefineParameter(2, ParameterAttributes.None, "options");
                     deserializeStatic.InitLocals = true;
-                    ValueTypeDeserializeStaticHelper.DeserializeStatic(analyzeResult, deserializeStatic.GetILGenerator(), targetType);
+                    DeserializeStaticHelper.DeserializeStatic(analyzeResult, deserializeStatic.GetILGenerator(), targetType);
                     var formatter = DynamicMethodFormatterGenerator.CreateFromDynamicMethods(serializeStatic, deserializeStatic);
                     return formatter;
                 }

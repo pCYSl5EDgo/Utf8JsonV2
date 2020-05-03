@@ -14,22 +14,25 @@ using Utf8Json.Internal;
 
 namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 {
-    public static class ValueTypeDeserializeStaticHelper
+    public static class DeserializeStaticHelper
     {
         public static void DeserializeStatic(in TypeAnalyzeResult analyzeResult, ILGenerator processor, Type returnType)
         {
-            var readIsNullNotNullLabel = processor.DefineLabel();
-            processor
-                .LdArg(0)
-                .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderReadIsNull)
-                .Emit(OpCodes.Brfalse_S, readIsNullNotNullLabel);
-            processor.ThrowException(typeof(NullReferenceException));
-            processor.MarkLabel(readIsNullNotNullLabel);
+            NullHandling(analyzeResult, processor);
 
             ref readonly var extensionDataInfo = ref analyzeResult.ExtensionData;
             var answerVariable = processor.DeclareLocal(returnType);
-            var answerCallableVariable = processor.DeclareLocal(returnType.MakeByRefType());
-            processor.LdLocAddress(answerVariable).StLoc(answerCallableVariable);
+            LocalBuilder answerCallableVariable;
+            if (analyzeResult.TargetType.IsValueType)
+            {
+                answerCallableVariable = processor.DeclareLocal(returnType.MakeByRefType());
+                processor.LdLocAddress(answerVariable).StLoc(answerCallableVariable);
+            }
+            else
+            {
+                answerCallableVariable = answerVariable;
+            }
+
             var readOnlyArguments = new DeserializeStaticReadOnlyArguments(answerVariable, answerCallableVariable, in analyzeResult, processor);
             try
             {
@@ -77,6 +80,26 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
         }
 
+        private static void NullHandling(in TypeAnalyzeResult analyzeResult, ILGenerator processor)
+        {
+            var readIsNullNotNullLabel = processor.DefineLabel();
+            processor
+                .LdArg(0)
+                .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderReadIsNull)
+                .Emit(OpCodes.Brfalse_S, readIsNullNotNullLabel);
+
+            if (analyzeResult.TargetType.IsValueType)
+            {
+                processor.ThrowException(typeof(NullReferenceException));
+            }
+            else
+            {
+                processor.LdNull().Emit(OpCodes.Ret);
+            }
+
+            processor.MarkLabel(readIsNullNotNullLabel);
+        }
+
         private static void WithFactoryMethod(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, in ExtensionDataInfo extensionDataInfo, LocalBuilder loopCountVariable, Label returnLabel, MethodInfo constructorDataFactoryMethod)
         {
             throw new NotImplementedException();
@@ -95,6 +118,18 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     ? 1
                     : 2;
             var processor = deserializeStaticReadOnlyArguments.Processor;
+
+            if (!deserializeStaticReadOnlyArguments.AnalyzeResult.TargetType.IsValueType)
+            {
+                var defaultConstructor = deserializeStaticReadOnlyArguments.AnalyzeResult.TargetType.GetConstructor(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance, null, Array.Empty<Type>(), null);
+                if (defaultConstructor is null)
+                {
+                    throw new InvalidOperationException(deserializeStaticReadOnlyArguments.AnalyzeResult.TargetType.FullName + " should have default constructor.");
+                }
+
+                processor.NewObj(defaultConstructor).StLoc(deserializeStaticReadOnlyArguments.AnswerVariable);
+            }
+
             CallCallbacks(deserializeStaticReadOnlyArguments.AnalyzeResult.OnDeserializing, processor, deserializeStaticReadOnlyArguments.AnswerCallableVariable);
 
             switch (processKind)
@@ -179,7 +214,20 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     .TryCallIfNotPossibleCallVirtual(setMethod);
             }
 
-            processor.LdLoc(deserializeStaticReadOnlyArguments.AnswerVariable).Emit(OpCodes.Ret);
+            if(deserializeStaticReadOnlyArguments.AnalyzeResult.TargetType.IsValueType)
+            {
+                processor.LdLoc(deserializeStaticReadOnlyArguments.AnswerVariable).Emit(OpCodes.Ret);
+            }
+            else
+            {
+                var defaultConstructor = deserializeStaticReadOnlyArguments.AnalyzeResult.TargetType.GetConstructor(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance, null, Array.Empty<Type>(), null);
+                if (defaultConstructor is null)
+                {
+                    throw new InvalidOperationException(deserializeStaticReadOnlyArguments.AnalyzeResult.TargetType.FullName + " should have default constructor.");
+                }
+
+                processor.NewObj(defaultConstructor).Emit(OpCodes.Ret);
+            }
         }
 
         private static void CallCallbacks(ReadOnlySpan<MethodInfo> methods, ILGenerator processor, LocalBuilder answerCallableVariable)
