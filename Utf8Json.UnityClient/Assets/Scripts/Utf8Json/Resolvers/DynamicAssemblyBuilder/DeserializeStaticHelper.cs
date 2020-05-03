@@ -118,10 +118,13 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         {
             var assignNumberIndex = uniqueIndex >> 5;
             var assignNumberBit = 1 << (uniqueIndex - (assignNumberIndex << 5));
+            processor.LdLoc(assignVariable);
+            if (assignNumberIndex != 0)
+            {
+                processor.LdcI4(assignNumberIndex << 2).Add();
+            }
+
             processor
-                .LdLoc(assignVariable)
-                .LdcI4(assignNumberIndex << 2)
-                .Add()
                 .Dup()
                 .LdIndU4()
                 .LdcI4(assignNumberBit)
@@ -133,10 +136,13 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         {
             var assignNumberIndex = uniqueIndex >> 5;
             var assignNumberBit = 1 << (uniqueIndex - (assignNumberIndex << 5));
+            processor.LdLoc(assignVariable);
+            if(assignNumberIndex != 0)
+            {
+                processor.LdcI4(assignNumberIndex << 2).Add();
+            }
+
             processor
-                .LdLoc(assignVariable)
-                .LdcI4(assignNumberIndex << 2)
-                .Add()
                 .LdIndU4()
                 .LdcI4(assignNumberBit)
                 .And()
@@ -182,7 +188,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             var successLabel = processor.DefineLabel();
             processor.Emit(OpCodes.Br_S, successLabel);
             processor.MarkLabel(notFilledLabel);
-            processor.ThrowException(typeof(JsonParsingException));
+            processor.ThrowException(typeof(InvalidOperationException));
             processor.MarkLabel(successLabel);
         }
 
@@ -200,7 +206,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 }
 
                 entryAnswer = new DeserializeDictionary.Entry.UnmanagedPart(entry);
-                break;
+                return;
             }
 
             throw new ArgumentException();
@@ -208,7 +214,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
         private static void SetFromLocalVariables(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, ReadOnlySpan<DeserializeDictionary.Entry.UnmanagedPart> alreadyUsedEntrySpan)
         {
-            
+
         }
 
         private static void NoConstructor(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, in ExtensionDataInfo extensionDataInfo, LocalBuilder loopCountVariable, Label returnLabel)
@@ -731,12 +737,11 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         {
             var processor = deserializeStaticReadOnlyArguments.Processor;
             ref readonly var analyzeResult = ref deserializeStaticReadOnlyArguments.AnalyzeResult;
-            processor.LdLoc(deserializeStaticReadOnlyArguments.AnswerCallableVariable);
-
-            EmbedMatchDeserializeStaticPart(entry.Type, entry.Index, analyzeResult, processor);
 
             if (deserializeStaticReadOnlyArguments.AssignVariable is null)
             {
+                processor.LdLoc(deserializeStaticReadOnlyArguments.AnswerCallableVariable);
+                EmbedMatchDeserializeStaticPart(entry.Type, entry.Index, analyzeResult, processor);
                 switch (entry.Type)
                 {
                     case TypeAnalyzeResultMemberKind.FieldValueType:
@@ -801,6 +806,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
             else
             {
+                EmbedMatchDeserializeStaticPart(entry.Type, entry.Index, analyzeResult, processor);
                 var elementVariable = deserializeStaticReadOnlyArguments.ElementVariableSpan[entry.UniqueIndex];
                 processor.StLoc(elementVariable);
                 SetAssignFlag(processor, entry.UniqueIndex, deserializeStaticReadOnlyArguments.AssignVariable);
