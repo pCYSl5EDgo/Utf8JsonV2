@@ -21,7 +21,11 @@ namespace StaticFunctionPointerHelper
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T Deserialize<T>(this ref JsonReader reader, JsonSerializerOptions options, IntPtr functionPointer)
         {
+#if CSHARP_8_OR_NEWER
+            return default!;
+#else
             return default;
+#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
