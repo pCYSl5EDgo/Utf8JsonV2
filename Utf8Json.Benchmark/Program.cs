@@ -2,6 +2,7 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 using System;
+using System.Text;
 
 namespace Utf8JsonBenchmark
 {
@@ -23,6 +24,8 @@ namespace Utf8JsonBenchmark
             BenchmarkRunner.Run<JsonEnumUInt64Tester>();
             BenchmarkRunner.Run<JsonEnumUInt16Tester>();
             BenchmarkRunner.Run<Json8IntegerFieldObjectSerializeTester>();
+            BenchmarkRunner.Run<Json8IntegerFieldObjectTypelessSerializeTester>();
+            BenchmarkRunner.Run<Json8IntegerFieldObjectDeserializeTester>();
         }
     }
 
@@ -62,6 +65,87 @@ namespace Utf8JsonBenchmark
         [Benchmark] public byte[] SerializeUtf8JsonV1() => global::Utf8Json.JsonSerializer.Serialize(Value);
         [Benchmark] public byte[] SerializeUtf8JsonV2() => V2::Utf8Json.JsonSerializer.Serialize(Value);
         [Benchmark] public byte[] SerializeSystemTextJson() => System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(Value);
+    }
+
+    [MemoryDiagnoser]
+    public class Json8IntegerFieldObjectTypelessSerializeTester
+    {
+        public struct EightMemberStruct
+        {
+            public int FirstInt32 { get; set; }
+            public int Second { get; set; }
+            public int Third { get; set; }
+            public int FourthInt { get; set; }
+            public int FifthNum { get; set; }
+            public int SixthInteger { get; set; }
+            public int SeventhDigit { get; set; }
+            public int EighthNumber { get; set; }
+        }
+
+        public object Value;
+
+        [GlobalSetup]
+        public void GlobalSetup()
+        {
+            Value = new EightMemberStruct
+            {
+                FirstInt32 = int.MinValue,
+                Second = int.MaxValue,
+                Third = 0,
+                FourthInt = -1,
+                FifthNum = 114514,
+                SixthInteger = -334810,
+                SeventhDigit = new Random().Next(int.MinValue, int.MaxValue),
+                EighthNumber = new Random().Next(int.MinValue, int.MaxValue),
+            };
+        }
+
+        [Benchmark] public byte[] SerializeUtf8JsonV1() => global::Utf8Json.JsonSerializer.Serialize(Value);
+        [Benchmark] public byte[] SerializeUtf8JsonV2() => V2::Utf8Json.JsonSerializer.Serialize(Value);
+        [Benchmark] public byte[] SerializeSystemTextJson() => System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(Value);
+    }
+
+    [MemoryDiagnoser]
+    public class Json8IntegerFieldObjectDeserializeTester
+    {
+        public struct EightMemberStruct
+        {
+            public int 第一の数値型 { get; set; }
+            public int 第二の整数型 { get; set; }
+            public int 第三の数の型 { get; set; }
+            public int FourthInt { get; set; }
+            public int FifthNum { get; set; }
+            public int SixthInteger { get; set; }
+            public int SeventhDigit { get; set; }
+            public int EighthNumber { get; set; }
+        }
+
+        public byte[] V1Bytes;
+        public byte[] V2Bytes;
+        public byte[] TextBytes;
+
+        [GlobalSetup]
+        public void GlobalSetup()
+        {
+            var value = new EightMemberStruct
+            {
+                第一の数値型 = int.MinValue,
+                第二の整数型 = int.MaxValue,
+                第三の数の型 = 0,
+                FourthInt = -1,
+                FifthNum = 114514,
+                SixthInteger = -334810,
+                SeventhDigit = new Random().Next(int.MinValue, int.MaxValue),
+                EighthNumber = new Random().Next(int.MinValue, int.MaxValue),
+            };
+            V1Bytes = global::Utf8Json.JsonSerializer.Serialize(value);
+            V2Bytes = V2::Utf8Json.JsonSerializer.Serialize(value);
+            TextBytes = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(value);
+        }
+
+        [Benchmark] public EightMemberStruct SerializeUtf8JsonV1() => global::Utf8Json.JsonSerializer.Deserialize<EightMemberStruct>(V1Bytes);
+        [Benchmark] public EightMemberStruct SerializeUtf8JsonV2() => V2::Utf8Json.JsonSerializer.Deserialize<EightMemberStruct>(V2Bytes);
+        [Benchmark] public EightMemberStruct SerializeSystemTextJson() => System.Text.Json.JsonSerializer.Deserialize<EightMemberStruct>(TextBytes);
     }
 
     [MemoryDiagnoser]
