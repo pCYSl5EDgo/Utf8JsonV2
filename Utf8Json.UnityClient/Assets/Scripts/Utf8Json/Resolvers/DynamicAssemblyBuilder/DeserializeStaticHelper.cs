@@ -66,8 +66,6 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     WithFactoryMethod(in readOnlyArguments, in extensionDataInfo, loopCountVariable, returnLabel, analyzeResult.ConstructorData.FactoryMethod);
                 }
 
-                processor.MarkLabel(returnLabel);
-
                 CallCallbacks(analyzeResult.OnDeserialized, processor, answerVariable);
 
                 processor
@@ -107,11 +105,24 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             詰め込み作業(deserializeStaticReadOnlyArguments, extensionDataInfo, loopCountVariable, returnLabel, processor);
             var parameterInfos = constructor.GetParameters();
             Span<DeserializeDictionary.Entry.UnmanagedPart> correspondingEntrySpan = stackalloc DeserializeDictionary.Entry.UnmanagedPart[parameterInfos.Length];
-            MatchConstructorAndLocateParameters(processor, in deserializeStaticReadOnlyArguments, parameterInfos, correspondingEntrySpan);
+            MatchConstructor(processor, in deserializeStaticReadOnlyArguments, parameterInfos, correspondingEntrySpan);
+            LocateParameters(deserializeStaticReadOnlyArguments, correspondingEntrySpan, processor);
             processor.NewObj(constructor).StLoc(deserializeStaticReadOnlyArguments.AnswerVariable);
+            //processor.NewObj(constructor).StLoc(deserializeStaticReadOnlyArguments.AnswerVariable);
 
             CallCallbacks(deserializeStaticReadOnlyArguments.AnalyzeResult.OnDeserializing, processor, deserializeStaticReadOnlyArguments.AnswerCallableVariable);
             SetFromLocalVariables(in deserializeStaticReadOnlyArguments, correspondingEntrySpan);
+        }
+
+        private static void LocateParameters(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, Span<DeserializeDictionary.Entry.UnmanagedPart> correspondingEntrySpan, ILGenerator processor)
+        {
+            var elementVariableSpan = deserializeStaticReadOnlyArguments.ElementVariableSpan;
+            for (var index = 0; index < correspondingEntrySpan.Length; index++)
+            {
+                ref readonly var unmanagedPart = ref correspondingEntrySpan[index];
+                var variable = elementVariableSpan[unmanagedPart.UniqueIndex];
+                processor.LdLoc(variable);
+            }
         }
 
         private static void SetAssignFlag(ILGenerator processor, int uniqueIndex, LocalBuilder assignVariable)
@@ -137,7 +148,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             var assignNumberIndex = uniqueIndex >> 5;
             var assignNumberBit = 1 << (uniqueIndex - (assignNumberIndex << 5));
             processor.LdLoc(assignVariable);
-            if(assignNumberIndex != 0)
+            if (assignNumberIndex != 0)
             {
                 processor.LdcI4(assignNumberIndex << 2).Add();
             }
@@ -156,7 +167,8 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             詰め込み作業(deserializeStaticReadOnlyArguments, extensionDataInfo, loopCountVariable, returnLabel, processor);
             var parameterInfos = method.GetParameters();
             Span<DeserializeDictionary.Entry.UnmanagedPart> correspondingEntrySpan = stackalloc DeserializeDictionary.Entry.UnmanagedPart[parameterInfos.Length];
-            MatchConstructorAndLocateParameters(processor, in deserializeStaticReadOnlyArguments, parameterInfos, correspondingEntrySpan);
+            MatchConstructor(processor, in deserializeStaticReadOnlyArguments, parameterInfos, correspondingEntrySpan);
+            LocateParameters(deserializeStaticReadOnlyArguments, correspondingEntrySpan, processor);
             processor.TryCallIfNotPossibleCallVirtual(method).StLoc(deserializeStaticReadOnlyArguments.AnswerVariable);
 
             CallCallbacks(deserializeStaticReadOnlyArguments.AnalyzeResult.OnDeserializing, processor, deserializeStaticReadOnlyArguments.AnswerCallableVariable);
@@ -164,12 +176,13 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             SetFromLocalVariables(in deserializeStaticReadOnlyArguments, correspondingEntrySpan);
         }
 
-        private static void MatchConstructorAndLocateParameters(ILGenerator processor, in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, ParameterInfo[] getParameters, Span<DeserializeDictionary.Entry.UnmanagedPart> correspondingEntrySpan)
+        private static void MatchConstructor(ILGenerator processor, in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, ParameterInfo[] getParameters, Span<DeserializeDictionary.Entry.UnmanagedPart> correspondingEntrySpan)
         {
             var assignVariable = deserializeStaticReadOnlyArguments.AssignVariable;
             Debug.Assert(!(assignVariable is null));
             ref readonly var dictionary = ref deserializeStaticReadOnlyArguments.Dictionary;
             var notFilledLabel = processor.DefineLabel();
+            var successLabel = processor.DefineLabel();
             for (var index = 0; index < getParameters.Length; index++)
             {
                 ref var entryAnswer = ref correspondingEntrySpan[index];
@@ -181,12 +194,16 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 }
 
                 FindMatchingParameterEntry(name, dictionary, out entryAnswer);
-                DetectAssignFlag(processor, entryAnswer.UniqueIndex, assignVariable, OpCodes.Brfalse, notFilledLabel);
-                processor.LdLoc(deserializeStaticReadOnlyArguments.ElementVariableSpan[entryAnswer.UniqueIndex]);
+                if (index == getParameters.Length - 1)
+                {
+                    DetectAssignFlag(processor, entryAnswer.UniqueIndex, assignVariable, OpCodes.Brtrue_S, successLabel);
+                }
+                else
+                {
+                    DetectAssignFlag(processor, entryAnswer.UniqueIndex, assignVariable, OpCodes.Brfalse, notFilledLabel);
+                }
             }
 
-            var successLabel = processor.DefineLabel();
-            processor.Emit(OpCodes.Br_S, successLabel);
             processor.MarkLabel(notFilledLabel);
             processor.ThrowException(typeof(InvalidOperationException));
             processor.MarkLabel(successLabel);
@@ -239,13 +256,14 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
         private static void 詰め込み作業(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, in ExtensionDataInfo extensionDataInfo, LocalBuilder loopCountVariable, Label returnLabel, ILGenerator processor)
         {
+            var lengthVariations = deserializeStaticReadOnlyArguments.Dictionary.LengthVariations;
+            Span<Label> destinations = stackalloc Label[lengthVariations.Length];
+            int possibleLengthCount;
+
             if (extensionDataInfo.Info is null)
             {
                 LoopStartProcedure(processor, deserializeStaticReadOnlyArguments, loopCountVariable, returnLabel);
-                var lengthVariations = deserializeStaticReadOnlyArguments.Dictionary.LengthVariations;
-                Span<Label> destinations = stackalloc Label[lengthVariations.Length];
-                var possibleLengthCount = 振り分けNoExtensionData(deserializeStaticReadOnlyArguments, lengthVariations, destinations);
-                非default(deserializeStaticReadOnlyArguments, deserializeStaticReadOnlyArguments.Processor, destinations, possibleLengthCount);
+                possibleLengthCount = 振り分けNoExtensionData(deserializeStaticReadOnlyArguments, lengthVariations, destinations);
             }
             else if (extensionDataInfo.Add)
             {
@@ -257,10 +275,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     .StLoc(extensionVariable);
 
                 LoopStartProcedure(processor, deserializeStaticReadOnlyArguments, loopCountVariable, returnLabel);
-                var lengthVariations = deserializeStaticReadOnlyArguments.Dictionary.LengthVariations;
-                Span<Label> destinations = stackalloc Label[lengthVariations.Length];
-                var possibleLengthCount = 振り分けWithExtensionData(deserializeStaticReadOnlyArguments, extensionVariable, lengthVariations, destinations);
-                非default(deserializeStaticReadOnlyArguments, deserializeStaticReadOnlyArguments.Processor, destinations, possibleLengthCount);
+                possibleLengthCount = 振り分けWithExtensionData(deserializeStaticReadOnlyArguments, extensionVariable, lengthVariations, destinations);
             }
             else
             {
@@ -274,11 +289,11 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     .TryCallIfNotPossibleCallVirtual(extensionDataInfo.Info.SetMethod);
 
                 LoopStartProcedure(processor, deserializeStaticReadOnlyArguments, loopCountVariable, returnLabel);
-                var lengthVariations = deserializeStaticReadOnlyArguments.Dictionary.LengthVariations;
-                Span<Label> destinations = stackalloc Label[lengthVariations.Length];
-                var possibleLengthCount = 振り分けWithExtensionData(deserializeStaticReadOnlyArguments, extensionVariable, lengthVariations, destinations);
-                非default(deserializeStaticReadOnlyArguments, deserializeStaticReadOnlyArguments.Processor, destinations, possibleLengthCount);
+                possibleLengthCount = 振り分けWithExtensionData(deserializeStaticReadOnlyArguments, extensionVariable, lengthVariations, destinations);
             }
+
+            非default(deserializeStaticReadOnlyArguments, deserializeStaticReadOnlyArguments.Processor, destinations, possibleLengthCount);
+            processor.MarkLabel(returnLabel);
         }
 
         private static void LoopStartProcedure(ILGenerator processor, in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, LocalBuilder loopCountVariable, Label returnLabel)
