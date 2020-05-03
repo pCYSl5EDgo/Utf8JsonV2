@@ -252,7 +252,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     GenerateIntermediateLanguageCodesForSerialize(serializeStatic, builderSet.Serialize);
                     GenerateIntermediateLanguageCodesForDeserialize(deserializeStatic, builderSet.Deserialize);
 
-                    ValueTypeSerializeStaticHelper.SerializeStatic(analyzeResult, serializeStatic.GetILGenerator(), processor => processor.LdArgAddress(1));
+                    SerializeStaticHelper.SerializeStatic(analyzeResult, serializeStatic.GetILGenerator(), processor => processor.LdArgAddress(1));
                     ValueTypeDeserializeStaticHelper.DeserializeStatic(analyzeResult, deserializeStatic.GetILGenerator(), targetType);
                     var formatter = Closing(builderSet.Type);
                     return formatter;
@@ -270,7 +270,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     serializeStatic.DefineParameter(2, ParameterAttributes.None, "value");
                     serializeStatic.DefineParameter(3, ParameterAttributes.None, "options");
                     serializeStatic.InitLocals = false;
-                    ValueTypeSerializeStaticHelper.SerializeStatic(analyzeResult, serializeStatic.GetILGenerator());
+                    SerializeStaticHelper.SerializeStatic(analyzeResult, serializeStatic.GetILGenerator(), processor => processor.LdArgAddress(1));
 
                     var readerParams = TypeArrayHolder.Length2;
                     readerParams[0] = typeof(JsonReader).MakeByRefType();

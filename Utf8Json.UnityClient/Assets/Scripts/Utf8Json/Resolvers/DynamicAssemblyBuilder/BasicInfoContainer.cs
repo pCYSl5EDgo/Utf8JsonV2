@@ -89,12 +89,10 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
         }
 
-        public static ILGenerator WriteLiteral(this ILGenerator processor, LocalBuilder spanVariable, int literal)
+        public static ILGenerator WriteLiteral(this ILGenerator processor, LocalBuilder bufferWriterAddressVariable, LocalBuilder spanVariable, int literal)
         {
             return processor
-                .LdArg(0)
-                .LdFieldAddress(FieldJsonWriterWriter)
-                .Dup()
+                .LdLoc(bufferWriterAddressVariable)
                 .LdcI4(4)
                 .TryCallIfNotPossibleCallVirtual(MethodBufferWriterGetSpan)
                 .StLoc(spanVariable)
@@ -103,6 +101,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 .TryCallIfNotPossibleCallVirtual(MethodSpanGetItem)
                 .LdcI4(literal)
                 .StIndI4()
+                .LdLoc(bufferWriterAddressVariable)
                 .LdcI4(4)
                 .TryCallIfNotPossibleCallVirtual(MethodBufferWriterAdvance);
         }

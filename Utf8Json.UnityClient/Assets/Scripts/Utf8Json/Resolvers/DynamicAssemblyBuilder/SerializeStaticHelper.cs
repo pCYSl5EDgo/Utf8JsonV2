@@ -13,7 +13,7 @@ using Utf8Json.Internal.Reflection;
 
 namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 {
-    public static class ValueTypeSerializeStaticHelper
+    public static class SerializeStaticHelper
     {
         public static void SerializeStatic(in TypeAnalyzeResult analyzeResult, ILGenerator processor, Func<ILGenerator, ILGenerator> loadValueArgumentAsCallableFunc)
         {
@@ -23,6 +23,19 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 .LdArg(0)
                 .LdFieldAddress(BasicInfoContainer.FieldJsonWriterWriter)
                 .StLoc(bufferWriterAddressVariable);
+
+            if (!analyzeResult.TargetType.IsValueType)
+            {
+                var notNullLabel = processor.DefineLabel();
+                processor
+                    .LdArg(1)
+                    .Emit(OpCodes.Brtrue_S, notNullLabel);
+
+                processor.WriteLiteral(bufferWriterAddressVariable, spanVariable, BasicInfoContainer.Null).Emit(OpCodes.Ret);
+
+                processor.MarkLabel(notNullLabel);
+            }
+
 
             if (analyzeResult.OnSerializing.Length != 0)
             {
@@ -882,7 +895,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
 
             processor.MarkLabel(writeTrueLabel);
-            processor.WriteLiteral(spanVariable, BasicInfoContainer.True);
+            processor.WriteLiteral(bufferWriterAddressVariable, spanVariable, BasicInfoContainer.True);
         }
 
         private static void EmbedPropertyNameNotBooleanDetectIsFirst(
@@ -1103,7 +1116,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             processor.MarkLabel(trueLabel);
             processor
                 .Copy(name.Slice(0, memberNameLength + 2), spanVariable, bufferWriterAddressVariable)
-                .WriteLiteral(spanVariable, BasicInfoContainer.True)
+                .WriteLiteral(bufferWriterAddressVariable, spanVariable, BasicInfoContainer.True)
                 .MarkLabel(endLabel);
         }
 

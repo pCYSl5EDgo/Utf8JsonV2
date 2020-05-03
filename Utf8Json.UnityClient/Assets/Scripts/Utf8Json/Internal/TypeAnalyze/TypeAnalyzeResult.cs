@@ -21,6 +21,7 @@ namespace Utf8Json.Internal
 
     public readonly struct TypeAnalyzeResult
     {
+        public readonly Type TargetType;
         public readonly FieldSerializationInfo[] FieldValueTypeArray;
         public readonly FieldSerializationInfo[] FieldReferenceTypeArray;
         public readonly PropertySerializationInfo[] PropertyValueTypeArray;
@@ -223,8 +224,9 @@ namespace Utf8Json.Internal
             }
         }
 
-        public TypeAnalyzeResult(FieldSerializationInfo[] fieldValueTypeArray, FieldSerializationInfo[] fieldReferenceTypeArray, PropertySerializationInfo[] propertyValueTypeArray, PropertySerializationInfo[] propertyReferenceTypeArray, ShouldSerializeFieldSerializationInfo[] fieldValueTypeShouldSerializeArray, ShouldSerializeFieldSerializationInfo[] fieldReferenceTypeShouldSerializeArray, ShouldSerializePropertySerializationInfo[] propertyValueTypeShouldSerializeArray, ShouldSerializePropertySerializationInfo[] propertyReferenceTypeShouldSerializeArray, MethodInfo[] onSerializing, MethodInfo[] onSerialized, MethodInfo[] onDeserializing, MethodInfo[] onDeserialized, ExtensionDataInfo extensionData, ConstructorDataInfo constructorData)
+        public TypeAnalyzeResult(Type targetType, FieldSerializationInfo[] fieldValueTypeArray, FieldSerializationInfo[] fieldReferenceTypeArray, PropertySerializationInfo[] propertyValueTypeArray, PropertySerializationInfo[] propertyReferenceTypeArray, ShouldSerializeFieldSerializationInfo[] fieldValueTypeShouldSerializeArray, ShouldSerializeFieldSerializationInfo[] fieldReferenceTypeShouldSerializeArray, ShouldSerializePropertySerializationInfo[] propertyValueTypeShouldSerializeArray, ShouldSerializePropertySerializationInfo[] propertyReferenceTypeShouldSerializeArray, MethodInfo[] onSerializing, MethodInfo[] onSerialized, MethodInfo[] onDeserializing, MethodInfo[] onDeserialized, ExtensionDataInfo extensionData, ConstructorDataInfo constructorData)
         {
+            TargetType = targetType;
             FieldValueTypeArray = fieldValueTypeArray;
             FieldReferenceTypeArray = fieldReferenceTypeArray;
             PropertyValueTypeArray = propertyValueTypeArray;

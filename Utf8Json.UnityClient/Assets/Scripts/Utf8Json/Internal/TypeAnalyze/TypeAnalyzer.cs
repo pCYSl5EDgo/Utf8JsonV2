@@ -34,12 +34,14 @@ namespace Utf8Json.Internal
             CollectConstructorOrFactory(type, out var constructorData);
 
             result = new TypeAnalyzeResult(
+                type,
                 fieldValueTypes, fieldReferenceTypes,
                 propertyValueTypes, propertyReferenceTypes,
                 fieldValueTypeShouldSerializes, fieldReferenceTypeShouldSerializes,
                 propertyValueTypeShouldSerializes, propertyReferenceTypeShouldSerializes,
                 onSerializing, onSerialized, onDeserializing, onDeserialized,
-                extensionDataProperty, constructorData);
+                extensionDataProperty, constructorData
+            );
         }
 
         private static void CollectConstructorOrFactory(Type type, out ConstructorDataInfo constructorDataInfo)
