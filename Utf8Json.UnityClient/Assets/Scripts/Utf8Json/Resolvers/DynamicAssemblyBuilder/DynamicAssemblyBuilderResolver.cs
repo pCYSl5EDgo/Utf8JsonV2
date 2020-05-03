@@ -231,70 +231,80 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 return EnumFactory(targetType);
             }
 
-            if (targetType.IsValueType)
-            {
-                TypeAnalyzer.Analyze(targetType, out var analyzeResult);
+            TypeAnalyzer.Analyze(targetType, out var analyzeResult);
 #if ENABLE_MONO
-                // 本当に嫌な話ではあるのですが、Mono環境ではIgnoresAccessChecksToをAssemblyBuilder内に定義してもinternal/privateアクセスを可能にしてくれないのです。
-                // なのでDnSpyでデバッグできない悲しみを背負ったDynamicMethodを使わざるを得ないのです。
-                var typeIsPublic = DetectTypeIsPublic(targetType) && analyzeResult.AreAllPublic();
-                if (typeIsPublic)
-                {
+            // 本当に嫌な話ではあるのですが、Mono環境ではIgnoresAccessChecksToをAssemblyBuilder内に定義してもinternal/privateアクセスを可能にしてくれないのです。
+            // なのでDnSpyでデバッグできない悲しみを背負ったDynamicMethodを使わざるを得ないのです。
+            var typeIsPublic = DetectTypeIsPublic(targetType) && analyzeResult.AreAllPublic();
+            if (typeIsPublic)
+            {
 #endif
-                    EnsurePrivateAccess(targetType);
-                    var builderSet = BuilderSet.PrepareBuilderSet(targetType, moduleBuilder);
-                    var serializeStatic = DefineSerializeStatic(targetType, builderSet.Type);
-                    var deserializeStatic = DefineDeserializeStatic(targetType, builderSet.Type);
+                EnsurePrivateAccess(targetType);
+                var builderSet = BuilderSet.PrepareBuilderSet(targetType, moduleBuilder);
+                var serializeStatic = DefineSerializeStatic(targetType, builderSet.Type);
+                var deserializeStatic = DefineDeserializeStatic(targetType, builderSet.Type);
 
+                if (targetType.IsValueType)
+                {
                     ValueTypeEmbedTypelessHelper.SerializeTypeless(targetType, serializeStatic, builderSet.SerializeTypeless);
                     ValueTypeEmbedTypelessHelper.DeserializeTypeless(targetType, deserializeStatic, builderSet.DeserializeTypeless);
-
-                    GenerateIntermediateLanguageCodesForSerialize(serializeStatic, builderSet.Serialize);
-                    GenerateIntermediateLanguageCodesForDeserialize(deserializeStatic, builderSet.Deserialize);
-
-                    SerializeStaticHelper.SerializeStatic(analyzeResult, serializeStatic.GetILGenerator(), processor => processor.LdArgAddress(1));
-                    DeserializeStaticHelper.DeserializeStatic(analyzeResult, deserializeStatic.GetILGenerator(), targetType);
-                    var formatter = Closing(builderSet.Type);
-                    return formatter;
-#if ENABLE_MONO
                 }
                 else
                 {
-                    var writerParams = TypeArrayHolder.Length3;
-                    writerParams[0] = typeof(JsonWriter).MakeByRefType();
-                    writerParams[1] = targetType;
-                    writerParams[2] = typeof(JsonSerializerOptions);
-
-                    var serializeStatic = new DynamicMethod(targetType.FullName + "<>SerializeStatic", null, writerParams, targetType, true);
-                    serializeStatic.DefineParameter(1, ParameterAttributes.None, "writer");
-                    serializeStatic.DefineParameter(2, ParameterAttributes.None, "value");
-                    serializeStatic.DefineParameter(3, ParameterAttributes.None, "options");
-                    serializeStatic.InitLocals = false;
-                    SerializeStaticHelper.SerializeStatic(analyzeResult, serializeStatic.GetILGenerator(), processor => processor.LdArgAddress(1));
-
-                    var readerParams = TypeArrayHolder.Length2;
-                    readerParams[0] = typeof(JsonReader).MakeByRefType();
-                    readerParams[1] = typeof(JsonSerializerOptions);
-
-                    var deserializeStatic = new DynamicMethod(targetType.FullName + "<>DeserializeStatic", targetType, readerParams, targetType, true);
-                    deserializeStatic.DefineParameter(1, ParameterAttributes.None, "reader");
-                    deserializeStatic.DefineParameter(2, ParameterAttributes.None, "options");
-                    deserializeStatic.InitLocals = true;
-                    DeserializeStaticHelper.DeserializeStatic(analyzeResult, deserializeStatic.GetILGenerator(), targetType);
-                    var formatter = DynamicMethodFormatterGenerator.CreateFromDynamicMethods(serializeStatic, deserializeStatic);
-                    return formatter;
+                    ReferenceTypeEmbedTypelessHelper.SerializeTypeless(targetType, serializeStatic, builderSet.SerializeTypeless);
+                    ReferenceTypeEmbedTypelessHelper.DeserializeTypeless(targetType, deserializeStatic, builderSet.DeserializeTypeless);
                 }
-#endif
+
+                GenerateIntermediateLanguageCodesForSerialize(serializeStatic, builderSet.Serialize);
+                GenerateIntermediateLanguageCodesForDeserialize(deserializeStatic, builderSet.Deserialize);
+
+                if(targetType.IsValueType)
+                {
+                    SerializeStaticHelper.SerializeStatic(analyzeResult, serializeStatic.GetILGenerator(), processor => processor.LdArgAddress(1));
+                }
+                else
+                {
+                    SerializeStaticHelper.SerializeStatic(analyzeResult, serializeStatic.GetILGenerator(), processor => processor.LdArg(1));
+                }
+                DeserializeStaticHelper.DeserializeStatic(analyzeResult, deserializeStatic.GetILGenerator());
+                var formatter = Closing(builderSet.Type);
+                return formatter;
+#if ENABLE_MONO
             }
             else
             {
-                EnsurePrivateAccess(targetType);
-                TypeAnalyzer.Analyze(targetType, out var analyzeResult);
-                var builderSet = BuilderSet.PrepareBuilderSet(targetType, moduleBuilder);
-                ReferenceEmbedHelper.Factory(targetType, in analyzeResult, in builderSet);
-                var formatter = Closing(builderSet.Type);
+                var writerParams = TypeArrayHolder.Length3;
+                writerParams[0] = typeof(JsonWriter).MakeByRefType();
+                writerParams[1] = targetType;
+                writerParams[2] = typeof(JsonSerializerOptions);
+
+                var serializeStatic = new DynamicMethod(targetType.FullName + "<>SerializeStatic", null, writerParams, targetType, true);
+                serializeStatic.DefineParameter(1, ParameterAttributes.None, "writer");
+                serializeStatic.DefineParameter(2, ParameterAttributes.None, "value");
+                serializeStatic.DefineParameter(3, ParameterAttributes.None, "options");
+                serializeStatic.InitLocals = false;
+                if(targetType.IsValueType)
+                {
+                    SerializeStaticHelper.SerializeStatic(analyzeResult, serializeStatic.GetILGenerator(), processor => processor.LdArgAddress(1));
+                }
+                else
+                {
+                    SerializeStaticHelper.SerializeStatic(analyzeResult, serializeStatic.GetILGenerator(), processor => processor.LdArg(1));
+                }
+
+                var readerParams = TypeArrayHolder.Length2;
+                readerParams[0] = typeof(JsonReader).MakeByRefType();
+                readerParams[1] = typeof(JsonSerializerOptions);
+
+                var deserializeStatic = new DynamicMethod(targetType.FullName + "<>DeserializeStatic", targetType, readerParams, targetType, true);
+                deserializeStatic.DefineParameter(1, ParameterAttributes.None, "reader");
+                deserializeStatic.DefineParameter(2, ParameterAttributes.None, "options");
+                deserializeStatic.InitLocals = true;
+                DeserializeStaticHelper.DeserializeStatic(analyzeResult, deserializeStatic.GetILGenerator());
+                var formatter = DynamicMethodFormatterGenerator.CreateFromDynamicMethods(serializeStatic, deserializeStatic);
                 return formatter;
             }
+#endif
         }
 
 #if ENABLE_MONO
