@@ -42,9 +42,4 @@ namespace Utf8Json
     public sealed class StringInternAttribute : Attribute
     {
     }
-
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
-    public sealed class AddAttribute : Attribute
-    {
-    }
 }

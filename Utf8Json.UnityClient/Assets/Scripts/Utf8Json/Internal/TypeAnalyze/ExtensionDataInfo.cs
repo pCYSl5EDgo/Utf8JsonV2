@@ -34,8 +34,7 @@ namespace Utf8Json.Internal
                     throw new InvalidOperationException();
                 }
 
-                var attribute = info.GetCustomAttribute<AddAttribute>();
-                Add = !(attribute is null);
+                Add = info.SetMethod is null;
             }
         }
     }
