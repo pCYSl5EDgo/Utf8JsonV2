@@ -11,6 +11,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
     {
         public readonly ILGenerator Processor;
         public readonly LocalBuilder AnswerVariable;
+        public readonly LocalBuilder AnswerCallableVariable;
         public readonly LocalBuilder NameVariable;
         public readonly LocalBuilder ReferenceVariable;
         public readonly DeserializeDictionary Dictionary;
@@ -19,10 +20,11 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         public readonly Label DefaultLabel;
         public readonly TypeAnalyzeResult AnalyzeResult;
 
-        public DeserializeStaticReadOnlyArguments(LocalBuilder answerVariable, in TypeAnalyzeResult analyzeResult, ILGenerator processor)
+        public DeserializeStaticReadOnlyArguments(LocalBuilder answerVariable, LocalBuilder answerCallableVariable, in TypeAnalyzeResult analyzeResult, ILGenerator processor)
         {
             Processor = processor;
             AnswerVariable = answerVariable;
+            AnswerCallableVariable = answerCallableVariable;
             AnalyzeResult = analyzeResult;
             Dictionary = new DeserializeDictionary(in analyzeResult);
             NameVariable = processor.DeclareLocal(typeof(ReadOnlySpan<byte>));

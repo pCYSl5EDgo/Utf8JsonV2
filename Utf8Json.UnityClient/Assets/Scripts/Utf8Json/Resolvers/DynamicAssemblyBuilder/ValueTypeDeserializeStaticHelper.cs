@@ -18,9 +18,19 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
     {
         public static void DeserializeStatic(in TypeAnalyzeResult analyzeResult, ILGenerator processor, Type returnType)
         {
+            var readIsNullNotNullLabel = processor.DefineLabel();
+            processor
+                .LdArg(0)
+                .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderReadIsNull)
+                .Emit(OpCodes.Brfalse_S, readIsNullNotNullLabel);
+            processor.ThrowException(typeof(NullReferenceException));
+            processor.MarkLabel(readIsNullNotNullLabel);
+
             ref readonly var extensionDataInfo = ref analyzeResult.ExtensionData;
             var answerVariable = processor.DeclareLocal(returnType);
-            var readOnlyArguments = new DeserializeStaticReadOnlyArguments(answerVariable, in analyzeResult, processor);
+            var answerCallableVariable = processor.DeclareLocal(returnType.MakeByRefType());
+            processor.LdLocAddress(answerVariable).StLoc(answerCallableVariable);
+            var readOnlyArguments = new DeserializeStaticReadOnlyArguments(answerVariable, answerCallableVariable, in analyzeResult, processor);
             try
             {
                 if (readOnlyArguments.Dictionary.LengthVariations.IsEmpty)
@@ -85,7 +95,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     ? 1
                     : 2;
             var processor = deserializeStaticReadOnlyArguments.Processor;
-            CallCallbacks(deserializeStaticReadOnlyArguments.AnalyzeResult.OnDeserializing, processor, deserializeStaticReadOnlyArguments.AnswerVariable);
+            CallCallbacks(deserializeStaticReadOnlyArguments.AnalyzeResult.OnDeserializing, processor, deserializeStaticReadOnlyArguments.AnswerCallableVariable);
 
             switch (processKind)
             {
@@ -98,7 +108,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         var extensionVariable = processor.DeclareLocal(typeof(Dictionary<string, object>));
                         Debug.Assert(!(extensionDataInfo.Info?.GetMethod is null), "extensionDataInfo.Info != null");
                         processor
-                            .LdLocAddress(deserializeStaticReadOnlyArguments.AnswerVariable)
+                            .LdLoc(deserializeStaticReadOnlyArguments.AnswerCallableVariable)
                             .TryCallIfNotPossibleCallVirtual(extensionDataInfo.Info.GetMethod)
                             .StLoc(extensionVariable);
 
@@ -111,7 +121,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         var extensionVariable = processor.DeclareLocal(typeof(Dictionary<string, object>));
                         Debug.Assert(!(extensionDataInfo.Info?.SetMethod is null), "extensionDataInfo.Info != null");
                         processor
-                            .LdLocAddress(deserializeStaticReadOnlyArguments.AnswerVariable)
+                            .LdLoc(deserializeStaticReadOnlyArguments.AnswerCallableVariable)
                             .NewObj(BasicInfoContainer.ConstructorInfoStringKeyObjectValueDictionary)
                             .Dup()
                             .StLoc(extensionVariable)
@@ -154,35 +164,25 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             var processor = deserializeStaticReadOnlyArguments.Processor;
             if (deserializeStaticReadOnlyArguments.AnalyzeResult.ExtensionData.Info is null)
             {
-                var notNull = processor.DefineLabel();
                 processor
                     .LdArg(0)
-                    .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderReadIsNull)
-                    .BrFalse(notNull);
-                processor
-                    .ThrowException(typeof(NullReferenceException));
-                processor.MarkLabel(notNull);
-                processor
-                    .LdArg(0)
-                    .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderReadNextBlock)
-                    .LdLoc(deserializeStaticReadOnlyArguments.AnswerVariable)
-                    .Emit(OpCodes.Ret);
+                    .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderReadNextBlock);
             }
             else
             {
                 var setMethod = deserializeStaticReadOnlyArguments.AnalyzeResult.ExtensionData.Info.SetMethod ?? throw new NullReferenceException();
                 processor
-                    .LdLocAddress(deserializeStaticReadOnlyArguments.AnswerVariable)
+                    .LdLoc(deserializeStaticReadOnlyArguments.AnswerCallableVariable)
                     .LdArg(0)
                     .LdArg(1)
                     .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodStringKeyObjectValueDictionaryFormatterDeserializeStatic)
-                    .TryCallIfNotPossibleCallVirtual(setMethod)
-                    .LdLoc(deserializeStaticReadOnlyArguments.AnswerVariable)
-                    .Emit(OpCodes.Ret);
+                    .TryCallIfNotPossibleCallVirtual(setMethod);
             }
+
+            processor.LdLoc(deserializeStaticReadOnlyArguments.AnswerVariable).Emit(OpCodes.Ret);
         }
 
-        private static void CallCallbacks(ReadOnlySpan<MethodInfo> methods, ILGenerator processor, LocalBuilder answerVariable)
+        private static void CallCallbacks(ReadOnlySpan<MethodInfo> methods, ILGenerator processor, LocalBuilder answerCallableVariable)
         {
             foreach (var methodInfo in methods)
             {
@@ -193,7 +193,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 else
                 {
                     processor
-                        .LdLocAddress(answerVariable)
+                        .LdLoc(answerCallableVariable)
                         .TryCallIfNotPossibleCallVirtual(methodInfo);
                 }
             }
@@ -582,7 +582,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         private static void EmbedMatch(in DeserializeDictionary.Entry entry, in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments)
         {
             var processor = deserializeStaticReadOnlyArguments.Processor;
-            processor.LdLocAddress(deserializeStaticReadOnlyArguments.AnswerVariable);
+            processor.LdLoc(deserializeStaticReadOnlyArguments.AnswerCallableVariable);
             switch (entry.Type)
             {
                 case TypeAnalyzeResultMemberKind.FieldValueType:
