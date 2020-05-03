@@ -1,11 +1,24 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Diagnostics;
 using System.Reflection;
 
 namespace Utf8Json.Internal
 {
+    public enum TypeAnalyzeResultMemberKind
+    {
+        FieldValueType,
+        PropertyValueType,
+        FieldReferenceType,
+        PropertyReferenceType,
+        FieldValueTypeShouldSerialize,
+        PropertyValueTypeShouldSerialize,
+        FieldReferenceTypeShouldSerialize,
+        PropertyReferenceTypeShouldSerialize,
+    }
+
     public readonly struct TypeAnalyzeResult
     {
         public readonly FieldSerializationInfo[] FieldValueTypeArray;
@@ -183,6 +196,31 @@ namespace Utf8Json.Internal
             }
 
             return true;
+        }
+
+        public Type GetTargetType(TypeAnalyzeResultMemberKind kind, int index)
+        {
+            switch (kind)
+            {
+                case TypeAnalyzeResultMemberKind.FieldValueType:
+                    return FieldValueTypeArray[index].TargetType;
+                case TypeAnalyzeResultMemberKind.PropertyValueType:
+                    return PropertyValueTypeArray[index].TargetType;
+                case TypeAnalyzeResultMemberKind.FieldReferenceType:
+                    return FieldReferenceTypeArray[index].TargetType;
+                case TypeAnalyzeResultMemberKind.PropertyReferenceType:
+                    return PropertyReferenceTypeArray[index].TargetType;
+                case TypeAnalyzeResultMemberKind.FieldValueTypeShouldSerialize:
+                    return FieldValueTypeShouldSerializeArray[index].TargetType;
+                case TypeAnalyzeResultMemberKind.PropertyValueTypeShouldSerialize:
+                    return PropertyValueTypeShouldSerializeArray[index].TargetType;
+                case TypeAnalyzeResultMemberKind.FieldReferenceTypeShouldSerialize:
+                    return FieldReferenceTypeShouldSerializeArray[index].TargetType;
+                case TypeAnalyzeResultMemberKind.PropertyReferenceTypeShouldSerialize:
+                    return PropertyReferenceTypeShouldSerializeArray[index].TargetType;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
+            }
         }
 
         public TypeAnalyzeResult(FieldSerializationInfo[] fieldValueTypeArray, FieldSerializationInfo[] fieldReferenceTypeArray, PropertySerializationInfo[] propertyValueTypeArray, PropertySerializationInfo[] propertyReferenceTypeArray, ShouldSerializeFieldSerializationInfo[] fieldValueTypeShouldSerializeArray, ShouldSerializeFieldSerializationInfo[] fieldReferenceTypeShouldSerializeArray, ShouldSerializePropertySerializationInfo[] propertyValueTypeShouldSerializeArray, ShouldSerializePropertySerializationInfo[] propertyReferenceTypeShouldSerializeArray, MethodInfo[] onSerializing, MethodInfo[] onSerialized, MethodInfo[] onDeserializing, MethodInfo[] onDeserialized, ExtensionDataInfo extensionData, ConstructorDataInfo constructorData)

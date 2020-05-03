@@ -122,9 +122,6 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     }
                     break;
             }
-
-            // goto while(!reader.ReadIsEndObjectWithSkipValueSeparator(ref count))
-            processor.Br(deserializeStaticReadOnlyArguments.LoopStartLabel);
         }
 
         private static void LoopStartProcedure(ILGenerator processor, in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, LocalBuilder loopCountVariable, Label returnLabel)
@@ -363,7 +360,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             {
                 var key = entryArray[0][position];
                 processor.LdcI8(key).BneUn(deserializeStaticReadOnlyArguments.DefaultLabel);
-                成功時の探索(in deserializeStaticReadOnlyArguments, entryArray, ref mutableArguments, new DeserializeDictionary.EntrySegment(key, 0, entryArray.Length));
+                成功時の探索(in deserializeStaticReadOnlyArguments, entryArray, ref mutableArguments, new DeserializeDictionaryEntrySegment(key, 0, entryArray.Length));
                 return;
             }
 
@@ -412,7 +409,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             mutableArguments.Return(classCount);
         }
 
-        private static void 二分探索(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, ref DeserializeStaticMutableArguments mutableArguments, ReadOnlySpan<DeserializeDictionary.Entry> entryArray, ReadOnlySpan<DeserializeDictionary.EntrySegment> segments, LocalBuilder ulongVariable)
+        private static void 二分探索(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, ref DeserializeStaticMutableArguments mutableArguments, ReadOnlySpan<DeserializeDictionary.Entry> entryArray, ReadOnlySpan<DeserializeDictionaryEntrySegment> segments, LocalBuilder ulongVariable)
         {
             while (true)
             {
@@ -457,7 +454,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
         }
 
-        private static void 成功時の探索(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, ReadOnlySpan<DeserializeDictionary.Entry> entryArray, ref DeserializeStaticMutableArguments mutableArguments, in DeserializeDictionary.EntrySegment middleSegment)
+        private static void 成功時の探索(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, ReadOnlySpan<DeserializeDictionary.Entry> entryArray, ref DeserializeStaticMutableArguments mutableArguments, in DeserializeDictionaryEntrySegment middleSegment)
         {
             var position = mutableArguments.Position;
             if (position + 1 == mutableArguments.Length)
@@ -588,7 +585,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             processor.LdLocAddress(deserializeStaticReadOnlyArguments.AnswerVariable);
             switch (entry.Type)
             {
-                case DeserializeDictionary.Type.FieldValueType:
+                case TypeAnalyzeResultMemberKind.FieldValueType:
                     {
                         ref readonly var info = ref deserializeStaticReadOnlyArguments.AnalyzeResult.FieldValueTypeArray[entry.Index];
                         switch (info.IsFormatterDirect)
@@ -616,7 +613,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         processor.StField(info.Info);
                     }
                     break;
-                case DeserializeDictionary.Type.PropertyValueType:
+                case TypeAnalyzeResultMemberKind.PropertyValueType:
                     {
                         ref readonly var info = ref deserializeStaticReadOnlyArguments.AnalyzeResult.PropertyValueTypeArray[entry.Index];
                         switch (info.IsFormatterDirect)
@@ -646,7 +643,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         processor.TryCallIfNotPossibleCallVirtual(setMethod);
                     }
                     break;
-                case DeserializeDictionary.Type.FieldValueTypeShouldSerialize:
+                case TypeAnalyzeResultMemberKind.FieldValueTypeShouldSerialize:
                     {
                         ref readonly var info = ref deserializeStaticReadOnlyArguments.AnalyzeResult.FieldValueTypeShouldSerializeArray[entry.Index];
                         switch (info.IsFormatterDirect)
@@ -674,7 +671,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         processor.StField(info.Info);
                     }
                     break;
-                case DeserializeDictionary.Type.PropertyValueTypeShouldSerialize:
+                case TypeAnalyzeResultMemberKind.PropertyValueTypeShouldSerialize:
                     {
                         ref readonly var info = ref deserializeStaticReadOnlyArguments.AnalyzeResult.PropertyValueTypeShouldSerializeArray[entry.Index];
                         switch (info.IsFormatterDirect)
@@ -704,7 +701,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         processor.TryCallIfNotPossibleCallVirtual(setMethod);
                     }
                     break;
-                case DeserializeDictionary.Type.FieldReferenceType:
+                case TypeAnalyzeResultMemberKind.FieldReferenceType:
                     {
                         ref readonly var info = ref deserializeStaticReadOnlyArguments.AnalyzeResult.FieldReferenceTypeArray[entry.Index];
                         switch (info.IsFormatterDirect)
@@ -732,7 +729,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         processor.StField(info.Info);
                     }
                     break;
-                case DeserializeDictionary.Type.PropertyReferenceType:
+                case TypeAnalyzeResultMemberKind.PropertyReferenceType:
                     {
                         ref readonly var info = ref deserializeStaticReadOnlyArguments.AnalyzeResult.PropertyReferenceTypeArray[entry.Index];
                         switch (info.IsFormatterDirect)
@@ -762,7 +759,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         processor.TryCallIfNotPossibleCallVirtual(setMethod);
                     }
                     break;
-                case DeserializeDictionary.Type.FieldReferenceTypeShouldSerialize:
+                case TypeAnalyzeResultMemberKind.FieldReferenceTypeShouldSerialize:
                     {
                         ref readonly var info = ref deserializeStaticReadOnlyArguments.AnalyzeResult.FieldReferenceTypeShouldSerializeArray[entry.Index];
                         switch (info.IsFormatterDirect)
@@ -790,7 +787,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         processor.StField(info.Info);
                     }
                     break;
-                case DeserializeDictionary.Type.PropertyReferenceTypeShouldSerialize:
+                case TypeAnalyzeResultMemberKind.PropertyReferenceTypeShouldSerialize:
                     {
                         ref readonly var info = ref deserializeStaticReadOnlyArguments.AnalyzeResult.PropertyReferenceTypeShouldSerializeArray[entry.Index];
                         switch (info.IsFormatterDirect)
@@ -821,7 +818,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     }
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(DeserializeDictionary.Type), entry.Type, null);
+                    throw new ArgumentOutOfRangeException(nameof(TypeAnalyzeResultMemberKind), entry.Type, null);
             }
 
             processor.Br(deserializeStaticReadOnlyArguments.LoopStartLabel);

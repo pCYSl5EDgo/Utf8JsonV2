@@ -68,7 +68,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 var memory = array.AsMemory(used, nameLength);
                 NullableStringFormatter.SerializeSpanNotNullNoQuotation(name, memory.Span);
                 ref var entryArray = ref Table[nameLength];
-                var entry = new Entry(memory, Type.FieldValueType, index, uniqueIndex++);
+                var entry = new Entry(memory, TypeAnalyzeResultMemberKind.FieldValueType, index, uniqueIndex++);
                 HashTableHelper.SortInsert(ref entryArray, entry);
                 used += nameLength;
             }
@@ -86,7 +86,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 var memory = array.AsMemory(used, nameLength);
                 NullableStringFormatter.SerializeSpanNotNullNoQuotation(name, memory.Span);
                 ref var entryArray = ref Table[nameLength];
-                var entry = new Entry(memory, Type.FieldReferenceType, index, uniqueIndex++);
+                var entry = new Entry(memory, TypeAnalyzeResultMemberKind.FieldReferenceType, index, uniqueIndex++);
                 HashTableHelper.SortInsert(ref entryArray, entry);
                 used += nameLength;
             }
@@ -104,7 +104,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 var memory = array.AsMemory(used, nameLength);
                 NullableStringFormatter.SerializeSpanNotNullNoQuotation(name, memory.Span);
                 ref var entryArray = ref Table[nameLength];
-                var entry = new Entry(memory, Type.FieldValueTypeShouldSerialize, index, uniqueIndex++);
+                var entry = new Entry(memory, TypeAnalyzeResultMemberKind.FieldValueTypeShouldSerialize, index, uniqueIndex++);
                 HashTableHelper.SortInsert(ref entryArray, entry);
                 used += nameLength;
             }
@@ -122,7 +122,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 var memory = array.AsMemory(used, nameLength);
                 NullableStringFormatter.SerializeSpanNotNullNoQuotation(name, memory.Span);
                 ref var entryArray = ref Table[nameLength];
-                var entry = new Entry(memory, Type.FieldReferenceTypeShouldSerialize, index, uniqueIndex++);
+                var entry = new Entry(memory, TypeAnalyzeResultMemberKind.FieldReferenceTypeShouldSerialize, index, uniqueIndex++);
                 HashTableHelper.SortInsert(ref entryArray, entry);
                 used += nameLength;
             }
@@ -145,7 +145,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 var memory = array.AsMemory(used, nameLength);
                 NullableStringFormatter.SerializeSpanNotNullNoQuotation(name, memory.Span);
                 ref var entryArray = ref Table[nameLength];
-                var entry = new Entry(memory, Type.PropertyValueType, index, uniqueIndex++);
+                var entry = new Entry(memory, TypeAnalyzeResultMemberKind.PropertyValueType, index, uniqueIndex++);
                 HashTableHelper.SortInsert(ref entryArray, entry);
                 used += nameLength;
             }
@@ -168,7 +168,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 var memory = array.AsMemory(used, nameLength);
                 NullableStringFormatter.SerializeSpanNotNullNoQuotation(name, memory.Span);
                 ref var entryArray = ref Table[nameLength];
-                var entry = new Entry(memory, Type.PropertyReferenceType, index, uniqueIndex++);
+                var entry = new Entry(memory, TypeAnalyzeResultMemberKind.PropertyReferenceType, index, uniqueIndex++);
                 HashTableHelper.SortInsert(ref entryArray, entry);
                 used += nameLength;
             }
@@ -191,7 +191,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 var memory = array.AsMemory(used, nameLength);
                 NullableStringFormatter.SerializeSpanNotNullNoQuotation(name, memory.Span);
                 ref var entryArray = ref Table[nameLength];
-                var entry = new Entry(memory, Type.PropertyValueTypeShouldSerialize, index, uniqueIndex++);
+                var entry = new Entry(memory, TypeAnalyzeResultMemberKind.PropertyValueTypeShouldSerialize, index, uniqueIndex++);
                 HashTableHelper.SortInsert(ref entryArray, entry);
                 used += nameLength;
             }
@@ -214,7 +214,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 var memory = array.AsMemory(used, nameLength);
                 NullableStringFormatter.SerializeSpanNotNullNoQuotation(name, memory.Span);
                 ref var entryArray = ref Table[nameLength];
-                var entry = new Entry(memory, Type.PropertyReferenceTypeShouldSerialize, index, uniqueIndex++);
+                var entry = new Entry(memory, TypeAnalyzeResultMemberKind.PropertyReferenceTypeShouldSerialize, index, uniqueIndex++);
                 HashTableHelper.SortInsert(ref entryArray, entry);
                 used += nameLength;
             }
@@ -262,11 +262,11 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         public readonly struct Entry : IComparable<Entry>
         {
             public readonly ReadOnlyMemory<byte> Key;
-            public readonly Type Type;
+            public readonly TypeAnalyzeResultMemberKind Type;
             public readonly int Index;
             public readonly int UniqueIndex;
 
-            public Entry(ReadOnlyMemory<byte> key, Type type, int index, int uniqueIndex)
+            public Entry(ReadOnlyMemory<byte> key, TypeAnalyzeResultMemberKind type, int index, int uniqueIndex)
             {
                 Key = key;
                 Type = type;
@@ -296,35 +296,6 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
         }
 
-        [StructLayout(LayoutKind.Explicit, CharSet = CharSet.Auto, Pack = 1, Size = 16)]
-        public readonly struct EntrySegment
-        {
-            [FieldOffset(0)]
-            public readonly ulong Key;
-            [FieldOffset(8)]
-            public readonly int Offset;
-            [FieldOffset(12)]
-            public readonly int Length;
-
-            public EntrySegment(ulong key, int offset, int length)
-            {
-                Key = key;
-                Offset = offset;
-                Length = length;
-            }
-        }
-
-        public enum Type
-        {
-            FieldValueType,
-            PropertyValueType,
-            FieldReferenceType,
-            PropertyReferenceType,
-            FieldValueTypeShouldSerialize,
-            PropertyValueTypeShouldSerialize,
-            FieldReferenceTypeShouldSerialize,
-            PropertyReferenceTypeShouldSerialize,
-        }
 
         public void Dispose()
         {
@@ -332,6 +303,24 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             {
                 ArrayPool<byte>.Shared.Return(item);
             }
+        }
+    }
+
+    [StructLayout(LayoutKind.Explicit, CharSet = CharSet.Auto, Pack = 1, Size = 16)]
+    public readonly struct DeserializeDictionaryEntrySegment
+    {
+        [FieldOffset(0)]
+        public readonly ulong Key;
+        [FieldOffset(8)]
+        public readonly int Offset;
+        [FieldOffset(12)]
+        public readonly int Length;
+
+        public DeserializeDictionaryEntrySegment(ulong key, int offset, int length)
+        {
+            Key = key;
+            Offset = offset;
+            Length = length;
         }
     }
 
@@ -391,7 +380,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             return answer;
         }
 
-        public static void WriteVariation(this ReadOnlySpan<DeserializeDictionary.Entry> entryArray, int position, Span<DeserializeDictionary.EntrySegment> span)
+        public static void WriteVariation(this ReadOnlySpan<DeserializeDictionary.Entry> entryArray, int position, Span<DeserializeDictionaryEntrySegment> span)
         {
             if (entryArray.IsEmpty)
             {
@@ -409,14 +398,14 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     continue;
                 }
 
-                span[0] = new DeserializeDictionary.EntrySegment(value, offset, length);
+                span[0] = new DeserializeDictionaryEntrySegment(value, offset, length);
                 offset += length;
                 length = 0;
                 value = nextValue;
                 span = span.Slice(1);
             }
 
-            span[0] = new DeserializeDictionary.EntrySegment(value, offset, length);
+            span[0] = new DeserializeDictionaryEntrySegment(value, offset, length);
         }
     }
 }

@@ -27,7 +27,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         public unsafe DeserializeStaticMutableArguments(ArrayPool<byte> pool)
         {
             this.pool = pool;
-            deserializeDictionaryEntrySegments = pool.Rent(sizeof(DeserializeDictionary.EntrySegment) * 64);
+            deserializeDictionaryEntrySegments = pool.Rent(sizeof(DeserializeDictionaryEntrySegment) * 64);
             used = default;
             ByteVariable = default;
             ULongVariable = default;
@@ -36,12 +36,12 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             Rest = default;
         }
 
-        public unsafe ReadOnlySpan<DeserializeDictionary.EntrySegment> Rent(ReadOnlySpan<DeserializeDictionary.Entry> entryArray, int classCount, int position)
+        public unsafe ReadOnlySpan<DeserializeDictionaryEntrySegment> Rent(ReadOnlySpan<DeserializeDictionary.Entry> entryArray, int classCount, int position)
         {
-            var span = MemoryMarshal.Cast<byte, DeserializeDictionary.EntrySegment>(deserializeDictionaryEntrySegments).Slice(used);
+            var span = MemoryMarshal.Cast<byte, DeserializeDictionaryEntrySegment>(deserializeDictionaryEntrySegments).Slice(used);
             if (span.Length < classCount)
             {
-                var length = sizeof(DeserializeDictionary.EntrySegment) * (used + classCount);
+                var length = sizeof(DeserializeDictionaryEntrySegment) * (used + classCount);
                 var newBytes = pool.Rent(length);
                 fixed (void* dst = &newBytes[0])
                 fixed (void* src = &deserializeDictionaryEntrySegments[0])
@@ -51,7 +51,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
                 pool.Return(deserializeDictionaryEntrySegments);
                 deserializeDictionaryEntrySegments = newBytes;
-                span = MemoryMarshal.Cast<byte, DeserializeDictionary.EntrySegment>(deserializeDictionaryEntrySegments).Slice(used);
+                span = MemoryMarshal.Cast<byte, DeserializeDictionaryEntrySegment>(deserializeDictionaryEntrySegments).Slice(used);
             }
 
             span = span.Slice(0, classCount);
