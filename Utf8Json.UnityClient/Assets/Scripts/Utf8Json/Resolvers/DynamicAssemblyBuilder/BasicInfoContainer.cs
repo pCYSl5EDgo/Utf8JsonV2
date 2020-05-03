@@ -27,8 +27,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         public static readonly MethodInfo MethodJsonReaderReadPropertyNameSegmentRaw = typeof(JsonReader).GetMethodInstance("ReadPropertyNameSegmentRaw");
         public static readonly MethodInfo MethodJsonReaderReadNextBlock = typeof(JsonReader).GetMethodInstance("ReadNextBlock");
         public static readonly MethodInfo MethodJsonReaderSkipWhiteSpace = typeof(JsonReader).GetMethodInstance("SkipWhiteSpace");
-        public static readonly MethodInfo MethodJsonReaderReadIsNameSeparatorWithVerify = typeof(JsonReader).GetMethodInstance("ReadIsNameSeparatorWithVerify");
-
+        
         public static readonly MethodInfo MethodBufferWriterGetSpan = typeof(BufferWriter).GetMethodInstance("GetSpan");
         public static readonly MethodInfo MethodBufferWriterAdvance = typeof(BufferWriter).GetMethodInstance("Advance");
 
@@ -36,8 +35,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
         public static readonly MethodInfo MethodReadOnlySpanGetLength = typeof(ReadOnlySpan<byte>).GetMethodInstance("get_Length");
         public static readonly MethodInfo MethodReadOnlySpanGetItem = typeof(SpanHelper).GetMethod("get_Item") ?? throw new NullReferenceException("ReadOnlySpan<byte>.get_Item");
-        public static readonly MethodInfo MethodReadOnlySpanSlice = typeof(ReadOnlySpan<byte>).GetMethod("Slice", typeof(int));
-
+        
         public static readonly MethodInfo MethodJsonSerializerOptionsExtensionsSerializeWithVerify = typeof(JsonSerializerOptionsExtensions).GetMethodStatic("SerializeWithVerify");
         public static readonly MethodInfo MethodJsonSerializerOptionsExtensionsDeserializeWithVerify = typeof(JsonSerializerOptionsExtensions).GetMethodStatic("DeserializeWithVerify");
 
