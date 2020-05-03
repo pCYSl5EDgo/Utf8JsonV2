@@ -1,13 +1,24 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <Choose>
+    <When Condition="'$(TargetFramework)'=='netstandard2.0' OR '$(TargetFramework)'=='netcoreapp2.1'">
+      <PropertyGroup>
+        <LangVersion>7.3</LangVersion>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <LangVersion>preview</LangVersion>
+        <Nullable>enable</Nullable>
+        <DefineConstants>$(DefineConstants);CSHARP_8_OR_NEWER</DefineConstants>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
+
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netstandard2.0;netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
-    <LangVersion>8.0</LangVersion>
-    <LangVersion Condition="'$(TargetFramework)'=='netstandard2.0' OR '$(TargetFramework)'=='netcoreapp2.1'">7.3</LangVersion>
     <DefineConstants Condition="'$(TargetFramework)'=='netcoreapp2.1' Or '$(TargetFramework)'=='netcoreapp2.2' Or '$(TargetFramework)'=='netcoreapp3.0' Or '$(TargetFramework)'=='netcoreapp3.1' Or '$(TargetFramework)'=='netstandard2.1' Or '$(TargetFramework)'=='net5.0'">$(DefineConstants);SPAN_BUILTIN</DefineConstants>
     <DefineConstants Condition="'$(TargetFramework)'=='netcoreapp3.0' Or '$(TargetFramework)'=='netcoreapp3.1' Or '$(TargetFramework)'=='netstandard2.1' Or '$(TargetFramework)'=='net5.0'">$(DefineConstants);NULLABLE_BUILTIN</DefineConstants>
-    <DefineConstants Condition="'$(LangVersion)'&gt;=8.0">$(DefineConstants);CSHARP_8_OR_NEWER</DefineConstants>
-    <Nullable Condition="'$(LangVersion)'&gt;=8.0">enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
