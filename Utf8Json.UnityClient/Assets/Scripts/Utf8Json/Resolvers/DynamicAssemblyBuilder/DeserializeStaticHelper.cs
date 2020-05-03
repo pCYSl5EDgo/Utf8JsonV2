@@ -10,6 +10,8 @@ using System.Reflection;
 using System.Reflection.Emit;
 using Utf8Json.Formatters;
 using Utf8Json.Internal;
+using Utf8Json.Internal.Reflection;
+
 // ReSharper disable UseIndexFromEndExpression
 // ReSharper disable ConvertIfStatementToNullCoalescingAssignment
 
@@ -17,16 +19,16 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 {
     public static class DeserializeStaticHelper
     {
-        public static void DeserializeStatic(in TypeAnalyzeResult analyzeResult, ILGenerator processor, Type returnType)
+        public static void DeserializeStatic(in TypeAnalyzeResult analyzeResult, ILGenerator processor)
         {
             NullHandling(analyzeResult, processor);
 
             ref readonly var extensionDataInfo = ref analyzeResult.ExtensionData;
-            var answerVariable = processor.DeclareLocal(returnType);
+            var answerVariable = processor.DeclareLocal(analyzeResult.TargetType);
             LocalBuilder answerCallableVariable;
             if (analyzeResult.TargetType.IsValueType)
             {
-                answerCallableVariable = processor.DeclareLocal(returnType.MakeByRefType());
+                answerCallableVariable = processor.DeclareLocal(analyzeResult.TargetType.MakeByRefType());
                 processor.LdLocAddress(answerVariable).StLoc(answerCallableVariable);
             }
             else
@@ -847,11 +849,62 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     break;
                 case DirectTypeEnum.None:
                     var targetType = analyzeResult.GetTargetType(entryType, entryIndex);
-                    var deserialize = BasicInfoContainer.DeserializeWithVerify(targetType);
-                    processor
-                        .LdArg(1)
-                        .LdArg(0)
-                        .TryCallIfNotPossibleCallVirtual(deserialize);
+                    var jsonFormatterAttribute = analyzeResult.GetFormatterInfo(entryType, entryIndex);
+                    if (jsonFormatterAttribute is null)
+                    {
+                        var deserialize = BasicInfoContainer.DeserializeWithVerify(targetType);
+                        processor
+                            .LdArg(1)
+                            .LdArg(0)
+                            .TryCallIfNotPossibleCallVirtual(deserialize);
+                    }
+                    else
+                    {
+                        var jsonFormatterType = jsonFormatterAttribute.FormatterType;
+                        var arguments = jsonFormatterAttribute.Arguments;
+                        var interfaceMethodSerialize = typeof(IJsonFormatter<>).MakeGeneric(targetType).GetMethodInstance("Deserialize");
+                        if (arguments is null)
+                        {
+                            var length2 = TypeArrayHolder.Length2;
+                            length2[0] = typeof(JsonReader).MakeByRefType();
+                            length2[1] = typeof(JsonSerializerOptions);
+                            var deserialize = jsonFormatterType.GetMethod("DeserializeStatic", BindingFlags.Public | BindingFlags.Static, null, length2, null);
+                            if (!(deserialize is null))
+                            {
+                                processor.LdArg(0).LdArg(1).TryCallIfNotPossibleCallVirtual(deserialize);
+                                break;
+                            }
+
+                            var field = jsonFormatterType.GetField("Instance", BindingFlags.Static | BindingFlags.Public)
+                                ?? jsonFormatterType.GetField("Default", BindingFlags.Static | BindingFlags.Public);
+
+                            if (!(field is null))
+                            {
+                                processor.LdStaticField(field).LdArg(0).LdArg(1).ConstrainedCallVirtual(jsonFormatterType, interfaceMethodSerialize);
+                                break;
+                            }
+
+                            var propertyGetMethod = jsonFormatterType.GetMethod("get_Instance", BindingFlags.Static | BindingFlags.Public, null, Array.Empty<Type>(), null)
+                                ?? jsonFormatterType.GetMethod("get_Default", BindingFlags.Static | BindingFlags.Public, null, Array.Empty<Type>(), null);
+
+                            if (!(propertyGetMethod is null))
+                            {
+                                processor.TryCallIfNotPossibleCallVirtual(propertyGetMethod).LdArg(0).LdArg(1).ConstrainedCallVirtual(jsonFormatterType, interfaceMethodSerialize);
+                                break;
+                            }
+                        }
+
+                        var constructorTypes = arguments is null ? Array.Empty<Type>() : arguments.Length == 1 ? TypeArrayHolder.Length1 : arguments.Length == 2 ? TypeArrayHolder.Length2 : arguments.Length == 3 ? TypeArrayHolder.Length3 : new Type[arguments.Length];
+                        FillConstructorTypesAndEmbedValues(processor, arguments ?? Array.Empty<object>(), constructorTypes);
+
+                        var jsonFormatterDefaultConstructor = jsonFormatterType.GetConstructor(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance, null, constructorTypes, null);
+                        Debug.Assert(!(jsonFormatterDefaultConstructor is null));
+                        processor
+                            .NewObj(jsonFormatterDefaultConstructor)
+                            .LdArg(0)
+                            .LdArg(1)
+                            .ConstrainedCallVirtual(jsonFormatterType, interfaceMethodSerialize);
+                    }
                     break;
                 default:
                     var method = ReadWritePrimitive.MethodReadPrimitives[(int)directTypeEnum];
@@ -859,6 +912,73 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         .LdArg(0)
                         .TryCallIfNotPossibleCallVirtual(method);
                     break;
+            }
+        }
+
+
+#if CSHARP_8_OR_NEWER
+        private static void FillConstructorTypesAndEmbedValues(ILGenerator processor, object?[] arguments, Type[] constructorTypes)
+#else
+        private static void FillConstructorTypesAndEmbedValues(ILGenerator processor, object[] arguments, Type[] constructorTypes)
+#endif
+        {
+            for (var i = 0; i < arguments.Length; i++)
+            {
+                ref var type = ref constructorTypes[i];
+                var argument = arguments[i];
+                switch (argument)
+                {
+                    case null:
+                        type = typeof(object);
+                        processor.LdNull();
+                        break;
+                    case int i32:
+                        type = typeof(int);
+                        processor.LdcI4(i32);
+                        break;
+                    case uint u32:
+                        type = typeof(uint);
+                        processor.LdcI4((int)u32);
+                        break;
+                    case byte u8:
+                        type = typeof(byte);
+                        processor.LdcI4(u8);
+                        break;
+                    case sbyte i8:
+                        type = typeof(sbyte);
+                        processor.LdcI4(i8);
+                        break;
+                    case ushort u16:
+                        type = typeof(ushort);
+                        processor.LdcI4(u16);
+                        break;
+                    case short i16:
+                        type = typeof(short);
+                        processor.LdcI4(i16);
+                        break;
+                    case ulong u64:
+                        type = typeof(ulong);
+                        processor.Emit(OpCodes.Ldc_I8, (long)u64);
+                        break;
+                    case long i64:
+                        type = typeof(long);
+                        processor.Emit(OpCodes.Ldc_I8, i64);
+                        break;
+                    case char c:
+                        type = typeof(char);
+                        processor.LdcI4(c);
+                        break;
+                    case string str:
+                        type = typeof(string);
+                        processor.LdStr(str);
+                        break;
+                    case Type t:
+                        type = typeof(Type);
+                        processor.LdType(t);
+                        break;
+                    default:
+                        throw new NotSupportedException(argument.GetType().FullName);
+                }
             }
         }
     }
