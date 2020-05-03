@@ -252,7 +252,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     GenerateIntermediateLanguageCodesForSerialize(serializeStatic, builderSet.Serialize);
                     GenerateIntermediateLanguageCodesForDeserialize(deserializeStatic, builderSet.Deserialize);
 
-                    ValueTypeSerializeStaticHelper.SerializeStatic(analyzeResult, serializeStatic.GetILGenerator());
+                    ValueTypeSerializeStaticHelper.SerializeStatic(analyzeResult, serializeStatic.GetILGenerator(), processor => processor.LdArgAddress(1));
                     ValueTypeDeserializeStaticHelper.DeserializeStatic(analyzeResult, deserializeStatic.GetILGenerator(), targetType);
                     var formatter = Closing(builderSet.Type);
                     return formatter;

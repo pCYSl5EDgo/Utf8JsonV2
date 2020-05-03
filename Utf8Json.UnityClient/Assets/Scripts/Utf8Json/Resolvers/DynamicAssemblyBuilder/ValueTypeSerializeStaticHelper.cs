@@ -15,7 +15,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 {
     public static class ValueTypeSerializeStaticHelper
     {
-        public static void SerializeStatic(in TypeAnalyzeResult analyzeResult, ILGenerator processor)
+        public static void SerializeStatic(in TypeAnalyzeResult analyzeResult, ILGenerator processor, Func<ILGenerator, ILGenerator> loadValueArgumentAsCallableFunc)
         {
             var spanVariable = processor.DeclareLocal(typeof(Span<byte>));
             var bufferWriterAddressVariable = processor.DeclareLocal(typeof(BufferWriter).MakeByRefType());
@@ -26,10 +26,10 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
             if (analyzeResult.OnSerializing.Length != 0)
             {
-                CallCallbacks(analyzeResult.OnSerializing, processor);
+                CallCallbacks(analyzeResult.OnSerializing, processor, loadValueArgumentAsCallableFunc);
             }
 
-            var didNotBeginObjectDuringValueTypePeriod = TrySerializeStaticOfValueTypeFieldAndProperty(analyzeResult, processor, spanVariable, bufferWriterAddressVariable);
+            var didNotBeginObjectDuringValueTypePeriod = TrySerializeStaticOfValueTypeFieldAndProperty(analyzeResult, processor, spanVariable, bufferWriterAddressVariable, loadValueArgumentAsCallableFunc);
 
             var detectIsFirstVariable = default(LocalBuilder);
             if (analyzeResult.FieldValueTypeShouldSerializeArray.Length != 0)
@@ -42,6 +42,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         spanVariable,
                         bufferWriterAddressVariable,
                         IntermediateLanguageGeneratorUtility.LdField,
+                        loadValueArgumentAsCallableFunc,
                         ref detectIsFirstVariable
                     );
                 }
@@ -52,7 +53,8 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         processor,
                         spanVariable,
                         bufferWriterAddressVariable,
-                        IntermediateLanguageGeneratorUtility.LdField
+                        IntermediateLanguageGeneratorUtility.LdField,
+                        loadValueArgumentAsCallableFunc
                     );
                 }
             }
@@ -67,6 +69,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         spanVariable,
                         bufferWriterAddressVariable,
                         IntermediateLanguageGeneratorUtility.TryCallIfNotPossibleCallVirtual,
+                        loadValueArgumentAsCallableFunc,
                         ref detectIsFirstVariable
                     );
                 }
@@ -77,7 +80,8 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         processor,
                         spanVariable,
                         bufferWriterAddressVariable,
-                        IntermediateLanguageGeneratorUtility.TryCallIfNotPossibleCallVirtual
+                        IntermediateLanguageGeneratorUtility.TryCallIfNotPossibleCallVirtual,
+                        loadValueArgumentAsCallableFunc
                     );
                 }
             }
@@ -94,6 +98,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         spanVariable,
                         bufferWriterAddressVariable,
                         IntermediateLanguageGeneratorUtility.LdField,
+                        loadValueArgumentAsCallableFunc,
                         ref ignoreNullValuesVariable,
                         ref referenceVariable,
                         ref detectIsFirstVariable
@@ -107,6 +112,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         spanVariable,
                         bufferWriterAddressVariable,
                         IntermediateLanguageGeneratorUtility.LdField,
+                        loadValueArgumentAsCallableFunc,
                         ref ignoreNullValuesVariable,
                         ref referenceVariable
                     );
@@ -123,6 +129,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         spanVariable,
                         bufferWriterAddressVariable,
                         IntermediateLanguageGeneratorUtility.TryCallIfNotPossibleCallVirtual,
+                        loadValueArgumentAsCallableFunc,
                         ref ignoreNullValuesVariable,
                         ref referenceVariable,
                         ref detectIsFirstVariable
@@ -130,12 +137,14 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 }
                 else
                 {
-                    SerializeStatic_ReferenceType_NotFirst(analyzeResult.PropertyReferenceTypeArray,
+                    SerializeStatic_ReferenceType_NotFirst(
+                        analyzeResult.PropertyReferenceTypeArray,
                         GetGetMethod,
                         processor,
                         spanVariable,
                         bufferWriterAddressVariable,
                         IntermediateLanguageGeneratorUtility.TryCallIfNotPossibleCallVirtual,
+                        loadValueArgumentAsCallableFunc,
                         ref ignoreNullValuesVariable,
                         ref referenceVariable
                     );
@@ -152,6 +161,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         spanVariable,
                         bufferWriterAddressVariable,
                         IntermediateLanguageGeneratorUtility.LdField,
+                        loadValueArgumentAsCallableFunc,
                         ref ignoreNullValuesVariable,
                         ref referenceVariable,
                         ref detectIsFirstVariable
@@ -165,6 +175,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         spanVariable,
                         bufferWriterAddressVariable,
                         IntermediateLanguageGeneratorUtility.LdField,
+                        loadValueArgumentAsCallableFunc,
                         ref ignoreNullValuesVariable,
                         ref referenceVariable
                     );
@@ -181,6 +192,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         spanVariable,
                         bufferWriterAddressVariable,
                         IntermediateLanguageGeneratorUtility.TryCallIfNotPossibleCallVirtual,
+                        loadValueArgumentAsCallableFunc,
                         ref ignoreNullValuesVariable,
                         ref referenceVariable,
                         ref detectIsFirstVariable
@@ -194,13 +206,14 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                         spanVariable,
                         bufferWriterAddressVariable,
                         IntermediateLanguageGeneratorUtility.TryCallIfNotPossibleCallVirtual,
+                        loadValueArgumentAsCallableFunc,
                         ref ignoreNullValuesVariable,
                         ref referenceVariable
                     );
                 }
             }
 
-            WriteExtensionData(analyzeResult, processor, didNotBeginObjectDuringValueTypePeriod, referenceVariable, ref detectIsFirstVariable);
+            WriteExtensionData(analyzeResult, processor, didNotBeginObjectDuringValueTypePeriod, loadValueArgumentAsCallableFunc, referenceVariable, ref detectIsFirstVariable);
 
             WriteBeginObjectIfNotWritten(detectIsFirstVariable, didNotBeginObjectDuringValueTypePeriod, processor);
 
@@ -210,22 +223,23 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
             if (analyzeResult.OnSerialized.Length != 0)
             {
-                CallCallbacks(analyzeResult.OnSerialized, processor);
+                CallCallbacks(analyzeResult.OnSerialized, processor, loadValueArgumentAsCallableFunc);
             }
 
             processor.Emit(OpCodes.Ret);
         }
 
         private static void WriteExtensionData(
-            in TypeAnalyzeResult analyzeResult,
-            ILGenerator processor,
-            bool didNotBeginObjectDuringValueTypePeriod,
+                in TypeAnalyzeResult analyzeResult,
+                ILGenerator processor,
+                bool didNotBeginObjectDuringValueTypePeriod,
+                Func<ILGenerator, ILGenerator> loadValueArgumentAsCallableFunc,
 #if CSHARP_8_OR_NEWER
-            LocalBuilder? referenceVariable,
-            ref LocalBuilder? detectIsFirstVariable)
+                LocalBuilder? referenceVariable,
+                ref LocalBuilder? detectIsFirstVariable)
 #else
-            LocalBuilder referenceVariable,
-            ref LocalBuilder detectIsFirstVariable)
+                LocalBuilder referenceVariable,
+                ref LocalBuilder detectIsFirstVariable)
 #endif
         {
             var getMethod = analyzeResult.ExtensionData.Info?.GetMethod;
@@ -241,8 +255,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
 
             var skipLabel = processor.DefineLabel();
-            processor
-                .LdArgAddress(1)
+            loadValueArgumentAsCallableFunc(processor)
                 .TryCallIfNotPossibleCallVirtual(getMethod)
                 .Dup()
                 .StLoc(referenceVariable)
@@ -316,18 +329,19 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         }
 
         private static void SerializeStatic_ReferenceType_ShouldSerialize_NotFirst<TContainer, T>(
-            TContainer[] members,
-            Function<TContainer, T> func,
-            ILGenerator processor,
-            LocalBuilder spanVariable,
-            LocalBuilder bufferWriterAddressVariable,
-            Func<ILGenerator, T, ILGenerator> loadTargetByFunc,
+                TContainer[] members,
+                Function<TContainer, T> func,
+                ILGenerator processor,
+                LocalBuilder spanVariable,
+                LocalBuilder bufferWriterAddressVariable,
+                Func<ILGenerator, T, ILGenerator> loadTargetByFunc,
+                Func<ILGenerator, ILGenerator> loadValueArgumentAsCallableFunc,
 #if CSHARP_8_OR_NEWER
             ref LocalBuilder? ignoreNullValuesVariable,
             ref LocalBuilder? referenceVariable)
 #else
-            ref LocalBuilder ignoreNullValuesVariable,
-            ref LocalBuilder referenceVariable)
+                ref LocalBuilder ignoreNullValuesVariable,
+                ref LocalBuilder referenceVariable)
 #endif
             where TContainer : struct, IShouldSerializeMemberContainer
             where T : class
@@ -347,13 +361,12 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 }
 
                 var skipLabel = processor.DefineLabel();
-                processor
-                    .LdArgAddress(1)
+                loadValueArgumentAsCallableFunc(processor)
                     .TryCallIfNotPossibleCallVirtual(info.ShouldSerialize)
                     .BrFalse(skipLabel);
 
                 var doNotIgnoreNull = processor.DefineLabel();
-                loadTargetByFunc(processor.LdArgAddress(1), t)
+                loadTargetByFunc(loadValueArgumentAsCallableFunc(processor), t)
                     .StLoc(referenceVariable)
                     .LdLoc(ignoreNullValuesVariable)
                     .BrFalse(doNotIgnoreNull);
@@ -402,21 +415,23 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         }
 
         private static void SerializeStatic_ReferenceType_ShouldSerialize_DetectIsFirst<TContainer, T>(
-            TContainer[] members,
-            Function<TContainer, T> func,
-            ILGenerator processor,
-            LocalBuilder spanVariable,
-            LocalBuilder bufferWriterAddressVariable,
-            Func<ILGenerator, T, ILGenerator> loadTargetByFunc,
+                TContainer[] members,
+                Function<TContainer, T> func,
+                ILGenerator processor,
+                LocalBuilder spanVariable,
+                LocalBuilder bufferWriterAddressVariable,
+                Func<ILGenerator, T, ILGenerator> loadTargetByFunc,
+                Func<ILGenerator, ILGenerator> loadValueArgumentAsCallableFunc,
 #if CSHARP_8_OR_NEWER
-            ref LocalBuilder? ignoreNullValuesVariable,
-            ref LocalBuilder? referenceVariable,
-            ref LocalBuilder? detectIsFirstVariable)
+                ref LocalBuilder? ignoreNullValuesVariable,
+                ref LocalBuilder? referenceVariable,
+                ref LocalBuilder? detectIsFirstVariable
 #else
-            ref LocalBuilder ignoreNullValuesVariable,
-            ref LocalBuilder referenceVariable,
-            ref LocalBuilder detectIsFirstVariable)
+                ref LocalBuilder ignoreNullValuesVariable,
+                ref LocalBuilder referenceVariable,
+                ref LocalBuilder detectIsFirstVariable
 #endif
+        )
             where TContainer : struct, IShouldSerializeMemberContainer
             where T : class
         {
@@ -441,13 +456,12 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 }
 
                 var skipLabel = processor.DefineLabel();
-                processor
-                    .LdArgAddress(1)
+                loadValueArgumentAsCallableFunc(processor)
                     .TryCallIfNotPossibleCallVirtual(info.ShouldSerialize)
                     .BrFalse(skipLabel);
 
                 var doNotIgnoreNull = processor.DefineLabel();
-                loadTargetByFunc(processor.LdArgAddress(1), t)
+                loadTargetByFunc(loadValueArgumentAsCallableFunc(processor), t)
                     .StLoc(referenceVariable)
                     .LdLoc(ignoreNullValuesVariable)
                     .BrFalse(doNotIgnoreNull);
@@ -472,11 +486,11 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
         }
 
-        private static bool TrySerializeStaticOfValueTypeFieldAndProperty(
-            in TypeAnalyzeResult analyzeResult,
+        private static bool TrySerializeStaticOfValueTypeFieldAndProperty(in TypeAnalyzeResult analyzeResult,
             ILGenerator processor,
             LocalBuilder spanVariable,
-            LocalBuilder bufferWriterAddressVariable)
+            LocalBuilder bufferWriterAddressVariable,
+            Func<ILGenerator, ILGenerator> loadValueArgumentAsCallableFunc)
         {
             var didNotWriteBeginObject = true;
             if (analyzeResult.FieldValueTypeArray.Length != 0)
@@ -484,7 +498,16 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 Func<ILGenerator, FieldInfo, ILGenerator> process = IntermediateLanguageGeneratorUtility.LdField;
                 foreach (ref var info in analyzeResult.FieldValueTypeArray.AsSpan())
                 {
-                    EmbedEachInfo_ValueType(processor, spanVariable, bufferWriterAddressVariable, process, ref info, didNotWriteBeginObject, info.Info);
+                    EmbedEachInfo_ValueType(
+                        processor,
+                        spanVariable,
+                        bufferWriterAddressVariable,
+                        process,
+                        ref info,
+                        didNotWriteBeginObject,
+                        info.Info,
+                        loadValueArgumentAsCallableFunc
+                    );
                     didNotWriteBeginObject = false;
                 }
             }
@@ -497,7 +520,8 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     spanVariable,
                     bufferWriterAddressVariable,
                     didNotWriteBeginObject,
-                    IntermediateLanguageGeneratorUtility.TryCallIfNotPossibleCallVirtual
+                    IntermediateLanguageGeneratorUtility.TryCallIfNotPossibleCallVirtual,
+                    loadValueArgumentAsCallableFunc
                 );
             }
 
@@ -520,21 +544,23 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         }
 
         private static void SerializeStatic_ReferenceType_DetectIsFirst<TContainer, T>(
-            TContainer[] members,
-            Function<TContainer, T> func,
-            ILGenerator processor,
-            LocalBuilder spanVariable,
-            LocalBuilder bufferWriterAddressVariable,
-            Func<ILGenerator, T, ILGenerator> loadTargetByFunc,
+                TContainer[] members,
+                Function<TContainer, T> func,
+                ILGenerator processor,
+                LocalBuilder spanVariable,
+                LocalBuilder bufferWriterAddressVariable,
+                Func<ILGenerator, T, ILGenerator> loadTargetByFunc,
+                Func<ILGenerator, ILGenerator> loadValueArgumentAsCallableFunc,
 #if CSHARP_8_OR_NEWER
-            ref LocalBuilder? ignoreNullValuesVariable,
-            ref LocalBuilder? referenceVariable,
-            ref LocalBuilder? detectIsFirstVariable)
+                ref LocalBuilder? ignoreNullValuesVariable,
+                ref LocalBuilder? referenceVariable,
+                ref LocalBuilder? detectIsFirstVariable
 #else
-            ref LocalBuilder ignoreNullValuesVariable,
-            ref LocalBuilder referenceVariable,
-            ref LocalBuilder detectIsFirstVariable)
+                ref LocalBuilder ignoreNullValuesVariable,
+                ref LocalBuilder referenceVariable,
+                ref LocalBuilder detectIsFirstVariable
 #endif
+        )
             where TContainer : struct, IMemberContainer
             where T : class
         {
@@ -560,7 +586,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
                 var skipLabel = processor.DefineLabel();
                 var doNotIgnoreNull = processor.DefineLabel();
-                loadTargetByFunc(processor.LdArgAddress(1), t)
+                loadTargetByFunc(loadValueArgumentAsCallableFunc(processor), t)
                     .StLoc(referenceVariable)
                     .LdLoc(ignoreNullValuesVariable)
                     .BrFalse(doNotIgnoreNull);
@@ -604,19 +630,21 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         }
 
         private static void SerializeStatic_ReferenceType_NotFirst<TContainer, T>(
-            TContainer[] members,
-            Function<TContainer, T> func,
-            ILGenerator processor,
-            LocalBuilder spanVariable,
-            LocalBuilder bufferWriterAddressVariable,
-            Func<ILGenerator, T, ILGenerator> loadTargetByFunc,
+                TContainer[] members,
+                Function<TContainer, T> func,
+                ILGenerator processor,
+                LocalBuilder spanVariable,
+                LocalBuilder bufferWriterAddressVariable,
+                Func<ILGenerator, T, ILGenerator> loadTargetByFunc,
+                Func<ILGenerator, ILGenerator> loadValueArgumentAsCallableFunc,
 #if CSHARP_8_OR_NEWER
-            ref LocalBuilder? ignoreNullValuesVariable,
-            ref LocalBuilder? referenceVariable)
+                ref LocalBuilder? ignoreNullValuesVariable,
+                ref LocalBuilder? referenceVariable
 #else
-            ref LocalBuilder ignoreNullValuesVariable,
-            ref LocalBuilder referenceVariable)
+                ref LocalBuilder ignoreNullValuesVariable,
+                ref LocalBuilder referenceVariable
 #endif
+        )
             where TContainer : struct, IMemberContainer
             where T : class
         {
@@ -637,7 +665,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
                 var skipLabel = processor.DefineLabel();
                 var doNotIgnoreNull = processor.DefineLabel();
-                loadTargetByFunc(processor.LdArgAddress(1), t)
+                loadTargetByFunc(loadValueArgumentAsCallableFunc(processor), t)
                     .StLoc(referenceVariable)
                     .LdLoc(ignoreNullValuesVariable)
                     .BrFalse(doNotIgnoreNull);
@@ -661,13 +689,13 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
         }
 
-        private static void SerializeStatic_ValueType_ShouldSerialize_NotFirst<TContainer, T>(
-            TContainer[] members,
+        private static void SerializeStatic_ValueType_ShouldSerialize_NotFirst<TContainer, T>(TContainer[] members,
             Function<TContainer, T> func,
             ILGenerator processor,
             LocalBuilder spanVariable,
             LocalBuilder bufferWriterAddressVariable,
-            Func<ILGenerator, T, ILGenerator> loadTargetByFunc)
+            Func<ILGenerator, T, ILGenerator> loadTargetByFunc,
+            Func<ILGenerator, ILGenerator> loadValueArgumentAsCallableFunc)
             where TContainer : struct, IShouldSerializeMemberContainer
             where T : class
         {
@@ -681,25 +709,22 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
                 var skipLabel = processor.DefineLabel();
 
-                processor
-                    .LdArgAddress(1)
-                    .TryCallIfNotPossibleCallVirtual(info.ShouldSerialize)
-                    .BrFalse(skipLabel);
+                loadValueArgumentAsCallableFunc(processor).TryCallIfNotPossibleCallVirtual(info.ShouldSerialize).BrFalse(skipLabel);
 
-                EmbedEachInfo_ValueType(processor, spanVariable, bufferWriterAddressVariable, loadTargetByFunc, ref info, false, t);
+                EmbedEachInfo_ValueType(processor, spanVariable, bufferWriterAddressVariable, loadTargetByFunc, ref info, false, t, loadValueArgumentAsCallableFunc);
 
                 processor.MarkLabel(skipLabel);
             }
         }
 
-        private static void EmbedEachInfo_ValueType<TContainer, T>(
-            ILGenerator processor,
+        private static void EmbedEachInfo_ValueType<TContainer, T>(ILGenerator processor,
             LocalBuilder spanVariable,
             LocalBuilder bufferWriterAddressVariable,
             Func<ILGenerator, T, ILGenerator> loadTargetByFunc,
             ref TContainer info,
             bool isFirst,
-            T t)
+            T t,
+            Func<ILGenerator, ILGenerator> loadValueArgumentAsCallableFunc)
             where TContainer : struct, IMemberContainer
             where T : class
         {
@@ -717,15 +742,15 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 case DirectTypeEnum.Double:
                 case DirectTypeEnum.Char:
                     EmbedPropertyNameNotBoolean(processor, info.MemberName, info.MemberNameByteLengthWithQuotation, spanVariable, bufferWriterAddressVariable, isFirst);
-                    LoadTargetValueType(processor.LdArg(0), loadTargetByFunc, t)
+                    LoadTargetValueType(processor.LdArg(0), loadTargetByFunc, t, loadValueArgumentAsCallableFunc)
                         .TryCallIfNotPossibleCallVirtual(ReadWritePrimitive.MethodWritePrimitives[(int)info.IsFormatterDirect]);
                     break;
                 case DirectTypeEnum.Boolean:
-                    EmbedBoolean(processor, info.MemberName, t, spanVariable, bufferWriterAddressVariable, isFirst, loadTargetByFunc);
+                    EmbedBoolean(processor, info.MemberName, t, spanVariable, bufferWriterAddressVariable, isFirst, loadTargetByFunc, loadValueArgumentAsCallableFunc);
                     break;
                 case DirectTypeEnum.None:
                     EmbedPropertyNameNotBoolean(processor, info.MemberName, info.MemberNameByteLengthWithQuotation, spanVariable, bufferWriterAddressVariable, isFirst);
-                    Embed_None(processor, ref info, loadTargetByFunc, t, LoadTargetValueType);
+                    Embed_None(processor, ref info, loadTargetByFunc, t, (generator, func, t1) => LoadTargetValueType(generator, func, t1, loadValueArgumentAsCallableFunc));
                     break;
                 case DirectTypeEnum.String:
                 default:
@@ -734,16 +759,17 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         }
 
         private static void SerializeStatic_ValueType_ShouldSerialize_DetectIsFirst<TMemberContainer, T>(
-            TMemberContainer[] members,
-            Function<TMemberContainer, T> func,
-            ILGenerator processor,
-            LocalBuilder spanVariable,
-            LocalBuilder bufferWriterAddressVariable,
-            Func<ILGenerator, T, ILGenerator> loadTargetByFunc,
+                TMemberContainer[] members,
+                Function<TMemberContainer, T> func,
+                ILGenerator processor,
+                LocalBuilder spanVariable,
+                LocalBuilder bufferWriterAddressVariable,
+                Func<ILGenerator, T, ILGenerator> loadTargetByFunc,
+                Func<ILGenerator, ILGenerator> loadValueArgumentAsCallableFunc,
 #if CSHARP_8_OR_NEWER
-            ref LocalBuilder? detectIsFirstVariable)
+                ref LocalBuilder? detectIsFirstVariable)
 #else
-            ref LocalBuilder detectIsFirstVariable)
+                ref LocalBuilder detectIsFirstVariable)
 #endif
             where TMemberContainer : struct, IShouldSerializeMemberContainer
             where T : class
@@ -763,8 +789,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
                 var skipLabel = processor.DefineLabel();
 
-                processor
-                    .LdArgAddress(1)
+                loadValueArgumentAsCallableFunc(processor)
                     .TryCallIfNotPossibleCallVirtual(info.ShouldSerialize)
                     .BrFalse(skipLabel);
 
@@ -782,18 +807,16 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     case DirectTypeEnum.Double:
                     case DirectTypeEnum.Char:
                         EmbedPropertyNameNotBooleanDetectIsFirst(processor, info.MemberName, info.MemberNameByteLengthWithQuotation, spanVariable, detectIsFirstVariable, bufferWriterAddressVariable);
-                        loadTargetByFunc(processor
-                            .LdArg(0)
-                            .LdArgAddress(1), t)
+                        loadTargetByFunc(loadValueArgumentAsCallableFunc(processor.LdArg(0)), t)
                             .TryCallIfNotPossibleCallVirtual(ReadWritePrimitive.MethodWritePrimitives[(int)info.IsFormatterDirect]);
                         break;
                     case DirectTypeEnum.Boolean:
-                        EmbedBoolean_DetectIsFirst(processor, info.MemberName, info.MemberNameByteLengthWithQuotation, t, spanVariable, loadTargetByFunc, detectIsFirstVariable, bufferWriterAddressVariable, skipLabel);
+                        EmbedBoolean_DetectIsFirst(processor, info.MemberName, info.MemberNameByteLengthWithQuotation, t, spanVariable, loadTargetByFunc, detectIsFirstVariable, bufferWriterAddressVariable, skipLabel, loadValueArgumentAsCallableFunc);
                         break;
                     case DirectTypeEnum.None:
                         EmbedPropertyNameNotBooleanDetectIsFirst(processor, info.MemberName, info.MemberNameByteLengthWithQuotation, spanVariable, detectIsFirstVariable, bufferWriterAddressVariable);
                         // ReSharper disable once RedundantTypeArgumentsOfMethod
-                        Embed_None(processor, ref info, loadTargetByFunc, t, LoadTargetValueType<T>);
+                        Embed_None(processor, ref info, loadTargetByFunc, t, (generator, func1, t1) => LoadTargetValueType(generator, func1, t1, loadValueArgumentAsCallableFunc));
                         break;
                     case DirectTypeEnum.String:
                     default:
@@ -804,8 +827,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
         }
 
-        private static void EmbedBoolean_DetectIsFirst<T>(
-            ILGenerator processor,
+        private static void EmbedBoolean_DetectIsFirst<T>(ILGenerator processor,
             string memberName,
             int memberNameByteLengthWithQuotation,
             T t,
@@ -813,7 +835,9 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             Func<ILGenerator, T, ILGenerator> process,
             LocalBuilder detectIsFirstVariable,
             LocalBuilder bufferWriterAddressVariable,
-            Label endLabel)
+            Label endLabel,
+            Func<ILGenerator, ILGenerator> loadValueArgumentAsCallableFunc
+        )
             where T : class
         {
             Span<byte> name = stackalloc byte[memberNameByteLengthWithQuotation + 7];
@@ -834,7 +858,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
             {
                 var trueLabel = processor.DefineLabel();
-                process(processor.LdArgAddress(1), t).BrTrue(trueLabel);
+                process(loadValueArgumentAsCallableFunc(processor), t).BrTrue(trueLabel);
 
                 processor.Copy(name, spanVariable, bufferWriterAddressVariable).Br(endLabel);
 
@@ -850,7 +874,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     .LdArg(0)
                     .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonWriterWriteBeginObject);
                 var trueLabel = processor.DefineLabel();
-                process(processor.LdArgAddress(1), t).BrTrue(trueLabel);
+                process(loadValueArgumentAsCallableFunc(processor), t).BrTrue(trueLabel);
                 processor.Copy(name.Slice(1), spanVariable, bufferWriterAddressVariable).Br(endLabel);
 
                 processor.MarkLabel(trueLabel);
@@ -894,7 +918,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 .MarkLabel(endLabel);
         }
 
-        private static void CallCallbacks(ReadOnlySpan<MethodInfo> methods, ILGenerator processor)
+        private static void CallCallbacks(ReadOnlySpan<MethodInfo> methods, ILGenerator processor, Func<ILGenerator, ILGenerator> loadValueArgumentAsCallableFunc)
         {
             foreach (var methodInfo in methods)
             {
@@ -904,9 +928,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 }
                 else
                 {
-                    processor
-                        .LdArgAddress(1)
-                        .TryCallIfNotPossibleCallVirtual(methodInfo);
+                    loadValueArgumentAsCallableFunc(processor).TryCallIfNotPossibleCallVirtual(methodInfo);
                 }
             }
         }
@@ -930,7 +952,8 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             LocalBuilder spanVariable,
             LocalBuilder bufferWriterAddressVariable,
             bool isFirst,
-            Func<ILGenerator, T, ILGenerator> process)
+            Func<ILGenerator, T, ILGenerator> process,
+            Func<ILGenerator, ILGenerator> loadValueArgumentAsCallableFunc)
             where TContainer : struct, IMemberContainer
             where T : class
         {
@@ -942,7 +965,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     continue;
                 }
 
-                EmbedEachInfo_ValueType(processor, spanVariable, bufferWriterAddressVariable, process, ref info, isFirst, t);
+                EmbedEachInfo_ValueType(processor, spanVariable, bufferWriterAddressVariable, process, ref info, isFirst, t, loadValueArgumentAsCallableFunc);
 
                 isFirst = false;
             }
@@ -1005,20 +1028,27 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 .ConstrainedCallVirtual(info.TargetType, interfaceMethodSerialize);
         }
 
-        private static ILGenerator LoadTargetValueType<T>(ILGenerator generator, Func<ILGenerator, T, ILGenerator> func, T t)
+        private static ILGenerator LoadTargetValueType<T>(ILGenerator generator, Func<ILGenerator, T, ILGenerator> func, T t, Func<ILGenerator, ILGenerator> loadValueArgumentAsCallableFunc)
             where T : class
         {
-            return func(generator.LdArgAddress(1), t);
+            return func(loadValueArgumentAsCallableFunc(generator), t);
         }
 
-        private static bool Try_Embed_None_With_Static_Formatter<T0, T1>(ILGenerator processor, Type targetType, Type jsonFormatterType, MethodInfo interfaceMethodSerialize, Func<ILGenerator, T0, T1, ILGenerator> loadTarget, T0 t0, T1 t1)
+        private static bool Try_Embed_None_With_Static_Formatter<T0, T1>(
+            ILGenerator processor,
+            Type targetType,
+            Type jsonFormatterType,
+            MethodInfo interfaceMethodSerialize,
+            Func<ILGenerator, T0, T1, ILGenerator> loadTargetByFunc,
+            T0 t0,
+            T1 t1)
             where T0 : class
             where T1 : class
         {
             var targetJsonFormattersSerializeStatic = jsonFormatterType.GetMethod("SerializeStatic", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static);
             if (!(targetJsonFormattersSerializeStatic is null))
             {
-                loadTarget(processor.LdArg(0), t0, t1)
+                loadTargetByFunc(processor.LdArg(0), t0, t1)
                     .LdArg(2)
                     .TryCallIfNotPossibleCallVirtual(targetJsonFormattersSerializeStatic);
                 return true;
@@ -1034,20 +1064,21 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 }
             }
 
-            loadTarget(processor.LdStaticFieldAddress(fieldInstance).LdArg(0), t0, t1)
+            loadTargetByFunc(processor.LdStaticFieldAddress(fieldInstance).LdArg(0), t0, t1)
                 .LdArg(2)
                 .ConstrainedCallVirtual(targetType, interfaceMethodSerialize);
             return true;
         }
 
-        private static void EmbedBoolean<T>(
-            ILGenerator processor,
+        private static void EmbedBoolean<T>(ILGenerator processor,
             string memberName,
             T t,
             LocalBuilder spanVariable,
             LocalBuilder bufferWriterAddressVariable,
             bool isFirst,
-            Func<ILGenerator, T, ILGenerator> process)
+            Func<ILGenerator, T, ILGenerator> loadTargetByFunc,
+            Func<ILGenerator, ILGenerator> loadValueArgumentAsCallableFunc
+        )
             where T : class
         {
             var memberNameLength = NullableStringFormatter.CalcByteLength(memberName);
@@ -1064,7 +1095,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             var trueLabel = processor.DefineLabel();
             var endLabel = processor.DefineLabel();
 
-            process(processor.LdArgAddress(1), t).Emit(OpCodes.Brtrue_S, trueLabel);
+            loadTargetByFunc(loadValueArgumentAsCallableFunc(processor), t).Emit(OpCodes.Brtrue_S, trueLabel);
 
             processor
                 .Copy(name, spanVariable, bufferWriterAddressVariable)
