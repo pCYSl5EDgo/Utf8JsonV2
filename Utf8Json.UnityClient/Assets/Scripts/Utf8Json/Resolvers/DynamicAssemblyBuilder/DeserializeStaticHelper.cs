@@ -119,9 +119,8 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         private static void LocateParameters(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, Span<DeserializeDictionary.Entry.UnmanagedPart> correspondingEntrySpan, ILGenerator processor)
         {
             var elementVariableSpan = deserializeStaticReadOnlyArguments.ElementVariableSpan;
-            for (var index = 0; index < correspondingEntrySpan.Length; index++)
+            foreach (ref readonly var unmanagedPart in correspondingEntrySpan)
             {
-                ref readonly var unmanagedPart = ref correspondingEntrySpan[index];
                 var variable = elementVariableSpan[unmanagedPart.UniqueIndex];
                 processor.LdLoc(variable);
             }
@@ -233,7 +232,62 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
         private static void SetFromLocalVariables(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, ReadOnlySpan<DeserializeDictionary.Entry.UnmanagedPart> alreadyUsedEntrySpan)
         {
+            var processor = deserializeStaticReadOnlyArguments.Processor;
+            var answerCallableVariable = deserializeStaticReadOnlyArguments.AnswerCallableVariable;
+            var assignVariable = deserializeStaticReadOnlyArguments.AssignVariable;
+            Debug.Assert(!(assignVariable is null));
+            ref readonly var analyze = ref deserializeStaticReadOnlyArguments.AnalyzeResult;
+            ref readonly var dictionary = ref deserializeStaticReadOnlyArguments.Dictionary;
+            var lengthVariations = dictionary.LengthVariations;
+            foreach (var lengthVariation in lengthVariations)
+            {
+                foreach (ref readonly var entry in dictionary[lengthVariation])
+                {
+                    for (var index = 0; index < alreadyUsedEntrySpan.Length; index++)
+                    {
+                        if (alreadyUsedEntrySpan[index].UniqueIndex == entry.UniqueIndex)
+                        {
+                            goto CONTINUE;
+                        }
+                    }
 
+                    var ignoreLabel = processor.DefineLabel();
+                    DetectAssignFlag(processor, entry.UniqueIndex, assignVariable, OpCodes.Brfalse_S, ignoreLabel);
+                    var localBuilder = deserializeStaticReadOnlyArguments.ElementVariableSpan[entry.UniqueIndex];
+                    processor.LdLoc(answerCallableVariable).LdLoc(localBuilder);
+                    switch (entry.Type)
+                    {
+                        case TypeAnalyzeResultMemberKind.FieldValueType:
+                            processor.Emit(OpCodes.Stfld, analyze.FieldValueTypeArray[entry.Index].Info);
+                            break;
+                        case TypeAnalyzeResultMemberKind.FieldReferenceType:
+                            processor.Emit(OpCodes.Stfld, analyze.FieldReferenceTypeArray[entry.Index].Info);
+                            break;
+                        case TypeAnalyzeResultMemberKind.FieldValueTypeShouldSerialize:
+                            processor.Emit(OpCodes.Stfld, analyze.FieldValueTypeShouldSerializeArray[entry.Index].Info);
+                            break;
+                        case TypeAnalyzeResultMemberKind.FieldReferenceTypeShouldSerialize:
+                            processor.Emit(OpCodes.Stfld, analyze.FieldReferenceTypeShouldSerializeArray[entry.Index].Info);
+                            break;
+                        case TypeAnalyzeResultMemberKind.PropertyValueType:
+                            processor.TryCallIfNotPossibleCallVirtual(analyze.PropertyValueTypeArray[entry.Index].Info.SetMethod ?? throw new NullReferenceException());
+                            break;
+                        case TypeAnalyzeResultMemberKind.PropertyReferenceType:
+                            processor.TryCallIfNotPossibleCallVirtual(analyze.PropertyReferenceTypeArray[entry.Index].Info.SetMethod ?? throw new NullReferenceException());
+                            break;
+                        case TypeAnalyzeResultMemberKind.PropertyValueTypeShouldSerialize:
+                            processor.TryCallIfNotPossibleCallVirtual(analyze.PropertyValueTypeShouldSerializeArray[entry.Index].Info.SetMethod ?? throw new NullReferenceException());
+                            break;
+                        case TypeAnalyzeResultMemberKind.PropertyReferenceTypeShouldSerialize:
+                            processor.TryCallIfNotPossibleCallVirtual(analyze.PropertyReferenceTypeShouldSerializeArray[entry.Index].Info.SetMethod ?? throw new NullReferenceException());
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
+                    processor.MarkLabel(ignoreLabel);
+                CONTINUE:;
+                }
+            }
         }
 
         private static void NoConstructor(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, in ExtensionDataInfo extensionDataInfo, LocalBuilder loopCountVariable, Label returnLabel)
