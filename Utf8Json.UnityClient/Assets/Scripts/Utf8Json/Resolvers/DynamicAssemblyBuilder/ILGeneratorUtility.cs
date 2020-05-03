@@ -111,6 +111,18 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             return processor;
         }
 
+        public static ILGenerator Or(this ILGenerator processor)
+        {
+            processor.Emit(OpCodes.Or);
+            return processor;
+        }
+
+        public static ILGenerator And(this ILGenerator processor)
+        {
+            processor.Emit(OpCodes.And);
+            return processor;
+        }
+
         public static ILGenerator StLoc(this ILGenerator processor, LocalBuilder info)
         {
             switch (info.LocalIndex)
@@ -243,6 +255,12 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         public static ILGenerator LdIndU1(this ILGenerator processor)
         {
             processor.Emit(OpCodes.Ldind_U1);
+            return processor;
+        }
+
+        public static ILGenerator LdIndU4(this ILGenerator processor)
+        {
+            processor.Emit(OpCodes.Ldind_U4);
             return processor;
         }
 

@@ -33,7 +33,9 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 answerCallableVariable = answerVariable;
             }
 
-            var readOnlyArguments = new DeserializeStaticReadOnlyArguments(answerVariable, answerCallableVariable, in analyzeResult, processor);
+            var readOnlyArguments = analyzeResult.ConstructorData.CanCreateInstanceBeforeDeserialization
+                ? new DeserializeStaticReadOnlyArguments(answerVariable, answerCallableVariable, in analyzeResult, processor)
+                : new DeserializeStaticReadOnlyArguments(answerVariable, answerCallableVariable, in analyzeResult, processor, ArrayPool<LocalBuilder>.Shared);
             try
             {
                 if (readOnlyArguments.Dictionary.LengthVariations.IsEmpty)
@@ -49,11 +51,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 var returnLabel = processor.DefineLabel();
 
                 //var addMethodInfo = extensionDataInfo.AddMethodInfo;
-                if (analyzeResult.ConstructorData.CanCreateInstanceBeforeDeserialization)
-                {
-                    NoConstructor(in readOnlyArguments, in extensionDataInfo, loopCountVariable, returnLabel);
-                }
-                else if (!(analyzeResult.ConstructorData.Constructor is null))
+                if (!(analyzeResult.ConstructorData.Constructor is null))
                 {
                     WithConstructor(in readOnlyArguments, in extensionDataInfo, loopCountVariable, returnLabel, analyzeResult.ConstructorData.Constructor);
                 }
@@ -63,7 +61,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 }
                 else
                 {
-                    throw new InvalidOperationException();
+                    NoConstructor(in readOnlyArguments, in extensionDataInfo, loopCountVariable, returnLabel);
                 }
 
                 processor.MarkLabel(returnLabel);
@@ -100,23 +98,47 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             processor.MarkLabel(readIsNullNotNullLabel);
         }
 
-        private static void WithFactoryMethod(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, in ExtensionDataInfo extensionDataInfo, LocalBuilder loopCountVariable, Label returnLabel, MethodInfo constructorDataFactoryMethod)
+        private static void WithConstructor(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, in ExtensionDataInfo extensionDataInfo, LocalBuilder loopCountVariable, Label returnLabel, ConstructorInfo constructorDataConstructor)
         {
-            throw new NotImplementedException();
+
         }
 
-        private static void WithConstructor(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, in ExtensionDataInfo extensionDataInfo, LocalBuilder loopCountVariable, Label returnLabel, ConstructorInfo constructorDataConstructor)
+        private static void SetAssignFlag(ILGenerator processor, int uniqueIndex, LocalBuilder assignVariable)
+        {
+            var assignNumberIndex = uniqueIndex >> 5;
+            var assignNumberBit = 1 << (uniqueIndex - (assignNumberIndex << 5));
+            processor
+                .LdLoc(assignVariable)
+                .LdcI4(assignNumberIndex << 2)
+                .Add()
+                .Dup()
+                .LdIndU4()
+                .LdcI4(assignNumberBit)
+                .Or()
+                .StIndI4();
+        }
+
+        private static void DetectAssignFlag(ILGenerator processor, int uniqueIndex, LocalBuilder assignVariable, OpCode code, Label label)
+        {
+            var assignNumberIndex = uniqueIndex >> 5;
+            var assignNumberBit = 1 << (uniqueIndex - (assignNumberIndex << 5));
+            processor
+                .LdLoc(assignVariable)
+                .LdcI4(assignNumberIndex << 2)
+                .Add()
+                .LdIndU4()
+                .LdcI4(assignNumberBit)
+                .And()
+                .Emit(code, label);
+        }
+
+        private static void WithFactoryMethod(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, in ExtensionDataInfo extensionDataInfo, LocalBuilder loopCountVariable, Label returnLabel, MethodInfo constructorDataFactoryMethod)
         {
             throw new NotImplementedException();
         }
 
         private static void NoConstructor(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, in ExtensionDataInfo extensionDataInfo, LocalBuilder loopCountVariable, Label returnLabel)
         {
-            var processKind = extensionDataInfo.Info is null
-                ? 0
-                : extensionDataInfo.Add
-                    ? 1
-                    : 2;
             var processor = deserializeStaticReadOnlyArguments.Processor;
 
             if (!deserializeStaticReadOnlyArguments.AnalyzeResult.TargetType.IsValueType)
@@ -132,40 +154,45 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
             CallCallbacks(deserializeStaticReadOnlyArguments.AnalyzeResult.OnDeserializing, processor, deserializeStaticReadOnlyArguments.AnswerCallableVariable);
 
-            switch (processKind)
+            if (extensionDataInfo.Info is null)
             {
-                case 0:
-                    LoopStartProcedure(processor, deserializeStaticReadOnlyArguments, loopCountVariable, returnLabel);
-                    DeserializeStatic_CreateInstanceBeforeDeserialization_NoExtensionData(in deserializeStaticReadOnlyArguments);
-                    break;
-                case 1:
-                    {
-                        var extensionVariable = processor.DeclareLocal(typeof(Dictionary<string, object>));
-                        Debug.Assert(!(extensionDataInfo.Info?.GetMethod is null), "extensionDataInfo.Info != null");
-                        processor
-                            .LdLoc(deserializeStaticReadOnlyArguments.AnswerCallableVariable)
-                            .TryCallIfNotPossibleCallVirtual(extensionDataInfo.Info.GetMethod)
-                            .StLoc(extensionVariable);
+                LoopStartProcedure(processor, deserializeStaticReadOnlyArguments, loopCountVariable, returnLabel);
+                var lengthVariations = deserializeStaticReadOnlyArguments.Dictionary.LengthVariations;
+                Span<Label> destinations = stackalloc Label[lengthVariations.Length];
+                var possibleLengthCount = 振り分けNoExtensionData(deserializeStaticReadOnlyArguments, lengthVariations, destinations);
+                非default(deserializeStaticReadOnlyArguments, deserializeStaticReadOnlyArguments.Processor, destinations, possibleLengthCount);
+            }
+            else if (extensionDataInfo.Add)
+            {
+                var extensionVariable = processor.DeclareLocal(typeof(Dictionary<string, object>));
+                Debug.Assert(!(extensionDataInfo.Info.GetMethod is null), "extensionDataInfo.Info != null");
+                processor
+                    .LdLoc(deserializeStaticReadOnlyArguments.AnswerCallableVariable)
+                    .TryCallIfNotPossibleCallVirtual(extensionDataInfo.Info.GetMethod)
+                    .StLoc(extensionVariable);
 
-                        LoopStartProcedure(processor, deserializeStaticReadOnlyArguments, loopCountVariable, returnLabel);
-                        DeserializeStatic_CreateInstanceBeforeDeserialization_WithExtensionData(in deserializeStaticReadOnlyArguments, extensionVariable);
-                    }
-                    break;
-                case 2:
-                    {
-                        var extensionVariable = processor.DeclareLocal(typeof(Dictionary<string, object>));
-                        Debug.Assert(!(extensionDataInfo.Info?.SetMethod is null), "extensionDataInfo.Info != null");
-                        processor
-                            .LdLoc(deserializeStaticReadOnlyArguments.AnswerCallableVariable)
-                            .NewObj(BasicInfoContainer.ConstructorInfoStringKeyObjectValueDictionary)
-                            .Dup()
-                            .StLoc(extensionVariable)
-                            .TryCallIfNotPossibleCallVirtual(extensionDataInfo.Info.SetMethod);
+                LoopStartProcedure(processor, deserializeStaticReadOnlyArguments, loopCountVariable, returnLabel);
+                var lengthVariations = deserializeStaticReadOnlyArguments.Dictionary.LengthVariations;
+                Span<Label> destinations = stackalloc Label[lengthVariations.Length];
+                var possibleLengthCount = 振り分けWithExtensionData(deserializeStaticReadOnlyArguments, extensionVariable, lengthVariations, destinations);
+                非default(deserializeStaticReadOnlyArguments, deserializeStaticReadOnlyArguments.Processor, destinations, possibleLengthCount);
+            }
+            else
+            {
+                var extensionVariable = processor.DeclareLocal(typeof(Dictionary<string, object>));
+                Debug.Assert(!(extensionDataInfo.Info.SetMethod is null), "extensionDataInfo.Info != null");
+                processor
+                    .LdLoc(deserializeStaticReadOnlyArguments.AnswerCallableVariable)
+                    .NewObj(BasicInfoContainer.ConstructorInfoStringKeyObjectValueDictionary)
+                    .Dup()
+                    .StLoc(extensionVariable)
+                    .TryCallIfNotPossibleCallVirtual(extensionDataInfo.Info.SetMethod);
 
-                        LoopStartProcedure(processor, deserializeStaticReadOnlyArguments, loopCountVariable, returnLabel);
-                        DeserializeStatic_CreateInstanceBeforeDeserialization_WithExtensionData(in deserializeStaticReadOnlyArguments, extensionVariable);
-                    }
-                    break;
+                LoopStartProcedure(processor, deserializeStaticReadOnlyArguments, loopCountVariable, returnLabel);
+                var lengthVariations = deserializeStaticReadOnlyArguments.Dictionary.LengthVariations;
+                Span<Label> destinations = stackalloc Label[lengthVariations.Length];
+                var possibleLengthCount = 振り分けWithExtensionData(deserializeStaticReadOnlyArguments, extensionVariable, lengthVariations, destinations);
+                非default(deserializeStaticReadOnlyArguments, deserializeStaticReadOnlyArguments.Processor, destinations, possibleLengthCount);
             }
         }
 
@@ -214,7 +241,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     .TryCallIfNotPossibleCallVirtual(setMethod);
             }
 
-            if(deserializeStaticReadOnlyArguments.AnalyzeResult.TargetType.IsValueType)
+            if (deserializeStaticReadOnlyArguments.AnalyzeResult.TargetType.IsValueType)
             {
                 processor.LdLoc(deserializeStaticReadOnlyArguments.AnswerVariable).Emit(OpCodes.Ret);
             }
@@ -247,12 +274,32 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
         }
 
-        private static void DeserializeStatic_CreateInstanceBeforeDeserialization_WithExtensionData(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, LocalBuilder extensionDataVariable)
+        private static int 振り分けNoExtensionData(DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, ReadOnlySpan<int> lengthVariations, Span<Label> destinations)
         {
             var processor = deserializeStaticReadOnlyArguments.Processor;
+            for (var i = 0; i < destinations.Length; i++)
+            {
+                destinations[i] = processor.DefineLabel();
+            }
 
-            var lengthVariations = deserializeStaticReadOnlyArguments.Dictionary.LengthVariations;
-            Span<Label> destinations = stackalloc Label[lengthVariations.Length];
+            var possibleLengthCount = deserializeStaticReadOnlyArguments.Dictionary.Table.Length;
+            EmbedSwitchLength(processor, lengthVariations, destinations, possibleLengthCount, deserializeStaticReadOnlyArguments.DefaultLabel);
+
+            // default case
+            processor.MarkLabel(deserializeStaticReadOnlyArguments.DefaultLabel);
+            processor
+                .LdArg(0)
+                .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderSkipWhiteSpace) // reader.ReadSkipWhiteSpace();
+                .LdArg(0)
+                .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderReadNextBlock) // reader.ReadNextBlock();
+                .Br(deserializeStaticReadOnlyArguments.LoopStartLabel); // continue;
+
+            return possibleLengthCount;
+        }
+
+        private static int 振り分けWithExtensionData(DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, LocalBuilder extensionDataVariable, ReadOnlySpan<int> lengthVariations, Span<Label> destinations)
+        {
+            var processor = deserializeStaticReadOnlyArguments.Processor;
             for (var i = 0; i < destinations.Length; i++)
             {
                 destinations[i] = processor.DefineLabel();
@@ -274,33 +321,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodObjectFormatterDeserializeStatic)
                 .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodStringKeyObjectValueDictionaryAdd)
                 .Br(deserializeStaticReadOnlyArguments.LoopStartLabel); // continue;
-
-            非default(deserializeStaticReadOnlyArguments, processor, destinations, possibleLengthCount);
-        }
-
-        private static void DeserializeStatic_CreateInstanceBeforeDeserialization_NoExtensionData(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments)
-        {
-            var lengthVariations = deserializeStaticReadOnlyArguments.Dictionary.LengthVariations;
-            Span<Label> destinations = stackalloc Label[lengthVariations.Length];
-            var processor = deserializeStaticReadOnlyArguments.Processor;
-            for (var i = 0; i < destinations.Length; i++)
-            {
-                destinations[i] = processor.DefineLabel();
-            }
-
-            var possibleLengthCount = deserializeStaticReadOnlyArguments.Dictionary.Table.Length;
-            EmbedSwitchLength(processor, lengthVariations, destinations, possibleLengthCount, deserializeStaticReadOnlyArguments.DefaultLabel);
-
-            // default case
-            processor.MarkLabel(deserializeStaticReadOnlyArguments.DefaultLabel);
-            processor
-                .LdArg(0)
-                .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderSkipWhiteSpace) // reader.ReadSkipWhiteSpace();
-                .LdArg(0)
-                .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodJsonReaderReadNextBlock) // reader.ReadNextBlock();
-                .Br(deserializeStaticReadOnlyArguments.LoopStartLabel); // continue;
-
-            非default(deserializeStaticReadOnlyArguments, processor, destinations, possibleLengthCount);
+            return possibleLengthCount;
         }
 
         private static void 非default(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, ILGenerator processor, Span<Label> destinations, int possibleLengthCount)
@@ -630,246 +651,115 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         private static void EmbedMatch(in DeserializeDictionary.Entry entry, in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments)
         {
             var processor = deserializeStaticReadOnlyArguments.Processor;
+            ref readonly var analyzeResult = ref deserializeStaticReadOnlyArguments.AnalyzeResult;
             processor.LdLoc(deserializeStaticReadOnlyArguments.AnswerCallableVariable);
-            switch (entry.Type)
+
+            EmbedMatchDeserializeStaticPart(entry.Type, entry.Index, analyzeResult, processor);
+
+            if (deserializeStaticReadOnlyArguments.AssignVariable is null)
             {
-                case TypeAnalyzeResultMemberKind.FieldValueType:
-                    {
-                        ref readonly var info = ref deserializeStaticReadOnlyArguments.AnalyzeResult.FieldValueTypeArray[entry.Index];
-                        switch (info.IsFormatterDirect)
+                switch (entry.Type)
+                {
+                    case TypeAnalyzeResultMemberKind.FieldValueType:
                         {
-                            case DirectTypeEnum.None:
-                                {
-                                    var deserialize = BasicInfoContainer.DeserializeWithVerify(info.TargetType);
-                                    processor
-                                        .LdArg(1)
-                                        .LdArg(0)
-                                        .TryCallIfNotPossibleCallVirtual(deserialize);
-                                    break;
-                                }
-                            case DirectTypeEnum.String:
-                                throw new ArgumentOutOfRangeException();
-                            default:
-                                {
-                                    var method = ReadWritePrimitive.MethodReadPrimitives[(int)info.IsFormatterDirect];
-                                    processor
-                                        .LdArg(0)
-                                        .TryCallIfNotPossibleCallVirtual(method);
-                                    break;
-                                }
+                            ref readonly var info = ref analyzeResult.FieldValueTypeArray[entry.Index];
+                            processor.StField(info.Info);
                         }
-                        processor.StField(info.Info);
-                    }
-                    break;
-                case TypeAnalyzeResultMemberKind.PropertyValueType:
-                    {
-                        ref readonly var info = ref deserializeStaticReadOnlyArguments.AnalyzeResult.PropertyValueTypeArray[entry.Index];
-                        switch (info.IsFormatterDirect)
+                        break;
+                    case TypeAnalyzeResultMemberKind.PropertyValueType:
                         {
-                            case DirectTypeEnum.None:
-                                {
-                                    var deserialize = BasicInfoContainer.DeserializeWithVerify(info.TargetType);
-                                    processor
-                                        .LdArg(1)
-                                        .LdArg(0)
-                                        .TryCallIfNotPossibleCallVirtual(deserialize);
-                                    break;
-                                }
-                            case DirectTypeEnum.String:
-                                throw new ArgumentOutOfRangeException();
-                            default:
-                                {
-                                    var method = ReadWritePrimitive.MethodReadPrimitives[(int)info.IsFormatterDirect];
-                                    processor
-                                        .LdArg(0)
-                                        .TryCallIfNotPossibleCallVirtual(method);
-                                    break;
-                                }
+                            ref readonly var info = ref analyzeResult.PropertyValueTypeArray[entry.Index];
+                            var setMethod = info.Info.SetMethod;
+                            Debug.Assert(!(setMethod is null));
+                            processor.TryCallIfNotPossibleCallVirtual(setMethod);
                         }
-                        var setMethod = info.Info.SetMethod;
-                        Debug.Assert(!(setMethod is null));
-                        processor.TryCallIfNotPossibleCallVirtual(setMethod);
-                    }
-                    break;
-                case TypeAnalyzeResultMemberKind.FieldValueTypeShouldSerialize:
-                    {
-                        ref readonly var info = ref deserializeStaticReadOnlyArguments.AnalyzeResult.FieldValueTypeShouldSerializeArray[entry.Index];
-                        switch (info.IsFormatterDirect)
+                        break;
+                    case TypeAnalyzeResultMemberKind.FieldValueTypeShouldSerialize:
                         {
-                            case DirectTypeEnum.None:
-                                {
-                                    var deserialize = BasicInfoContainer.DeserializeWithVerify(info.TargetType);
-                                    processor
-                                        .LdArg(1)
-                                        .LdArg(0)
-                                        .TryCallIfNotPossibleCallVirtual(deserialize);
-                                    break;
-                                }
-                            case DirectTypeEnum.String:
-                                throw new ArgumentOutOfRangeException();
-                            default:
-                                {
-                                    var method = ReadWritePrimitive.MethodReadPrimitives[(int)info.IsFormatterDirect];
-                                    processor
-                                        .LdArg(0)
-                                        .TryCallIfNotPossibleCallVirtual(method);
-                                    break;
-                                }
+                            ref readonly var info = ref analyzeResult.FieldValueTypeShouldSerializeArray[entry.Index];
+                            processor.StField(info.Info);
                         }
-                        processor.StField(info.Info);
-                    }
-                    break;
-                case TypeAnalyzeResultMemberKind.PropertyValueTypeShouldSerialize:
-                    {
-                        ref readonly var info = ref deserializeStaticReadOnlyArguments.AnalyzeResult.PropertyValueTypeShouldSerializeArray[entry.Index];
-                        switch (info.IsFormatterDirect)
+                        break;
+                    case TypeAnalyzeResultMemberKind.PropertyValueTypeShouldSerialize:
                         {
-                            case DirectTypeEnum.None:
-                                {
-                                    var deserialize = BasicInfoContainer.DeserializeWithVerify(info.TargetType);
-                                    processor
-                                        .LdArg(1)
-                                        .LdArg(0)
-                                        .TryCallIfNotPossibleCallVirtual(deserialize);
-                                    break;
-                                }
-                            case DirectTypeEnum.String:
-                                throw new ArgumentOutOfRangeException();
-                            default:
-                                {
-                                    var method = ReadWritePrimitive.MethodReadPrimitives[(int)info.IsFormatterDirect];
-                                    processor
-                                        .LdArg(0)
-                                        .TryCallIfNotPossibleCallVirtual(method);
-                                    break;
-                                }
+                            ref readonly var info = ref analyzeResult.PropertyValueTypeShouldSerializeArray[entry.Index];
+                            var setMethod = info.Info.SetMethod;
+                            Debug.Assert(!(setMethod is null));
+                            processor.TryCallIfNotPossibleCallVirtual(setMethod);
                         }
-                        var setMethod = info.Info.SetMethod;
-                        Debug.Assert(!(setMethod is null));
-                        processor.TryCallIfNotPossibleCallVirtual(setMethod);
-                    }
-                    break;
-                case TypeAnalyzeResultMemberKind.FieldReferenceType:
-                    {
-                        ref readonly var info = ref deserializeStaticReadOnlyArguments.AnalyzeResult.FieldReferenceTypeArray[entry.Index];
-                        switch (info.IsFormatterDirect)
+                        break;
+                    case TypeAnalyzeResultMemberKind.FieldReferenceType:
                         {
-                            case DirectTypeEnum.None:
-                                var deserialize = BasicInfoContainer.DeserializeWithVerify(info.TargetType);
-                                processor
-                                    .LdArg(1)
-                                    .LdArg(0)
-                                    .TryCallIfNotPossibleCallVirtual(deserialize);
-                                break;
-                            case DirectTypeEnum.String:
-                                var method = ReadWritePrimitive.MethodReadPrimitives[(int)info.IsFormatterDirect];
-                                processor
-                                    .LdArg(0)
-                                    .TryCallIfNotPossibleCallVirtual(method);
-                                if (info.ShouldIntern)
-                                {
-                                    processor.TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodStringIntern);
-                                }
-                                break;
-                            default:
-                                throw new ArgumentOutOfRangeException();
+                            ref readonly var info = ref analyzeResult.FieldReferenceTypeArray[entry.Index];
+                            processor.StField(info.Info);
                         }
-                        processor.StField(info.Info);
-                    }
-                    break;
-                case TypeAnalyzeResultMemberKind.PropertyReferenceType:
-                    {
-                        ref readonly var info = ref deserializeStaticReadOnlyArguments.AnalyzeResult.PropertyReferenceTypeArray[entry.Index];
-                        switch (info.IsFormatterDirect)
+                        break;
+                    case TypeAnalyzeResultMemberKind.PropertyReferenceType:
                         {
-                            case DirectTypeEnum.None:
-                                var deserialize = BasicInfoContainer.DeserializeWithVerify(info.TargetType);
-                                processor
-                                    .LdArg(1)
-                                    .LdArg(0)
-                                    .TryCallIfNotPossibleCallVirtual(deserialize);
-                                break;
-                            case DirectTypeEnum.String:
-                                var method = ReadWritePrimitive.MethodReadPrimitives[(int)info.IsFormatterDirect];
-                                processor
-                                    .LdArg(0)
-                                    .TryCallIfNotPossibleCallVirtual(method);
-                                if (info.ShouldIntern)
-                                {
-                                    processor.TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodStringIntern);
-                                }
-                                break;
-                            default:
-                                throw new ArgumentOutOfRangeException();
+                            ref readonly var info = ref analyzeResult.PropertyReferenceTypeArray[entry.Index];
+                            var setMethod = info.Info.SetMethod;
+                            Debug.Assert(!(setMethod is null));
+                            processor.TryCallIfNotPossibleCallVirtual(setMethod);
                         }
-                        var setMethod = info.Info.SetMethod;
-                        Debug.Assert(!(setMethod is null));
-                        processor.TryCallIfNotPossibleCallVirtual(setMethod);
-                    }
-                    break;
-                case TypeAnalyzeResultMemberKind.FieldReferenceTypeShouldSerialize:
-                    {
-                        ref readonly var info = ref deserializeStaticReadOnlyArguments.AnalyzeResult.FieldReferenceTypeShouldSerializeArray[entry.Index];
-                        switch (info.IsFormatterDirect)
+                        break;
+                    case TypeAnalyzeResultMemberKind.FieldReferenceTypeShouldSerialize:
                         {
-                            case DirectTypeEnum.None:
-                                var deserialize = BasicInfoContainer.DeserializeWithVerify(info.TargetType);
-                                processor
-                                    .LdArg(1)
-                                    .LdArg(0)
-                                    .TryCallIfNotPossibleCallVirtual(deserialize);
-                                break;
-                            case DirectTypeEnum.String:
-                                var method = ReadWritePrimitive.MethodReadPrimitives[(int)info.IsFormatterDirect];
-                                processor
-                                    .LdArg(0)
-                                    .TryCallIfNotPossibleCallVirtual(method);
-                                if (info.ShouldIntern)
-                                {
-                                    processor.TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodStringIntern);
-                                }
-                                break;
-                            default:
-                                throw new ArgumentOutOfRangeException();
+                            ref readonly var info = ref analyzeResult.FieldReferenceTypeShouldSerializeArray[entry.Index];
+                            processor.StField(info.Info);
                         }
-                        processor.StField(info.Info);
-                    }
-                    break;
-                case TypeAnalyzeResultMemberKind.PropertyReferenceTypeShouldSerialize:
-                    {
-                        ref readonly var info = ref deserializeStaticReadOnlyArguments.AnalyzeResult.PropertyReferenceTypeShouldSerializeArray[entry.Index];
-                        switch (info.IsFormatterDirect)
+                        break;
+                    case TypeAnalyzeResultMemberKind.PropertyReferenceTypeShouldSerialize:
                         {
-                            case DirectTypeEnum.None:
-                                var deserialize = BasicInfoContainer.DeserializeWithVerify(info.TargetType);
-                                processor
-                                    .LdArg(1)
-                                    .LdArg(0)
-                                    .TryCallIfNotPossibleCallVirtual(deserialize);
-                                break;
-                            case DirectTypeEnum.String:
-                                var method = ReadWritePrimitive.MethodReadPrimitives[(int)info.IsFormatterDirect];
-                                processor
-                                    .LdArg(0)
-                                    .TryCallIfNotPossibleCallVirtual(method);
-                                if (info.ShouldIntern)
-                                {
-                                    processor.TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodStringIntern);
-                                }
-                                break;
-                            default:
-                                throw new ArgumentOutOfRangeException();
+                            ref readonly var info = ref analyzeResult.PropertyReferenceTypeShouldSerializeArray[entry.Index];
+                            var setMethod = info.Info.SetMethod;
+                            Debug.Assert(!(setMethod is null));
+                            processor.TryCallIfNotPossibleCallVirtual(setMethod);
                         }
-                        var setMethod = info.Info.SetMethod;
-                        Debug.Assert(!(setMethod is null));
-                        processor.TryCallIfNotPossibleCallVirtual(setMethod);
-                    }
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(TypeAnalyzeResultMemberKind), entry.Type, null);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(TypeAnalyzeResultMemberKind), entry.Type, null);
+                }
+            }
+            else
+            {
+                var elementVariable = deserializeStaticReadOnlyArguments.ElementVariableSpan[entry.UniqueIndex];
+                processor.StLoc(elementVariable);
+                SetAssignFlag(processor, entry.UniqueIndex, deserializeStaticReadOnlyArguments.AssignVariable);
             }
 
             processor.Br(deserializeStaticReadOnlyArguments.LoopStartLabel);
+        }
+
+        private static void EmbedMatchDeserializeStaticPart(TypeAnalyzeResultMemberKind entryType, int entryIndex, in TypeAnalyzeResult analyzeResult, ILGenerator processor)
+        {
+            var directTypeEnum = analyzeResult.GetDirectTypeEnum(entryType, entryIndex);
+            switch (directTypeEnum)
+            {
+                case DirectTypeEnum.String:
+                    var stringMethod = ReadWritePrimitive.MethodReadPrimitives[(int)DirectTypeEnum.String];
+                    processor
+                        .LdArg(0)
+                        .TryCallIfNotPossibleCallVirtual(stringMethod);
+                    if (analyzeResult.GetShouldIntern(entryType, entryIndex))
+                    {
+                        processor.TryCallIfNotPossibleCallVirtual(BasicInfoContainer.MethodStringIntern);
+                    }
+                    break;
+                case DirectTypeEnum.None:
+                    var targetType = analyzeResult.GetTargetType(entryType, entryIndex);
+                    var deserialize = BasicInfoContainer.DeserializeWithVerify(targetType);
+                    processor
+                        .LdArg(1)
+                        .LdArg(0)
+                        .TryCallIfNotPossibleCallVirtual(deserialize);
+                    break;
+                default:
+                    var method = ReadWritePrimitive.MethodReadPrimitives[(int)directTypeEnum];
+                    processor
+                        .LdArg(0)
+                        .TryCallIfNotPossibleCallVirtual(method);
+                    break;
+            }
         }
     }
 }
