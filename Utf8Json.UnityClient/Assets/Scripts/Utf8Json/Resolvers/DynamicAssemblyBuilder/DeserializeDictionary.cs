@@ -266,6 +266,20 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             public readonly int Index;
             public readonly int UniqueIndex;
 
+            public readonly struct UnmanagedPart
+            {
+                public readonly TypeAnalyzeResultMemberKind Type;
+                public readonly int Index;
+                public readonly int UniqueIndex;
+
+                public UnmanagedPart(in Entry parent)
+                {
+                    Type = parent.Type;
+                    Index = parent.Index;
+                    UniqueIndex = parent.UniqueIndex;
+                }
+            }
+
             public Entry(ReadOnlyMemory<byte> key, TypeAnalyzeResultMemberKind type, int index, int uniqueIndex)
             {
                 Key = key;
