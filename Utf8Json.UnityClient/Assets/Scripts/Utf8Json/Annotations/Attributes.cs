@@ -42,4 +42,39 @@ namespace Utf8Json
     public sealed class StringInternAttribute : Attribute
     {
     }
+
+    [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
+    public sealed class RegisterTargetTypeAttribute : Attribute, IComparable<RegisterTargetTypeAttribute>
+    {
+        public int Index { get; }
+        public Type TargetType { get; }
+
+        public RegisterTargetTypeAttribute(Type targetType, int index)
+        {
+            this.TargetType = targetType;
+            this.Index = index;
+        }
+
+#if CSHARP_8_OR_NEWER
+        public int CompareTo(RegisterTargetTypeAttribute? other)
+#else
+        public int CompareTo(RegisterTargetTypeAttribute other)
+#endif
+        {
+            if (ReferenceEquals(this, other)) return 0;
+            if (other is null) return 1;
+            var compareTo = Index.CompareTo(other.Index);
+            if (compareTo == 0)
+            {
+                compareTo = TargetType.IsValueType
+                    ? other.TargetType.IsValueType
+                        ? 0
+                        : -1
+                    : other.TargetType.IsValueType
+                        ? 1
+                        : 0;
+            }
+            return compareTo;
+        }
+    }
 }
