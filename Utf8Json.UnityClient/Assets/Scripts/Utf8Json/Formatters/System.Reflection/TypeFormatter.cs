@@ -30,7 +30,9 @@ namespace Utf8Json.Formatters
 #else
         public void Serialize(ref JsonWriter writer, Type value, JsonSerializerOptions options)
 #endif
-            => SerializeStatic(ref writer, value, options);
+        {
+            SerializeStatic(ref writer, value, options);
+        }
 
 #if CSHARP_8_OR_NEWER
         public static void SerializeStatic(ref JsonWriter writer, Type? value, JsonSerializerOptions options)
@@ -38,14 +40,9 @@ namespace Utf8Json.Formatters
         public static void SerializeStatic(ref JsonWriter writer, Type value, JsonSerializerOptions options)
 #endif
         {
-            if (value == null)
+            if (value is null)
             {
-                var span = writer.Writer.GetSpan(4);
-                span[0] = (byte)'n';
-                span[1] = (byte)'u';
-                span[2] = (byte)'l';
-                span[3] = (byte)'l';
-                writer.Writer.Advance(4);
+                writer.WriteNull();
                 return;
             }
 

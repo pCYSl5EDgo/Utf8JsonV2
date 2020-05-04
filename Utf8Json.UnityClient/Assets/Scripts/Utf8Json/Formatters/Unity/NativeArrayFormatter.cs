@@ -29,15 +29,13 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, NativeArray<T> value, JsonSerializerOptions options)
         {
-            if (!value.IsCreated || value.Length == 0)
+            if (!value.IsCreated || value.Length == 0 || writer.Depth >= options.MaxDepth)
             {
-                var span = writer.Writer.GetSpan(2);
-                span[0] = (byte)'[';
-                span[1] = (byte)']';
-                writer.Writer.Advance(2);
+                writer.Writer.WriteEmptyArray();
                 return;
             }
 
+            writer.Depth++;
             writer.WriteBeginArray();
 #if !ENABLE_IL2CPP
             var serializer = options.Resolver.GetSerializeStatic<T>();
@@ -69,6 +67,7 @@ namespace Utf8Json.Formatters
         END:
 #endif
             writer.WriteEndArray();
+            writer.Depth--;
         }
 
         public static unsafe NativeArray<T> DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)

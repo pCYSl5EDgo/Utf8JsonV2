@@ -33,9 +33,17 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            ref var bufferWriter = ref writer.Writer;
+            if (writer.Depth >= options.MaxDepth)
+            {
+                bufferWriter.WriteEmptyObject();
+                return;
+            }
+
+            writer.Depth++;
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)'{';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -45,14 +53,14 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'1';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item1);
 
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)',';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -62,12 +70,13 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'2';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item2);
 
             writer.WriteEndObject();
+            writer.Depth--;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -109,7 +118,7 @@ namespace Utf8Json.Formatters
                             continue;
                     }
                 }
-
+                
                 reader.ReadNextBlock();
             }
 
@@ -120,7 +129,7 @@ namespace Utf8Json.Formatters
 #endif
             return answer;
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -168,9 +177,17 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            ref var bufferWriter = ref writer.Writer;
+            if (writer.Depth >= options.MaxDepth)
+            {
+                bufferWriter.WriteEmptyObject();
+                return;
+            }
+
+            writer.Depth++;
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)'{';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -180,14 +197,14 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'1';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item1);
 
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)',';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -197,14 +214,14 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'2';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item2);
 
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)',';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -214,12 +231,13 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'3';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item3);
 
             writer.WriteEndObject();
+            writer.Depth--;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -265,7 +283,7 @@ namespace Utf8Json.Formatters
                             continue;
                     }
                 }
-
+                
                 reader.ReadNextBlock();
             }
 
@@ -276,7 +294,7 @@ namespace Utf8Json.Formatters
 #endif
             return answer;
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -324,9 +342,17 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            ref var bufferWriter = ref writer.Writer;
+            if (writer.Depth >= options.MaxDepth)
+            {
+                bufferWriter.WriteEmptyObject();
+                return;
+            }
+
+            writer.Depth++;
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)'{';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -336,14 +362,14 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'1';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item1);
 
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)',';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -353,14 +379,14 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'2';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item2);
 
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)',';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -370,14 +396,14 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'3';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item3);
 
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)',';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -387,12 +413,13 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'4';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item4);
 
             writer.WriteEndObject();
+            writer.Depth--;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -442,7 +469,7 @@ namespace Utf8Json.Formatters
                             continue;
                     }
                 }
-
+                
                 reader.ReadNextBlock();
             }
 
@@ -453,7 +480,7 @@ namespace Utf8Json.Formatters
 #endif
             return answer;
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -501,9 +528,17 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            ref var bufferWriter = ref writer.Writer;
+            if (writer.Depth >= options.MaxDepth)
+            {
+                bufferWriter.WriteEmptyObject();
+                return;
+            }
+
+            writer.Depth++;
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)'{';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -513,14 +548,14 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'1';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item1);
 
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)',';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -530,14 +565,14 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'2';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item2);
 
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)',';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -547,14 +582,14 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'3';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item3);
 
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)',';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -564,14 +599,14 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'4';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item4);
 
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)',';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -581,12 +616,13 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'5';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item5);
 
             writer.WriteEndObject();
+            writer.Depth--;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -640,7 +676,7 @@ namespace Utf8Json.Formatters
                             continue;
                     }
                 }
-
+                
                 reader.ReadNextBlock();
             }
 
@@ -651,7 +687,7 @@ namespace Utf8Json.Formatters
 #endif
             return answer;
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -699,9 +735,17 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            ref var bufferWriter = ref writer.Writer;
+            if (writer.Depth >= options.MaxDepth)
+            {
+                bufferWriter.WriteEmptyObject();
+                return;
+            }
+
+            writer.Depth++;
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)'{';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -711,14 +755,14 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'1';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item1);
 
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)',';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -728,14 +772,14 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'2';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item2);
 
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)',';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -745,14 +789,14 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'3';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item3);
 
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)',';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -762,14 +806,14 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'4';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item4);
 
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)',';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -779,14 +823,14 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'5';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item5);
 
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)',';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -796,12 +840,13 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'6';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item6);
 
             writer.WriteEndObject();
+            writer.Depth--;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -859,7 +904,7 @@ namespace Utf8Json.Formatters
                             continue;
                     }
                 }
-
+                
                 reader.ReadNextBlock();
             }
 
@@ -870,7 +915,7 @@ namespace Utf8Json.Formatters
 #endif
             return answer;
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -918,9 +963,17 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            ref var bufferWriter = ref writer.Writer;
+            if (writer.Depth >= options.MaxDepth)
+            {
+                bufferWriter.WriteEmptyObject();
+                return;
+            }
+
+            writer.Depth++;
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)'{';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -930,14 +983,14 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'1';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item1);
 
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)',';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -947,14 +1000,14 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'2';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item2);
 
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)',';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -964,14 +1017,14 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'3';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item3);
 
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)',';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -981,14 +1034,14 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'4';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item4);
 
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)',';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -998,14 +1051,14 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'5';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item5);
 
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)',';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -1015,14 +1068,14 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'6';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item6);
 
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)',';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -1032,12 +1085,13 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'7';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item7);
 
             writer.WriteEndObject();
+            writer.Depth--;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -1099,7 +1153,7 @@ namespace Utf8Json.Formatters
                             continue;
                     }
                 }
-
+                
                 reader.ReadNextBlock();
             }
 
@@ -1110,7 +1164,7 @@ namespace Utf8Json.Formatters
 #endif
             return answer;
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else

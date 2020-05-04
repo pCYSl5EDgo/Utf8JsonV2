@@ -28,24 +28,8 @@ namespace Utf8Json.Formatters
         public static void SerializeStatic(ref JsonWriter writer, Task value, JsonSerializerOptions options)
 #endif
         {
-            if (value == null)
-            {
-                var span = writer.Writer.GetSpan(4);
-                span[0] = (byte)'n';
-                span[1] = (byte)'u';
-                span[2] = (byte)'l';
-                span[3] = (byte)'l';
-                writer.Writer.Advance(4);
-                return;
-            }
-
-            value.Wait(); // wait!
-            var span1 = writer.Writer.GetSpan(4);
-            span1[0] = (byte)'n';
-            span1[1] = (byte)'u';
-            span1[2] = (byte)'l';
-            span1[3] = (byte)'l';
-            writer.Writer.Advance(4);
+            value?.Wait(); // wait!
+            writer.WriteNull();
         }
 
 #if CSHARP_8_OR_NEWER

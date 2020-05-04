@@ -51,9 +51,17 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            ref var bufferWriter = ref writer.Writer;
+            if (writer.Depth >= options.MaxDepth)
+            {
+                bufferWriter.WriteEmptyObject();
+                return;
+            }
+
+            writer.Depth++;
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)'{';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -63,7 +71,7 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'1';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item1);
@@ -71,7 +79,7 @@ namespace Utf8Json.Formatters
 
             {
                 const int sizeHint = 9;
-                var span = writer.Writer.GetSpan(sizeHint);
+                var span = bufferWriter.GetSpan(sizeHint);
                 span[0] = (byte)',';
                 span[1] = (byte)'"';
                 span[2] = (byte)'I';
@@ -81,13 +89,14 @@ namespace Utf8Json.Formatters
                 span[6] = (byte)'<#= i #>';
                 span[7] = (byte)'"';
                 span[8] = (byte)':';
-                writer.Writer.Advance(sizeHint);
+                bufferWriter.Advance(sizeHint);
             }
 
             options.SerializeWithVerify(ref writer, value.Item<#= i #>);
 <#}#>
 
             writer.WriteEndObject();
+            writer.Depth--;
         }
 
 #if CSHARP_8_OR_NEWER

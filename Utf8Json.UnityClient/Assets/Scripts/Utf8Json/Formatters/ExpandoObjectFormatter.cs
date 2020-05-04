@@ -30,27 +30,7 @@ namespace Utf8Json.Formatters
         public static void SerializeStatic(ref JsonWriter writer, ExpandoObject value, JsonSerializerOptions options)
 #endif
         {
-            if (value == null)
-            {
-                var span = writer.Writer.GetSpan(4);
-                span[0] = (byte)'n';
-                span[1] = (byte)'u';
-                span[2] = (byte)'l';
-                span[3] = (byte)'l';
-                writer.Writer.Advance(4);
-                return;
-            }
-
-            var serializer = options.Resolver.GetSerializeStatic<IDictionary<string, object>>();
-            if (serializer.ToPointer() == null)
-            {
-                var formatter = options.Resolver.GetFormatterWithVerify<IDictionary<string, object>>();
-                formatter.Serialize(ref writer, value, options);
-            }
-            else
-            {
-                writer.Serialize(value, options, serializer);
-            }
+            InterfaceDictionaryFormatter<string, object>.SerializeStatic(ref writer, value, options);
         }
 
 #if CSHARP_8_OR_NEWER

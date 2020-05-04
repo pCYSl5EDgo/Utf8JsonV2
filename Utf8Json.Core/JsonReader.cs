@@ -32,12 +32,15 @@ namespace Utf8Json
         public JsonReader(ReadOnlySpan<byte> span)
         {
             this.Reader = new SequenceReader(span);
+            Depth = default;
         }
 
         /// <summary>
         /// Gets the number of bytes consumed by the reader.
         /// </summary>
         public int Consumed => this.Reader.Consumed;
+
+        public uint Depth { get; set; }
 
         /// <summary>
         /// Gets a value indicating whether the reader is at the end of the sequence.
