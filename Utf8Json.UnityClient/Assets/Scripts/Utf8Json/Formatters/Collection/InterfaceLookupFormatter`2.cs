@@ -28,24 +28,10 @@ namespace Utf8Json.Formatters
         }
 
 #if CSHARP_8_OR_NEWER
-        public static void SerializeStatic(ref JsonWriter writer, ILookup<TKey, TElement>? value, JsonSerializerOptions options)
+        public static void SerializeStatic(ref JsonWriter writer, ILookup<TKey, TElement>? value, JsonSerializerOptions options) => InterfaceEnumerableFormatter<IGrouping<TKey, TElement>>.SerializeStatic(ref writer, value, options);
 #else
-        public static void SerializeStatic(ref JsonWriter writer, ILookup<TKey, TElement> value, JsonSerializerOptions options)
+        public static void SerializeStatic(ref JsonWriter writer, ILookup<TKey, TElement> value, JsonSerializerOptions options) => InterfaceEnumerableFormatter<IGrouping<TKey, TElement>>.SerializeStatic(ref writer, value, options);
 #endif
-        {
-            if (value == null)
-            {
-                var span = writer.Writer.GetSpan(4);
-                span[0] = (byte)'n';
-                span[1] = (byte)'u';
-                span[2] = (byte)'l';
-                span[3] = (byte)'l';
-                writer.Writer.Advance(4);
-                return;
-            }
-
-            options.SerializeWithVerify<IEnumerable<IGrouping<TKey, TElement>>>(ref writer, value);
-        }
 
 #if CSHARP_8_OR_NEWER
         public ILookup<TKey, TElement>? Deserialize(ref JsonReader reader, JsonSerializerOptions options)

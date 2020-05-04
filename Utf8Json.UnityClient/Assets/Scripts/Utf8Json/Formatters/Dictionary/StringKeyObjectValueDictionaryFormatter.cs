@@ -23,7 +23,7 @@ namespace Utf8Json.Formatters
                 writer.WriteNull();
                 return;
             }
-
+            
             SerializeStatic(ref writer, dictionary, options);
         }
 
@@ -42,8 +42,16 @@ namespace Utf8Json.Formatters
         public static void SerializeStatic(ref JsonWriter writer, Dictionary<string, object> value, JsonSerializerOptions options)
 #endif
         {
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyObject();
+                return;
+            }
+
+            ++writer.Depth;
             SerializeExtensionDataStaticDetectIsFirst(value, ref writer, options, true);
             writer.WriteEndObject();
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER

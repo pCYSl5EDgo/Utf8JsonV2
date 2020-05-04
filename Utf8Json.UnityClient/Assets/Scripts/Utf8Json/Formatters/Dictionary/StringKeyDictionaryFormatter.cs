@@ -28,7 +28,7 @@ namespace Utf8Json.Formatters
         : IJsonFormatter<Dictionary<string, TValue>>
     {
         public void Serialize(ref JsonWriter writer, Dictionary<string, TValue> value, JsonSerializerOptions options) => SerializeStatic(ref writer, value, options);
-
+        
         public static void SerializeStatic(ref JsonWriter writer, Dictionary<string, TValue> value, JsonSerializerOptions options)
 #endif
         {
@@ -38,6 +38,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyObject();
+                return;
+            }
+
+            ++writer.Depth;
             writer.WriteBeginObject();
 
             var e = value.GetEnumerator();
@@ -88,6 +95,7 @@ namespace Utf8Json.Formatters
 
         END:
             writer.WriteEndObject();
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -140,7 +148,7 @@ namespace Utf8Json.Formatters
 #endif
             return answer;
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -172,7 +180,7 @@ namespace Utf8Json.Formatters
         : IJsonFormatter<ReadOnlyDictionary<string, TValue>>
     {
         public void Serialize(ref JsonWriter writer, ReadOnlyDictionary<string, TValue> value, JsonSerializerOptions options) => SerializeStatic(ref writer, value, options);
-
+        
         public static void SerializeStatic(ref JsonWriter writer, ReadOnlyDictionary<string, TValue> value, JsonSerializerOptions options)
 #endif
         {
@@ -182,6 +190,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyObject();
+                return;
+            }
+
+            ++writer.Depth;
             writer.WriteBeginObject();
 
             var e = value.GetEnumerator();
@@ -232,6 +247,7 @@ namespace Utf8Json.Formatters
 
         END:
             writer.WriteEndObject();
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -284,7 +300,7 @@ namespace Utf8Json.Formatters
 #endif
             return new ReadOnlyDictionary<string, TValue>(answer);
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -316,7 +332,7 @@ namespace Utf8Json.Formatters
         : IJsonFormatter<SortedDictionary<string, TValue>>
     {
         public void Serialize(ref JsonWriter writer, SortedDictionary<string, TValue> value, JsonSerializerOptions options) => SerializeStatic(ref writer, value, options);
-
+        
         public static void SerializeStatic(ref JsonWriter writer, SortedDictionary<string, TValue> value, JsonSerializerOptions options)
 #endif
         {
@@ -326,6 +342,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyObject();
+                return;
+            }
+
+            ++writer.Depth;
             writer.WriteBeginObject();
 
             var e = value.GetEnumerator();
@@ -376,6 +399,7 @@ namespace Utf8Json.Formatters
 
         END:
             writer.WriteEndObject();
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -428,7 +452,7 @@ namespace Utf8Json.Formatters
 #endif
             return answer;
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -460,7 +484,7 @@ namespace Utf8Json.Formatters
         : IJsonFormatter<SortedList<string, TValue>>
     {
         public void Serialize(ref JsonWriter writer, SortedList<string, TValue> value, JsonSerializerOptions options) => SerializeStatic(ref writer, value, options);
-
+        
         public static void SerializeStatic(ref JsonWriter writer, SortedList<string, TValue> value, JsonSerializerOptions options)
 #endif
         {
@@ -470,6 +494,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyObject();
+                return;
+            }
+
+            ++writer.Depth;
             writer.WriteBeginObject();
 
             var e = value.GetEnumerator();
@@ -520,6 +551,7 @@ namespace Utf8Json.Formatters
 
         END:
             writer.WriteEndObject();
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -572,7 +604,7 @@ namespace Utf8Json.Formatters
 #endif
             return answer;
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -604,7 +636,7 @@ namespace Utf8Json.Formatters
         : IJsonFormatter<IDictionary<string, TValue>>
     {
         public void Serialize(ref JsonWriter writer, IDictionary<string, TValue> value, JsonSerializerOptions options) => SerializeStatic(ref writer, value, options);
-
+        
         public static void SerializeStatic(ref JsonWriter writer, IDictionary<string, TValue> value, JsonSerializerOptions options)
 #endif
         {
@@ -614,6 +646,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyObject();
+                return;
+            }
+
+            ++writer.Depth;
             writer.WriteBeginObject();
 
             var e = value.GetEnumerator();
@@ -664,6 +703,7 @@ namespace Utf8Json.Formatters
 
         END:
             writer.WriteEndObject();
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -716,7 +756,7 @@ namespace Utf8Json.Formatters
 #endif
             return answer;
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -748,7 +788,7 @@ namespace Utf8Json.Formatters
         : IJsonFormatter<ConcurrentDictionary<string, TValue>>
     {
         public void Serialize(ref JsonWriter writer, ConcurrentDictionary<string, TValue> value, JsonSerializerOptions options) => SerializeStatic(ref writer, value, options);
-
+        
         public static void SerializeStatic(ref JsonWriter writer, ConcurrentDictionary<string, TValue> value, JsonSerializerOptions options)
 #endif
         {
@@ -758,6 +798,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyObject();
+                return;
+            }
+
+            ++writer.Depth;
             writer.WriteBeginObject();
 
             var e = value.GetEnumerator();
@@ -808,6 +855,7 @@ namespace Utf8Json.Formatters
 
         END:
             writer.WriteEndObject();
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -860,7 +908,7 @@ namespace Utf8Json.Formatters
 #endif
             return answer;
         }
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -902,6 +950,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyObject();
+                return;
+            }
+
+            ++writer.Depth;
             writer.WriteBeginObject();
 
             var e = value.GetEnumerator();
@@ -952,6 +1007,7 @@ namespace Utf8Json.Formatters
 
         END:
             writer.WriteEndObject();
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -1046,6 +1102,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyObject();
+                return;
+            }
+
+            ++writer.Depth;
             writer.WriteBeginObject();
 
             var e = value.GetEnumerator();
@@ -1096,6 +1159,7 @@ namespace Utf8Json.Formatters
 
         END:
             writer.WriteEndObject();
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER

@@ -22,14 +22,10 @@ namespace Utf8Json.Formatters
             if (value is null)
             {
                 writer.WriteNull();
+                return;
             }
-            else
-            {
-                var span = writer.Writer.GetSpan(2);
-                span[0] = (byte)'{';
-                span[1] = (byte)'}';
-                writer.Writer.Advance(2);
-            }
+
+            writer.Writer.WriteEmptyObject();
         }
 
 #if CSHARP_8_OR_NEWER
@@ -50,35 +46,39 @@ namespace Utf8Json.Formatters
             if (value is null)
             {
                 writer.WriteNull();
+                return;
             }
-            else
+
+            switch (value)
             {
-                switch (value)
-                {
-                    case string str:
-                        NullableStringFormatter.SerializeStatic(ref writer, str, options);
-                        return;
-                    case int i32:
-                        writer.Write(i32);
-                        return;
-                    case bool b:
-                        writer.Write(b);
-                        return;
-                }
-
-                var targetType = value.GetType();
-                if (targetType == typeof(object))
-                {
-                    var span = writer.Writer.GetSpan(2);
-                    span[0] = (byte)'{';
-                    span[1] = (byte)'}';
-                    writer.Writer.Advance(2);
+                case string str:
+                    NullableStringFormatter.SerializeStatic(ref writer, str, options);
                     return;
-                }
-
-                var formatter = options.Resolver.GetFormatterWithVerify(targetType);
-                formatter.SerializeTypeless(ref writer, value, options);
+                case int i32:
+                    writer.Write(i32);
+                    return;
+                case bool b:
+                    writer.Write(b);
+                    return;
             }
+
+            var targetType = value.GetType();
+            if (targetType == typeof(object))
+            {
+                writer.Writer.WriteEmptyObject();
+                return;
+            }
+
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyObject();
+                return;
+            }
+
+            ++writer.Depth;
+            var formatter = options.Resolver.GetFormatterWithVerify(targetType);
+            formatter.SerializeTypeless(ref writer, value, options);
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER

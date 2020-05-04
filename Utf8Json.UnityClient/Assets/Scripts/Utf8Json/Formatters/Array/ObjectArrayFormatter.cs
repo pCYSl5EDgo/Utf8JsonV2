@@ -53,6 +53,13 @@ namespace Utf8Json.Formatters
         public static void SerializeStatic(ref JsonWriter writer, object[] value, JsonSerializerOptions options)
 #endif
         {
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             writer.WriteBeginArray();
             ObjectFormatter.SerializeStatic(ref writer, value[0], options);
             for (var i = 1; i < value.Length; i++)
@@ -61,6 +68,7 @@ namespace Utf8Json.Formatters
                 ObjectFormatter.SerializeStatic(ref writer, value[i], options);
             }
             writer.WriteEndArray();
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER

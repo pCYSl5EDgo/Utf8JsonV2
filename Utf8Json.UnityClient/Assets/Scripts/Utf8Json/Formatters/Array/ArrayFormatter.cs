@@ -32,28 +32,29 @@ namespace Utf8Json.Formatters
         public static void SerializeStatic(ref JsonWriter writer, T[] value, JsonSerializerOptions options)
 #endif
         {
+            ref var bufferWriter = ref writer.Writer;
             if (value == null)
             {
-                var span = writer.Writer.GetSpan(4);
+                var span = bufferWriter.GetSpan(4);
                 span[0] = (byte)'n';
                 span[1] = (byte)'u';
                 span[2] = (byte)'l';
                 span[3] = (byte)'l';
-                writer.Writer.Advance(4);
+                bufferWriter.Advance(4);
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth || value.Length == 0)
             {
-                var span = writer.Writer.GetSpan(1);
-                span[0] = (byte)'[';
-                writer.Writer.Advance(1);
-            }
-            if (value.Length == 0)
-            {
-                var span = writer.Writer.GetSpan(1);
-                span[0] = (byte)']';
-                writer.Writer.Advance(1);
+                bufferWriter.WriteEmptyArray();
                 return;
+            }
+
+            ++writer.Depth;
+            {
+                var span = bufferWriter.GetSpan(1);
+                span[0] = (byte)'[';
+                bufferWriter.Advance(1);
             }
 
 #if !ENABLE_IL2CPP
@@ -65,9 +66,9 @@ namespace Utf8Json.Formatters
                     writer.Serialize(value[0], options, serializer);
                     for (var i = 1; i < value.Length; i++)
                     {
-                        var span = writer.Writer.GetSpan(1);
+                        var span = bufferWriter.GetSpan(1);
                         span[0] = (byte)',';
-                        writer.Writer.Advance(1);
+                        bufferWriter.Advance(1);
                         writer.Serialize(value[i], options, serializer);
                     }
                     goto END;
@@ -79,19 +80,20 @@ namespace Utf8Json.Formatters
 
             for (var i = 1; i < value.Length; i++)
             {
-                var span = writer.Writer.GetSpan(1);
+                var span = bufferWriter.GetSpan(1);
                 span[0] = (byte)',';
-                writer.Writer.Advance(1);
+                bufferWriter.Advance(1);
                 formatter.Serialize(ref writer, value[i], options);
             }
 #if !ENABLE_IL2CPP
         END:
 #endif
             {
-                var span = writer.Writer.GetSpan(1);
+                var span = bufferWriter.GetSpan(1);
                 span[0] = (byte)']';
-                writer.Writer.Advance(1);
+                bufferWriter.Advance(1);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER

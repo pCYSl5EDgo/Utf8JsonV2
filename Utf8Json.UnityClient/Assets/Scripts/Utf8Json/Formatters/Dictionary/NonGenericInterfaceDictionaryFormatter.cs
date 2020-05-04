@@ -16,21 +16,21 @@ namespace Utf8Json.Formatters
 #endif
     {
 #if CSHARP_8_OR_NEWER
-        public void Serialize(ref JsonWriter writer, IDictionary? value, JsonSerializerOptions formatterResolver)
+        public void Serialize(ref JsonWriter writer, IDictionary? value, JsonSerializerOptions options)
 #else
-        public void Serialize(ref JsonWriter writer, IDictionary value, JsonSerializerOptions formatterResolver)
+        public void Serialize(ref JsonWriter writer, IDictionary value, JsonSerializerOptions options)
 #endif
         {
-            SerializeStatic(ref writer, value, formatterResolver);
+            SerializeStatic(ref writer, value, options);
         }
 
 #if CSHARP_8_OR_NEWER
-        public static void SerializeStatic(ref JsonWriter writer, IDictionary? value, JsonSerializerOptions formatterResolver)
+        public static void SerializeStatic(ref JsonWriter writer, IDictionary? value, JsonSerializerOptions options)
 #else
-        public static void SerializeStatic(ref JsonWriter writer, IDictionary value, JsonSerializerOptions formatterResolver)
+        public static void SerializeStatic(ref JsonWriter writer, IDictionary value, JsonSerializerOptions options)
 #endif
         {
-            if (value == null)
+            if (value is null)
             {
                 var span = writer.Writer.GetSpan(4);
                 span[0] = (byte)'n';
@@ -41,10 +41,17 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyObject();
+                return;
+            }
+
+            ++writer.Depth;
 #if CSHARP_8_OR_NEWER
-            var valueFormatter = formatterResolver.Resolver.GetFormatterWithVerify<object?>();
+            var valueFormatter = options.Resolver.GetFormatterWithVerify<object?>();
 #else
-            var valueFormatter = formatterResolver.Resolver.GetFormatterWithVerify<object>();
+            var valueFormatter = options.Resolver.GetFormatterWithVerify<object>();
 #endif
 
             writer.WriteBeginObject();
@@ -59,7 +66,7 @@ namespace Utf8Json.Formatters
                     var propertyName = item.Key.ToString();
                     Debug.Assert(propertyName != null, nameof(propertyName) + " != null");
                     writer.WritePropertyName(propertyName);
-                    valueFormatter.Serialize(ref writer, item.Value, formatterResolver);
+                    valueFormatter.Serialize(ref writer, item.Value, options);
                 }
                 else
                 {
@@ -76,7 +83,7 @@ namespace Utf8Json.Formatters
                     var propertyName = item.Key.ToString();
                     Debug.Assert(propertyName != null, nameof(propertyName) + " != null");
                     writer.WritePropertyName(propertyName);
-                    valueFormatter.Serialize(ref writer, item.Value, formatterResolver);
+                    valueFormatter.Serialize(ref writer, item.Value, options);
                 }
             }
             finally
@@ -88,9 +95,8 @@ namespace Utf8Json.Formatters
             }
 
         END:
-            var span1 = writer.Writer.GetSpan(1);
-            span1[0] = (byte)'}';
-            writer.Writer.Advance(1);
+            writer.WriteEndObject();
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER

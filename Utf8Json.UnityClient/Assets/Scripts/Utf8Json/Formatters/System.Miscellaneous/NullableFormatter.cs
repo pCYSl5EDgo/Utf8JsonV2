@@ -21,11 +21,10 @@ namespace Utf8Json.Formatters
                 span[2] = (byte)'l';
                 span[3] = (byte)'l';
                 writer.Writer.Advance(4);
+                return;
             }
-            else
-            {
-                options.SerializeWithVerify(ref writer, value.Value);
-            }
+
+            options.SerializeWithVerify(ref writer, value.Value);
         }
 
         public T? Deserialize(ref JsonReader reader, JsonSerializerOptions options)

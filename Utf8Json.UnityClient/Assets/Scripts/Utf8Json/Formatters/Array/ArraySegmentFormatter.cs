@@ -19,21 +19,29 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, ArraySegment<T> value, JsonSerializerOptions options)
         {
+            ref var bufferWriter = ref writer.Writer;
             if (value.Array == null)
             {
-                var span1 = writer.Writer.GetSpan(4);
+                var span1 = bufferWriter.GetSpan(4);
                 span1[0] = (byte)'n';
                 span1[1] = (byte)'u';
                 span1[2] = (byte)'l';
                 span1[3] = (byte)'l';
-                writer.Writer.Advance(4);
+                bufferWriter.Advance(4);
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
             {
-                var span1 = writer.Writer.GetSpan(1);
+                bufferWriter.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
+            {
+                var span1 = bufferWriter.GetSpan(1);
                 span1[0] = (byte)'[';
-                writer.Writer.Advance(1);
+                bufferWriter.Advance(1);
             }
 
             var span = value.AsSpan();
@@ -52,9 +60,9 @@ namespace Utf8Json.Formatters
 
                     for (var i = 1; i < span.Length; i++)
                     {
-                        var span1 = writer.Writer.GetSpan(1);
+                        var span1 = bufferWriter.GetSpan(1);
                         span1[0] = (byte)',';
-                        writer.Writer.Advance(1);
+                        bufferWriter.Advance(1);
                         writer.Serialize(span[i], options, serializer);
                     }
                     goto END;
@@ -67,18 +75,19 @@ namespace Utf8Json.Formatters
 
             for (var i = 1; i < span.Length; i++)
             {
-                var span1 = writer.Writer.GetSpan(1);
+                var span1 = bufferWriter.GetSpan(1);
                 span1[0] = (byte)',';
-                writer.Writer.Advance(1);
+                bufferWriter.Advance(1);
                 formatter.Serialize(ref writer, span[i], options);
             }
 
         END:
             {
-                var span1 = writer.Writer.GetSpan(1);
+                var span1 = bufferWriter.GetSpan(1);
                 span1[0] = (byte)']';
-                writer.Writer.Advance(1);
+                bufferWriter.Advance(1);
             }
+            --writer.Depth;
         }
 
         public ArraySegment<T> Deserialize(ref JsonReader reader, JsonSerializerOptions options)

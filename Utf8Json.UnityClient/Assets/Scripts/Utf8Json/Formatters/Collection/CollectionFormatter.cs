@@ -38,6 +38,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var enumerator = value.GetEnumerator();
             writer.WriteBeginArray();
             try
@@ -74,6 +81,7 @@ namespace Utf8Json.Formatters
 
         END:
             writer.WriteEndArray();
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -123,7 +131,7 @@ namespace Utf8Json.Formatters
             return buffer;
         }
 
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -171,6 +179,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var enumerator = value.GetEnumerator();
             writer.WriteBeginArray();
             try
@@ -207,6 +222,7 @@ namespace Utf8Json.Formatters
 
         END:
             writer.WriteEndArray();
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -256,7 +272,7 @@ namespace Utf8Json.Formatters
             return buffer;
         }
 
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -304,6 +320,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var enumerator = value.GetEnumerator();
             writer.WriteBeginArray();
             try
@@ -340,6 +363,7 @@ namespace Utf8Json.Formatters
 
         END:
             writer.WriteEndArray();
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -389,7 +413,7 @@ namespace Utf8Json.Formatters
             return buffer;
         }
 
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -437,6 +461,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var enumerator = value.GetEnumerator();
             writer.WriteBeginArray();
             try
@@ -473,6 +504,7 @@ namespace Utf8Json.Formatters
 
         END:
             writer.WriteEndArray();
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -522,7 +554,7 @@ namespace Utf8Json.Formatters
             return buffer;
         }
 
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -570,6 +602,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var enumerator = value.GetEnumerator();
             writer.WriteBeginArray();
             try
@@ -606,6 +645,7 @@ namespace Utf8Json.Formatters
 
         END:
             writer.WriteEndArray();
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -655,7 +695,7 @@ namespace Utf8Json.Formatters
             return buffer;
         }
 
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -703,6 +743,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var enumerator = value.GetEnumerator();
             writer.WriteBeginArray();
             try
@@ -739,6 +786,7 @@ namespace Utf8Json.Formatters
 
         END:
             writer.WriteEndArray();
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -788,7 +836,7 @@ namespace Utf8Json.Formatters
             return buffer;
         }
 
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else
@@ -836,6 +884,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var enumerator = value.GetEnumerator();
             writer.WriteBeginArray();
             try
@@ -872,6 +927,7 @@ namespace Utf8Json.Formatters
 
         END:
             writer.WriteEndArray();
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -921,7 +977,7 @@ namespace Utf8Json.Formatters
             return buffer;
         }
 
-
+        
 #if CSHARP_8_OR_NEWER
         public void SerializeTypeless(ref JsonWriter writer, object? value, JsonSerializerOptions options)
 #else

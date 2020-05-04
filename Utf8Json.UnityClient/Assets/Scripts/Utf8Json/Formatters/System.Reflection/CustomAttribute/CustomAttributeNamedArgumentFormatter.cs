@@ -34,6 +34,13 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, CustomAttributeNamedArgument value, JsonSerializerOptions options)
         {
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyObject();
+                return;
+            }
+
+            ++writer.Depth;
             ReadOnlySpan<byte> bytesIsField = new[] {
                 (byte)'{',
                 (byte)'"',
@@ -131,6 +138,7 @@ namespace Utf8Json.Formatters
             });
             CustomAttributeTypedArgumentFormatter.SerializeStatic(ref writer, value.TypedValue, options);
             writer.WriteEndObject();
+            --writer.Depth;
         }
 
         public static CustomAttributeNamedArgument DeserializeStatic(ref JsonReader reader, JsonSerializerOptions options)

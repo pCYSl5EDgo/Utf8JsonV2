@@ -46,20 +46,28 @@ namespace Utf8Json.Formatters
         public static void SerializeStatic(ref JsonWriter writer, BitArray value, JsonSerializerOptions options)
 #endif
         {
+            ref var bufferWriter = ref writer.Writer;
             if (value == null)
             {
-                var span = writer.Writer.GetSpan(4);
+                var span = bufferWriter.GetSpan(4);
                 span[0] = (byte)'n';
                 span[1] = (byte)'u';
                 span[2] = (byte)'l';
                 span[3] = (byte)'l';
-                writer.Writer.Advance(4);
+                bufferWriter.Advance(4);
                 return;
             }
 
-            var span3 = writer.Writer.GetSpan(1);
+            if (writer.Depth >= options.MaxDepth)
+            {
+                bufferWriter.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
+            var span3 = bufferWriter.GetSpan(1);
             span3[0] = (byte)'[';
-            writer.Writer.Advance(1);
+            bufferWriter.Advance(1);
             if (value.Length == 0)
             {
                 goto END;
@@ -67,53 +75,54 @@ namespace Utf8Json.Formatters
 
             if (value[0])
             {
-                var span1 = writer.Writer.GetSpan(4);
+                var span1 = bufferWriter.GetSpan(4);
                 span1[0] = (byte)'t';
                 span1[1] = (byte)'r';
                 span1[2] = (byte)'u';
                 span1[3] = (byte)'e';
-                writer.Writer.Advance(4);
+                bufferWriter.Advance(4);
             }
             else
             {
-                var span2 = writer.Writer.GetSpan(5);
+                var span2 = bufferWriter.GetSpan(5);
                 span2[0] = (byte)'f';
                 span2[1] = (byte)'a';
                 span2[2] = (byte)'l';
                 span2[3] = (byte)'s';
                 span2[4] = (byte)'e';
-                writer.Writer.Advance(5);
+                bufferWriter.Advance(5);
             }
             for (var i = 1; i < value.Length; i++)
             {
-                var span1 = writer.Writer.GetSpan(1);
+                var span1 = bufferWriter.GetSpan(1);
                 span1[0] = (byte)',';
-                writer.Writer.Advance(1);
+                bufferWriter.Advance(1);
                 if (value[i])
                 {
-                    var span = writer.Writer.GetSpan(4);
+                    var span = bufferWriter.GetSpan(4);
                     span[0] = (byte)'t';
                     span[1] = (byte)'r';
                     span[2] = (byte)'u';
                     span[3] = (byte)'e';
-                    writer.Writer.Advance(4);
+                    bufferWriter.Advance(4);
                 }
                 else
                 {
-                    var span = writer.Writer.GetSpan(5);
+                    var span = bufferWriter.GetSpan(5);
                     span[0] = (byte)'f';
                     span[1] = (byte)'a';
                     span[2] = (byte)'l';
                     span[3] = (byte)'s';
                     span[4] = (byte)'e';
-                    writer.Writer.Advance(5);
+                    bufferWriter.Advance(5);
                 }
             }
 
         END:
-            var span4 = writer.Writer.GetSpan(1);
+            var span4 = bufferWriter.GetSpan(1);
             span4[0] = (byte)']';
-            writer.Writer.Advance(1);
+            bufferWriter.Advance(1);
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER

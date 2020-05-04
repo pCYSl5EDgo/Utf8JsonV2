@@ -46,12 +46,19 @@ namespace Utf8Json.Formatters
         public static void SerializeStatic(ref JsonWriter writer, CustomAttributeData value, JsonSerializerOptions options)
 #endif
         {
-            if (value == null)
+            if (value is null)
             {
                 writer.WriteNull();
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyObject();
+                return;
+            }
+
+            ++writer.Depth;
             writer.WriteRaw(new[] {
                 (byte)'{',
                 (byte)'"',
@@ -91,8 +98,8 @@ namespace Utf8Json.Formatters
                 (byte)':',
             });
             ConstructorInfoFormatter.SerializeStatic(ref writer, value.Constructor, options);
-
             writer.WriteEndObject();
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER

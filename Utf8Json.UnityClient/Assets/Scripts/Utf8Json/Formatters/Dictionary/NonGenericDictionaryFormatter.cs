@@ -41,6 +41,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyObject();
+                return;
+            }
+
+            ++writer.Depth;
 #if CSHARP_8_OR_NEWER
             var valueFormatter = options.Resolver.GetFormatterWithVerify<object?>();
 #else
@@ -91,6 +98,7 @@ namespace Utf8Json.Formatters
             var span1 = writer.Writer.GetSpan(1);
             span1[0] = (byte)'}';
             writer.Writer.Advance(1);
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER

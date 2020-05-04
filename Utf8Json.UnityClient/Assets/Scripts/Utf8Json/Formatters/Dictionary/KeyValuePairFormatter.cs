@@ -20,6 +20,13 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, KeyValuePair<TKey, TValue> value, JsonSerializerOptions options)
         {
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyObject();
+                return;
+            }
+
+            ++writer.Depth;
             {
                 // {"Key":
                 const int length = 7;
@@ -59,6 +66,7 @@ namespace Utf8Json.Formatters
                 span[0] = (byte)'}';
                 writer.Writer.Advance(1);
             }
+            --writer.Depth;
         }
 
         public KeyValuePair<TKey, TValue> Deserialize(ref JsonReader reader, JsonSerializerOptions options)

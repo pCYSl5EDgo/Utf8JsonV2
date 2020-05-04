@@ -226,8 +226,16 @@ namespace Utf8Json.Formatters
 
         public static void SerializeStatic(ref JsonWriter writer, Exception value, JsonSerializerOptions options)
         {
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyObject();
+                return;
+            }
+
+            ++writer.Depth;
             ExceptionFormatterHelper.SerializeStaticWithoutWritingEndObject(ref writer, value, options);
             writer.WriteEndObject();
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER

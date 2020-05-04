@@ -44,6 +44,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyObject();
+                return;
+            }
+
+            ++writer.Depth;
             MethodBaseFormatterHelper.SerializeStaticWithoutEndObject(ref writer, value, options);
 
             writer.WriteRaw(new[]
@@ -66,6 +73,7 @@ namespace Utf8Json.Formatters
             TypeFormatter.SerializeStatic(ref writer, value.ReturnType, options);
 
             writer.WriteEndObject();
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER

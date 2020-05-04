@@ -37,14 +37,22 @@ namespace Utf8Json.Formatters
         public static void SerializeStatic(ref JsonWriter writer, TypeInfo value, JsonSerializerOptions options)
 #endif
         {
-            if (value == null)
+            if (value is null)
             {
                 writer.WriteNull();
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyObject();
+                return;
+            }
+
+            ++writer.Depth;
             MemberInfoFormatterHelper.SerializeStaticWithoutEndObject(ref writer, value, options);
             writer.WriteEndObject();
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER

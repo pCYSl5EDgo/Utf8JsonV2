@@ -40,6 +40,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             {
                 var span = writer.Writer.GetSpan(3);
                 span[0] = 0x4B; // K
@@ -64,6 +71,7 @@ namespace Utf8Json.Formatters
                 span[0] = (byte)'}';
                 writer.Writer.Advance(1);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER

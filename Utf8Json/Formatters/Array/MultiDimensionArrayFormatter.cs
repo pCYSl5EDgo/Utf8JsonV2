@@ -43,6 +43,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -185,6 +192,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -383,6 +391,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -547,6 +562,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -751,6 +767,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -937,6 +960,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -1147,6 +1171,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -1355,6 +1386,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -1571,6 +1603,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -1801,6 +1840,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -2023,6 +2063,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -2275,6 +2322,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -2503,6 +2551,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -2777,6 +2832,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -3011,6 +3067,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -3307,6 +3370,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -3547,6 +3611,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -3865,6 +3936,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -4111,6 +4183,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -4451,6 +4530,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -4703,6 +4783,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -5065,6 +5152,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -5323,6 +5411,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -5707,6 +5802,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -5971,6 +6067,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -6377,6 +6480,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -6647,6 +6751,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -7075,6 +7186,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -7351,6 +7463,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -7801,6 +7920,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -8083,6 +8203,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -8555,6 +8682,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -8843,6 +8971,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -9337,6 +9472,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -9631,6 +9767,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -10147,6 +10290,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -10447,6 +10591,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -10985,6 +11136,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -11291,6 +11443,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -11851,6 +12010,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -12163,6 +12323,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -12745,6 +12912,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -13063,6 +13231,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -13667,6 +13842,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -13991,6 +14167,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -14617,6 +14800,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -14947,6 +15131,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -15595,6 +15786,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -15931,6 +16123,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -16601,6 +16800,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -16943,6 +17143,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -17635,6 +17842,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -17983,6 +18191,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -18697,6 +18912,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -19051,6 +19267,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -19787,6 +20010,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -20147,6 +20371,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -20905,6 +21136,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -21271,6 +21503,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -22051,6 +22290,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
@@ -22423,6 +22663,13 @@ namespace Utf8Json.Formatters
                 return;
             }
 
+            if (writer.Depth >= options.MaxDepth)
+            {
+                writer.Writer.WriteEmptyArray();
+                return;
+            }
+
+            ++writer.Depth;
             var startIndexOf0 = value.GetLowerBound(0);
             var lengthOf0 = value.GetLength(0);
             var startIndexOf1 = value.GetLowerBound(1);
@@ -23225,6 +23472,7 @@ namespace Utf8Json.Formatters
                 span[1] = (byte)'}';
                 writer.Writer.Advance(sizeHint);
             }
+            --writer.Depth;
         }
 
 #if CSHARP_8_OR_NEWER
