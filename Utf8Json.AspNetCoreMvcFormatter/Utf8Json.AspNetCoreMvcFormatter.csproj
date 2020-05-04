@@ -1,5 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
+  </PropertyGroup>
+
   <Choose>
     <When Condition="'$(TargetFramework)'=='netstandard2.0' OR '$(TargetFramework)'=='netcoreapp2.1'">
       <PropertyGroup>
@@ -16,7 +20,6 @@
   </Choose>
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
     <DefineConstants Condition="'$(TargetFramework)'=='netcoreapp3.1'">$(DefineConstants);ASP_NET_CORE_APP_FRAMEWORK</DefineConstants>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
