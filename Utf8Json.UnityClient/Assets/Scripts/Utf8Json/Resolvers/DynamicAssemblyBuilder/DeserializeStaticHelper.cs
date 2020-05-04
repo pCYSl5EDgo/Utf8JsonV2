@@ -227,7 +227,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 return;
             }
 
-            throw new ArgumentException();
+            throw new ArgumentException("parameter " + name + " has no corresponding field/property.");
         }
 
         private static void SetFromLocalVariables(in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments, ReadOnlySpan<DeserializeDictionary.Entry.UnmanagedPart> alreadyUsedEntrySpan)
