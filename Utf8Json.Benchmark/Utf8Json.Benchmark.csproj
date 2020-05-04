@@ -15,6 +15,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Utf8Json.Annotations\Utf8Json.Annotations.csproj">
+      <Aliases>V2A</Aliases>
+    </ProjectReference>
     <ProjectReference Include="..\Utf8Json\Utf8JsonV2.csproj">
       <Aliases>V2</Aliases>
     </ProjectReference>
