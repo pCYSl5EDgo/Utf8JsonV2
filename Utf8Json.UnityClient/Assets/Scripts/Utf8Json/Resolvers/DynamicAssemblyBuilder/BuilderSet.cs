@@ -16,6 +16,11 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         public readonly MethodBuilder Deserialize;
         public readonly MethodBuilder DeserializeTypeless;
 
+        public static string CreateFormatterName(Type targetType)
+        {
+            return "Utf8Json.IL.Emit.Formatters." + targetType.FullName + "<>Formatter";
+        }
+
         public BuilderSet(TypeBuilder type, MethodBuilder serialize, MethodBuilder serializeTypeless, MethodBuilder deserialize, MethodBuilder deserializeTypeless)
         {
             Type = type;
@@ -28,7 +33,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         public static BuilderSet PrepareBuilderSet(Type targetType, ModuleBuilder moduleBuilder)
         {
             var typeBuilder = moduleBuilder.DefineType(
-                "Utf8Json.IL.Emit.Formatters." + targetType.FullName + "<>Formatter",
+                CreateFormatterName(targetType),
                 TypeAttributes.AutoLayout | TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.Class,
                 typeof(object),
                 new[]

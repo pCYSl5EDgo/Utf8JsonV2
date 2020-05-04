@@ -1004,8 +1004,15 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             var jsonFormatterAttribute = info.FormatterInfo;
             if (jsonFormatterAttribute is null) // get formatter
             {
-                loadTarget(processor.LdArg(2).LdArg(0), t0, t1)
-                    .TryCallIfNotPossibleCallVirtual(BasicInfoContainer.SerializeWithVerify(info.TargetType));
+                var serialize = Type.GetType(BuilderSet.CreateFormatterName(info.TargetType))?.GetMethod("SerializeStatic", BindingFlags.Public | BindingFlags.Static);
+                if (serialize is null)
+                {
+                    loadTarget(processor.LdArg(2).LdArg(0), t0, t1).TryCallIfNotPossibleCallVirtual(BasicInfoContainer.SerializeWithVerify(info.TargetType));
+                }
+                else
+                {
+                    loadTarget(processor.LdArg(0), t0, t1).LdArg(2).TryCallIfNotPossibleCallVirtual(serialize);
+                }
                 return;
             }
 

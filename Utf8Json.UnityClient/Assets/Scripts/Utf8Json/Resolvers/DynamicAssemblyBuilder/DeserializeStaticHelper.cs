@@ -906,11 +906,16 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     var jsonFormatterAttribute = analyzeResult.GetFormatterInfo(entryType, entryIndex);
                     if (jsonFormatterAttribute is null)
                     {
-                        var deserialize = BasicInfoContainer.DeserializeWithVerify(targetType);
-                        processor
-                            .LdArg(1)
-                            .LdArg(0)
-                            .TryCallIfNotPossibleCallVirtual(deserialize);
+                        var deserializeStatic = Type.GetType(BuilderSet.CreateFormatterName(targetType))?.GetMethod("DeserializeStatic", BindingFlags.Public | BindingFlags.Static);
+                        if (deserializeStatic is null)
+                        {
+                            var deserializeWithVerify = BasicInfoContainer.DeserializeWithVerify(targetType);
+                            processor.LdArg(1).LdArg(0).TryCallIfNotPossibleCallVirtual(deserializeWithVerify);
+                        }
+                        else
+                        {
+                            processor.LdArg(0).LdArg(1).TryCallIfNotPossibleCallVirtual(deserializeStatic);
+                        }
                     }
                     else
                     {
