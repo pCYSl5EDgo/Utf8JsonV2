@@ -258,6 +258,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 GenerateIntermediateLanguageCodesForSerialize(serializeStatic, builderSet.Serialize);
                 GenerateIntermediateLanguageCodesForDeserialize(deserializeStatic, builderSet.Deserialize);
 
+                SerializeStaticHelper.Module = moduleBuilder;
                 if(targetType.IsValueType)
                 {
                     SerializeStaticHelper.SerializeStatic(analyzeResult, serializeStatic.GetILGenerator(), processor => processor.LdArgAddress(1));
@@ -266,7 +267,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 {
                     SerializeStaticHelper.SerializeStatic(analyzeResult, serializeStatic.GetILGenerator(), processor => processor.LdArg(1));
                 }
-                DeserializeStaticHelper.DeserializeStatic(analyzeResult, deserializeStatic.GetILGenerator());
+                DeserializeStaticHelper.DeserializeStatic(analyzeResult, deserializeStatic.GetILGenerator(), moduleBuilder);
                 var formatter = Closing(builderSet.Type);
                 return formatter;
 #if ENABLE_MONO
@@ -300,7 +301,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                 deserializeStatic.DefineParameter(1, ParameterAttributes.None, "reader");
                 deserializeStatic.DefineParameter(2, ParameterAttributes.None, "options");
                 deserializeStatic.InitLocals = true;
-                DeserializeStaticHelper.DeserializeStatic(analyzeResult, deserializeStatic.GetILGenerator());
+                DeserializeStaticHelper.DeserializeStatic(analyzeResult, deserializeStatic.GetILGenerator(), moduleBuilder);
                 var formatter = DynamicMethodFormatterGenerator.CreateFromDynamicMethods(serializeStatic, deserializeStatic);
                 return formatter;
             }

@@ -19,7 +19,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 {
     public static class DeserializeStaticHelper
     {
-        public static void DeserializeStatic(in TypeAnalyzeResult analyzeResult, ILGenerator processor)
+        public static void DeserializeStatic(in TypeAnalyzeResult analyzeResult, ILGenerator processor, Module module)
         {
             NullHandling(analyzeResult, processor);
 
@@ -37,8 +37,8 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
 
             var readOnlyArguments = analyzeResult.ConstructorData.CanCreateInstanceBeforeDeserialization
-                ? new DeserializeStaticReadOnlyArguments(answerVariable, answerCallableVariable, in analyzeResult, processor)
-                : new DeserializeStaticReadOnlyArguments(answerVariable, answerCallableVariable, in analyzeResult, processor, ArrayPool<LocalBuilder>.Shared);
+                ? new DeserializeStaticReadOnlyArguments(answerVariable, answerCallableVariable, in analyzeResult, processor, module)
+                : new DeserializeStaticReadOnlyArguments(answerVariable, answerCallableVariable, in analyzeResult, processor, module, ArrayPool<LocalBuilder>.Shared);
             try
             {
                 if (readOnlyArguments.Dictionary.LengthVariations.IsEmpty)
@@ -812,7 +812,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             if (deserializeStaticReadOnlyArguments.AssignVariable is null)
             {
                 processor.LdLoc(deserializeStaticReadOnlyArguments.AnswerCallableVariable);
-                EmbedMatchDeserializeStaticPart(entry.Type, entry.Index, analyzeResult, processor);
+                EmbedMatchDeserializeStaticPart(entry.Type, entry.Index, in deserializeStaticReadOnlyArguments);
                 switch (entry.Type)
                 {
                     case TypeAnalyzeResultMemberKind.FieldValueType:
@@ -877,7 +877,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             }
             else
             {
-                EmbedMatchDeserializeStaticPart(entry.Type, entry.Index, analyzeResult, processor);
+                EmbedMatchDeserializeStaticPart(entry.Type, entry.Index, in deserializeStaticReadOnlyArguments);
                 var elementVariable = deserializeStaticReadOnlyArguments.ElementVariableSpan[entry.UniqueIndex];
                 processor.StLoc(elementVariable);
                 SetAssignFlag(processor, entry.UniqueIndex, deserializeStaticReadOnlyArguments.AssignVariable);
@@ -886,8 +886,10 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             processor.Br(deserializeStaticReadOnlyArguments.LoopStartLabel);
         }
 
-        private static void EmbedMatchDeserializeStaticPart(TypeAnalyzeResultMemberKind entryType, int entryIndex, in TypeAnalyzeResult analyzeResult, ILGenerator processor)
+        private static void EmbedMatchDeserializeStaticPart(TypeAnalyzeResultMemberKind entryType, int entryIndex, in DeserializeStaticReadOnlyArguments deserializeStaticReadOnlyArguments)
         {
+            ref readonly var analyzeResult = ref deserializeStaticReadOnlyArguments.AnalyzeResult;
+            var processor = deserializeStaticReadOnlyArguments.Processor;
             var directTypeEnum = analyzeResult.GetDirectTypeEnum(entryType, entryIndex);
             switch (directTypeEnum)
             {
@@ -906,7 +908,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
                     var jsonFormatterAttribute = analyzeResult.GetFormatterInfo(entryType, entryIndex);
                     if (jsonFormatterAttribute is null)
                     {
-                        var deserializeStatic = Type.GetType(BuilderSet.CreateFormatterName(targetType))?.GetMethod("DeserializeStatic", BindingFlags.Public | BindingFlags.Static);
+                        var deserializeStatic = deserializeStaticReadOnlyArguments.Module.GetType(BuilderSet.CreateFormatterName(targetType))?.GetMethod("DeserializeStatic", BindingFlags.Public | BindingFlags.Static);
                         if (deserializeStatic is null)
                         {
                             var deserializeWithVerify = BasicInfoContainer.DeserializeWithVerify(targetType);

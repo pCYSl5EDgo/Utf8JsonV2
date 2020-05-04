@@ -18,7 +18,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 
         public static string CreateFormatterName(Type targetType)
         {
-            return "Utf8Json.IL.Emit.Formatters." + targetType.FullName + "<>Formatter";
+            return "Utf8Json.IL.Emit.Formatters." + targetType.FullName?.Replace("+", "<>") + "<>Formatter";
         }
 
         public BuilderSet(TypeBuilder type, MethodBuilder serialize, MethodBuilder serializeTypeless, MethodBuilder deserialize, MethodBuilder deserializeTypeless)

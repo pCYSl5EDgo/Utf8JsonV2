@@ -4,6 +4,7 @@
 using System;
 using System.Buffers;
 using System.Diagnostics;
+using System.Reflection;
 using System.Reflection.Emit;
 using Utf8Json.Internal;
 
@@ -22,6 +23,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         public readonly Label DefaultLabel;
         public readonly TypeAnalyzeResult AnalyzeResult;
         public readonly ReadOnlySpan<LocalBuilder> ElementVariableSpan;
+        public readonly Module Module;
 #if CSHARP_8_OR_NEWER
         public readonly LocalBuilder? AssignVariable;
         private readonly LocalBuilder[]? elementVariableArray;
@@ -32,7 +34,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
         private readonly ArrayPool<LocalBuilder> pool;
 #endif
 
-        public DeserializeStaticReadOnlyArguments(LocalBuilder answerVariable, LocalBuilder answerCallableVariable, in TypeAnalyzeResult analyzeResult, ILGenerator processor)
+        public DeserializeStaticReadOnlyArguments(LocalBuilder answerVariable, LocalBuilder answerCallableVariable, in TypeAnalyzeResult analyzeResult, ILGenerator processor, Module module)
         {
             Processor = processor;
             AnswerVariable = answerVariable;
@@ -47,9 +49,10 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             AssignVariable = default;
             elementVariableArray = default;
             pool = default;
+            Module = module;
         }
 
-        public DeserializeStaticReadOnlyArguments(LocalBuilder answerVariable, LocalBuilder answerCallableVariable, in TypeAnalyzeResult analyzeResult, ILGenerator processor, ArrayPool<LocalBuilder> pool)
+        public DeserializeStaticReadOnlyArguments(LocalBuilder answerVariable, LocalBuilder answerCallableVariable, in TypeAnalyzeResult analyzeResult, ILGenerator processor, Module module, ArrayPool<LocalBuilder> pool)
         {
             Processor = processor;
             AnswerVariable = answerVariable;
@@ -60,6 +63,7 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             ReferenceVariable = processor.DeclareLocal(typeof(byte).MakeByRefType());
             LoopStartLabel = processor.DefineLabel();
             DefaultLabel = processor.DefineLabel();
+            Module = module;
 
             this.pool = pool;
             var totalCount = Dictionary.TotalCount;

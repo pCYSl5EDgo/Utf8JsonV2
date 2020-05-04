@@ -15,6 +15,11 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
 {
     public static class SerializeStaticHelper
     {
+#if CSHARP_8_OR_NEWER
+        public static Module? Module;
+#else
+        public static Module Module;
+#endif
         public static void SerializeStatic(in TypeAnalyzeResult analyzeResult, ILGenerator processor, Func<ILGenerator, ILGenerator> loadValueArgumentAsCallableFunc)
         {
             var spanVariable = processor.DeclareLocal(typeof(Span<byte>));
@@ -1004,7 +1009,9 @@ namespace Utf8Json.Resolvers.DynamicAssemblyBuilder
             var jsonFormatterAttribute = info.FormatterInfo;
             if (jsonFormatterAttribute is null) // get formatter
             {
-                var serialize = Type.GetType(BuilderSet.CreateFormatterName(info.TargetType))?.GetMethod("SerializeStatic", BindingFlags.Public | BindingFlags.Static);
+                var serialize = Module
+                    ?.GetType(BuilderSet.CreateFormatterName(info.TargetType))
+                    ?.GetMethod("SerializeStatic", BindingFlags.Public | BindingFlags.Static);
                 if (serialize is null)
                 {
                     loadTarget(processor.LdArg(2).LdArg(0), t0, t1).TryCallIfNotPossibleCallVirtual(BasicInfoContainer.SerializeWithVerify(info.TargetType));
