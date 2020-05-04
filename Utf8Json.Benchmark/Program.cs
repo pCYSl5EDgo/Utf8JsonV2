@@ -1,4 +1,4 @@
-﻿extern alias V2A;
+extern alias V2A;
 extern alias V2;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
