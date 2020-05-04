@@ -1,9 +1,14 @@
-﻿extern alias V2;
+﻿extern alias V2A;
+extern alias V2;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 using System;
 using System.Text;
+using Utf8JsonBenchmark;
 
+[assembly:V2A::Utf8Json.RegisterTargetType(typeof(JsonCompoundObjectSerializeTester.EightMemberStruct), 0)]
+[assembly:V2A::Utf8Json.RegisterTargetType(typeof(JsonCompoundObjectSerializeTester.SixMemberClass), 1)]
+[assembly:V2A::Utf8Json.RegisterTargetType(typeof(JsonCompoundObjectSerializeTester.CompoundClass), 2)]
 namespace Utf8JsonBenchmark
 {
     internal class Program
@@ -26,7 +31,77 @@ namespace Utf8JsonBenchmark
             BenchmarkRunner.Run<Json8IntegerFieldObjectSerializeTester>();
             BenchmarkRunner.Run<Json8IntegerFieldObjectTypelessSerializeTester>();
             BenchmarkRunner.Run<Json8IntegerFieldObjectDeserializeTester>();
+            BenchmarkRunner.Run<JsonCompoundObjectSerializeTester>();
         }
+    }
+
+    [MemoryDiagnoser]
+    public class JsonCompoundObjectSerializeTester
+    {
+        public struct EightMemberStruct
+        {
+            public int FirstInt32 { get; set; }
+            public int Second { get; set; }
+            public int Third { get; set; }
+            public int FourthInt { get; set; }
+            public int FifthNum { get; set; }
+            public int SixthInteger { get; set; }
+            public int SeventhDigit { get; set; }
+            public int EighthNumber { get; set; }
+        }
+
+        public class SixMemberClass
+        {
+            public string 第一の文章 { get; set; }
+            public string 第2の文章 { get; set; }
+            public string 第３の文章 { get; set; }
+            public string 第よんの文章 { get; set; }
+            public string 第Vの文章 { get; set; }
+            public string 第Ⅵの文章 { get; set; }
+        }
+
+        public class CompoundClass
+        {
+            public EightMemberStruct S0 { get; set; }
+            public SixMemberClass S1 { get; set; }
+        }
+
+        public CompoundClass Value;
+
+        [GlobalSetup]
+        public void GlobalSetUp()
+        {
+            V2::Utf8Json.JsonSerializerOptionsExtensions.PrepareJsonFormatter(V2::Utf8Json.JsonSerializer.DefaultOptions);
+            Value = new CompoundClass
+            {
+                S0 = new EightMemberStruct
+                {
+                    Second = 113413,
+                    EighthNumber = 121741,
+                    Third = -32,
+                    FourthInt = int.MinValue,
+                    FifthNum = int.MaxValue,
+                    SixthInteger = 0,
+                    SeventhDigit = -9715725,
+                    FirstInt32 = 1,
+                },
+                S1 = new SixMemberClass
+                {
+                    第2の文章 = "",
+                    //"春は、あけぼの。やうやう白くなりゆく山ぎは少し明りて紫だちたる雲の細くたなびきたる。\n夏は、夜。月の頃はさらなり。闇もなほ。螢の多く飛び違ひたる。また、ただ一つ二つなど、ほのかにうち光りて行くもをかし。雨など降るもをかし。\n秋は、夕暮。夕日のさして、山の端（は）いと近うなりたるに、烏の寝どころへ行くとて、三つ四つ、二つ三つなど、飛び急ぐさへあはれなり。まいて雁などの連ねたるがいと小さく見ゆるは、いとをかし。日入り果てて、風の音、虫の音など、はたいふべきにあらず。\n冬は、つとめて。雪の降りたるはいふべきにもあらず。霜のいと白きも、またさらでも、いと寒きに、火など急ぎ熾して、炭もて渡るも、いとつきづきし。昼になりて、ぬるくゆるびもていけば、火桶の火も、白き灰がちになりて、わろし。"
+                    第Vの文章 = "春は、あけぼの。",
+                    //"ルイズ！ルイズ！ルイズ！ルイズぅぅうううわぁああああああああああああああああああああああん！！！あぁああああ…ああ…あっあっー！あぁああああああ！！！ルイズルイズルイズぅううぁわぁああああ！！！あぁクンカクンカ！クンカクンカ！スーハースーハー！スーハースーハー！いい匂いだなぁ…くんくん んはぁっ！ルイズ・フランソワーズたんの桃色ブロンドの髪をクンカクンカしたいお！クンカクンカ！あぁあ！！間違えた！モフモフしたいお！モフモフ！モフモフ！髪髪モフモフ！カリカリモフモフ…きゅんきゅんきゅい！！小説12巻のルイズたんかわいかったよぅ！！あぁぁああ…あああ…あっあぁああああ！！ふぁぁあああんんっ！！アニメ2期放送されて良かったねルイズたん！あぁあああああ！かわいい！ルイズたん！かわいい！あっああぁああ！コミック2巻も発売されて嬉し…いやぁああああああ！！！にゃああああああああん！！ぎゃああああああああ！！ぐあああああああああああ！！！コミックなんて現実じゃない！！！！あ…小説もアニメもよく考えたら…ル イ ズ ち ゃ ん は 現実 じ ゃ な い？にゃあああああああああああああん！！うぁああああああああああ！！そんなぁああああああ！！いやぁぁぁあああああああああ！！はぁああああああん！！ハルケギニアぁああああ！！この！ちきしょー！やめてやる！！現実なんかやめ…て…え！？見…てる？表紙絵のルイズちゃんが僕を見てる？表紙絵のルイズちゃんが僕を見てるぞ！ルイズちゃんが僕を見てるぞ！挿絵のルイズちゃんが僕を見てるぞ！！アニメのルイズちゃんが僕に話しかけてるぞ！！！よかった…世の中まだまだ捨てたモンじゃないんだねっ！いやっほぉおおおおおおお！！！僕にはルイズちゃんがいる！！やったよケティ！！ひとりでできるもん！！！あ、コミックのルイズちゃああああああああああああああん！！いやぁあああああああああああああああ！！！！あっあんああっああんあアン様ぁあ！！シ、シエスター！！アンリエッタぁああああああ！！！タバサｧぁあああ！！ううっうぅうう！！俺の想いよルイズへ届け！！ハルケギニアのルイズへ届け！"
+                    第Ⅵの文章 = "ルイズ！",
+                    第よんの文章 = "..fdko",
+                    第一の文章 = "日本語!",
+                    第３の文章 = null,
+                },
+            };
+        }
+
+        [Benchmark] public byte[] SerializeUtf8JsonV1() => global::Utf8Json.JsonSerializer.Serialize(Value);
+        [Benchmark] public byte[] SerializeUtf8JsonV2() => V2::Utf8Json.JsonSerializer.Serialize(Value);
+        [Benchmark] public byte[] SerializeSystemTextJson() => System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(Value);
     }
 
     [MemoryDiagnoser]
