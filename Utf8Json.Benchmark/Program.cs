@@ -9,6 +9,7 @@ using Utf8JsonBenchmark;
 [assembly:V2A::Utf8Json.RegisterTargetType(typeof(JsonCompoundObjectSerializeTester.EightMemberStruct), 0)]
 [assembly:V2A::Utf8Json.RegisterTargetType(typeof(JsonCompoundObjectSerializeTester.SixMemberClass), 1)]
 [assembly:V2A::Utf8Json.RegisterTargetType(typeof(JsonCompoundObjectSerializeTester.CompoundClass), 2)]
+
 namespace Utf8JsonBenchmark
 {
     internal class Program
