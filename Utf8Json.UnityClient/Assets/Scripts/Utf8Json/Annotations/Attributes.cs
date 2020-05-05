@@ -5,15 +5,20 @@ using System;
 
 namespace Utf8Json
 {
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+    public sealed class SourceCodeGeneratedFormatterResolverAttribute : Attribute
+    {
+    }
+
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface | AttributeTargets.Field | AttributeTargets.Property)]
     public class JsonFormatterAttribute : Attribute
     {
-        public Type FormatterType { get; private set; }
+        public Type FormatterType { get; }
 
 #if CSHARP_8_OR_NEWER
-        public object?[]? Arguments { get; private set; }
+        public object?[]? Arguments { get; }
 #else
-        public object[] Arguments { get; private set; }
+        public object[] Arguments { get; }
 #endif
 
         public JsonFormatterAttribute(Type formatterType)
