@@ -2,8 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-
-    <IsPackable>false</IsPackable>
+    <LangVersion>preview</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,4 +20,8 @@
     <Compile Include="..\Utf8Json.UnityClient\Assets\Scripts\Utf8Json.Tests\**\*.cs" />
   </ItemGroup>
 
+  <ItemGroup>
+  	<ProjectReference Include="..\Utf8Json.Generator\Utf8Json.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+	
 </Project>
