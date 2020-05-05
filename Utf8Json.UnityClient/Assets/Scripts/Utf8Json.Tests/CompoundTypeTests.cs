@@ -23,14 +23,15 @@ namespace Utf8Json.Test
         [TestCase(int.MaxValue, int.MinValue, long.MaxValue, long.MinValue)]
         public void CompoundTest(int x, int y, long a, long b)
         {
+            HelloWorldGenerated.HelloWorld.SayHello();
             var value = new CompoundType(x, y, a, b);
             var bytes = JsonSerializer.Serialize(value);
             var deserialize = JsonSerializer.Deserialize<CompoundType>(bytes);
-            TestContext.WriteLine(System.Text.Encoding.UTF8.GetString(bytes));
             Assert.AreEqual(x, deserialize.t32.X);
             Assert.AreEqual(y, deserialize.t32.Y);
             Assert.AreEqual(a, deserialize.t64.A);
             Assert.AreEqual(b, deserialize.t64.B);
+            Assert.IsTrue(false);
         }
 
         public struct Int32Int32Tuple
